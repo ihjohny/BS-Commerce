@@ -39,6 +39,7 @@ Open [http://localhost:3003](http://localhost:3003) with your browser to see Sto
 
 ## Learn More
 
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
