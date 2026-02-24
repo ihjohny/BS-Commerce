@@ -21,6 +21,8 @@ out/
 **/payload-types.ts
 **/generated-schema.graphql
 **/media/
+# Exception: Media collection source (uploads dirs are still ignored above)
+!**/collections/media/
 
 # Logs
 *.log
