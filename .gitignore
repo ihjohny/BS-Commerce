@@ -1,30 +1,43 @@
-# Build folders
-/build
-packages/*/build/
-packages/*/examples/*/build/
-es
-lib
-umd
+# Dependencies
+node_modules/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
+# Build outputs
+.next/
+dist/
+build/
+out/
 
+# Environment variables
+.env
+.env.local
+.env.*.local
 
-# Cache folders
-.cache
+# Payload CMS
+**/payload-types.ts
+**/generated-schema.graphql
+**/media/
 
 # Logs
-logs
 *.log
-
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Editor
 .DS_Store
+Thumbs.db
+.vscode/
 *.swp
-.idea
-.vscode
-.env.local
+*.swo
 
-# Dependency directory
-node_modules
+# Testing
+coverage/
+.nyc_output/
 
-#lock file
-package-lock.json
+# TypeScript
+*.tsbuildinfo
