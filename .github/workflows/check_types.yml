@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [frontend-monorepo-backup]
+    branches: [revamp/multivendor]
   pull_request:
-    branches: [frontend-monorepo-backup]
+    branches: [revamp/multivendor]
 
 jobs:
   build:
@@ -15,17 +15,18 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version: [24.x]
+        # Matches engines in package.json (>=24.0.0)
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "yarn"
+          cache-dependency-path: yarn.lock
       - run: yarn install
       - name: Perform TypeScript type checking
-        run: yarn check-types
+        run: yarn typecheck
