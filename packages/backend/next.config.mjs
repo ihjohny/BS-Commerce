@@ -2,6 +2,7 @@ import { withPayload } from '@payloadcms/next/withPayload'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['ioredis', 'payloadcms-redis-plugin'],
   // Allow cross-origin requests from the storefront
   async headers() {
     return [

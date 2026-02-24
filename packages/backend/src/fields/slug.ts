@@ -1,4 +1,5 @@
 import type { Field } from 'payload'
+import { slugify } from '@bs-commerce/shared'
 
 export const slugField = (sourceField: string = 'title'): Field => ({
   name: 'slug',
@@ -15,12 +16,7 @@ export const slugField = (sourceField: string = 'title'): Field => ({
         if (value) return value
         const source = data?.[sourceField] as string | undefined
         if (!source) return value
-        return source
-          .toLowerCase()
-          .trim()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '')
+        return slugify(source)
       },
     ],
   },

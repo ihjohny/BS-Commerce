@@ -1,9 +1,14 @@
-import type { CollectionConfig, FieldAccess } from 'payload'
+import type { CollectionConfig, FieldAccess, PayloadRequest } from 'payload'
 import { isAdmin } from '../../access/is-admin'
 import { isSelfOrAdmin } from '../../access/is-self-or-admin'
 
 // Field-level access: must return boolean only (FieldAccess, not collection Access)
 const adminOnly: FieldAccess = ({ req }) => req.user?.role === 'admin'
+
+// access.admin must return boolean only (not AccessResult/Where).
+// Admins and vendors can use the admin panel; collection/field access enforces what they can do.
+const canAccessAdmin = ({ req }: { req: PayloadRequest }): boolean =>
+  req.user?.role === 'admin' || req.user?.role === 'vendor'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -19,6 +24,7 @@ export const Users: CollectionConfig = {
     group: 'Platform',
   },
   access: {
+    admin: canAccessAdmin, // Only admins can access the admin panel (create-first-user allows when no users exist)
     create: () => true, // Public registration
     read: isSelfOrAdmin,
     update: isSelfOrAdmin,
@@ -121,33 +127,8 @@ export const Users: CollectionConfig = {
       ],
     },
 
-    // ─── Multivendor: tenant relationship (set by multivendor plugin in Phase 4) ─
-    {
-      name: 'tenant',
-      type: 'relationship',
-      relationTo: 'tenants' as 'users', // cast: tenants collection added in Phase 4
-      hasMany: false,
-      admin: {
-        condition: (data) => data?.role === 'vendor',
-        description: 'Automatically assigned when vendor application is approved.',
-        readOnly: true,
-      },
-      access: {
-        update: adminOnly,
-      },
-    },
-
-    // ─── Addresses ────────────────────────────────────────────────────────────
-    {
-      name: 'addresses',
-      type: 'relationship',
-      relationTo: 'addresses' as 'users', // cast: addresses collection added in Phase 2
-      hasMany: true,
-      admin: {
-        readOnly: true,
-        description: 'Managed via the addresses collection.',
-      },
-    },
+    // tenant field added in Phase 4 (multivendor plugin — tenants collection)
+    // addresses field added in Phase 2 (ecommerce plugin — addresses collection)
   ],
 
   hooks: {

@@ -2,6 +2,7 @@ import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 // import { mongooseAdapter } from '@payloadcms/db-mongodb' // swap adapter here to use MongoDB
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import sharp from 'sharp'
 import { en } from '@payloadcms/translations/languages/en'
 import { bnBd } from '@payloadcms/translations/languages/bnBd'
 import { redisCache } from 'payloadcms-redis-plugin'
@@ -107,6 +108,9 @@ export default buildConfig({
   // Decision #17: social login (Google + Facebook) via @papercup/payload-auth-plugin (Phase 1 prep).
   secret: process.env.PAYLOAD_SECRET!,
 
+  // ─── Sharp (image processing) ────────────────────────────────────────────────
+  sharp,
+
   // ─── Upload ───────────────────────────────────────────────────────────────────
   upload: {
     limits: {
@@ -125,6 +129,7 @@ export default buildConfig({
   },
 
   // ─── CORS ────────────────────────────────────────────────────────────────────
+  // Auth cookie is only accepted when request Origin is in this list (see payload auth extractJWT).
   cors: [
     process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
