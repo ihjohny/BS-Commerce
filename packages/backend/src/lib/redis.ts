@@ -17,4 +17,5 @@ export const cachedCollections = {
   categories: true,
   pages: true,
   media: true,
+  products: true,
 } as const

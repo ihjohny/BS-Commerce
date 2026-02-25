@@ -128,7 +128,12 @@ export const Users: CollectionConfig = {
     },
 
     // tenant field added in Phase 4 (multivendor plugin — tenants collection)
-    // addresses field added in Phase 2 (ecommerce plugin — addresses collection)
+    {
+      name: 'addresses',
+      type: 'relationship',
+      relationTo: 'addresses',
+      hasMany: true,
+    },
   ],
 
   hooks: {
