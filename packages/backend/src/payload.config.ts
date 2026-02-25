@@ -14,6 +14,10 @@ import { Media } from './collections/media'
 import { Pages } from './collections/pages'
 import { Categories } from './collections/categories'
 
+import { ecommercePlugin } from './plugins/ecommerce'
+import { inventoryPlugin } from './plugins/inventory'
+import { shippingPlugin } from './plugins/shipping'
+
 import { Header } from './globals/header'
 import { Footer } from './globals/footer'
 import { PlatformSettings } from './globals/platform-settings'
@@ -86,6 +90,23 @@ export default buildConfig({
     redisCache({
       redis: redisConfig,
       collections: cachedCollections,
+    }),
+
+    // Phase 2: Ecommerce Core
+    ecommercePlugin({
+      enabled: true,
+      currencies: (process.env.SUPPORTED_CURRENCIES || 'USD,BDT').split(','),
+      defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
+      allowGuestCheckout: process.env.GUEST_CHECKOUT_ENABLED === 'true',
+    }),
+    inventoryPlugin({
+      enabled: process.env.INVENTORY_ENABLED !== 'false',
+      trackMovements: true,
+      lowStockThreshold: Number(process.env.LOW_STOCK_THRESHOLD || '10'),
+    }),
+    shippingPlugin({
+      enabled: true,
+      model: (process.env.SHIPPING_MODEL || 'platform') as 'platform' | 'vendor' | 'hybrid',
     }),
 
     // Future plugins (added per phase):
