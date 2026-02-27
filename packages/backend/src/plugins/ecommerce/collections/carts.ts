@@ -1,5 +1,4 @@
 import type { CollectionConfig } from 'payload'
-import { isAdmin } from '../../../access/is-admin'
 
 export const Carts: CollectionConfig = {
   slug: 'carts',
@@ -10,22 +9,52 @@ export const Carts: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, req }) => {
-        if (!data?.items || !Array.isArray(data.items)) return data
+      async ({ data, req, operation }) => {
+        if (!data) return data
 
+        // User assignment: customers can only create/update for self; admin can set any user.
+        if (req.user?.id != null) {
+          if (req.user.role !== 'admin') {
+            data.user = req.user.id // Customer/vendor: always use own ID, ignore any passed value
+          } else if (operation === 'create' && data.user == null) {
+            data.user = req.user.id // Admin create: default to self when not specified
+          }
+          // Admin update: allow explicit user (or leave unchanged if not in payload)
+        }
+
+        if (!data.items || !Array.isArray(data.items)) return data
+
+        // Derive unitPrice from product/variant — never trust client (OWASP: price manipulation)
         for (const item of data.items) {
           const variantId = typeof item.variant === 'object' ? item.variant?.id : item.variant
           const productId = typeof item.product === 'object' ? item.product?.id : item.product
-          if (variantId && productId) {
+          if (!productId) continue
+
+          const product = await req.payload.findByID({
+            collection: 'products',
+            id: productId,
+            depth: 0,
+          })
+          if (!product) throw new Error(`Product ${productId} not found`)
+
+          let unitPrice: number
+          if (variantId) {
             const variant = await req.payload.findByID({
               collection: 'product-variants',
               id: variantId,
+              depth: 0,
             })
             const vProductId = typeof variant?.product === 'object' ? variant?.product?.id : variant?.product
-            if (variant && vProductId !== productId) {
+            if (!variant || vProductId !== productId) {
               throw new Error(`Variant ${variantId} does not belong to product ${productId}`)
             }
+            unitPrice = Number((variant as { price?: number }).price)
+            if (isNaN(unitPrice) || unitPrice < 0) throw new Error(`Invalid variant price for ${variantId}`)
+          } else {
+            unitPrice = Number((product as { basePrice?: number }).basePrice)
+            if (isNaN(unitPrice) || unitPrice < 0) throw new Error(`Invalid product basePrice for ${productId}`)
           }
+          item.unitPrice = Math.round(unitPrice * 100) / 100
         }
 
         const subtotal = data.items.reduce(
@@ -72,7 +101,7 @@ export const Carts: CollectionConfig = {
     {
       name: 'items',
       type: 'array',
-      required: true,
+      required: false, // Allow empty cart after checkout; required=true would reject []
       defaultValue: [],
       fields: [
         {
@@ -87,7 +116,13 @@ export const Carts: CollectionConfig = {
           relationTo: 'product-variants',
         },
         { name: 'quantity', type: 'number', required: true, min: 1 },
-        { name: 'unitPrice', type: 'number', required: true, min: 0 },
+        {
+          name: 'unitPrice',
+          type: 'number',
+          required: false, // Server-populated from product/variant; client must not send
+          min: 0,
+          admin: { description: 'Auto-set from product basePrice or variant price. Do not send.' },
+        },
       ],
     },
     {

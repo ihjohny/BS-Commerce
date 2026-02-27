@@ -1,6 +1,11 @@
 import type { CollectionConfig, FieldAccess, PayloadRequest } from 'payload'
 import { isAdmin } from '../../access/is-admin'
 import { isSelfOrAdmin } from '../../access/is-self-or-admin'
+import {
+  getAuthRequiredIdentifier,
+  toLoginIdentifier,
+  validateAuthIdentifier,
+} from '../../lib/auth-config'
 
 // Field-level access: must return boolean only (FieldAccess, not collection Access)
 const adminOnly: FieldAccess = ({ req }) => req.user?.role === 'admin'
@@ -17,10 +22,12 @@ export const Users: CollectionConfig = {
     verify: false,
     maxLoginAttempts: 5,
     lockTime: 600 * 1000, // 10 minutes
+    // Decision #18: login with email OR phone. username stores the login identifier (email or phone).
+    loginWithUsername: { allowEmailLogin: true },
   },
   admin: {
-    useAsTitle: 'email',
-    defaultColumns: ['email', 'phone', 'role', 'status', 'createdAt'],
+    useAsTitle: 'username',
+    defaultColumns: ['username', 'email', 'phone', 'role', 'status', 'createdAt'],
     group: 'Platform',
   },
   access: {
@@ -37,7 +44,7 @@ export const Users: CollectionConfig = {
       type: 'email',
       unique: true,
       admin: {
-        description: 'Required if phone is not provided.',
+        description: 'Required if phone is not provided (configurable via AUTH_REQUIRED_IDENTIFIER).',
       },
     },
     {
@@ -45,8 +52,20 @@ export const Users: CollectionConfig = {
       type: 'text',
       unique: true,
       admin: {
-        description: 'Required if email is not provided.',
+        description: 'Required if email is not provided (configurable via AUTH_REQUIRED_IDENTIFIER).',
       },
+    },
+    {
+      name: 'username',
+      type: 'text',
+      unique: true,
+      admin: {
+        description: 'Login identifier — auto-set from email or phone. Do not edit.',
+        readOnly: true,
+        condition: (_, __, { operation }) => operation !== 'create', // Hide on create (auto-populated); show on edit
+      },
+      validate: (val: unknown) =>
+        val && typeof val === 'string' && val.trim().length > 0 ? true : 'Required',
     },
 
     // ─── Profile ──────────────────────────────────────────────────────────────
@@ -138,10 +157,38 @@ export const Users: CollectionConfig = {
 
   hooks: {
     beforeValidate: [
-      ({ data }) => {
-        if (!data?.email && !data?.phone) {
-          throw new Error('At least one of email or phone is required.')
+      ({ data, originalDoc }) => {
+        if (!data) return data
+
+        const identifier = getAuthRequiredIdentifier()
+        validateAuthIdentifier(identifier, data)
+
+        // create-first-user may send email in username; sync for storage
+        const rawEmail = data.email ?? originalDoc?.email
+        const rawPhone = data.phone ?? originalDoc?.phone
+        const rawUsername = data.username
+        if (!rawEmail && rawUsername && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(rawUsername).trim())) {
+          data.email = String(rawUsername).trim().toLowerCase()
         }
+        if (!rawPhone && rawUsername && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(rawUsername).trim()) && String(rawUsername).trim()) {
+          data.phone = String(rawUsername).trim()
+        }
+
+        const email = data.email ?? originalDoc?.email
+        const phone = data.phone ?? originalDoc?.phone
+        const loginId = toLoginIdentifier(email, phone, data.username)
+        if (loginId) {
+          data.username = loginId.toLowerCase()
+        }
+
+        // Reset verification when identifier changes
+        if (originalDoc && data.email !== undefined && String(data.email || '').trim() !== String(originalDoc.email || '').trim()) {
+          data.emailVerified = false
+        }
+        if (originalDoc && data.phone !== undefined && String(data.phone || '').trim() !== String(originalDoc.phone || '').trim()) {
+          data.phoneVerified = false
+        }
+
         return data
       },
     ],
