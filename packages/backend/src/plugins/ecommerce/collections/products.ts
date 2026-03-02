@@ -1,26 +1,11 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
+import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 import { slugField } from '../../../fields/slug'
 import { getCurrencyOptions } from '../../../lib/currencies'
 
-export const Products: CollectionConfig = {
-  slug: 'products',
-  admin: {
-    useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'status', 'basePrice', 'currency', 'publishedAt'],
-    group: 'Ecommerce',
-  },
-  access: {
-    create: isAdmin,
-    read: ({ req }) => {
-      if (!req.user) return { status: { equals: 'published' } }
-      if (req.user.role === 'admin') return true
-      return { status: { equals: 'published' } }
-    },
-    update: isAdmin,
-    delete: isAdmin,
-  },
-  fields: [
+export function createProductsConfig(multivendorEnabled = false): CollectionConfig {
+  const fields: CollectionConfig['fields'] = [
     { name: 'name', type: 'text', required: true, localized: true },
     slugField('name'),
     {
@@ -103,6 +88,56 @@ export const Products: CollectionConfig = {
       ],
     },
     { name: 'publishedAt', type: 'date' },
-  ],
-  timestamps: true,
+  ]
+
+  if (multivendorEnabled) {
+    fields.unshift({
+      name: 'tenant',
+      type: 'relationship',
+      relationTo: 'tenants',
+      required: true,
+      admin: { description: 'Vendor (tenant) who owns this product.' },
+    })
+  }
+
+  return {
+    slug: 'products',
+    admin: {
+      useAsTitle: 'name',
+      defaultColumns: multivendorEnabled
+        ? ['name', 'slug', 'tenant', 'status', 'basePrice', 'currency', 'publishedAt']
+        : ['name', 'slug', 'status', 'basePrice', 'currency', 'publishedAt'],
+      group: 'Ecommerce',
+    },
+    access: {
+      create: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
+      read: ({ req }) => {
+        if (!req.user) return { status: { equals: 'published' } }
+        if (req.user.role === 'admin') return true
+        if (multivendorEnabled && req.user.role === 'vendor') return isAdminOrVendorOwner({ req })
+        return { status: { equals: 'published' } }
+      },
+      update: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
+      delete: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
+    },
+    hooks: multivendorEnabled
+      ? {
+          beforeValidate: [
+            ({ data, req }) => {
+              if (!data) return data
+              if (req.user?.role === 'vendor' && req.user.tenant && !data.tenant) {
+                const tenantId = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
+                data.tenant = tenantId
+              }
+              return data
+            },
+          ],
+        }
+      : undefined,
+    fields,
+    timestamps: true,
+  }
 }
+
+/** @deprecated Use createProductsConfig(multivendorEnabled) */
+export const Products: CollectionConfig = createProductsConfig(false)

@@ -15,6 +15,7 @@ import { Pages } from './collections/pages'
 import { Categories } from './collections/categories'
 
 import { ecommercePlugin } from './plugins/ecommerce'
+import { multivendorPlugin } from './plugins/multivendor'
 import { inventoryPlugin } from './plugins/inventory'
 import { shippingPlugin } from './plugins/shipping'
 import { paymentsPlugin } from './plugins/payments'
@@ -166,9 +167,18 @@ export default buildConfig({
       collections: cachedCollections,
     }),
 
+    // Phase 4: Multivendor Foundation (must run before ecommerce for tenant field on Users)
+    multivendorPlugin({
+      enabled: process.env.MULTIVENDOR_ENABLED === 'true',
+      autoApproveVendors: process.env.VENDOR_AUTO_APPROVE === 'true',
+      requireKYC: process.env.VENDOR_KYC_REQUIRED === 'true',
+      requireProductApproval: process.env.PRODUCT_REQUIRES_APPROVAL === 'true',
+    }),
+
     // Phase 2: Ecommerce Core
     ecommercePlugin({
       enabled: true,
+      multivendorEnabled: process.env.MULTIVENDOR_ENABLED === 'true',
       currencies: (process.env.SUPPORTED_CURRENCIES || 'USD,BDT').split(','),
       defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
       allowGuestCheckout: process.env.GUEST_CHECKOUT_ENABLED === 'true',
@@ -211,7 +221,6 @@ export default buildConfig({
     }),
 
     // Future plugins (added per phase):
-    // multivendorPlugin({ enabled: process.env.MULTIVENDOR_ENABLED === 'true', ... })
     // ecommercePlugin({ ... })
     // ordersPlugin({ ... })
     // paymentsPlugin({ ... })

@@ -146,7 +146,7 @@ export const Users: CollectionConfig = {
       ],
     },
 
-    // tenant field added in Phase 4 (multivendor plugin — tenants collection)
+    // tenant field added by multivendor plugin when MULTIVENDOR_ENABLED=true
     {
       name: 'addresses',
       type: 'relationship',
