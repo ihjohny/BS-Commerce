@@ -1,11 +1,12 @@
 import type { Plugin } from 'payload'
-import { Products } from './collections/products'
-import { ProductVariants } from './collections/product-variants'
+import { createProductsConfig } from './collections/products'
+import { createProductVariantsConfig } from './collections/product-variants'
 import { Carts } from './collections/carts'
 import { Addresses } from './collections/addresses'
 
 export interface EcommercePluginOptions {
   enabled?: boolean
+  multivendorEnabled?: boolean
   currencies?: string[]
   defaultCurrency?: string
   allowGuestCheckout?: boolean
@@ -14,15 +15,15 @@ export interface EcommercePluginOptions {
 export const ecommercePlugin =
   (options: EcommercePluginOptions = {}): Plugin =>
   (incomingConfig) => {
-    const { enabled = true } = options
+    const { enabled = true, multivendorEnabled = false } = options
     if (!enabled) return incomingConfig
 
     return {
       ...incomingConfig,
       collections: [
         ...(incomingConfig.collections || []),
-        Products,
-        ProductVariants,
+        createProductsConfig(multivendorEnabled),
+        createProductVariantsConfig(multivendorEnabled),
         Carts,
         Addresses,
       ],

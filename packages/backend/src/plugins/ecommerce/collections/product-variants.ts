@@ -1,24 +1,9 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
+import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 
-export const ProductVariants: CollectionConfig = {
-  slug: 'product-variants',
-  admin: {
-    useAsTitle: 'name',
-    defaultColumns: ['name', 'sku', 'price', 'product', 'isActive'],
-    group: 'Ecommerce',
-  },
-  access: {
-    create: isAdmin,
-    read: ({ req }) => {
-      if (!req.user) return { isActive: { equals: true } }
-      if (req.user.role === 'admin') return true
-      return { isActive: { equals: true } }
-    },
-    update: isAdmin,
-    delete: isAdmin,
-  },
-  fields: [
+export function createProductVariantsConfig(multivendorEnabled = false): CollectionConfig {
+  const fields: CollectionConfig['fields'] = [
     {
       name: 'product',
       type: 'relationship',
@@ -44,6 +29,63 @@ export const ProductVariants: CollectionConfig = {
     },
     { name: 'weight', type: 'number', min: 0 },
     { name: 'isActive', type: 'checkbox', defaultValue: true },
-  ],
-  timestamps: true,
+  ]
+
+  if (multivendorEnabled) {
+    fields.splice(1, 0, {
+      name: 'tenant',
+      type: 'relationship',
+      relationTo: 'tenants',
+      required: true,
+      admin: { description: 'Inherited from product. Auto-set on save.' },
+    })
+  }
+
+  return {
+    slug: 'product-variants',
+    admin: {
+      useAsTitle: 'name',
+      defaultColumns: multivendorEnabled
+        ? ['name', 'sku', 'price', 'product', 'tenant', 'isActive']
+        : ['name', 'sku', 'price', 'product', 'isActive'],
+      group: 'Ecommerce',
+    },
+    access: {
+      create: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
+      read: ({ req }) => {
+        if (!req.user) return { isActive: { equals: true } }
+        if (req.user.role === 'admin') return true
+        if (multivendorEnabled && req.user.role === 'vendor') return isAdminOrVendorOwner({ req })
+        return { isActive: { equals: true } }
+      },
+      update: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
+      delete: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
+    },
+    hooks: multivendorEnabled
+      ? {
+          beforeValidate: [
+            async ({ data, req }) => {
+              if (!data) return data
+              if (!data.tenant && data.product) {
+                const productId = typeof data.product === 'object' ? (data.product as { id?: string }).id : data.product
+                if (productId && req.payload) {
+                  const p = await req.payload.findByID({ collection: 'products', id: productId, depth: 0 })
+                  if (p?.tenant) data.tenant = typeof p.tenant === 'object' ? (p.tenant as { id: string }).id : p.tenant
+                }
+              }
+              if (req.user?.role === 'vendor' && req.user.tenant && !data.tenant) {
+                const tenantId = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
+                data.tenant = tenantId
+              }
+              return data
+            },
+          ],
+        }
+      : undefined,
+    fields,
+    timestamps: true,
+  }
 }
+
+/** @deprecated Use createProductVariantsConfig(multivendorEnabled) */
+export const ProductVariants: CollectionConfig = createProductVariantsConfig(false)
