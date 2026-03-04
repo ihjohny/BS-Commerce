@@ -1,14 +1,17 @@
 /**
  * Process checkout: create Order + Order Items + Transaction from Cart.
- * Phase 3 single-vendor: no sub-orders, no commission.
+ * Phase 3: single-vendor, no sub-orders.
+ * Phase 5: when MULTIVENDOR_ENABLED, splits by vendor into sub-orders, calculates commission.
  *
  * All DB writes run in a single transaction when the adapter supports it (Postgres).
- * MongoDB: beginTransaction may return null — operations run without a transaction (best-effort).
  * Email is sent after commit. Used by process-checkout API and (future) payment webhooks.
  */
 import type { Payload, PayloadRequest } from 'payload'
 import { NotFound } from 'payload'
 import { getDefaultCurrency } from './currencies'
+import { DefaultOrderSplitter, getPlatformItems } from '../plugins/orders/strategies/order-splitter'
+import type { CartItemForSplit } from '../plugins/orders/strategies/order-splitter'
+import { getCommissionRateForTenant, calculateCommission } from './commission'
 
 /** Creates req with transactionID when adapter supports transactions. */
 function reqWithTransaction(req: PayloadRequest | undefined, transactionID: string | number | null): PayloadRequest {
@@ -17,8 +20,9 @@ function reqWithTransaction(req: PayloadRequest | undefined, transactionID: stri
   return { ...base, transactionID }
 }
 
+const splitByVendor = process.env.MULTIVENDOR_ENABLED === 'true'
+
 export interface ProcessCheckoutInput {
-  /** Cart ID (UUID string or legacy number). Payload findByID accepts both. */
   cartId: string | number
   shippingAddress: {
     firstName: string
@@ -42,34 +46,26 @@ export interface ProcessCheckoutInput {
     country: string
     phone?: string
   }
-  /** Optional. Required for guest checkout. */
   guestEmail?: string
-  /** Optional. For testing without real payment. */
   simulatePayment?: boolean
-  /** Optional. Default from cart currency or platform default. */
   currency?: string
 }
 
 export interface ProcessCheckoutResult {
-  /** IDs are strings (UUID standard). See docs/ID-STANDARD.md */
   order: { id: string; orderNumber: string }
   transaction?: { id: string }
   error?: string
-  /** HTTP status when error is set (e.g. 404 for cart not found) */
   statusCode?: number
 }
 
 export async function processCheckout(
   payload: Payload,
   input: ProcessCheckoutInput,
-  /** User ID. String with UUID; number with serial. Pass raw from req.user.id. */
   userId?: string | number,
-  /** Request context for hooks (e.g. orders afterChange). Omit for webhooks. */
   req?: PayloadRequest
 ): Promise<ProcessCheckoutResult> {
   const { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment = false } = input
 
-  // 1. Load cart with items (findByID throws NotFound if missing)
   let cart: Awaited<ReturnType<Payload['findByID']>>
   try {
     cart = await payload.findByID({
@@ -101,19 +97,8 @@ export async function processCheckout(
 
   const currency = input.currency || getDefaultCurrency()
 
-  // 2. Compute order item data and subtotal
-  const orderItemData: Array<{
-    productId: string
-    variantId: string | null
-    productName: string
-    variantName: string
-    sku: string
-    quantity: number
-    unitPrice: number
-    totalPrice: number
-    productImage: string
-  }> = []
-  let subtotal = 0
+  // Build order item data with tenantId (for multivendor)
+  const orderItemData: CartItemForSplit[] = []
 
   for (const item of items) {
     const productId = typeof item.product === 'object' ? item.product?.id : item.product
@@ -122,15 +107,22 @@ export async function processCheckout(
     const product = await payload.findByID({
       collection: 'products',
       id: productId as string,
-      depth: 0,
+      depth: 1,
     })
 
     if (!product) {
       return { order: { id: '', orderNumber: '' }, error: `Product ${productId} not found` }
     }
 
+    const productAny = product as { tenant?: { id: string } | string | null; name?: string; sku?: string; basePrice?: number }
+    const tenantId = productAny.tenant
+      ? typeof productAny.tenant === 'object'
+        ? productAny.tenant?.id ?? null
+        : productAny.tenant
+      : null
+
     let variantName = ''
-    let sku = (product as { sku?: string }).sku || ''
+    let sku = productAny.sku || ''
     let unitPrice = item.unitPrice
 
     if (variantId) {
@@ -140,36 +132,37 @@ export async function processCheckout(
         depth: 0,
       })
       if (variant) {
-        variantName = (variant as { name?: string }).name || ''
-        sku = (variant as { sku?: string }).sku || sku
-        unitPrice = (variant as { price?: number }).price ?? unitPrice
+        const v = variant as { name?: string; sku?: string; price?: number }
+        variantName = v.name || ''
+        sku = v.sku || sku
+        unitPrice = v.price ?? unitPrice
       }
     } else {
-      unitPrice = (product as { basePrice?: number }).basePrice ?? unitPrice
+      unitPrice = productAny.basePrice ?? unitPrice
     }
 
     const quantity = Number(item.quantity) || 1
     const totalPrice = Math.round(quantity * unitPrice * 100) / 100
-    subtotal += totalPrice
 
     orderItemData.push({
       productId: productId as string,
       variantId: variantId as string | null,
-      productName: (product as { name?: string }).name || 'Product',
+      productName: productAny.name || 'Product',
       variantName,
       sku,
       quantity,
       unitPrice,
       totalPrice,
       productImage: '',
+      tenantId,
     })
   }
 
-  // 3. Calculate totals (Phase 3: simple - no shipping calc, no tax)
   const shippingTotal = 0
   const taxTotal = 0
   const discountTotal = 0
-  const grandTotal = Math.round((subtotal + shippingTotal + taxTotal - discountTotal) * 100) / 100
+  const subtotalCalc = orderItemData.reduce((s, i) => s + i.totalPrice, 0)
+  const grandTotal = Math.round((subtotalCalc + shippingTotal + taxTotal - discountTotal) * 100) / 100
 
   const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
@@ -180,28 +173,26 @@ export async function processCheckout(
   let paymentTransactionId: string | undefined
 
   try {
+    const subtotal = orderItemData.reduce((s, i) => s + i.totalPrice, 0)
     const orderData: Record<string, unknown> = {
-    orderNumber,
-    status: 'pending',
-    items: [],
-    shippingAddress,
-    billingAddress,
-    subtotal,
-    shippingTotal,
-    taxTotal,
-    discountTotal,
-    grandTotal,
-    currency,
-    paymentStatus: 'unpaid', // Set to paid in single update when simulatePayment (avoids inconsistent state)
-    notes: '',
-    placedAt: new Date().toISOString(),
-  }
-  if (userId) {
-    orderData.customer = userId
-  }
-    if (guestEmail) {
-      orderData.guestEmail = guestEmail
+      orderNumber,
+      status: 'pending',
+      items: [],
+      shippingAddress,
+      billingAddress,
+      subtotal,
+      shippingTotal,
+      taxTotal,
+      discountTotal,
+      grandTotal,
+      currency,
+      paymentStatus: 'unpaid',
+      notes: '',
+      placedAt: new Date().toISOString(),
     }
+    if (userId) orderData.customer = userId
+    if (guestEmail) orderData.guestEmail = guestEmail
+    if (splitByVendor) orderData.subOrders = []
 
     order = await payload.create({
       collection: 'orders',
@@ -227,32 +218,131 @@ export async function processCheckout(
     })
 
     const orderItemIds: string[] = []
-    for (const d of orderItemData) {
-      const itemData: Record<string, unknown> = {
-        order: orderId,
-        product: d.productId,
-        productName: d.productName,
-        variantName: d.variantName,
-        sku: d.sku,
-        quantity: d.quantity,
-        unitPrice: d.unitPrice,
-        totalPrice: d.totalPrice,
-        productImage: d.productImage,
-      }
-      if (d.variantId != null) {
-        itemData.variant = d.variantId
+    const subOrderIds: string[] = []
+
+    if (splitByVendor) {
+      const platformItems = getPlatformItems(orderItemData)
+      const splitter = new DefaultOrderSplitter()
+      const segments = splitter.split(orderItemData)
+
+      // Create sub-orders for vendor segments
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i]
+        const { amount: commissionAmount, rate: commissionRate } = await (async () => {
+          const rate = await getCommissionRateForTenant(payload, seg.tenantId)
+          return calculateCommission(seg.subtotal, rate)
+        })()
+        const vendorEarnings = Math.round((seg.subtotal - commissionAmount) * 100) / 100
+
+        const subOrderNumber = `${orderNumber}-${String.fromCharCode(65 + i)}`
+        const subOrder = await payload.create({
+          collection: 'sub-orders',
+          overrideAccess: true,
+          data: {
+            parentOrder: orderId,
+            parentOrderNumber: orderNumber,
+            tenant: seg.tenantId,
+            subOrderNumber,
+            status: 'pending',
+            items: [],
+            subtotal: seg.subtotal,
+            shippingTotal: 0,
+            taxTotal: 0,
+            commissionAmount,
+            commissionRate,
+            vendorEarnings,
+          } as any,
+          req: reqTx,
+        })
+        subOrderIds.push(subOrder.id as string)
+
+        for (const d of seg.items) {
+          const itemData: Record<string, unknown> = {
+            order: orderId,
+            subOrder: subOrder.id,
+            tenant: seg.tenantId,
+            product: d.productId,
+            productName: d.productName,
+            variantName: d.variantName,
+            sku: d.sku,
+            quantity: d.quantity,
+            unitPrice: d.unitPrice,
+            totalPrice: d.totalPrice,
+            productImage: d.productImage,
+          }
+          if (d.variantId != null) itemData.variant = d.variantId
+
+          const orderItem = await payload.create({
+            collection: 'order-items',
+            overrideAccess: true,
+            data: itemData as any,
+            req: reqTx,
+          })
+          orderItemIds.push(orderItem.id as string)
+        }
+
+        // Update sub-order with item IDs
+        const segItemIds = orderItemIds.slice(-seg.items.length)
+        await payload.update({
+          collection: 'sub-orders',
+          id: subOrder.id,
+          overrideAccess: true,
+          data: { items: segItemIds } as any,
+          req: reqTx,
+        })
       }
 
-      const orderItem = await payload.create({
-        collection: 'order-items',
-        overrideAccess: true,
-        data: itemData as any,
-        req: reqTx,
-      })
-      orderItemIds.push(orderItem.id as string)
+      // Platform items (no sub-order)
+      for (const d of platformItems) {
+        const itemData: Record<string, unknown> = {
+          order: orderId,
+          product: d.productId,
+          productName: d.productName,
+          variantName: d.variantName,
+          sku: d.sku,
+          quantity: d.quantity,
+          unitPrice: d.unitPrice,
+          totalPrice: d.totalPrice,
+          productImage: d.productImage,
+        }
+        if (d.variantId != null) itemData.variant = d.variantId
+
+        const orderItem = await payload.create({
+          collection: 'order-items',
+          overrideAccess: true,
+          data: itemData as any,
+          req: reqTx,
+        })
+        orderItemIds.push(orderItem.id as string)
+      }
+    } else {
+      // Single-vendor: no sub-orders
+      for (const d of orderItemData) {
+        const itemData: Record<string, unknown> = {
+          order: orderId,
+          product: d.productId,
+          productName: d.productName,
+          variantName: d.variantName,
+          sku: d.sku,
+          quantity: d.quantity,
+          unitPrice: d.unitPrice,
+          totalPrice: d.totalPrice,
+          productImage: d.productImage,
+        }
+        if (d.variantId != null) itemData.variant = d.variantId
+
+        const orderItem = await payload.create({
+          collection: 'order-items',
+          overrideAccess: true,
+          data: itemData as any,
+          req: reqTx,
+        })
+        orderItemIds.push(orderItem.id as string)
+      }
     }
 
     const orderUpdateData: Record<string, unknown> = { items: orderItemIds }
+    if (splitByVendor && subOrderIds.length) orderUpdateData.subOrders = subOrderIds
 
     const updateReq = { ...reqTx, context: { ...(reqTx.context || {}), skipOrderStatusHistory: simulatePayment } }
     if (simulatePayment) {
@@ -277,7 +367,7 @@ export async function processCheckout(
       orderUpdateData.status = 'processing'
     }
 
-    const updatedOrder = await payload.update({
+    await payload.update({
       collection: 'orders',
       id: order.id,
       overrideAccess: true,
@@ -285,7 +375,7 @@ export async function processCheckout(
       req: updateReq,
     })
 
-    if (simulatePayment && updatedOrder) {
+    if (simulatePayment) {
       const statusHistoryData: Record<string, unknown> = {
         order: orderId,
         fromStatus: 'pending',
@@ -301,6 +391,7 @@ export async function processCheckout(
       })
     }
 
+    // Reserve inventory
     const productIds = [...new Set(items.map((i) => (typeof i.product === 'object' ? i.product?.id : i.product)).filter(Boolean) as string[])]
     const stockLevels = await payload.find({
       collection: 'stock-levels',
@@ -347,7 +438,6 @@ export async function processCheckout(
     throw err
   }
 
-  // Send order confirmation email (after commit; failure does not affect order)
   let recipientEmail: string | undefined
   if (guestEmail) recipientEmail = guestEmail
   else if (userId) {
@@ -356,7 +446,8 @@ export async function processCheckout(
   }
   if (recipientEmail) {
     const { sendOrderConfirmationEmail } = await import('../plugins/notifications/lib/send-email')
-    sendOrderConfirmationEmail(orderNumber, recipientEmail, grandTotal, currency).catch((e) =>
+    const gTotal = orderItemData.reduce((s, i) => s + i.totalPrice, 0)
+    sendOrderConfirmationEmail(orderNumber, recipientEmail, gTotal, currency).catch((e) =>
       console.error('[processCheckout] Failed to send order email:', e)
     )
   }

@@ -127,11 +127,11 @@ export const PlatformSettings: GlobalConfig = {
         {
           name: 'defaultCommissionRate',
           type: 'number',
-          defaultValue: 10,
+          defaultValue: 0,
           min: 0,
           max: 100,
           admin: {
-            description: 'Default commission % applied to all vendors unless overridden.',
+            description: 'Default commission % applied to all vendors unless overridden. 0 = no commission (business sets their rate).',
             step: 0.01,
           },
         },

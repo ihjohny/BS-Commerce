@@ -20,6 +20,8 @@ import { inventoryPlugin } from './plugins/inventory'
 import { shippingPlugin } from './plugins/shipping'
 import { paymentsPlugin } from './plugins/payments'
 import { ordersPlugin } from './plugins/orders'
+import { commissionsPlugin } from './plugins/commissions'
+import { payoutsPlugin } from './plugins/payouts'
 import { notificationsPlugin } from './plugins/notifications'
 
 import { Header } from './globals/header'
@@ -211,6 +213,17 @@ export default buildConfig({
       enabled: true,
       splitByVendor: process.env.MULTIVENDOR_ENABLED === 'true',
       orderStateMachine: 'default',
+    }),
+    commissionsPlugin({
+      enabled: process.env.MULTIVENDOR_ENABLED === 'true',
+      defaultStrategy: (process.env.COMMISSION_STRATEGY as 'percentage' | 'flat' | 'tiered' | 'category-based') || 'percentage',
+      defaultRate: Number(process.env.DEFAULT_COMMISSION_RATE ?? '0'),
+    }),
+    payoutsPlugin({
+      enabled: process.env.MULTIVENDOR_ENABLED === 'true',
+      schedule: process.env.PAYOUT_SCHEDULE || 'biweekly',
+      holdDays: Number(process.env.PAYOUT_HOLD_DAYS || '7'),
+      adapter: (process.env.PAYOUT_ADAPTER as 'manual-ledger' | 'stripe-transfer') || 'manual-ledger',
     }),
     notificationsPlugin({
       enabled: true,

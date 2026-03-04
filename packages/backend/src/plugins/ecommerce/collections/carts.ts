@@ -1,6 +1,44 @@
 import type { CollectionConfig } from 'payload'
 
-export const Carts: CollectionConfig = {
+const itemFieldsBase = [
+  {
+    name: 'product',
+    type: 'relationship' as const,
+    relationTo: 'products',
+    required: true,
+  },
+  {
+    name: 'variant',
+    type: 'relationship' as const,
+    relationTo: 'product-variants',
+  },
+  { name: 'quantity', type: 'number' as const, required: true, min: 1 },
+  {
+    name: 'unitPrice',
+    type: 'number' as const,
+    required: false,
+    min: 0,
+    admin: { description: 'Auto-set from product basePrice or variant price. Do not send.' },
+  },
+]
+
+export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig {
+  const itemFields = [
+    ...itemFieldsBase.slice(0, 2),
+    ...(multivendorEnabled
+      ? [
+          {
+            name: 'vendor',
+            type: 'relationship' as const,
+            relationTo: 'tenants' as const,
+            admin: { description: 'Denormalized vendor for cart grouping. Auto-set from product.' },
+          },
+        ]
+      : []),
+    ...itemFieldsBase.slice(2),
+  ]
+
+  return {
   slug: 'carts',
   admin: {
     useAsTitle: 'id',
@@ -24,7 +62,7 @@ export const Carts: CollectionConfig = {
 
         if (!data.items || !Array.isArray(data.items)) return data
 
-        // Derive unitPrice from product/variant — never trust client (OWASP: price manipulation)
+        // Derive unitPrice and vendor from product/variant — never trust client (OWASP: price manipulation)
         for (const item of data.items) {
           const variantId = typeof item.variant === 'object' ? item.variant?.id : item.variant
           const productId = typeof item.product === 'object' ? item.product?.id : item.product
@@ -33,7 +71,7 @@ export const Carts: CollectionConfig = {
           const product = await req.payload.findByID({
             collection: 'products',
             id: productId,
-            depth: 0,
+            depth: 1,
           })
           if (!product) throw new Error(`Product ${productId} not found`)
 
@@ -55,6 +93,13 @@ export const Carts: CollectionConfig = {
             if (isNaN(unitPrice) || unitPrice < 0) throw new Error(`Invalid product basePrice for ${productId}`)
           }
           item.unitPrice = Math.round(unitPrice * 100) / 100
+          // Denormalize vendor (tenant) for multivendor cart grouping
+          if (process.env.MULTIVENDOR_ENABLED === 'true') {
+            const tenant = (product as { tenant?: { id: string } | string | null }).tenant
+            if (tenant != null) {
+              item.vendor = typeof tenant === 'object' ? tenant?.id : tenant
+            }
+          }
         }
 
         const subtotal = data.items.reduce(
@@ -103,27 +148,7 @@ export const Carts: CollectionConfig = {
       type: 'array',
       required: false, // Allow empty cart after checkout; required=true would reject []
       defaultValue: [],
-      fields: [
-        {
-          name: 'product',
-          type: 'relationship',
-          relationTo: 'products',
-          required: true,
-        },
-        {
-          name: 'variant',
-          type: 'relationship',
-          relationTo: 'product-variants',
-        },
-        { name: 'quantity', type: 'number', required: true, min: 1 },
-        {
-          name: 'unitPrice',
-          type: 'number',
-          required: false, // Server-populated from product/variant; client must not send
-          min: 0,
-          admin: { description: 'Auto-set from product basePrice or variant price. Do not send.' },
-        },
-      ],
+      fields: itemFields,
     },
     {
       name: 'subtotal',
@@ -138,4 +163,7 @@ export const Carts: CollectionConfig = {
     },
   ],
   timestamps: true,
+  }
 }
+
+export const Carts = createCartsConfig(false)
