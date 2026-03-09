@@ -23,6 +23,7 @@ import { ordersPlugin } from './plugins/orders'
 import { commissionsPlugin } from './plugins/commissions'
 import { payoutsPlugin } from './plugins/payouts'
 import { notificationsPlugin } from './plugins/notifications'
+import { verificationPlugin } from './plugins/verification'
 
 import { Header } from './globals/header'
 import { Footer } from './globals/footer'
@@ -231,6 +232,12 @@ export default buildConfig({
         email: (process.env.EMAIL_ADAPTER as 'smtp' | 'resend') || 'smtp',
         sms: process.env.SMS_ADAPTER,
       },
+    }),
+
+    // Phase 6.1: Identifier verification (email link/OTP)
+    verificationPlugin({
+      enabled: process.env.VERIFICATION_ENABLED !== 'false',
+      emailStrategy: (process.env.EMAIL_VERIFICATION_STRATEGY as 'link' | 'otp') || 'link',
     }),
 
     // Future plugins (added per phase):
