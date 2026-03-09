@@ -7,12 +7,15 @@
 import type { Endpoint } from 'payload'
 import { sendVerificationLink } from '../adapters/email-link'
 import { sendVerificationOTP } from '../adapters/email-otp'
+import { getPhoneAdapter } from '../adapters/get-phone-adapter'
 import { generateVerificationToken, generateOTP } from '../lib/generate-code'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const COOLDOWN_MS = 60 * 1000 // 60 seconds
 const DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES = 30
 const DEFAULT_OTP_EXPIRY_SECONDS = 300
+const DEFAULT_PHONE_OTP_EXPIRY_SECONDS = 300
+const DEFAULT_PHONE_OTP_LENGTH = 6
 
 function getEmailStrategy(): 'link' | 'otp' {
   const v = process.env.EMAIL_VERIFICATION_STRATEGY?.toLowerCase()
@@ -52,18 +55,21 @@ export const sendVerificationEndpoint: Endpoint = {
         return Response.json({ error: 'Invalid email address.' }, { status: 400 })
       }
     }
-    // Phone: accept any non-empty string for now
-
     if (idType === 'phone') {
-      return Response.json(
-        { error: 'Phone verification is not yet implemented (Phase 6.2).' },
-        { status: 501 }
-      )
+      if (trimmed.length < 10) {
+        return Response.json({ error: 'Invalid phone number.' }, { status: 400 })
+      }
     }
 
-    // Optional: require auth and that identifier belongs to user
+    // Optional: if authenticated, identifier must match user's email or phone
     const user = req.user
-    if (user?.email && trimmed.toLowerCase() !== String(user.email).trim().toLowerCase()) {
+    if (idType === 'email' && user?.email && trimmed.toLowerCase() !== String(user.email).trim().toLowerCase()) {
+      return Response.json(
+        { error: 'Identifier does not match the authenticated user.' },
+        { status: 403 }
+      )
+    }
+    if (idType === 'phone' && user?.phone && trimmed !== String(user.phone).trim()) {
       return Response.json(
         { error: 'Identifier does not match the authenticated user.' },
         { status: 403 }
@@ -77,7 +83,7 @@ export const sendVerificationEndpoint: Endpoint = {
       collection: 'verification-codes',
       where: {
         identifier: { equals: trimmed },
-        type: { equals: 'email' },
+        type: { equals: idType },
       },
       limit: 1,
       sort: '-createdAt',
@@ -95,6 +101,35 @@ export const sendVerificationEndpoint: Endpoint = {
       }
     }
 
+    // ─── Phone (Phase 6.2) ───────────────────────────────────────────────────
+    if (idType === 'phone') {
+      const otpLength = Math.min(8, Math.max(4, parseInt(process.env.PHONE_VERIFICATION_OTP_LENGTH || String(DEFAULT_PHONE_OTP_LENGTH), 10) || DEFAULT_PHONE_OTP_LENGTH))
+      const code = generateOTP(otpLength)
+      const expirySeconds = parseInt(process.env.PHONE_VERIFICATION_OTP_EXPIRY || String(DEFAULT_PHONE_OTP_EXPIRY_SECONDS), 10) || DEFAULT_PHONE_OTP_EXPIRY_SECONDS
+      const expiresAt = new Date()
+      expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds)
+
+      await payload.create({
+        collection: 'verification-codes',
+        data: {
+          identifier: trimmed,
+          type: 'phone',
+          code,
+          expiresAt: expiresAt.toISOString(),
+        },
+        req,
+        overrideAccess: true,
+      })
+
+      const adapter = await getPhoneAdapter()
+      const sent = await adapter.sendOTP(trimmed, code, expirySeconds)
+      if (!sent) {
+        return Response.json({ error: 'Failed to send verification code.' }, { status: 502 })
+      }
+      return Response.json({ success: true, message: 'Verification code sent to your phone.' })
+    }
+
+    // ─── Email ───────────────────────────────────────────────────────────────
     const strategy = getEmailStrategy()
     const expiresAt = new Date()
 
