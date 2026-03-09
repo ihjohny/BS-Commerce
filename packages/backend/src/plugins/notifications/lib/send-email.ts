@@ -20,7 +20,10 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     console.log('[Notifications] SMTP configured but nodemailer not yet integrated. Logging email:')
   }
 
-  console.log('[Notifications] Email:', { to, subject, preview: (text || html || '').slice(0, 100) })
+  const content = text || html || ''
+  // Verification links need full URL (token ~43 chars); avoid truncating so testers can copy from preview
+  const previewLength = content.includes('verify-email/') ? 200 : 100
+  console.log('[Notifications] Email:', { to, subject, preview: content.slice(0, previewLength) })
   return true
 }
 
