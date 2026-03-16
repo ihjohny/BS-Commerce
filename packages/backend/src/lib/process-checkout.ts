@@ -66,6 +66,24 @@ export async function processCheckout(
 ): Promise<ProcessCheckoutResult> {
   const { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment = false } = input
 
+  // Optional: require verified identifier for logged-in checkout
+  const requireVerifiedForCheckout = process.env.REQUIRE_VERIFIED_FOR_CHECKOUT === 'true'
+  if (requireVerifiedForCheckout && userId && !guestEmail) {
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+    })
+    const u = user as { emailVerified?: boolean; phoneVerified?: boolean }
+    if (!u.emailVerified && !u.phoneVerified) {
+      return {
+        order: { id: '', orderNumber: '' },
+        error: 'Account identifiers are not verified. Please verify your email or phone before checkout.',
+        statusCode: 403,
+      }
+    }
+  }
+
   let cart: Awaited<ReturnType<Payload['findByID']>>
   try {
     cart = await payload.findByID({

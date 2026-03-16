@@ -37,6 +37,24 @@ export const authLoginEndpoint: Endpoint = {
         data: loginData as any,
         req,
       })
+
+      const requireVerified = process.env.AUTH_REQUIRE_VERIFIED_EMAIL_FOR_LOGIN === 'true'
+      if (requireVerified) {
+        const user = result?.user as { email?: string | null; emailVerified?: boolean } | undefined
+        if (user?.email && user.emailVerified === false) {
+          return Response.json(
+            {
+              errors: [
+                {
+                  message: 'Email address is not verified. Please verify your email before logging in.',
+                },
+              ],
+            },
+            { status: 403 }
+          )
+        }
+      }
+
       return Response.json(result, { status: 200 })
     } catch (err) {
       const status = (err as { status?: number })?.status ?? 401
