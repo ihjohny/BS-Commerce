@@ -7,8 +7,10 @@
 import type { Plugin } from 'payload'
 import { VerificationCodes } from './collections/verification-codes'
 import { sendVerificationEndpoint } from './endpoints/send-verification'
-import { verifyEmailEndpoint } from './endpoints/verify-email'
+import { verifyEmailPostEndpoint } from './endpoints/verify-email-post'
 import { verifyPhoneEndpoint } from './endpoints/verify-phone'
+import { verifyEmailLinkGetEndpoint } from './endpoints/verify-email-link-get'
+import { verifyIdentifierAdminEndpoint } from './endpoints/verify-identifier-admin'
 
 export interface VerificationPluginOptions {
   /** Enable the plugin. Default true. */
@@ -27,8 +29,10 @@ export const verificationPlugin =
     const endpoints = [
       ...(incomingConfig.endpoints || []),
       sendVerificationEndpoint,
-      verifyEmailEndpoint,
+      verifyEmailPostEndpoint,
       verifyPhoneEndpoint,
+      verifyEmailLinkGetEndpoint,
+      verifyIdentifierAdminEndpoint,
     ]
 
     return {

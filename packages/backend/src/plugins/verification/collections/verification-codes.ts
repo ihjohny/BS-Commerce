@@ -57,6 +57,13 @@ export const VerificationCodes: CollectionConfig = {
       type: 'date',
       admin: { description: 'When the code was consumed.' },
     },
+    {
+      name: 'ip',
+      type: 'text',
+      admin: {
+        description: 'Origin IP address when the code was created (for rate limiting / audit).',
+      },
+    },
   ],
   timestamps: true,
 }

@@ -7,7 +7,7 @@ import type { Endpoint } from 'payload'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export const verifyEmailEndpoint: Endpoint = {
+export const verifyEmailPostEndpoint: Endpoint = {
   path: '/auth/verify-email',
   method: 'post',
   handler: async (req) => {
@@ -141,3 +141,4 @@ export const verifyEmailEndpoint: Endpoint = {
     )
   },
 }
+

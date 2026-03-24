@@ -16,6 +16,8 @@ const DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES = 30
 const DEFAULT_OTP_EXPIRY_SECONDS = 300
 const DEFAULT_PHONE_OTP_EXPIRY_SECONDS = 300
 const DEFAULT_PHONE_OTP_LENGTH = 6
+const DEFAULT_RATE_LIMIT_WINDOW_MINUTES = 10
+const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 10
 
 function getEmailStrategy(): 'link' | 'otp' {
   const v = process.env.EMAIL_VERIFICATION_STRATEGY?.toLowerCase()
@@ -77,6 +79,13 @@ export const sendVerificationEndpoint: Endpoint = {
     }
 
     const payload = req.payload
+    const ip =
+      // PayloadRequest has ip on Node; fall back to header for edge adapters
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (req as any).ip ||
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      undefined
 
     // Cooldown: last code for this identifier within 60s
     const { docs } = await payload.find({
@@ -101,6 +110,56 @@ export const sendVerificationEndpoint: Endpoint = {
       }
     }
 
+    // Rolling window rate limit per identifier and per IP
+    const windowMinutes =
+      parseInt(process.env.VERIFICATION_RATE_LIMIT_WINDOW_MINUTES || String(DEFAULT_RATE_LIMIT_WINDOW_MINUTES), 10) ||
+      DEFAULT_RATE_LIMIT_WINDOW_MINUTES
+    const maxRequests =
+      parseInt(process.env.VERIFICATION_RATE_LIMIT_MAX_REQUESTS || String(DEFAULT_RATE_LIMIT_MAX_REQUESTS), 10) ||
+      DEFAULT_RATE_LIMIT_MAX_REQUESTS
+    const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString()
+
+    // Per-identifier window
+    const windowForIdentifier = await payload.find({
+      collection: 'verification-codes',
+      where: {
+        identifier: { equals: trimmed },
+        createdAt: { greater_than_equal: windowStart },
+      },
+      limit: maxRequests + 1,
+      req,
+      overrideAccess: true,
+    })
+    if (windowForIdentifier.totalDocs >= maxRequests) {
+      return Response.json(
+        {
+          error: 'Too many verification requests for this identifier. Please try again later.',
+        },
+        { status: 429 }
+      )
+    }
+
+    if (ip) {
+      const windowForIp = await payload.find({
+        collection: 'verification-codes',
+        where: {
+          ip: { equals: ip },
+          createdAt: { greater_than_equal: windowStart },
+        },
+        limit: maxRequests + 1,
+        req,
+        overrideAccess: true,
+      })
+      if (windowForIp.totalDocs >= maxRequests) {
+        return Response.json(
+          {
+            error: 'Too many verification requests from this IP. Please try again later.',
+          },
+          { status: 429 }
+        )
+      }
+    }
+
     // ─── Phone (Phase 6.2) ───────────────────────────────────────────────────
     if (idType === 'phone') {
       const otpLength = Math.min(8, Math.max(4, parseInt(process.env.PHONE_VERIFICATION_OTP_LENGTH || String(DEFAULT_PHONE_OTP_LENGTH), 10) || DEFAULT_PHONE_OTP_LENGTH))
@@ -116,6 +175,7 @@ export const sendVerificationEndpoint: Endpoint = {
           type: 'phone',
           code,
           expiresAt: expiresAt.toISOString(),
+          ip,
         },
         req,
         overrideAccess: true,
@@ -145,6 +205,7 @@ export const sendVerificationEndpoint: Endpoint = {
           type: 'email',
           code: token,
           expiresAt: expiresAt.toISOString(),
+          ip,
         },
         req,
         overrideAccess: true,
@@ -169,6 +230,7 @@ export const sendVerificationEndpoint: Endpoint = {
         type: 'email',
         code,
         expiresAt: expiresAt.toISOString(),
+        ip,
       },
       req,
       overrideAccess: true,
