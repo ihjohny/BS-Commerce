@@ -88,6 +88,18 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       ],
     },
     { name: 'publishedAt', type: 'date' },
+    {
+      name: 'rating',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true, description: 'Aggregated from approved product reviews.' },
+    },
+    {
+      name: 'totalReviews',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true, description: 'Total approved product reviews.' },
+    },
   ]
 
   if (multivendorEnabled) {

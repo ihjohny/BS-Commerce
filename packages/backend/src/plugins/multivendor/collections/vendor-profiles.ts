@@ -77,7 +77,7 @@ export const VendorProfiles: CollectionConfig = {
     {
       name: 'rating',
       type: 'number',
-      admin: { description: 'Aggregated from vendor reviews (Phase 6).', readOnly: true },
+      admin: { description: 'Aggregated from approved vendor reviews.', readOnly: true },
       defaultValue: 0,
     },
     {
