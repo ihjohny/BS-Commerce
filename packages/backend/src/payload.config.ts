@@ -24,6 +24,7 @@ import { commissionsPlugin } from './plugins/commissions'
 import { payoutsPlugin } from './plugins/payouts'
 import { notificationsPlugin } from './plugins/notifications'
 import { verificationPlugin } from './plugins/verification'
+import { discountsPlugin } from './plugins/discounts'
 
 import { Header } from './globals/header'
 import { Footer } from './globals/footer'
@@ -238,6 +239,9 @@ export default buildConfig({
     verificationPlugin({
       enabled: process.env.VERIFICATION_ENABLED !== 'false',
       emailStrategy: (process.env.EMAIL_VERIFICATION_STRATEGY as 'link' | 'otp') || 'link',
+    }),
+    discountsPlugin({
+      enabled: process.env.DISCOUNTS_ENABLED !== 'false',
     }),
 
     // Future plugins (added per phase):

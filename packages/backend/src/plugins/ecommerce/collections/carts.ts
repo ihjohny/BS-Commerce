@@ -1,4 +1,5 @@
-import type { CollectionConfig } from 'payload'
+import { APIError, type CollectionConfig } from 'payload'
+import { validateCouponForSubtotal } from '../../discounts/lib/coupon'
 
 const itemFieldsBase = [
   {
@@ -108,6 +109,26 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
           0
         )
         data.subtotal = Math.round(subtotal * 100) / 100
+        data.discountTotal = 0
+        data.appliedCoupon = null
+
+        if (typeof data.couponCode === 'string' && data.couponCode.trim()) {
+          const couponResult = await validateCouponForSubtotal({
+            payload: req.payload,
+            req,
+            couponCode: data.couponCode,
+            subtotal: data.subtotal,
+            userId: req.user?.id,
+          })
+          if (!couponResult.valid) {
+            throw new APIError(couponResult.discountReason, 400)
+          }
+          data.couponCode = couponResult.coupon.code
+          data.appliedCoupon = couponResult.coupon.id
+          data.discountTotal = couponResult.discountTotal
+        }
+
+        data.grandTotal = Math.round((Number(data.subtotal || 0) - Number(data.discountTotal || 0)) * 100) / 100
         return data
       },
     ],
@@ -155,6 +176,29 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
       type: 'number',
       defaultValue: 0,
       admin: { readOnly: true, description: 'Auto-calculated from items.' },
+    },
+    {
+      name: 'couponCode',
+      type: 'text',
+      admin: { description: 'Optional coupon code. Validated server-side.' },
+    },
+    {
+      name: 'appliedCoupon',
+      type: 'relationship',
+      relationTo: 'coupons',
+      admin: { readOnly: true, description: 'Resolved coupon from couponCode.' },
+    },
+    {
+      name: 'discountTotal',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true, description: 'Discount amount from applied coupon.' },
+    },
+    {
+      name: 'grandTotal',
+      type: 'number',
+      defaultValue: 0,
+      admin: { readOnly: true, description: 'subtotal - discountTotal (shipping/tax excluded in cart).' },
     },
     {
       name: 'expiresAt',
