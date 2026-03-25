@@ -12,6 +12,7 @@ import { getDefaultCurrency } from './currencies'
 import { DefaultOrderSplitter, getPlatformItems } from '../plugins/orders/strategies/order-splitter'
 import type { CartItemForSplit } from '../plugins/orders/strategies/order-splitter'
 import { getCommissionRateForTenant, calculateCommission } from './commission'
+import { validateCouponForSubtotal } from '../plugins/discounts/lib/coupon'
 
 /** Creates req with transactionID when adapter supports transactions. */
 function reqWithTransaction(req: PayloadRequest | undefined, transactionID: string | number | null): PayloadRequest {
@@ -178,8 +179,27 @@ export async function processCheckout(
 
   const shippingTotal = 0
   const taxTotal = 0
-  const discountTotal = 0
   const subtotalCalc = orderItemData.reduce((s, i) => s + i.totalPrice, 0)
+  let discountTotal = 0
+  let appliedCouponId: string | null = null
+  let couponCodeSnapshot: string | null = null
+
+  const rawCouponCode = (cart as { couponCode?: string | null }).couponCode
+  if (typeof rawCouponCode === 'string' && rawCouponCode.trim()) {
+    const couponResult = await validateCouponForSubtotal({
+      payload,
+      req,
+      couponCode: rawCouponCode,
+      subtotal: subtotalCalc,
+      userId,
+    })
+    if (!couponResult.valid) {
+      return { order: { id: '', orderNumber: '' }, error: couponResult.discountReason, statusCode: 400 }
+    }
+    appliedCouponId = couponResult.coupon.id
+    couponCodeSnapshot = couponResult.coupon.code
+    discountTotal = couponResult.discountTotal
+  }
   const grandTotal = Math.round((subtotalCalc + shippingTotal + taxTotal - discountTotal) * 100) / 100
 
   const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
@@ -202,6 +222,8 @@ export async function processCheckout(
       shippingTotal,
       taxTotal,
       discountTotal,
+      appliedCoupon: appliedCouponId,
+      couponCodeSnapshot,
       grandTotal,
       currency,
       paymentStatus: 'unpaid',
@@ -392,6 +414,24 @@ export async function processCheckout(
       data: orderUpdateData as any,
       req: updateReq,
     })
+
+    if (appliedCouponId) {
+      const couponDoc = await payload.findByID({
+        collection: 'coupons',
+        id: appliedCouponId,
+        depth: 0,
+        overrideAccess: true,
+        req: reqTx,
+      })
+      const currentUses = Number((couponDoc as { totalUses?: number })?.totalUses || 0)
+      await payload.update({
+        collection: 'coupons',
+        id: appliedCouponId,
+        overrideAccess: true,
+        data: { totalUses: currentUses + 1 },
+        req: reqTx,
+      })
+    }
 
     if (simulatePayment) {
       const statusHistoryData: Record<string, unknown> = {

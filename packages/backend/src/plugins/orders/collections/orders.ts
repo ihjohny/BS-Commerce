@@ -78,6 +78,17 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
     { name: 'shippingTotal', type: 'number', required: true, defaultValue: 0 },
     { name: 'taxTotal', type: 'number', required: true, defaultValue: 0 },
     { name: 'discountTotal', type: 'number', required: true, defaultValue: 0 },
+    {
+      name: 'appliedCoupon',
+      type: 'relationship',
+      relationTo: 'coupons',
+      admin: { description: 'Coupon used at checkout (if any).' },
+    },
+    {
+      name: 'couponCodeSnapshot',
+      type: 'text',
+      admin: { readOnly: true, description: 'Coupon code snapshot at checkout time.' },
+    },
     { name: 'grandTotal', type: 'number', required: true, defaultValue: 0 },
     {
       name: 'currency',
