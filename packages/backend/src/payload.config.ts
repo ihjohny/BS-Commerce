@@ -34,6 +34,11 @@ import { PlatformSettings } from './globals/platform-settings'
 import { redisConfig, cachedCollections } from './lib/redis'
 import { processCheckout } from './lib/process-checkout'
 import { authLoginEndpoint } from './endpoints/auth-login'
+import { guestOrderLookupEndpoint } from './endpoints/guest-order-lookup'
+import { createRateLimiter, enforceRateLimit, getClientIp, CHECKOUT_RATE_LIMIT } from './lib/rate-limiter'
+import { isValidUUID } from './lib/utils'
+
+const checkoutLimiter = createRateLimiter({ ...CHECKOUT_RATE_LIMIT, keyPrefix: 'rl:checkout' })
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -109,18 +114,29 @@ export default buildConfig({
   // ─── Custom Endpoints ────────────────────────────────────────────────────────
   endpoints: [
     authLoginEndpoint,
+    guestOrderLookupEndpoint,
     {
       path: '/checkout/process',
       method: 'post',
       handler: async (req) => {
+        // ── Rate limiting (by IP) ───────────────────────────────────────────
+        const clientIp = getClientIp(req as unknown as Request)
+        const limitResponse = await enforceRateLimit(checkoutLimiter, clientIp)
+        if (limitResponse) return limitResponse
+
         const data = (await (req as Request).json?.().catch(() => ({}))) || {}
-        const { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment = false } = data
+        const { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment = false, idempotencyKey } = data
 
         if (!cartId || !shippingAddress || !billingAddress) {
           return Response.json(
             { error: 'Missing required fields: cartId, shippingAddress, billingAddress' },
             { status: 400 }
           )
+        }
+
+        // Validate idempotencyKey format if provided
+        if (idempotencyKey !== undefined && (typeof idempotencyKey !== 'string' || !isValidUUID(idempotencyKey))) {
+          return Response.json({ error: 'idempotencyKey must be a valid UUID string' }, { status: 400 })
         }
 
         const requiredAddressFields = ['firstName', 'lastName', 'street1', 'city', 'country']
@@ -140,11 +156,26 @@ export default buildConfig({
             { status: 400 }
           )
         }
+        // Validate guestEmail format for guest checkout
+        if (!userId && guestEmail) {
+          const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          if (typeof guestEmail !== 'string' || !emailRe.test(guestEmail.trim())) {
+            return Response.json(
+              { error: 'guestEmail must be a valid email address' },
+              { status: 400 }
+            )
+          }
+        }
+
+        // simulatePayment: only allow in development or for admin users
+        const isAdminUser = req.user?.role === 'admin'
+        const isDev = process.env.NODE_ENV === 'development'
+        const safeSimulatePayment = (isAdminUser || isDev) ? (simulatePayment === true) : false
 
         try {
           const result = await processCheckout(
             req.payload,
-            { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment },
+            { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment: safeSimulatePayment, idempotencyKey },
             userId,
             req
           )

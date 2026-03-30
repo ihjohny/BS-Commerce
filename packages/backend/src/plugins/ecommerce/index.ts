@@ -15,7 +15,7 @@ export interface EcommercePluginOptions {
 export const ecommercePlugin =
   (options: EcommercePluginOptions = {}): Plugin =>
   (incomingConfig) => {
-    const { enabled = true, multivendorEnabled = false } = options
+    const { enabled = true, multivendorEnabled = false, allowGuestCheckout = false } = options
     if (!enabled) return incomingConfig
 
     return {
@@ -24,7 +24,7 @@ export const ecommercePlugin =
         ...(incomingConfig.collections || []),
         createProductsConfig(multivendorEnabled),
         createProductVariantsConfig(multivendorEnabled),
-        createCartsConfig(multivendorEnabled),
+        createCartsConfig(multivendorEnabled, allowGuestCheckout),
         Addresses,
       ],
     }
