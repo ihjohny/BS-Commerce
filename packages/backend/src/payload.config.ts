@@ -24,6 +24,7 @@ import { commissionsPlugin } from './plugins/commissions'
 import { payoutsPlugin } from './plugins/payouts'
 import { notificationsPlugin } from './plugins/notifications'
 import { verificationPlugin } from './plugins/verification'
+import { reviewsPlugin } from './plugins/reviews'
 import { discountsPlugin } from './plugins/discounts'
 
 import { Header } from './globals/header'
@@ -242,6 +243,13 @@ export default buildConfig({
     }),
     discountsPlugin({
       enabled: process.env.DISCOUNTS_ENABLED !== 'false',
+    }),
+
+    // Phase 6: Reviews (product + optional vendor reviews)
+    reviewsPlugin({
+      enabled: process.env.REVIEWS_ENABLED !== 'false',
+      requireApproval: process.env.REVIEW_REQUIRES_APPROVAL === 'true',
+      vendorReviews: process.env.MULTIVENDOR_ENABLED === 'true',
     }),
 
     // Future plugins (added per phase):
