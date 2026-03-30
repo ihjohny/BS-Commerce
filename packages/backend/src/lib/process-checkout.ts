@@ -50,6 +50,7 @@ export interface ProcessCheckoutInput {
   guestEmail?: string
   simulatePayment?: boolean
   currency?: string
+  idempotencyKey?: string
 }
 
 export interface ProcessCheckoutResult {
@@ -65,11 +66,56 @@ export async function processCheckout(
   userId?: string | number,
   req?: PayloadRequest
 ): Promise<ProcessCheckoutResult> {
-  const { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment = false } = input
+  const { cartId, shippingAddress, billingAddress, simulatePayment = false, idempotencyKey } = input
+  // Normalize guestEmail once: trim + lowercase so stored value always matches lookup queries
+  const guestEmail = input.guestEmail ? input.guestEmail.trim().toLowerCase() : undefined
+  const isAdminUser = (req?.user as { role?: string } | undefined)?.role === 'admin'
+
+  if (!userId && !guestEmail) {
+    return { order: { id: '', orderNumber: '' }, error: 'Guest checkout requires guestEmail', statusCode: 400 }
+  }
+
+  // ── Idempotency: return existing order if key was already used ──────────
+  if (idempotencyKey) {
+    const existing = await payload.find({
+      collection: 'orders',
+      where: { idempotencyKey: { equals: idempotencyKey } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    if (existing.docs.length > 0) {
+      const existingOrder = existing.docs[0] as {
+        id: string
+        orderNumber: string
+        customer?: { id: string } | string | null
+        guestEmail?: string | null
+      }
+      const existingCustomerId =
+        existingOrder.customer != null
+          ? (typeof existingOrder.customer === 'object' ? existingOrder.customer.id : String(existingOrder.customer))
+          : null
+      const existingGuestEmail = existingOrder.guestEmail ? String(existingOrder.guestEmail).trim().toLowerCase() : null
+
+      if (userId) {
+        if (isAdminUser || existingCustomerId === String(userId)) {
+          return { order: { id: existingOrder.id, orderNumber: existingOrder.orderNumber } }
+        }
+      } else if (!existingCustomerId && existingGuestEmail && existingGuestEmail === guestEmail) {
+        return { order: { id: existingOrder.id, orderNumber: existingOrder.orderNumber } }
+      }
+
+      return {
+        order: { id: '', orderNumber: '' },
+        error: 'idempotencyKey is already used by another checkout context',
+        statusCode: 409,
+      }
+    }
+  }
 
   // Optional: require verified identifier for logged-in checkout
   const requireVerifiedForCheckout = process.env.REQUIRE_VERIFIED_FOR_CHECKOUT === 'true'
-  if (requireVerifiedForCheckout && userId && !guestEmail) {
+  if (requireVerifiedForCheckout && userId && !isAdminUser) {
     const user = await payload.findByID({
       collection: 'users',
       id: userId,
@@ -91,12 +137,31 @@ export async function processCheckout(
       collection: 'carts',
       id: cartId,
       depth: 2,
+      overrideAccess: true, // Access enforced below via ownership check
     })
   } catch (err) {
     if (err instanceof NotFound) {
       return { order: { id: '', orderNumber: '' }, error: 'Cart not found', statusCode: 404 }
     }
     throw err
+  }
+
+  // ── Ownership verification ──────────────────────────────────────────────
+  // Prevent a guest from checking out another guest's cart, or an authenticated
+  // user from checking out a cart that doesn't belong to them.
+  const cartDoc = cart as { user?: { id: string } | string | null; guestId?: string | null }
+  if (!userId) {
+    // Guest checkout: verify guestId on cart matches X-Guest-Id header
+    const headerGuestId = req?.headers?.get?.('x-guest-id')
+    if (!headerGuestId || cartDoc.guestId !== headerGuestId) {
+      return { order: { id: '', orderNumber: '' }, error: 'Cart does not belong to this guest', statusCode: 403 }
+    }
+  } else {
+    // Authenticated checkout: verify cart belongs to this user (skip for admin)
+    const cartUserId = typeof cartDoc.user === 'object' ? cartDoc.user?.id : cartDoc.user
+    if (!isAdminUser && (!cartUserId || cartUserId !== String(userId))) {
+      return { order: { id: '', orderNumber: '' }, error: 'Cart does not belong to this user', statusCode: 403 }
+    }
   }
 
   const items = cart.items as Array<{
@@ -108,10 +173,6 @@ export async function processCheckout(
 
   if (!items?.length) {
     return { order: { id: '', orderNumber: '' }, error: 'Cart is empty' }
-  }
-
-  if (!userId && !guestEmail) {
-    return { order: { id: '', orderNumber: '' }, error: 'Guest checkout requires guestEmail' }
   }
 
   const currency = input.currency || getDefaultCurrency()
@@ -232,6 +293,7 @@ export async function processCheckout(
     }
     if (userId) orderData.customer = userId
     if (guestEmail) orderData.guestEmail = guestEmail
+    if (idempotencyKey) orderData.idempotencyKey = idempotencyKey
     if (splitByVendor) orderData.subOrders = []
 
     order = await payload.create({

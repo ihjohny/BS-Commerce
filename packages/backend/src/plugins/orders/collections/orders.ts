@@ -40,6 +40,16 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       admin: { description: 'For guest checkout.' },
     },
     {
+      name: 'idempotencyKey',
+      type: 'text',
+      index: true,
+      admin: {
+        readOnly: true,
+        description:
+          'Client-supplied UUID for idempotent checkout. If an order with this key already exists, the existing order is returned without creating a duplicate.',
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       required: true,

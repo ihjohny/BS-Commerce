@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:guest": "node scripts/test-guest-checkout.mjs",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importMap",
     "payload": "payload"
@@ -27,6 +28,7 @@
     "next": "15.4.11",
     "payload": "^3.77.0",
     "payloadcms-redis-plugin": "^0.2.17",
+    "rate-limiter-flexible": "^10.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.32.6"

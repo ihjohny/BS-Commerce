@@ -1,5 +1,6 @@
-import { APIError, type CollectionConfig } from 'payload'
+import { APIError, type CollectionConfig, type Where } from 'payload'
 import { validateCouponForSubtotal } from '../../discounts/lib/coupon'
+import { isValidUUID } from '../../../lib/utils'
 
 const itemFieldsBase = [
   {
@@ -23,7 +24,7 @@ const itemFieldsBase = [
   },
 ]
 
-export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig {
+export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckout = false): CollectionConfig {
   const itemFields = [
     ...itemFieldsBase.slice(0, 2),
     ...(multivendorEnabled
@@ -39,6 +40,29 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
     ...itemFieldsBase.slice(2),
   ]
 
+  // ── Guest-aware access helpers ────────────────────────────────────────────
+  // When allowGuestCheckout is true, unauthenticated requests with a valid
+  // X-Guest-Id header can access carts matching their guestId (and only
+  // carts without a user — prevents accessing authenticated users' carts).
+
+  function guestReadFilter(req: {
+    user?: { id: string | number; role?: string } | null
+    headers: { get(name: string): string | null }
+  }): boolean | Where {
+    if (req.user?.role === 'admin') return true
+    if (req.user) return { user: { equals: req.user.id } } as Where
+    if (!allowGuestCheckout) return false
+
+    const guestId = req.headers.get('x-guest-id')
+    if (!guestId || !isValidUUID(guestId)) return false
+    return {
+      and: [
+        { guestId: { equals: guestId } },
+        { user: { equals: null } },
+      ],
+    } as Where
+  }
+
   return {
   slug: 'carts',
   admin: {
@@ -50,6 +74,23 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
     beforeChange: [
       async ({ data, req, operation }) => {
         if (!data) return data
+
+        // ── Guest cart: assign guestId from header, never from body ────────
+        if (!req.user) {
+          if (operation === 'create') {
+            const headerGuestId = req.headers.get('x-guest-id')
+            if (!headerGuestId || !isValidUUID(headerGuestId)) {
+              throw new APIError('X-Guest-Id header with a valid UUID is required for guest cart creation', 400)
+            }
+            data.guestId = headerGuestId
+            data.user = undefined // Guest carts never have a user
+            // Default expiry: 7 days from now
+            if (!data.expiresAt) {
+              data.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            }
+          }
+          // On update: do not modify guestId — it was set on create
+        }
 
         // User assignment: customers can only create/update for self; admin can set any user.
         if (req.user?.id != null) {
@@ -134,22 +175,15 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
     ],
   },
   access: {
-    create: ({ req }) => Boolean(req.user),
-    read: ({ req }) => {
-      if (req.user?.role === 'admin') return true
-      if (req.user) return { user: { equals: req.user.id } }
-      return false
+    create: ({ req }) => {
+      if (req.user) return true
+      if (!allowGuestCheckout) return false
+      const guestId = req.headers.get('x-guest-id')
+      return Boolean(guestId && isValidUUID(guestId))
     },
-    update: ({ req }) => {
-      if (req.user?.role === 'admin') return true
-      if (req.user) return { user: { equals: req.user.id } }
-      return false
-    },
-    delete: ({ req }) => {
-      if (req.user?.role === 'admin') return true
-      if (req.user) return { user: { equals: req.user.id } }
-      return false
-    },
+    read: ({ req }) => guestReadFilter(req),
+    update: ({ req }) => guestReadFilter(req),
+    delete: ({ req }) => guestReadFilter(req),
   },
   fields: [
     {
@@ -162,7 +196,7 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
       name: 'guestId',
       type: 'text',
       index: true,
-      admin: { description: 'UUID for guest identification.' },
+      admin: { description: 'UUID for guest identification. Set from X-Guest-Id header; never from body.' },
     },
     {
       name: 'items',
@@ -203,7 +237,7 @@ export function createCartsConfig(multivendorEnabled: boolean): CollectionConfig
     {
       name: 'expiresAt',
       type: 'date',
-      admin: { description: 'Guest carts expire.' },
+      admin: { description: 'Guest carts expire. Auto-set to 7 days on guest create.' },
     },
   ],
   timestamps: true,

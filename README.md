@@ -49,6 +49,11 @@ See `packages/backend/.env.example` for the full list.
 | `REDIS_URL` | Redis URL — required |
 | `PAYLOAD_SECRET` | Auth token secret |
 | `MULTIVENDOR_ENABLED` | `true` = marketplace, `false` = single-vendor |
+| `GUEST_CHECKOUT_ENABLED` | Enables guest cart + guest checkout flow |
+| `CHECKOUT_RATE_LIMIT_POINTS` | Max checkout requests per rate-limit window |
+| `CHECKOUT_RATE_LIMIT_DURATION_SECONDS` | Checkout rate-limit window in seconds |
+| `GUEST_LOOKUP_RATE_LIMIT_POINTS` | Max guest order-lookup requests per window |
+| `GUEST_LOOKUP_RATE_LIMIT_DURATION_SECONDS` | Guest lookup rate-limit window in seconds |
 
 ## Modes
 
@@ -56,6 +61,20 @@ See `packages/backend/.env.example` for the full list.
 |------|---------|
 | Single-vendor | `MULTIVENDOR_ENABLED=false` |
 | Marketplace | `MULTIVENDOR_ENABLED=true` |
+
+## Guest Checkout Testing
+
+From `packages/backend`, run:
+
+```bash
+yarn test:guest
+```
+
+Optional flags:
+
+- `RUN_RATE_LIMIT=true` to include rate-limit assertions
+- `PRODUCT_ID=<id>` to pin a specific product (otherwise the first published product is used)
+- `AUTH_TOKEN=<jwt>` to run authenticated abuse checks when login policy blocks auto-created test users
 
 ## License
 
