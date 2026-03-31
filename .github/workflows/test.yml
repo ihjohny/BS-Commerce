@@ -109,12 +109,9 @@ jobs:
         run: yarn install --frozen-lockfile
         working-directory: .
 
-      - name: Build backend
-        run: yarn build
-
-      - name: Start backend server
+      - name: Start backend server (dev mode)
         run: |
-          yarn start &
+          yarn dev &
           echo $! > /tmp/server.pid
 
       - name: Wait for server + seed data + run E2E
