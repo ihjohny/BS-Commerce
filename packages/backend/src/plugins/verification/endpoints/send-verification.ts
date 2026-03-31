@@ -19,6 +19,12 @@ const DEFAULT_PHONE_OTP_LENGTH = 6
 const DEFAULT_RATE_LIMIT_WINDOW_MINUTES = 10
 const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 10
 
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
 function getEmailStrategy(): 'link' | 'otp' {
   const v = process.env.EMAIL_VERIFICATION_STRATEGY?.toLowerCase()
   return v === 'otp' ? 'otp' : 'link'
@@ -111,12 +117,14 @@ export const sendVerificationEndpoint: Endpoint = {
     }
 
     // Rolling window rate limit per identifier and per IP
-    const windowMinutes =
-      parseInt(process.env.VERIFICATION_RATE_LIMIT_WINDOW_MINUTES || String(DEFAULT_RATE_LIMIT_WINDOW_MINUTES), 10) ||
+    const windowMinutes = parsePositiveInt(
+      process.env.VERIFICATION_RATE_LIMIT_WINDOW_MINUTES,
       DEFAULT_RATE_LIMIT_WINDOW_MINUTES
-    const maxRequests =
-      parseInt(process.env.VERIFICATION_RATE_LIMIT_MAX_REQUESTS || String(DEFAULT_RATE_LIMIT_MAX_REQUESTS), 10) ||
+    )
+    const maxRequests = parsePositiveInt(
+      process.env.VERIFICATION_RATE_LIMIT_MAX_REQUESTS,
       DEFAULT_RATE_LIMIT_MAX_REQUESTS
+    )
     const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString()
 
     // Per-identifier window
