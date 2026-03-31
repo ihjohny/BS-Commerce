@@ -4,15 +4,14 @@
  * product from GET /api/products unless PRODUCT_ID is set.
  *
  * Usage (from packages/backend): yarn test:guest
- * Optional: PRODUCT_ID=... RUN_RATE_LIMIT=true VERBOSE=true BASE_URL=...
+ * Optional: PRODUCT_ID=... RUN_RATE_LIMIT=true VERBOSE=true BASE_URL=... AUTH_TOKEN=...
  */
 
 import crypto from 'node:crypto'
+import { createClient } from '../../_helpers/live-api-client.mjs'
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
-const API_BASE = `${BASE_URL.replace(/\/$/, '')}/api`
+const { request, ok, fail, skip, logStep, printSummary } = createClient()
 const RUN_RATE_LIMIT = process.env.RUN_RATE_LIMIT === 'true'
-const VERBOSE = process.env.VERBOSE === 'true'
 const AUTH_TOKEN = process.env.AUTH_TOKEN || null
 
 const state = {
@@ -29,59 +28,13 @@ function ip(host) {
   return `10.10.${ipSegment}.${host}`
 }
 
-const summary = []
-
-function logStep(name) {
-  console.log(`\n[STEP] ${name}`)
-}
-
-function pass(name, detail = '') {
-  summary.push({ name, ok: true, detail })
-  console.log(`  PASS ${name}${detail ? ` - ${detail}` : ''}`)
-}
-
-function fail(name, detail = '') {
-  summary.push({ name, ok: false, detail })
-  console.error(`  FAIL ${name}${detail ? ` - ${detail}` : ''}`)
-}
-
-function skip(name, detail = '') {
-  summary.push({ name, ok: true, skipped: true, detail })
-  console.log(`  SKIP ${name}${detail ? ` - ${detail}` : ''}`)
-}
-
 function assert(condition, message) {
   if (!condition) throw new Error(message)
 }
 
-async function request(path, { method = 'GET', headers = {}, body } = {}) {
-  const reqHeaders = { ...headers }
-  let reqBody
-  if (body !== undefined) {
-    reqHeaders['Content-Type'] = reqHeaders['Content-Type'] || 'application/json'
-    reqBody = typeof body === 'string' ? body : JSON.stringify(body)
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: reqHeaders,
-    body: reqBody,
-  })
-
-  const text = await res.text()
-  let json = null
-  try {
-    json = text ? JSON.parse(text) : null
-  } catch {
-    json = null
-  }
-
-  if (VERBOSE) {
-    console.log(`    ${method} ${path} -> ${res.status}`)
-    if (text) console.log(`    body: ${text.slice(0, 500)}`)
-  }
-
-  return { res, status: res.status, json, text, headers: res.headers }
+function getDoc(payload) {
+  if (!payload || typeof payload !== 'object') return null
+  return payload.doc || payload.docs?.[0] || payload
 }
 
 async function registerAndLoginCustomer() {
@@ -112,14 +65,6 @@ async function registerAndLoginCustomer() {
   return { email, token: login.json.token }
 }
 
-function getDoc(payload) {
-  if (!payload || typeof payload !== 'object') return null
-  return payload.doc || payload.docs?.[0] || payload
-}
-
-/**
- * Uses PRODUCT_ID env if set; otherwise lists published products (public read).
- */
 async function resolveProductId() {
   const explicit = process.env.PRODUCT_ID?.trim()
   if (explicit) return explicit
@@ -135,12 +80,12 @@ async function resolveProductId() {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     throw new Error(
-      `Could not reach ${BASE_URL} (list products failed: ${msg}). Start the backend: yarn dev`,
+      `Could not reach API (list products failed: ${msg}). Start the backend: yarn dev`,
     )
   }
   if (r.status !== 200) {
     throw new Error(
-      `Failed to list products (${r.status}). Is the backend running at ${BASE_URL}? ${r.text?.slice(0, 200) ?? ''}`,
+      `Failed to list products (${r.status}). Is the backend running? ${r.text?.slice(0, 200) ?? ''}`,
     )
   }
   const docs = r.json?.docs ?? []
@@ -207,23 +152,23 @@ async function testCartLifecycle() {
   assert(created.status === 201, `Expected 201 creating cart, got ${created.status}`)
   assert(created.cartId, 'Cart ID missing from create response')
   const cartId = created.cartId
-  pass('B1 create cart', `cartId=${cartId}`)
+  ok('B1 create cart', `cartId=${cartId}`)
 
   const ownRead = await request(`/carts/${cartId}`, {
     headers: { 'X-Guest-Id': state.guestId },
   })
   assert(ownRead.status === 200, `Expected 200 reading own cart, got ${ownRead.status}`)
-  pass('B2 read own cart')
+  ok('B2 read own cart')
 
   const wrongRead = await request(`/carts/${cartId}`, {
     headers: { 'X-Guest-Id': state.otherGuestId },
   })
   assert([403, 404].includes(wrongRead.status), `Expected 403/404 reading with wrong guest, got ${wrongRead.status}`)
-  pass('B3 wrong guest cannot read', `status=${wrongRead.status}`)
+  ok('B3 wrong guest cannot read', `status=${wrongRead.status}`)
 
   const noHeaderRead = await request(`/carts/${cartId}`)
   assert([401, 403, 404].includes(noHeaderRead.status), `Expected 401/403/404 without header, got ${noHeaderRead.status}`)
-  pass('B4 missing header cannot read', `status=${noHeaderRead.status}`)
+  ok('B4 missing header cannot read', `status=${noHeaderRead.status}`)
 
   const patched = await request(`/carts/${cartId}`, {
     method: 'PATCH',
@@ -231,21 +176,21 @@ async function testCartLifecycle() {
     body: { items: [{ product: state.productId, quantity: 3 }] },
   })
   assert(patched.status === 200, `Expected 200 patching cart, got ${patched.status}`)
-  pass('B5 update cart')
+  ok('B5 update cart')
 
   const deleted = await request(`/carts/${cartId}`, {
     method: 'DELETE',
     headers: { 'X-Guest-Id': state.guestId },
   })
   assert(deleted.status === 200, `Expected 200 deleting cart, got ${deleted.status}`)
-  pass('B6 delete cart')
+  ok('B6 delete cart')
 
   const createMissingHeader = await request('/carts', {
     method: 'POST',
     body: { items: [{ product: state.productId, quantity: 1 }] },
   })
   assert([400, 403].includes(createMissingHeader.status), `Expected 400/403 create without header, got ${createMissingHeader.status}`)
-  pass('B7 create without header blocked', `status=${createMissingHeader.status}`)
+  ok('B7 create without header blocked', `status=${createMissingHeader.status}`)
 
   const createInvalidGuest = await request('/carts', {
     method: 'POST',
@@ -253,7 +198,7 @@ async function testCartLifecycle() {
     body: { items: [{ product: state.productId, quantity: 1 }] },
   })
   assert([400, 403].includes(createInvalidGuest.status), `Expected 400/403 create invalid guest id, got ${createInvalidGuest.status}`)
-  pass('B8 invalid guest id blocked', `status=${createInvalidGuest.status}`)
+  ok('B8 invalid guest id blocked', `status=${createInvalidGuest.status}`)
 }
 
 async function testCheckoutAndLookup() {
@@ -272,7 +217,7 @@ async function testCheckoutAndLookup() {
   state.orderNumber = okCheckout.json?.order?.orderNumber || null
   state.orderId = okCheckout.json?.order?.id || null
   assert(state.orderNumber, 'Missing orderNumber from successful checkout')
-  pass('C1 successful guest checkout', `orderNumber=${state.orderNumber}`)
+  ok('C1 successful guest checkout', `orderNumber=${state.orderNumber}`)
 
   const cartMissing = await createCart(state.guestId, 1)
   assert(cartMissing.status === 201 && cartMissing.cartId, 'Failed creating cart for C2')
@@ -286,7 +231,7 @@ async function testCheckoutAndLookup() {
     },
   })
   assert(missingEmail.status === 400, `Expected 400 missing guestEmail, got ${missingEmail.status}`)
-  pass('C2 missing guestEmail blocked')
+  ok('C2 missing guestEmail blocked')
 
   const cartInvalid = await createCart(state.guestId, 1)
   assert(cartInvalid.status === 201 && cartInvalid.cartId, 'Failed creating cart for C3')
@@ -298,7 +243,7 @@ async function testCheckoutAndLookup() {
     forwardedFor: ip(3),
   })
   assert(invalidEmail.status === 400, `Expected 400 invalid guestEmail, got ${invalidEmail.status}`)
-  pass('C3 invalid guestEmail blocked')
+  ok('C3 invalid guestEmail blocked')
 
   const cartMismatch = await createCart(state.guestId, 1)
   assert(cartMismatch.status === 201 && cartMismatch.cartId, 'Failed creating cart for C4')
@@ -310,7 +255,7 @@ async function testCheckoutAndLookup() {
     forwardedFor: ip(4),
   })
   assert(mismatch.status === 403, `Expected 403 cart ownership mismatch, got ${mismatch.status}`)
-  pass('C4 guest ownership enforced')
+  ok('C4 guest ownership enforced')
 
   const cartIdempotent = await createCart(state.guestId, 1)
   assert(cartIdempotent.status === 201 && cartIdempotent.cartId, 'Failed creating cart for C5')
@@ -335,7 +280,7 @@ async function testCheckoutAndLookup() {
   assert(idempotentSecond.status === 201, `Expected 201 idempotent second checkout, got ${idempotentSecond.status}`)
   const secondOrderId = idempotentSecond.json?.order?.id
   assert(firstOrderId && secondOrderId && firstOrderId === secondOrderId, 'Idempotent retry did not return same order id')
-  pass('C5 idempotency returns same order')
+  ok('C5 idempotency returns same order')
 
   const cartNorm = await createCart(state.guestId, 1)
   assert(cartNorm.status === 201 && cartNorm.cartId, 'Failed creating cart for C6')
@@ -349,7 +294,7 @@ async function testCheckoutAndLookup() {
   assert(normCheckout.status === 201, `Expected 201 normalized email checkout, got ${normCheckout.status}`)
   const normOrderNumber = normCheckout.json?.order?.orderNumber
   assert(normOrderNumber, 'Missing orderNumber for normalized-email checkout')
-  pass('C6 normalized guestEmail accepted')
+  ok('C6 normalized guestEmail accepted')
 
   const lookupOk = await request('/guest/order-lookup', {
     method: 'POST',
@@ -357,7 +302,7 @@ async function testCheckoutAndLookup() {
     body: { orderNumber: state.orderNumber, guestEmail: 'guest@example.com' },
   })
   assert(lookupOk.status === 200, `Expected 200 lookup success, got ${lookupOk.status}`)
-  pass('D1 lookup success')
+  ok('D1 lookup success')
 
   const lookupWrongEmail = await request('/guest/order-lookup', {
     method: 'POST',
@@ -365,7 +310,7 @@ async function testCheckoutAndLookup() {
     body: { orderNumber: state.orderNumber, guestEmail: 'wrong@example.com' },
   })
   assert(lookupWrongEmail.status === 404, `Expected 404 wrong email lookup, got ${lookupWrongEmail.status}`)
-  pass('D2 wrong email returns 404')
+  ok('D2 wrong email returns 404')
 
   const lookupWrongOrder = await request('/guest/order-lookup', {
     method: 'POST',
@@ -373,7 +318,7 @@ async function testCheckoutAndLookup() {
     body: { orderNumber: 'ORD-00000000-ZZZZ', guestEmail: 'guest@example.com' },
   })
   assert(lookupWrongOrder.status === 404, `Expected 404 wrong orderNumber lookup, got ${lookupWrongOrder.status}`)
-  pass('D3 wrong order returns 404')
+  ok('D3 wrong order returns 404')
 
   const lookupMissingField = await request('/guest/order-lookup', {
     method: 'POST',
@@ -381,13 +326,12 @@ async function testCheckoutAndLookup() {
     body: { orderNumber: state.orderNumber },
   })
   assert(lookupMissingField.status === 400, `Expected 400 missing guestEmail lookup, got ${lookupMissingField.status}`)
-  pass('D4 missing field validation')
+  ok('D4 missing field validation')
 }
 
 async function testAbuseScenarios() {
   logStep('E: Abuse / penetration checks')
 
-  // E1: idempotency key must not be reusable across different guest contexts.
   const key = crypto.randomUUID()
   const guest1Email = 'guest-one@example.com'
   const guest2Email = 'guest-two@example.com'
@@ -413,9 +357,8 @@ async function testAbuseScenarios() {
     forwardedFor: ip(32),
   })
   assert(g2.status === 409, `Expected 409 on cross-guest idempotency reuse, got ${g2.status}`)
-  pass('E1 cross-guest idempotency reuse blocked')
+  ok('E1 cross-guest idempotency reuse blocked')
 
-  // E2: authenticated customer cannot checkout a guest cart.
   if (!state.authToken && AUTH_TOKEN) {
     state.authToken = AUTH_TOKEN
     state.authUserEmail = 'token-user@example.com'
@@ -446,13 +389,13 @@ async function testAbuseScenarios() {
     },
     body: {
       cartId: guestCart.cartId,
-      guestEmail: state.authUserEmail, // attempt bypass by supplying guestEmail while authenticated
+      guestEmail: state.authUserEmail,
       shippingAddress: { firstName: 'A', lastName: 'B', street1: '1', city: 'D', country: 'BD' },
       billingAddress: { firstName: 'A', lastName: 'B', street1: '1', city: 'D', country: 'BD' },
     },
   })
   assert(authCheckout.status === 403, `Expected 403 authenticated user on guest cart checkout, got ${authCheckout.status}`)
-  pass('E2 authenticated user cannot checkout guest cart')
+  ok('E2 authenticated user cannot checkout guest cart')
 }
 
 async function testRateLimits() {
@@ -470,7 +413,7 @@ async function testRateLimits() {
   }
   assert(codesLookup.slice(0, 10).every((c) => c === 404), `Expected first 10 lookup requests to be 404, got ${codesLookup.join(',')}`)
   assert(codesLookup[10] === 429, `Expected 11th guest lookup request to be 429, got ${codesLookup[10]}`)
-  pass('D6 guest lookup rate limit', `codes=${codesLookup.join(',')}`)
+  ok('D6 guest lookup rate limit', `codes=${codesLookup.join(',')}`)
 
   const checkoutIp = ip(242)
   const codesCheckout = []
@@ -489,25 +432,11 @@ async function testRateLimits() {
   }
   assert(codesCheckout.slice(0, 5).every((c) => c === 404), `Expected first 5 checkout requests to be 404, got ${codesCheckout.join(',')}`)
   assert(codesCheckout[5] === 429, `Expected 6th checkout request to be 429, got ${codesCheckout[5]}`)
-  pass('F checkout rate limit', `codes=${codesCheckout.join(',')}`)
-}
-
-function printSummaryAndExit() {
-  const failed = summary.filter((x) => !x.ok)
-  const skipped = summary.filter((x) => x.skipped)
-  console.log('\n=== Guest checkout test summary ===')
-  for (const row of summary) {
-    const label = row.skipped ? 'SKIP' : row.ok ? 'PASS' : 'FAIL'
-    console.log(`${label} - ${row.name}${row.detail ? ` (${row.detail})` : ''}`)
-  }
-  const passed = summary.length - failed.length - skipped.length
-  console.log(`\nTotal: ${summary.length}, Passed: ${passed}, Skipped: ${skipped.length}, Failed: ${failed.length}`)
-  process.exit(failed.length ? 1 : 0)
+  ok('F checkout rate limit', `codes=${codesCheckout.join(',')}`)
 }
 
 async function main() {
   console.log('Running guest checkout backend test suite')
-  console.log(`API_BASE=${API_BASE}`)
   console.log(`GUEST_ID=${state.guestId}`)
   console.log(`RUN_RATE_LIMIT=${RUN_RATE_LIMIT}`)
 
@@ -548,7 +477,8 @@ async function main() {
     console.log('\nSkipping rate-limit checks. Set RUN_RATE_LIMIT=true to include them.')
   }
 
-  printSummaryAndExit()
+  const failCount = printSummary('Guest checkout')
+  process.exit(failCount ? 1 : 0)
 }
 
 main().catch((err) => {

@@ -1,4 +1,5 @@
 import type { Endpoint } from 'payload'
+import { consumeEmailVerificationToken } from '../lib/verify-email-token'
 
 /**
  * GET /api/auth/verify-email/:token
@@ -10,63 +11,11 @@ export const verifyEmailLinkGetEndpoint: Endpoint = {
   method: 'get',
   handler: async (req) => {
     const token = req.routeParams?.token || ''
-    const trimmed = typeof token === 'string' ? token.trim() : ''
-
-    if (!trimmed) {
-      return Response.json({ error: 'Verification token is required.' }, { status: 400 })
-    }
-
-    const payload = req.payload
-
-    const { docs } = await payload.find({
-      collection: 'verification-codes',
-      where: {
-        type: { equals: 'email' },
-        code: { equals: trimmed },
-        used: { equals: false },
-      },
-      limit: 1,
+    const result = await consumeEmailVerificationToken({
+      token: typeof token === 'string' ? token : '',
       req,
-      overrideAccess: true,
     })
-
-    const record = docs[0]
-    if (!record) {
-      return Response.json({ error: 'Invalid or expired verification link.' }, { status: 400 })
-    }
-
-    const expiresAt = record.expiresAt ? new Date(record.expiresAt).getTime() : 0
-    if (Date.now() > expiresAt) {
-      return Response.json(
-        { error: 'Verification link has expired. Please request a new one.' },
-        { status: 400 }
-      )
-    }
-
-    await payload.update({
-      collection: 'verification-codes',
-      id: record.id,
-      data: { used: true, usedAt: new Date().toISOString() },
-      req,
-      overrideAccess: true,
-    })
-
-    const identifier = String(record.identifier).trim().toLowerCase()
-    const { docs: users } = await payload.find({
-      collection: 'users',
-      where: { email: { equals: identifier } },
-      limit: 1,
-    })
-    const user = users[0]
-    if (user) {
-      await payload.update({
-        collection: 'users',
-        id: user.id,
-        data: { emailVerified: true },
-        req,
-        overrideAccess: true,
-      })
-    }
+    if (!result.success) return Response.json({ error: result.error }, { status: 400 })
 
     return Response.json({ success: true, message: 'Email verified.' })
   },

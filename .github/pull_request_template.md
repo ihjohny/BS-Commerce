@@ -1,39 +1,65 @@
 # Description
 
-(Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.)
+(Summary of the change and which issue is fixed. Include relevant motivation and context.)
 
 ## Type of change
 
-(Please delete options that are not relevant.)
-
-- [ ] Link to a **GH Issue** or **Jira** task here for reference.
+- [ ] Link to a **GH Issue** or **Jira** task
 - [ ] Bug fix
 - [ ] New feature
+- [ ] Refactoring / test improvement
 
 # How Has This Been Tested?
 
-(Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration)
+(Describe the tests that you ran to verify your changes.)
 
-- [ ] Tested by myself
-- [ ] Unit test
+- [ ] Unit tests (`yarn test:unit`)
+- [ ] E2E tests (`yarn test:e2e`)
+- [ ] Manual testing
 
-# Developer Checklist:
+# Security/Abuse Test Coverage
+
+(For security-sensitive surfaces: auth, checkout, verification, payments, coupons, ownership, rate limits, guest flows)
+
+- [ ] Cross-user / cross-tenant access denial
+- [ ] Input tampering (forged IDs, injected payloads)
+- [ ] Replay / idempotency protection
+- [ ] Rate-limit behavior
+- [ ] Error message safety (no information leakage)
+- [ ] N/A — change does not touch sensitive surfaces
+
+# OWASP Coverage Mapping
+
+(Map tests to OWASP API Top 10 risks. See `docs/TESTING-ARCHITECTURE-RFC.md` §3.)
+
+| OWASP risk | Test file / case | Status |
+|---|---|---|
+| API1 (BOLA) | | |
+| API2 (Broken Auth) | | |
+| API5 (Broken Function Auth) | | |
+| N/A | | |
+
+# ENV-Dependent Behavior
+
+- [ ] Tested with flag on / off / missing / invalid (per `docs/BACKEND-TESTING-STRATEGY.md` §6)
+- [ ] N/A — change does not depend on ENV flags
+
+# Developer Checklist
 
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
+- [ ] I have updated documentation (OpenAPI, architecture docs)
+- [ ] `yarn typecheck` passes
+- [ ] `yarn test:unit` passes
+- [ ] New tests follow standard structure (`tests/unit/`, `tests/e2e/`, etc.)
+- [ ] Test data is created and cleaned up automatically (no manual seeding)
 - [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
 
-# Review check list:
+# Review Checklist
 
-- [ ] Separation of Concerns followed (Reviewer name/NaN)
-- [ ] Code is in sync with existing code patterns/technologies. (Reviewer name/NaN)
-- [ ] Are there any obvious optimizations that will improve performance? (Reviewer name/NaN)
-- [ ] Can any logging or debugging code be removed? (Reviewer name/NaN)
-- [ ] Are all data inputs checked (for the correct type, length, format, and range) and encoded? (Reviewer name/NaN)
-- [ ] Are invalid parameter values handled? (Reviewer name/NaN)
-- [ ] Is error handling done the correct way? (Reviewer name/NaN)
-- [ ] Are all the edge cases (null, 0, negative) handled properly? (Reviewer name/NaN)
+- [ ] Separation of concerns followed
+- [ ] Code is in sync with existing patterns
+- [ ] Are there any obvious performance optimizations?
+- [ ] Are all data inputs validated (type, length, format, range)?
+- [ ] Is error handling done correctly?
+- [ ] Are edge cases (null, 0, negative, missing) handled?
