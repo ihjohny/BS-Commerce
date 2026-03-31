@@ -1,0 +1,128 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [revamp/multivendor]
+  pull_request:
+    branches: [revamp/multivendor]
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Fast lane: typecheck + unit tests (no DB, no server)
+  # ────────────────────────────────────────────────────────────────────────────
+  unit:
+    name: Typecheck + Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
+      - run: yarn install --frozen-lockfile
+        working-directory: .
+      - run: yarn typecheck
+      - run: yarn test:unit
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # E2E lane: real Postgres + Redis + live server
+  # ────────────────────────────────────────────────────────────────────────────
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: unit
+    defaults:
+      run:
+        working-directory: packages/backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bs_commerce_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URI: postgresql://postgres:postgres@localhost:5432/bs_commerce_test
+      DATABASE_ID_TYPE: uuid
+      REDIS_URL: redis://localhost:6379
+      PAYLOAD_SECRET: ci-test-secret-not-for-production
+      NODE_ENV: development
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_STOREFRONT_URL: http://localhost:3001
+      AUTH_REQUIRED_IDENTIFIER: either
+      NEXT_PUBLIC_AUTH_REQUIRED_IDENTIFIER: either
+      AUTH_REQUIRE_VERIFIED_EMAIL_FOR_LOGIN: "false"
+      GUEST_CHECKOUT_ENABLED: "true"
+      SUPPORTED_CURRENCIES: USD,BDT
+      DEFAULT_CURRENCY: USD
+      PAYMENT_PROVIDER: sslcommerz
+      SSLCOMMERZ_SANDBOX: "true"
+      MULTIVENDOR_ENABLED: "false"
+      VERIFICATION_ENABLED: "true"
+      EMAIL_VERIFICATION_STRATEGY: link
+      PHONE_VERIFICATION_PROVIDER: console
+      REQUIRE_VERIFIED_FOR_CHECKOUT: "false"
+      INVENTORY_ENABLED: "true"
+      DISCOUNTS_ENABLED: "true"
+      REVIEWS_ENABLED: "true"
+      SHIPPING_MODEL: platform
+      TEST_ADMIN_EMAIL: admin@test.local
+      TEST_ADMIN_PASSWORD: AdminTest1234!
+      BASE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: .
+
+      - name: Build backend
+        run: yarn build
+
+      - name: Start backend server
+        run: |
+          yarn start &
+          echo $! > /tmp/server.pid
+
+      - name: Wait for server + seed data + run E2E
+        run: node tests/run-e2e.mjs
+
+      - name: Stop backend server
+        if: always()
+        run: |
+          if [ -f /tmp/server.pid ]; then
+            kill "$(cat /tmp/server.pid)" 2>/dev/null || true
+          fi
