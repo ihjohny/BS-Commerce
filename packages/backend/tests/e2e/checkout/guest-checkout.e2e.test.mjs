@@ -38,17 +38,24 @@ function getDoc(payload) {
 }
 
 async function registerAndLoginCustomer() {
+  const authRequired = (process.env.AUTH_REQUIRED_IDENTIFIER || 'either').toLowerCase()
   const email = `pentest-${Date.now()}-${crypto.randomInt(1000, 9999)}@example.com`
+  const phone = `+1555${String(1000000000 + Math.floor(Math.random() * 8999999999))}`
   const password = 'Test1234!Secure'
+
+  const createBody = {
+    email,
+    password,
+    firstName: 'Pentest',
+    lastName: 'User',
+  }
+  if (authRequired === 'phone') {
+    createBody.phone = phone
+  }
 
   const created = await request('/users', {
     method: 'POST',
-    body: {
-      email,
-      password,
-      firstName: 'Pentest',
-      lastName: 'User',
-    },
+    body: createBody,
   })
   if (![200, 201].includes(created.status)) {
     throw new Error(`Failed to create test user (${created.status}): ${created.text}`)
@@ -56,7 +63,7 @@ async function registerAndLoginCustomer() {
 
   const login = await request('/auth/login', {
     method: 'POST',
-    body: { identifier: email, password },
+    body: { identifier: authRequired === 'phone' ? phone : email, password },
   })
   if (login.status !== 200 || !login.json?.token) {
     throw new Error(`Failed to login test user (${login.status}): ${login.text}`)
@@ -439,6 +446,10 @@ async function main() {
   console.log('Running guest checkout backend test suite')
   console.log(`GUEST_ID=${state.guestId}`)
   console.log(`RUN_RATE_LIMIT=${RUN_RATE_LIMIT}`)
+  if (process.env.GUEST_CHECKOUT_ENABLED === 'false') {
+    skip('guest checkout suite', 'GUEST_CHECKOUT_ENABLED=false for this profile')
+    process.exit(0)
+  }
 
   try {
     logStep('Resolve product')

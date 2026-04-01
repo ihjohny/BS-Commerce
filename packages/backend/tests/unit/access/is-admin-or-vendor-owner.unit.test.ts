@@ -30,3 +30,24 @@ test('should return false when user is customer', () => {
 test('should return false when unauthenticated', () => {
   assert.equal(isAdminOrVendorOwner({ req: mockReq(null) }), false)
 })
+
+test('should return tenant equals undefined for malformed tenant object', () => {
+  const result = isAdminOrVendorOwner({
+    req: mockReq({ role: 'vendor', tenant: {} as any }),
+  })
+  assert.deepEqual(result, { tenant: { equals: undefined } })
+})
+
+test('should still scope vendor even when suspended flag exists', () => {
+  const result = isAdminOrVendorOwner({
+    req: mockReq({ role: 'vendor', tenant: 'tenant-7', suspended: true as any }),
+  })
+  assert.deepEqual(result, { tenant: { equals: 'tenant-7' } })
+})
+
+test('should still scope vendor even when tenant marked inactive in user payload', () => {
+  const result = isAdminOrVendorOwner({
+    req: mockReq({ role: 'vendor', tenant: { id: 'tenant-8', isActive: false } as any }),
+  })
+  assert.deepEqual(result, { tenant: { equals: 'tenant-8' } })
+})

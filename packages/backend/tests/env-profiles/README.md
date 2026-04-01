@@ -136,8 +136,15 @@ No gaps remaining in pairwise coverage.
 # Run with specific profile
 node tests/run-e2e.mjs --profile multivendor
 
+# Safe local run (recommended)
+yarn test:e2e:safe --profile multivendor
+
 # Run specific suite with profile
 node tests/run-e2e.mjs --profile gates-on --suite auth
+
+# Safe matrix run (recommended)
+yarn test:all-profiles:safe
+yarn test:all-profiles:safe:quick
 
 # List available profiles
 node -e "import('./tests/_helpers/load-env-profile.mjs').then(m => console.log(m.getAvailableProfiles()))"

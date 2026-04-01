@@ -20,3 +20,7 @@ test('should return false when user is customer', () => {
 test('should return false when unauthenticated', () => {
   assert.equal(isVendor({ req: mockReq(null) }), false)
 })
+
+test('should return false when role casing differs', () => {
+  assert.equal(isVendor({ req: mockReq({ role: 'Vendor' as any }) }), false)
+})

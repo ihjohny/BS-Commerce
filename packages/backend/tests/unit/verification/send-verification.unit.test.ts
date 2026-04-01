@@ -8,7 +8,16 @@ import { sendVerificationEndpoint } from '../../../src/plugins/verification/endp
 const handler = sendVerificationEndpoint.handler
 
 let envBackups: Record<string, string | undefined> = {}
-const envKeys = ['EMAIL_VERIFICATION_STRATEGY', 'EMAIL_VERIFICATION_OTP_LENGTH']
+const envKeys = [
+  'EMAIL_VERIFICATION_STRATEGY',
+  'EMAIL_VERIFICATION_OTP_LENGTH',
+  'EMAIL_VERIFICATION_OTP_EXPIRY',
+  'PHONE_VERIFICATION_OTP_LENGTH',
+  'PHONE_VERIFICATION_OTP_EXPIRY',
+  'PHONE_VERIFICATION_PROVIDER',
+  'VERIFICATION_RATE_LIMIT_WINDOW_MINUTES',
+  'VERIFICATION_RATE_LIMIT_MAX_REQUESTS',
+]
 
 beforeEach(() => {
   envBackups = {}
@@ -101,4 +110,86 @@ test('should return 429 when per-identifier rate limit exceeded', async () => {
   })
   const res = await handler(req)
   assert.equal(res.status, 429)
+})
+
+test('should return 403 when authenticated user phone does not match', async () => {
+  const req = mockHandlerReq({
+    body: { identifierType: 'phone', identifier: '+8801111111111' },
+    user: { phone: '+8801999999999' },
+    payloadOverrides: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 403)
+})
+
+test('should return 429 when per-ip rate limit exceeded', async () => {
+  const oldDate = new Date(Date.now() - 120000).toISOString()
+  let callCount = 0
+  const req = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'a@b.com' },
+    headers: { 'x-forwarded-for': '203.0.113.5' },
+    payloadOverrides: {
+      find: async () => {
+        callCount++
+        if (callCount === 1) return { docs: [{ createdAt: oldDate }], totalDocs: 1 } // cooldown check
+        if (callCount === 2) return { docs: [], totalDocs: 0 } // identifier window
+        return { docs: [], totalDocs: 999 } // ip window
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 429)
+  const json = await res.json()
+  assert.ok(String(json.error).includes('IP'))
+})
+
+test('should send email verification OTP successfully with clamped otp length', async () => {
+  process.env.EMAIL_VERIFICATION_STRATEGY = 'otp'
+  process.env.EMAIL_VERIFICATION_OTP_LENGTH = '999'
+  process.env.EMAIL_VERIFICATION_OTP_EXPIRY = '300'
+
+  let createdCode = ''
+  const req = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'user@example.com' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.sort === '-createdAt') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+      create: async (args: any) => {
+        createdCode = String(args.data?.code || '')
+        return { id: 'vc-1' }
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 200)
+  assert.equal(createdCode.length, 6)
+})
+
+test('should send phone verification OTP successfully with bounded length', async () => {
+  process.env.PHONE_VERIFICATION_PROVIDER = 'console'
+  process.env.PHONE_VERIFICATION_OTP_LENGTH = '3'
+  process.env.PHONE_VERIFICATION_OTP_EXPIRY = '120'
+
+  let createdType = ''
+  let createdCode = ''
+  const req = mockHandlerReq({
+    body: { identifierType: 'phone', identifier: '+8801712345678' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.sort === '-createdAt') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+      create: async (args: any) => {
+        createdType = String(args.data?.type || '')
+        createdCode = String(args.data?.code || '')
+        return { id: 'vc-2' }
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 200)
+  assert.equal(createdType, 'phone')
+  assert.equal(createdCode.length, 4)
 })

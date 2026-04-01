@@ -10,6 +10,7 @@ const { request, ok, fail, skip, logStep, printSummary } = createClient()
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN
 const ts = Date.now()
+const AUTH_REQUIRED = (process.env.AUTH_REQUIRED_IDENTIFIER || 'either').toLowerCase()
 
 async function run() {
   if (!ADMIN_TOKEN) { skip('All user tests', 'ADMIN_TOKEN not set'); printSummary('Users CRUD'); return }
@@ -17,9 +18,14 @@ async function run() {
   // ─── Register a new customer ──────────────────────────────────────────────
   logStep('Register new customer')
   const email = `e2e-user-${ts}@test.local`
+  const phone = `+1555${String(1000000000 + Math.floor(Math.random() * 8999999999))}`
+  const registerBody = { email, password: 'TestUser1234!' }
+  if (AUTH_REQUIRED === 'phone') {
+    registerBody.phone = phone
+  }
   const { status: regStatus, json: regJson } = await request('/users', {
     method: 'POST',
-    body: { email, password: 'TestUser1234!' },
+    body: registerBody,
   })
   if (regStatus === 201 || regStatus === 200) {
     ok('Register customer', `id=${regJson?.doc?.id}`)
@@ -41,7 +47,7 @@ async function run() {
   logStep('Login as customer')
   const { status: loginStatus, json: loginJson, text: loginText } = await request('/auth/login', {
     method: 'POST',
-    body: { identifier: email, password: 'TestUser1234!' },
+    body: { identifier: AUTH_REQUIRED === 'phone' ? phone : email, password: 'TestUser1234!' },
   })
   
   // Handle verification gate (user might still not be verified)

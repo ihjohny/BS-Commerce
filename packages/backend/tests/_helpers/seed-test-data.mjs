@@ -27,6 +27,7 @@ import { TestDataManager } from './test-data-manager.mjs'
 
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@test.local'
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'AdminTest1234!'
+const ADMIN_PHONE = process.env.TEST_ADMIN_PHONE || '+15551234567'
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 
 async function main() {
@@ -40,6 +41,7 @@ async function main() {
   const admin = await dm.bootstrapAdmin({
     email: ADMIN_EMAIL,
     password: ADMIN_PASSWORD,
+    phone: ADMIN_PHONE,
   })
   console.log(`Admin ready (created=${admin.created})`)
 

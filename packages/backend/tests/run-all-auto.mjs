@@ -8,11 +8,13 @@
  * 5) Always stop server and tear down infra
  */
 
+import path from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
 import { waitForServer } from './_helpers/wait-for-server.mjs'
+import { resolveE2eInfraEnv } from './_helpers/e2e-infra-env.mjs'
+import { findNextCliJs } from './_helpers/e2e-next-dev.mjs'
 
-const TEST_POSTGRES_PORT = process.env.TEST_POSTGRES_PORT || '5433'
-const TEST_REDIS_PORT = process.env.TEST_REDIS_PORT || '6380'
+const backendRoot = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'))
 
 function yarnInvocation(args) {
   if (process.platform === 'win32') {
@@ -50,23 +52,32 @@ async function stopServer(serverProcess) {
 }
 
 async function main() {
+  const infra = resolveE2eInfraEnv()
+  const composeShellEnv = { ...process.env, ...infra.composeEnv }
   let serverProcess
   const serverEnv = {
-    DATABASE_URI: `postgresql://postgres:postgres@localhost:${TEST_POSTGRES_PORT}/bs_commerce_test`,
-    REDIS_URL: `redis://localhost:${TEST_REDIS_PORT}`,
+    ...process.env,
+    DATABASE_URI: infra.databaseUri,
+    REDIS_URL: infra.redisUrl,
+    BASE_URL: infra.baseUrl,
+    NEXT_PUBLIC_APP_URL: infra.baseUrl,
   }
 
   try {
-    runStep('Infra up', ['test:infra:up'])
+    runStep('Infra up', ['test:infra:up'], composeShellEnv)
 
     console.log('\n=== Start backend server ===')
-    const invocation = yarnInvocation(['dev'])
-    serverProcess = spawn(invocation.command, invocation.args, {
+    const nextCli = findNextCliJs(backendRoot)
+    if (!nextCli) {
+      throw new Error('Could not find Next.js CLI (node_modules/next).')
+    }
+    serverProcess = spawn(process.execPath, [nextCli, 'dev', '-p', String(infra.backendPort)], {
+      cwd: backendRoot,
       stdio: 'inherit',
-      env: { ...process.env, ...serverEnv },
+      env: serverEnv,
     })
 
-    await waitForServer({ baseUrl: 'http://localhost:3000', timeoutMs: 90_000 })
+    await waitForServer({ baseUrl: infra.baseUrl, timeoutMs: 90_000 })
 
     runStep('Typecheck', ['typecheck'])
     runStep('Unit tests', ['test:unit'])
@@ -76,7 +87,7 @@ async function main() {
   } finally {
     await stopServer(serverProcess)
     try {
-      runStep('Infra down', ['test:infra:down'])
+      runStep('Infra down', ['test:infra:down'], composeShellEnv)
     } catch (err) {
       console.error('⚠️ Failed to tear down infra cleanly:', err instanceof Error ? err.message : err)
     }

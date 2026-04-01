@@ -74,17 +74,29 @@ export class TestDataManager {
    * Bootstrap the first admin user via Payload's create-first-user.
    * If users already exist, logs in with the provided credentials instead.
    * Ensures the admin has emailVerified=true to pass verification gates.
+   *
+   * When AUTH_REQUIRED_IDENTIFIER=phone, `phone` (or TEST_ADMIN_PHONE) must be set;
+   * first-register and login flows use the phone identifier accordingly.
    */
-  async bootstrapAdmin({ email, password }) {
+  async bootstrapAdmin({ email, password, phone }) {
+    const authRequired = (process.env.AUTH_REQUIRED_IDENTIFIER || 'either').toLowerCase()
+    const phoneRequired = authRequired === 'phone'
+    const adminPhone = String(phone || process.env.TEST_ADMIN_PHONE || '+15551234567').trim()
+
+    const firstRegisterBody = {
+      email,
+      password,
+      role: 'admin',
+      status: 'active',
+      emailVerified: true,
+    }
+    if (phoneRequired) {
+      firstRegisterBody.phone = adminPhone
+    }
+
     const firstUser = await this.#request('/users/first-register', {
       method: 'POST',
-      body: {
-        email,
-        password,
-        role: 'admin',
-        status: 'active',
-        emailVerified: true,
-      },
+      body: firstRegisterBody,
     })
 
     if (firstUser.status === 200 || firstUser.status === 201) {
@@ -92,101 +104,142 @@ export class TestDataManager {
       const userId = firstUser.json?.user?.id || firstUser.json?.id
       if (token) {
         this.#adminToken = token
-        // Ensure emailVerified is set (first-register might not honor it)
+        // Ensure verification flags (first-register might not honor all)
         if (userId) {
+          const patch = { emailVerified: true }
+          if (phoneRequired) patch.phoneVerified = true
           await this.#request(`/users/${userId}`, {
             method: 'PATCH',
-            body: { emailVerified: true },
+            body: patch,
           })
         }
-        return { email, token, created: true }
+        return { email, phone: adminPhone, token, created: true }
       }
     }
 
-    // Try standard login endpoints
-    const login = await this.#request('/users/login', {
-      method: 'POST',
-      body: { email, password },
-    })
-    if (login.status === 200 && login.json?.token) {
-      this.#adminToken = login.json.token
-      // Ensure admin is verified
-      await this.#ensureAdminVerified(email)
-      return { email, token: login.json.token, created: false }
+    const tryLogin = async () => {
+      const attempts = phoneRequired
+        ? [
+            () =>
+              this.#request('/auth/login', {
+                method: 'POST',
+                body: { identifier: adminPhone, password },
+              }),
+            () =>
+              this.#request('/users/login', {
+                method: 'POST',
+                body: { email, password },
+              }),
+            () =>
+              this.#request('/auth/login', {
+                method: 'POST',
+                body: { identifier: email, password },
+              }),
+          ]
+        : [
+            () =>
+              this.#request('/users/login', {
+                method: 'POST',
+                body: { email, password },
+              }),
+            () =>
+              this.#request('/auth/login', {
+                method: 'POST',
+                body: { identifier: email, password },
+              }),
+          ]
+
+      let last
+      for (const run of attempts) {
+        last = await run()
+        if (last.status === 200 && last.json?.token) {
+          this.#adminToken = last.json.token
+          await this.#ensureAdminVerified(email, adminPhone, phoneRequired)
+          return last
+        }
+      }
+      return last
     }
 
-    const loginAlt = await this.#request('/auth/login', {
-      method: 'POST',
-      body: { identifier: email, password },
-    })
-    if (loginAlt.status === 200 && loginAlt.json?.token) {
-      this.#adminToken = loginAlt.json.token
-      return { email, token: loginAlt.json.token, created: false }
+    const login = await tryLogin()
+    if (login?.status === 200 && login.json?.token) {
+      return { email, phone: adminPhone, token: login.json.token, created: false }
     }
 
-    // Login might fail due to verification gate - try to verify admin first
-    // Find admin user and verify them
-    const verified = await this.#tryVerifyExistingAdmin(email, password)
+    const verified = await this.#tryVerifyExistingAdmin(email, password, adminPhone, phoneRequired)
     if (verified) {
-      return { email, token: this.#adminToken, created: false }
+      return { email, phone: adminPhone, token: this.#adminToken, created: false }
     }
 
     throw new Error(
-      `Failed to bootstrap admin. first-register=${firstUser.status}, login=${login.status}, auth/login=${loginAlt.status}`
+      `Failed to bootstrap admin. first-register=${firstUser.status}, last-login=${login?.status ?? 'n/a'}`
     )
   }
 
-  async #ensureAdminVerified(email) {
-    // Find the user by email
-    const users = await this.#request(`/users?where[email][equals]=${encodeURIComponent(email)}&limit=1`)
+  async #ensureAdminVerified(email, phone, phoneMode) {
+    const users = await this.#findUserDocByEmailOrPhone(email, phone, phoneMode)
     if (users.status === 200 && users.json?.docs?.[0]) {
       const userId = users.json.docs[0].id
+      const body = { emailVerified: true }
+      if (phoneMode) body.phoneVerified = true
       await this.#request(`/users/${userId}`, {
         method: 'PATCH',
-        body: { emailVerified: true },
+        body,
       })
     }
   }
 
-  async #tryVerifyExistingAdmin(email, password) {
-    // First try to find and verify the user via first-register token or direct API
-    // This is a fallback when login fails due to verification gate
-    const users = await this.#request(`/users?where[email][equals]=${encodeURIComponent(email)}&limit=1`)
-    
+  async #findUserDocByEmailOrPhone(email, phone, phoneMode) {
+    if (phoneMode && phone) {
+      const byPhone = await this.#request(
+        `/users?where[phone][equals]=${encodeURIComponent(phone)}&limit=1`
+      )
+      if (byPhone.status === 200 && byPhone.json?.docs?.[0]) return byPhone
+    }
+    return this.#request(`/users?where[email][equals]=${encodeURIComponent(email)}&limit=1`)
+  }
+
+  async #tryVerifyExistingAdmin(email, password, phone, phoneMode) {
+    const users = await this.#findUserDocByEmailOrPhone(email, phone, phoneMode)
+
     if (users.status !== 200 || !users.json?.docs?.[0]) {
       return false
     }
-    
+
     const userId = users.json.docs[0].id
-    
-    // Try to update emailVerified without auth (might work for first user)
+
+    const body = { emailVerified: true }
+    if (phoneMode) body.phoneVerified = true
     const update = await this.#request(`/users/${userId}`, {
       method: 'PATCH',
-      body: { emailVerified: true },
+      body,
     })
-    
+
     if (update.status === 200 || update.status === 201) {
-      // Now try login again
       const login = await this.#request('/auth/login', {
         method: 'POST',
-        body: { identifier: email, password },
+        body: { identifier: phoneMode ? phone : email, password },
       })
       if (login.status === 200 && login.json?.token) {
         this.#adminToken = login.json.token
         return true
       }
     }
-    
+
     return false
   }
 
   async createUser(overrides = {}) {
     const uid = this.#uid()
+    const authRequired = (process.env.AUTH_REQUIRED_IDENTIFIER || 'either').toLowerCase()
     const data = {
       email: `${uid}@test.local`,
       password: 'TestPass1234!',
       firstName: 'Test',
       lastName: 'User',
+      ...(authRequired === 'phone' && overrides.phone === undefined
+        ? { phone: `+1555${String(1000000000 + Math.floor(Math.random() * 8999999999))}` }
+        : {}),
       ...overrides,
     }
 
