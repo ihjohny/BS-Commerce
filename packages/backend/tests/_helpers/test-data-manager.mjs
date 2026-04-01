@@ -333,6 +333,13 @@ export class TestDataManager {
     let errors = 0
     for (const { collection, id } of items) {
       try {
+        // Tenant teardown can violate FK constraints via deep references
+        // (products/order-items/sub-orders). Skip here; infra down -v resets DB
+        // in automated runs.
+        if (collection === 'tenants') {
+          continue
+        }
+
         const res = await this.#request(`/${collection}/${id}`, { method: 'DELETE' })
         if (res.status !== 200 && res.status !== 404) {
           if (this.#verbose) console.log(`  [DM] cleanup ${collection}/${id}: ${res.status}`)

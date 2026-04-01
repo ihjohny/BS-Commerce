@@ -21,7 +21,7 @@ afterEach(() => {
 })
 
 test('should suppress phone OTP debug logs in production mode (API8)', async () => {
-  process.env.NODE_ENV = 'production'
+  ;(process.env as Record<string, string | undefined>).NODE_ENV = 'production'
 
   let logCalled = false
   const originalLog = console.log
@@ -39,7 +39,7 @@ test('should suppress phone OTP debug logs in production mode (API8)', async () 
 })
 
 test('should emit verification link debug log in non-production for observability (API8)', async () => {
-  process.env.NODE_ENV = 'test'
+  ;(process.env as Record<string, string | undefined>).NODE_ENV = 'test'
   process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 
   const captured: string[] = []

@@ -22,6 +22,7 @@
     "test:e2e:all-gates": "node tests/run-e2e.mjs --profile all-gates",
     "test:e2e:phone-only": "node tests/run-e2e.mjs --profile phone-only",
     "test:all": "yarn typecheck && yarn test:unit && yarn test:e2e",
+    "test:all:auto": "node tests/run-all-auto.mjs",
     "test:all-profiles": "node tests/run-all-profiles.mjs",
     "test:all-profiles:quick": "node tests/run-all-profiles.mjs --quick",
     "test:infra:up": "docker compose -f docker-compose.test.yml up -d",

@@ -25,6 +25,16 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
+function parseBoundedPositiveInt(
+  raw: string | undefined,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const parsed = parsePositiveInt(raw, fallback)
+  return Math.min(max, Math.max(min, parsed))
+}
+
 function getEmailStrategy(): 'link' | 'otp' {
   const v = process.env.EMAIL_VERIFICATION_STRATEGY?.toLowerCase()
   return v === 'otp' ? 'otp' : 'link'
@@ -170,9 +180,17 @@ export const sendVerificationEndpoint: Endpoint = {
 
     // ─── Phone (Phase 6.2) ───────────────────────────────────────────────────
     if (idType === 'phone') {
-      const otpLength = Math.min(8, Math.max(4, parseInt(process.env.PHONE_VERIFICATION_OTP_LENGTH || String(DEFAULT_PHONE_OTP_LENGTH), 10) || DEFAULT_PHONE_OTP_LENGTH))
+      const otpLength = parseBoundedPositiveInt(
+        process.env.PHONE_VERIFICATION_OTP_LENGTH,
+        DEFAULT_PHONE_OTP_LENGTH,
+        4,
+        8
+      )
       const code = generateOTP(otpLength)
-      const expirySeconds = parseInt(process.env.PHONE_VERIFICATION_OTP_EXPIRY || String(DEFAULT_PHONE_OTP_EXPIRY_SECONDS), 10) || DEFAULT_PHONE_OTP_EXPIRY_SECONDS
+      const expirySeconds = parsePositiveInt(
+        process.env.PHONE_VERIFICATION_OTP_EXPIRY,
+        DEFAULT_PHONE_OTP_EXPIRY_SECONDS
+      )
       const expiresAt = new Date()
       expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds)
 
@@ -203,7 +221,10 @@ export const sendVerificationEndpoint: Endpoint = {
 
     if (strategy === 'link') {
       const token = generateVerificationToken()
-      const expiryMinutes = parseInt(process.env.EMAIL_VERIFICATION_TOKEN_EXPIRY_MINUTES || String(DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES), 10) || DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES
+      const expiryMinutes = parsePositiveInt(
+        process.env.EMAIL_VERIFICATION_TOKEN_EXPIRY_MINUTES,
+        DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES
+      )
       expiresAt.setMinutes(expiresAt.getMinutes() + expiryMinutes)
 
       await payload.create({
@@ -228,7 +249,10 @@ export const sendVerificationEndpoint: Endpoint = {
 
     // OTP
     const code = generateOTP(getOTPLength())
-    const expirySeconds = parseInt(process.env.EMAIL_VERIFICATION_OTP_EXPIRY || String(DEFAULT_OTP_EXPIRY_SECONDS), 10) || DEFAULT_OTP_EXPIRY_SECONDS
+    const expirySeconds = parsePositiveInt(
+      process.env.EMAIL_VERIFICATION_OTP_EXPIRY,
+      DEFAULT_OTP_EXPIRY_SECONDS
+    )
     expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds)
 
     await payload.create({

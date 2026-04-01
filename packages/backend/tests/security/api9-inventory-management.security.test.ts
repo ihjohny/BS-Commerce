@@ -11,10 +11,10 @@ const EXPECTED_VERIFICATION_ENDPOINTS = [
   '/auth/admin/verify-identifier',
 ]
 
-test('should register only expected verification endpoints when enabled (API9)', () => {
+test('should register only expected verification endpoints when enabled (API9)', async () => {
   const plugin = verificationPlugin({ enabled: true })
   const incoming = { collections: [], endpoints: [] } as any
-  const result = plugin(incoming)
+  const result = (await plugin(incoming)) as any
 
   const endpointPaths = (result.endpoints || []).map((e: any) => e.path)
   const verificationPaths = endpointPaths.filter((p: string) => String(p).startsWith('/auth/'))
@@ -25,10 +25,10 @@ test('should register only expected verification endpoints when enabled (API9)',
   )
 })
 
-test('should not register verification collection or endpoints when disabled (API9)', () => {
+test('should not register verification collection or endpoints when disabled (API9)', async () => {
   const plugin = verificationPlugin({ enabled: false })
   const incoming = { collections: [{ slug: 'users' }], endpoints: [{ path: '/auth/login' }] } as any
-  const result = plugin(incoming)
+  const result = (await plugin(incoming)) as any
 
   assert.equal(result.collections.length, 1)
   assert.equal(result.collections[0].slug, 'users')
@@ -36,12 +36,18 @@ test('should not register verification collection or endpoints when disabled (AP
   assert.equal(result.endpoints[0].path, '/auth/login')
 })
 
-test('should avoid duplicate verification endpoint paths in plugin output (API9)', () => {
+test('should avoid duplicate verification endpoint paths in plugin output (API9)', async () => {
   const plugin = verificationPlugin({ enabled: true })
-  const incoming = { collections: [], endpoints: [] } as any
-  const result = plugin(incoming)
+  const incoming = {
+    collections: [],
+    endpoints: [
+      // Simulate pre-registered route collision from another plugin/config block.
+      { path: '/auth/send-verification', method: 'post' },
+    ],
+  } as any
+  const result = (await plugin(incoming)) as any
 
   const paths = (result.endpoints || []).map((e: any) => e.path)
-  const unique = new Set(paths)
-  assert.equal(unique.size, paths.length)
+  const sendVerificationPathCount = paths.filter((p: string) => p === '/auth/send-verification').length
+  assert.equal(sendVerificationPathCount, 1)
 })
