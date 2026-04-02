@@ -45,10 +45,16 @@ function getOTPLength(): number {
   return Number.isFinite(n) && n >= 4 && n <= 8 ? n : 6
 }
 
-export const sendVerificationEndpoint: Endpoint = {
-  path: '/auth/send-verification',
-  method: 'post',
-  handler: async (req) => {
+export type SendVerificationDeps = {
+  sendVerificationLink?: typeof sendVerificationLink
+  sendVerificationOTP?: typeof sendVerificationOTP
+  getPhoneAdapter?: typeof getPhoneAdapter
+}
+
+export async function sendVerificationHandler(req: any, deps?: SendVerificationDeps): Promise<Response> {
+  const sendLink = deps?.sendVerificationLink ?? sendVerificationLink
+  const sendOtpEmail = deps?.sendVerificationOTP ?? sendVerificationOTP
+  const resolvePhoneAdapter = deps?.getPhoneAdapter ?? getPhoneAdapter
     const data = (await (req as Request).json?.().catch(() => ({}))) || {}
     const { identifierType, identifier } = data
 
@@ -207,7 +213,7 @@ export const sendVerificationEndpoint: Endpoint = {
         overrideAccess: true,
       })
 
-      const adapter = await getPhoneAdapter()
+      const adapter = await resolvePhoneAdapter()
       const sent = await adapter.sendOTP(trimmed, code, expirySeconds)
       if (!sent) {
         return Response.json({ error: 'Failed to send verification code.' }, { status: 502 })
@@ -240,7 +246,7 @@ export const sendVerificationEndpoint: Endpoint = {
         overrideAccess: true,
       })
 
-      const sent = await sendVerificationLink(trimmed, token, expiryMinutes)
+      const sent = await sendLink(trimmed, token, expiryMinutes)
       if (!sent) {
         return Response.json({ error: 'Failed to send verification email.' }, { status: 502 })
       }
@@ -268,10 +274,15 @@ export const sendVerificationEndpoint: Endpoint = {
       overrideAccess: true,
     })
 
-    const sent = await sendVerificationOTP(trimmed, code, expirySeconds)
+    const sent = await sendOtpEmail(trimmed, code, expirySeconds)
     if (!sent) {
       return Response.json({ error: 'Failed to send verification code.' }, { status: 502 })
     }
     return Response.json({ success: true, message: 'Verification code sent to your email.' })
-  },
+}
+
+export const sendVerificationEndpoint: Endpoint = {
+  path: '/auth/send-verification',
+  method: 'post',
+  handler: async (req) => sendVerificationHandler(req),
 }

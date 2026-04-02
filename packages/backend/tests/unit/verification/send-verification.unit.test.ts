@@ -3,7 +3,10 @@ import assert from 'node:assert/strict'
 // @ts-ignore
 import { mockHandlerReq } from '../../_helpers/mock-request.ts'
 // @ts-ignore
-import { sendVerificationEndpoint } from '../../../src/plugins/verification/endpoints/send-verification.ts'
+import {
+  sendVerificationEndpoint,
+  sendVerificationHandler,
+} from '../../../src/plugins/verification/endpoints/send-verification.ts'
 
 const handler = sendVerificationEndpoint.handler
 
@@ -192,4 +195,91 @@ test('should send phone verification OTP successfully with bounded length', asyn
   assert.equal(res.status, 200)
   assert.equal(createdType, 'phone')
   assert.equal(createdCode.length, 4)
+})
+
+test('should return 200 when email link send succeeds (injected)', async () => {
+  process.env.EMAIL_VERIFICATION_STRATEGY = 'link'
+
+  const req = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'linkok@example.com' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.sort === '-createdAt') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+      create: async () => ({ id: 'vc-link-1' }),
+    },
+  })
+  const res = await sendVerificationHandler(req, {
+    sendVerificationLink: async () => true,
+  })
+  assert.equal(res.status, 200)
+  const json = await res.json()
+  assert.equal(json.success, true)
+  assert.ok(String(json.message).includes('link'))
+})
+
+test('should return 502 when email link send fails (injected)', async () => {
+  process.env.EMAIL_VERIFICATION_STRATEGY = 'link'
+
+  const req = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'linkfail@example.com' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.sort === '-createdAt') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+      create: async () => ({ id: 'vc-link-2' }),
+    },
+  })
+  const res = await sendVerificationHandler(req, {
+    sendVerificationLink: async () => false,
+  })
+  assert.equal(res.status, 502)
+  const json = await res.json()
+  assert.ok(String(json.error).includes('email'))
+})
+
+test('should return 502 when email OTP send fails (injected)', async () => {
+  process.env.EMAIL_VERIFICATION_STRATEGY = 'otp'
+
+  const req = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'otp502@example.com' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.sort === '-createdAt') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+      create: async () => ({ id: 'vc-otp-502' }),
+    },
+  })
+  const res = await sendVerificationHandler(req, {
+    sendVerificationOTP: async () => false,
+  })
+  assert.equal(res.status, 502)
+  const json = await res.json()
+  assert.ok(String(json.error).includes('code'))
+})
+
+test('should return 502 when phone adapter sendOTP fails (injected)', async () => {
+  process.env.PHONE_VERIFICATION_PROVIDER = 'console'
+
+  const req = mockHandlerReq({
+    body: { identifierType: 'phone', identifier: '+8801712345678' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.sort === '-createdAt') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+      create: async () => ({ id: 'vc-phone-502' }),
+    },
+  })
+  const res = await sendVerificationHandler(req, {
+    getPhoneAdapter: async () => ({
+      sendOTP: async () => false,
+    }),
+  })
+  assert.equal(res.status, 502)
+  const json = await res.json()
+  assert.ok(String(json.error).length > 0)
 })

@@ -8,9 +8,12 @@ import { authLoginEndpoint } from '../../src/endpoints/auth-login.ts'
 import { verifyIdentifierAdminEndpoint } from '../../src/plugins/verification/endpoints/verify-identifier-admin.ts'
 // @ts-ignore
 import { consumeEmailVerificationToken, INVALID_LINK_ERROR } from '../../src/plugins/verification/lib/verify-email-token.ts'
+// @ts-ignore
+import { verifyPhoneEndpoint } from '../../src/plugins/verification/endpoints/verify-phone.ts'
 
 const loginHandler = authLoginEndpoint.handler
 const adminVerifyHandler = verifyIdentifierAdminEndpoint.handler
+const verifyPhoneHandler = verifyPhoneEndpoint.handler
 
 let envBackup: string | undefined
 beforeEach(() => {
@@ -42,6 +45,14 @@ test('should deny unauthenticated access to admin verification endpoint (API2)',
   })
   const res = await adminVerifyHandler(req)
   assert.equal(res.status, 403)
+})
+
+test('should reject phone verification without code (API2 — auth surface)', async () => {
+  const req = mockHandlerReq({
+    body: { phone: '+8801712345678' },
+  })
+  const res = await verifyPhoneHandler(req)
+  assert.equal(res.status, 400)
 })
 
 test('should return generic invalid-link error for unknown verification token (API2)', async () => {

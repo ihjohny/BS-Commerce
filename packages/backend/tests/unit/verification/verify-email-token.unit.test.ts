@@ -123,3 +123,27 @@ test('should reject replay when the same token is consumed twice', async () => {
   assert.equal(second.success, false)
   if (!second.success) assert.equal(second.error, INVALID_LINK_ERROR)
 })
+
+test('should succeed without user update when identifier is not an email shape', async () => {
+  const updateCalls: MockCall[] = []
+  const req = buildReq({
+    find: async () => ({
+      docs: [
+        {
+          id: 'code-non-email',
+          identifier: 'not-an-email-string',
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        },
+      ],
+    }),
+    update: async (args) => {
+      updateCalls.push({ args })
+      return {}
+    },
+  })
+
+  const result = await consumeEmailVerificationToken({ token: 'opaque-token', req })
+  assert.deepEqual(result, { success: true })
+  assert.equal(updateCalls.length, 1)
+  assert.equal(updateCalls[0].args.collection, 'verification-codes')
+})

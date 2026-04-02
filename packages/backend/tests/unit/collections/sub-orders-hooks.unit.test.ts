@@ -1,18 +1,21 @@
-import test from 'node:test'
+import test, { beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 // @ts-ignore
 import { SubOrders } from '../../../src/plugins/orders/collections/sub-orders.ts'
 
 const beforeChangeHook = SubOrders.hooks?.beforeChange?.[0] as any
-const afterChangeHooks = SubOrders.hooks?.afterChange as any[]
-function getParentDerivationHook() {
-  const hook = (afterChangeHooks || []).find((fn: any) => {
-    const src = String(fn)
-    return src.includes('Derive parent order status') || src.includes('parentOrderId')
-  })
-  assert.ok(hook, 'parent-status derivation afterChange hook should exist')
-  return hook as any
-}
+const afterReadHook = SubOrders.hooks?.afterRead?.[0] as any
+const inventoryAfterChangeHook = SubOrders.hooks?.afterChange?.[0] as any
+const parentDerivationAfterChangeHook = SubOrders.hooks?.afterChange?.[1] as any
+
+let strategyBackup: string | undefined
+beforeEach(() => {
+  strategyBackup = process.env.PARENT_ORDER_STATUS_STRATEGY
+})
+afterEach(() => {
+  if (strategyBackup === undefined) delete process.env.PARENT_ORDER_STATUS_STRATEGY
+  else process.env.PARENT_ORDER_STATUS_STRATEGY = strategyBackup
+})
 
 test('should allow valid sub-order status transition in beforeChange', () => {
   assert.ok(beforeChangeHook)
@@ -31,7 +34,7 @@ test('should reject invalid sub-order status transition in beforeChange', () => 
 })
 
 test('should derive parent order status on sub-order update', async () => {
-  const parentDerivationHook = getParentDerivationHook()
+  assert.ok(parentDerivationAfterChangeHook)
   const updateCalls: any[] = []
   const req = {
     payload: {
@@ -50,10 +53,199 @@ test('should derive parent order status on sub-order update', async () => {
 
   const doc = { id: 'sub-1', status: 'shipped', parentOrder: 'order-1' }
   const previousDoc = { id: 'sub-1', status: 'processing' }
-  await parentDerivationHook({ operation: 'update', doc, previousDoc, req })
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
 
   assert.equal(updateCalls.length, 1)
   assert.equal(updateCalls[0].collection, 'orders')
   assert.equal(updateCalls[0].id, 'order-1')
+  assert.equal(updateCalls[0].data.status, 'partially-shipped')
+})
+
+test('afterRead should hydrate parentOrderNumber from parent order', async () => {
+  assert.ok(afterReadHook)
+  const doc = { id: 'so-1', parentOrder: 'ord-99' } as any
+  const req = {
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'orders') return { orderNumber: 'ORD-2026-ABC' }
+        return null
+      },
+    },
+  }
+  const out = await afterReadHook({ doc: { ...doc }, req })
+  assert.equal(out.parentOrderNumber, 'ORD-2026-ABC')
+})
+
+test('afterRead should skip find when parentOrderNumber already present', async () => {
+  let findCalls = 0
+  const doc = {
+    id: 'so-1',
+    parentOrder: 'ord-99',
+    parentOrderNumber: 'ALREADY',
+  }
+  const req = {
+    payload: {
+      findByID: async () => {
+        findCalls++
+        return {}
+      },
+    },
+  }
+  const out = await afterReadHook({ doc: { ...doc }, req })
+  assert.equal(out.parentOrderNumber, 'ALREADY')
+  assert.equal(findCalls, 0)
+})
+
+test('afterRead should return when no parentOrder', async () => {
+  const doc = { id: 'so-1' }
+  const req = { payload: { findByID: async () => ({}) } }
+  const out = await afterReadHook({ doc: { ...doc }, req })
+  assert.equal(out.parentOrder, undefined)
+})
+
+test('inventory afterChange should no-op cancel when no order-items', async () => {
+  assert.ok(inventoryAfterChangeHook)
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+    },
+  }
+  const doc = { id: 'so-1', status: 'cancelled', parentOrder: 'p-1' }
+  const previousDoc = { status: 'pending' }
+  await inventoryAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+})
+
+test('inventory afterChange should no-op shipped when no order-items', async () => {
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+    },
+  }
+  const doc = { id: 'so-1', status: 'shipped', parentOrder: 'p-1' }
+  const previousDoc = { status: 'pending' }
+  await inventoryAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+})
+
+test('parent derivation should set parent to cancelled when all sub-orders are cancelled', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') {
+          return {
+            docs: [
+              { id: 'sub-1', status: 'cancelled' },
+              { id: 'sub-2', status: 'cancelled' },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-1', status: 'cancelled', parentOrder: 'order-parent' }
+  const previousDoc = { id: 'sub-1', status: 'pending' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls.length, 1)
+  assert.equal(updateCalls[0].data.status, 'cancelled')
+})
+
+test('parent derivation should set parent to completed when all active sub-orders completed', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') {
+          return {
+            docs: [
+              { id: 'sub-1', status: 'processing' },
+              { id: 'sub-2', status: 'completed' },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-1', status: 'completed', parentOrder: 'order-parent' }
+  const previousDoc = { id: 'sub-1', status: 'processing' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls[0].data.status, 'completed')
+})
+
+test('parent derivation should not update parent when status unchanged', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  await parentDerivationAfterChangeHook({
+    operation: 'update',
+    doc: { id: 'so', status: 'pending', parentOrder: 'p' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(updateCalls.length, 0)
+})
+
+test('parent derivation should skip when sub-order has no parentOrder', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  await parentDerivationAfterChangeHook({
+    operation: 'update',
+    doc: { id: 'so', status: 'shipped' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(updateCalls.length, 0)
+})
+
+test('parent derivation uses strict strategy when mixed cancel and ship', async () => {
+  process.env.PARENT_ORDER_STATUS_STRATEGY = 'strict'
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') {
+          return {
+            docs: [
+              { id: 'sub-1', status: 'cancelled' },
+              { id: 'sub-2', status: 'shipped' },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-2', status: 'shipped', parentOrder: 'order-parent' }
+  const previousDoc = { id: 'sub-2', status: 'pending' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls.length, 1)
   assert.equal(updateCalls[0].data.status, 'partially-shipped')
 })

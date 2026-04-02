@@ -30,6 +30,18 @@ test('should return 400 when password is missing', async () => {
   assert.ok(json.errors[0].message.includes('Password'))
 })
 
+test('should return 400 when password is not a string', async () => {
+  const req = mockHandlerReq({ body: { identifier: 'a@b.com', password: 12345 } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when identifier is not a string', async () => {
+  const req = mockHandlerReq({ body: { identifier: 12345, password: 'x' } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when identifier is empty string', async () => {
   const req = mockHandlerReq({ body: { identifier: '   ', password: 'pass' } })
   const res = await handler(req)
@@ -118,6 +130,34 @@ test('should return 401 when payload.login throws auth error', async () => {
   assert.equal(res.status, 401)
   const json = await res.json()
   assert.ok(json.errors[0].message.includes('Invalid'))
+})
+
+test('should default to 401 when login throws without status', async () => {
+  const req = mockHandlerReq({
+    body: { identifier: 'a@b.com', password: 'wrong' },
+    payloadOverrides: {
+      login: async () => {
+        throw new Error('boom')
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 401)
+})
+
+test('should use generic message when login throws non-Error', async () => {
+  const req = mockHandlerReq({
+    body: { identifier: 'a@b.com', password: 'wrong' },
+    payloadOverrides: {
+      login: async () => {
+        throw 'string-failure'
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 401)
+  const json = await res.json()
+  assert.equal(json.errors[0].message, 'Authentication failed')
 })
 
 test('should return 200 for phone login with no email verification gate impact', async () => {

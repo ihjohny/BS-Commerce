@@ -1,4 +1,4 @@
-import test from 'node:test'
+import test, { beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 // @ts-ignore
 import { createCartsConfig } from '../../../src/plugins/ecommerce/collections/carts.ts'
@@ -9,12 +9,37 @@ function mockHeaders(values: Record<string, string>) {
   }
 }
 
-function getBeforeChangeHook() {
-  const cfg = createCartsConfig(false, true)
+function getBeforeChangeHook(multivendor = false, allowGuestCheckout = true) {
+  const cfg = createCartsConfig(multivendor, allowGuestCheckout)
   const hook = cfg.hooks?.beforeChange?.[0]
   assert.ok(hook, 'beforeChange hook should exist')
   return hook as any
 }
+
+function couponRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'cp-1',
+    code: 'SAVE10',
+    type: 'percentage',
+    value: 10,
+    isActive: true,
+    expiresAt: null,
+    minOrderValue: null,
+    maxTotalUses: null,
+    maxUsesPerUser: null,
+    totalUses: 0,
+    ...overrides,
+  }
+}
+
+let mvBackup: string | undefined
+beforeEach(() => {
+  mvBackup = process.env.MULTIVENDOR_ENABLED
+})
+afterEach(() => {
+  if (mvBackup === undefined) delete process.env.MULTIVENDOR_ENABLED
+  else process.env.MULTIVENDOR_ENABLED = mvBackup
+})
 
 test('should require valid X-Guest-Id for guest cart create', async () => {
   const hook = getBeforeChangeHook()
@@ -70,4 +95,173 @@ test('should derive unitPrice and totals from product price', async () => {
   assert.equal(result.subtotal, 199)
   assert.equal(result.discountTotal, 0)
   assert.equal(result.grandTotal, 199)
+})
+
+test('should derive unitPrice from variant when variant belongs to product', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: 'prod-1', variant: 'var-1', quantity: 2, unitPrice: 999 }],
+  } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'prod-1', basePrice: 100, tenant: null }
+        if (collection === 'product-variants') {
+          return { id: 'var-1', price: 12.25, product: 'prod-1' }
+        }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items[0].unitPrice, 12.25)
+  assert.equal(result.subtotal, 24.5)
+})
+
+test('should throw when variant does not belong to product', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ product: 'p-1', variant: 'v-bad', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 10 }
+        if (collection === 'product-variants') return { id: 'v-bad', price: 5, product: 'other-product' }
+        return null
+      },
+    },
+  }
+  await assert.rejects(
+    () => hook({ operation: 'update', data, req }),
+    /does not belong to product/,
+  )
+})
+
+test('should throw when product is not found', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ product: 'missing', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: { findByID: async () => null },
+  }
+  await assert.rejects(() => hook({ operation: 'update', data, req }), /not found/)
+})
+
+test('should throw when basePrice is invalid', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ product: 'p-1', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: -1 }
+        return null
+      },
+    },
+  }
+  await assert.rejects(() => hook({ operation: 'update', data, req }), /Invalid product basePrice/)
+})
+
+test('should throw APIError when coupon is invalid', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ product: 'p-1', quantity: 1 }], couponCode: 'BAD' } as any
+  let findCalls = 0
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 50 }
+        return null
+      },
+      find: async (args: any) => {
+        findCalls++
+        if (args.collection === 'coupons') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  await assert.rejects(() => hook({ operation: 'update', data, req }), (err: any) => {
+    assert.ok(err.status === 400 || err.statusCode === 400)
+    return true
+  })
+  assert.ok(findCalls >= 1)
+})
+
+test('should apply valid coupon to discount and grandTotal', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ product: 'p-1', quantity: 2 }], couponCode: 'save10' } as any
+  let couponFinds = 0
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 100 }
+        return null
+      },
+      find: async (args: any) => {
+        if (args.collection === 'coupons') {
+          couponFinds++
+          return { docs: [couponRow()], totalDocs: 0 }
+        }
+        if (args.collection === 'orders') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.subtotal, 200)
+  assert.equal(result.couponCode, 'SAVE10')
+  assert.equal(result.discountTotal, 20)
+  assert.equal(result.grandTotal, 180)
+  assert.ok(couponFinds >= 1)
+})
+
+test('should denormalize vendor onto line item when multivendor env and config enabled', async () => {
+  process.env.MULTIVENDOR_ENABLED = 'true'
+  const hook = getBeforeChangeHook(true, true)
+  const data = { items: [{ product: 'p-1', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 10, tenant: { id: 'tenant-99' } }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items[0].vendor, 'tenant-99')
+})
+
+test('should return early when items is not an array', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: null, user: 'ignored' } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {},
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items, null)
+  assert.equal(result.user, 'u-1')
+})
+
+test('should default admin create user to self when user omitted', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [] } as any
+  const req = {
+    user: { id: 'admin-1', role: 'admin' },
+    headers: mockHeaders({}),
+    payload: {},
+  }
+  const result = await hook({ operation: 'create', data, req })
+  assert.equal(result.user, 'admin-1')
 })

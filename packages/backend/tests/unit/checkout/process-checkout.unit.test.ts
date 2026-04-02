@@ -174,6 +174,74 @@ test('should return 409 when idempotencyKey is used by different user', async ()
   assert.equal(result.statusCode, 409)
 })
 
+test('should return existing order when idempotencyKey matches same guest email', async () => {
+  const payload = buildPayload({
+    find: async (args: any) => {
+      if (args.collection === 'orders' && args.where?.idempotencyKey) {
+        return {
+          docs: [{
+            id: 'guest-order-1',
+            orderNumber: 'ORD-GUEST',
+            customer: null,
+            guestEmail: 'repeat@guest.com',
+          }],
+        }
+      }
+      return { docs: [] }
+    },
+  })
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, guestEmail: 'Repeat@Guest.com', idempotencyKey: 'idem-guest-1' },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.order.id, 'guest-order-1')
+  assert.equal(result.order.orderNumber, 'ORD-GUEST')
+  assert.equal(result.error, undefined)
+})
+
+test('should allow admin to reuse idempotency order owned by another customer', async () => {
+  const payload = buildPayload({
+    find: async (args: any) => {
+      if (args.collection === 'orders' && args.where?.idempotencyKey) {
+        return { docs: [{ id: 'admin-idem', orderNumber: 'ORD-A', customer: { id: 'customer-x' } }] }
+      }
+      return { docs: [] }
+    },
+  })
+  const req = { headers: { get: () => null }, user: { id: 'admin-1', role: 'admin' }, context: {} } as any
+  const result = await processCheckout(payload, { ...baseInput, idempotencyKey: 'idem-admin' }, 'admin-1', req)
+  assert.equal(result.order.id, 'admin-idem')
+  assert.equal(result.error, undefined)
+})
+
+test('should return 400 when cart coupon code is invalid', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          couponCode: 'NOT-A-REAL-COUPON',
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'coupons') return { docs: [], totalDocs: 0 }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'g@t.com' }, undefined, guestReq())
+  assert.equal(result.statusCode, 400)
+  assert.ok(result.error?.includes('not found') || result.error?.includes('Coupon'))
+})
+
 test('should block unverified user when REQUIRE_VERIFIED_FOR_CHECKOUT is on', async () => {
   process.env.REQUIRE_VERIFIED_FOR_CHECKOUT = 'true'
   const payload = buildPayload({

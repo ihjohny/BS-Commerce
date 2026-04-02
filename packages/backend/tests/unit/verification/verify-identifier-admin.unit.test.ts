@@ -33,6 +33,24 @@ test('should return 400 when identifierType is missing', async () => {
   assert.equal(res.status, 400)
 })
 
+test('should return 400 when identifier is missing', async () => {
+  const req = mockHandlerReq({
+    body: { identifierType: 'email' },
+    user: { role: 'admin' },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when identifier is not a string', async () => {
+  const req = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 12345 },
+    user: { role: 'admin' },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when identifierType is invalid', async () => {
   const req = mockHandlerReq({
     body: { identifierType: 'fax', identifier: 'a@b.com' },

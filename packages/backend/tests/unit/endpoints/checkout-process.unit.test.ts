@@ -1,0 +1,181 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+// @ts-ignore
+import { mockHandlerReq } from '../../_helpers/mock-request.ts'
+// @ts-ignore
+import { checkoutProcessHandler } from '../../../src/endpoints/checkout-process.ts'
+
+const validAddr = {
+  firstName: 'A',
+  lastName: 'B',
+  street1: '1 St',
+  city: 'C',
+  country: 'US',
+}
+
+const baseBody = {
+  cartId: 'cart-1',
+  shippingAddress: validAddr,
+  billingAddress: validAddr,
+  guestEmail: 'guest@example.com',
+}
+
+async function jsonBody(res: Response) {
+  return res.json() as Promise<Record<string, unknown>>
+}
+
+test('should return 429 when rate limit rejects', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () =>
+      new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 429)
+})
+
+test('should return 400 when cartId shippingAddress billingAddress missing', async () => {
+  const req = mockHandlerReq({ body: { guestEmail: 'g@e.com' } })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.ok(String(j.error).includes('Missing required fields'))
+})
+
+test('should return 400 when idempotencyKey is not a valid UUID', async () => {
+  const req = mockHandlerReq({ body: { ...baseBody, idempotencyKey: 'not-a-uuid' } })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'idempotencyKey must be a valid UUID string')
+})
+
+test('should return 400 when shipping address field missing', async () => {
+  const req = mockHandlerReq({
+    body: {
+      cartId: 'c1',
+      shippingAddress: { ...validAddr, city: '' },
+      billingAddress: validAddr,
+      guestEmail: 'guest@example.com',
+    },
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'shippingAddress.city is required')
+})
+
+test('should return 400 when guest checkout has no guestEmail', async () => {
+  const req = mockHandlerReq({
+    body: { cartId: 'c1', shippingAddress: validAddr, billingAddress: validAddr },
+    user: undefined,
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.ok(String(j.error).includes('guestEmail'))
+})
+
+test('should return 400 when guestEmail format is invalid', async () => {
+  const req = mockHandlerReq({
+    body: { ...baseBody, guestEmail: 'not-an-email' },
+    user: undefined,
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'guestEmail must be a valid email address')
+})
+
+test('should return 201 when processCheckout succeeds', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({
+      order: { id: 'order-1', orderNumber: 'ORD-99' },
+    }),
+  })
+  assert.equal(res.status, 201)
+  const j = await jsonBody(res)
+  assert.equal(j.order && (j.order as { orderNumber: string }).orderNumber, 'ORD-99')
+})
+
+test('should allow authenticated checkout without guestEmail when user is present', async () => {
+  const req = mockHandlerReq({
+    body: { cartId: 'c1', shippingAddress: validAddr, billingAddress: validAddr },
+    user: { id: 'user-1', role: 'customer' },
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async (_p, _input, userId) => {
+      assert.equal(userId, 'user-1')
+      return { order: { id: 'o1', orderNumber: 'ORD-AUTH' } }
+    },
+  })
+  assert.equal(res.status, 201)
+})
+
+test('should return processCheckout error status when business logic fails', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({
+      order: { id: '', orderNumber: '' },
+      error: 'Cart not found',
+      statusCode: 404,
+    }),
+  })
+  assert.equal(res.status, 404)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'Cart not found')
+})
+
+test('should return 500 when processCheckout throws', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => {
+      throw new Error('database exploded')
+    },
+  })
+  assert.equal(res.status, 500)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'database exploded')
+})
+
+test('should accept valid UUID idempotencyKey', async () => {
+  let seenKey: string | undefined
+  const req = mockHandlerReq({
+    body: {
+      ...baseBody,
+      idempotencyKey: '123e4567-e89b-12d3-a456-426614174000',
+    },
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async (_p, input) => {
+      seenKey = input.idempotencyKey
+      return { order: { id: 'o1', orderNumber: 'ORD-1' } }
+    },
+  })
+  assert.equal(res.status, 201)
+  assert.equal(seenKey, '123e4567-e89b-12d3-a456-426614174000')
+})
