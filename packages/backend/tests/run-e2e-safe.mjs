@@ -143,6 +143,18 @@ async function stopServer(server) {
 async function main() {
   const infra = resolveE2eInfraEnv()
   const composeShellEnv = { ...process.env, ...infra.composeEnv }
+  const canonicalTsconfigPath = path.join(backendRoot, 'tsconfig.json')
+  // Isolate tsconfig per slot so parallel Next dev servers never rewrite the same file (Windows TS assertion).
+  const slotTsconfigPath = path.join(backendRoot, `tsconfig.e2e-slot-${infra.slot}.json`)
+  const canonicalTsconfigText = fs.existsSync(canonicalTsconfigPath) ? fs.readFileSync(canonicalTsconfigPath, 'utf8') : null
+  let tsconfigSnapshot = null
+  if (canonicalTsconfigText != null) {
+    fs.writeFileSync(slotTsconfigPath, canonicalTsconfigText, 'utf8')
+    tsconfigSnapshot = canonicalTsconfigText
+  }
+
+  const queryableTimeoutMsEnv = process.env.E2E_QUERYABLE_TIMEOUT_MS
+  const queryableTimeoutMs = queryableTimeoutMsEnv && Number.isFinite(Number(queryableTimeoutMsEnv)) ? Number(queryableTimeoutMsEnv) : 120_000
 
   const baseEnv = loadEnvFile(path.join(profileDir, '.env.test'))
   const profileEnv = profileArg ? loadEnvFile(path.join(profileDir, `.env.test.${profileArg}`)) : {}
@@ -154,6 +166,12 @@ async function main() {
 
   const baseUrl = mergedProfileEnv.BASE_URL || infra.baseUrl
   const serverEnv = { ...process.env, ...mergedProfileEnv }
+  // Next dev writes to `.next/` by default; parallel runs must not share build output.
+  // Use `distDir` (configured in `next.config.mjs`) to isolate per E2E slot.
+  serverEnv.NEXT_DIST_DIR = serverEnv.NEXT_DIST_DIR || `.next-e2e-slot-${infra.slot}`
+  if (canonicalTsconfigText != null) {
+    serverEnv.E2E_TSCONFIG_PATH = path.basename(slotTsconfigPath)
+  }
 
   if (profileArg) console.log(`Using profile: ${profileArg}`)
   if (suiteArg) console.log(`Using suite: ${suiteArg}`)
@@ -179,7 +197,7 @@ async function main() {
       env: serverEnv,
     })
 
-    await waitForQueryable(baseUrl, server)
+    await waitForQueryable(baseUrl, server, queryableTimeoutMs)
 
     console.log('\n=== Run E2E ===')
     const args = ['tests/run-e2e.mjs']
@@ -197,6 +215,16 @@ async function main() {
   } finally {
     await stopServer(server)
     killPortListeners(infra.backendPort)
+    if (tsconfigSnapshot != null) {
+      try {
+        const currentTsconfig = fs.existsSync(slotTsconfigPath) ? fs.readFileSync(slotTsconfigPath, 'utf8') : null
+        if (currentTsconfig !== tsconfigSnapshot) {
+          fs.writeFileSync(slotTsconfigPath, tsconfigSnapshot, 'utf8')
+        }
+      } catch (err) {
+        console.error('⚠️ tsconfig restore warning:', err instanceof Error ? err.message : String(err))
+      }
+    }
     if (!keepInfra) {
       try {
         runStep('Infra down (final cleanup)', ['test:infra:down'], composeShellEnv)
