@@ -1,6 +1,8 @@
 import test, { beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 
+const pe = process.env as Record<string, string | undefined>
+
 let backups: Record<string, string | undefined> = {}
 const keys = [
   'TWILIO_ACCOUNT_SID',
@@ -14,23 +16,23 @@ let originalFetch: typeof fetch
 
 beforeEach(() => {
   backups = {}
-  for (const k of keys) backups[k] = process.env[k]
+  for (const k of keys) backups[k] = pe[k]
   originalFetch = globalThis.fetch
 })
 afterEach(() => {
   for (const k of keys) {
-    if (backups[k] === undefined) delete process.env[k]
-    else process.env[k] = backups[k]
+    if (backups[k] === undefined) Reflect.deleteProperty(pe, k)
+    else pe[k] = backups[k]
   }
   globalThis.fetch = originalFetch
 })
 
 test('sendOTP returns true when Twilio env is not configured', async () => {
-  delete process.env.TWILIO_ACCOUNT_SID
-  delete process.env.TWILIO_AUTH_TOKEN
-  delete process.env.TWILIO_FROM_NUMBER
-  delete process.env.TWILIO_MESSAGING_SERVICE_SID
-  process.env.NODE_ENV = 'development'
+  Reflect.deleteProperty(pe, 'TWILIO_ACCOUNT_SID')
+  Reflect.deleteProperty(pe, 'TWILIO_AUTH_TOKEN')
+  Reflect.deleteProperty(pe, 'TWILIO_FROM_NUMBER')
+  Reflect.deleteProperty(pe, 'TWILIO_MESSAGING_SERVICE_SID')
+  pe.NODE_ENV = 'development'
   const { phoneTwilioAdapter } = await import(
     '../../../src/plugins/verification/adapters/phone-twilio.ts'
   )
@@ -39,10 +41,10 @@ test('sendOTP returns true when Twilio env is not configured', async () => {
 })
 
 test('sendOTP prefixes phone with + when sending to Twilio API', async () => {
-  process.env.TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-  process.env.TWILIO_AUTH_TOKEN = 'auth-token'
-  process.env.TWILIO_FROM_NUMBER = '+15551234567'
-  process.env.NODE_ENV = 'test'
+  pe.TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  pe.TWILIO_AUTH_TOKEN = 'auth-token'
+  pe.TWILIO_FROM_NUMBER = '+15551234567'
+  pe.NODE_ENV = 'test'
 
   let capturedBody = ''
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -63,9 +65,9 @@ test('sendOTP prefixes phone with + when sending to Twilio API', async () => {
 })
 
 test('sendOTP returns false when Twilio API responds with error', async () => {
-  process.env.TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-  process.env.TWILIO_AUTH_TOKEN = 'auth-token'
-  process.env.TWILIO_FROM_NUMBER = '+15551234567'
+  pe.TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  pe.TWILIO_AUTH_TOKEN = 'auth-token'
+  pe.TWILIO_FROM_NUMBER = '+15551234567'
 
   globalThis.fetch = (async () =>
     ({
@@ -82,9 +84,9 @@ test('sendOTP returns false when Twilio API responds with error', async () => {
 })
 
 test('sendOTP returns false when fetch throws', async () => {
-  process.env.TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-  process.env.TWILIO_AUTH_TOKEN = 'auth-token'
-  process.env.TWILIO_FROM_NUMBER = '+15551234567'
+  pe.TWILIO_ACCOUNT_SID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  pe.TWILIO_AUTH_TOKEN = 'auth-token'
+  pe.TWILIO_FROM_NUMBER = '+15551234567'
 
   globalThis.fetch = (async () => {
     throw new Error('network down')

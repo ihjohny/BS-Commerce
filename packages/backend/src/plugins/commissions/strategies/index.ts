@@ -20,7 +20,11 @@ export interface CommissionStrategy {
 
 /** Percentage of subtotal. */
 export class PercentageCommissionStrategy implements CommissionStrategy {
-  constructor(private ratePercent: number) {}
+  private readonly ratePercent: number
+
+  constructor(ratePercent: number) {
+    this.ratePercent = ratePercent
+  }
 
   calculate(ctx: CommissionContext): CommissionResult {
     const amount = Math.round(ctx.subtotal * (this.ratePercent / 100) * 100) / 100
@@ -30,7 +34,11 @@ export class PercentageCommissionStrategy implements CommissionStrategy {
 
 /** Flat fee per order. */
 export class FlatFeeCommissionStrategy implements CommissionStrategy {
-  constructor(private flatAmount: number) {}
+  private readonly flatAmount: number
+
+  constructor(flatAmount: number) {
+    this.flatAmount = flatAmount
+  }
 
   calculate(ctx: CommissionContext): CommissionResult {
     return { amount: Math.round(this.flatAmount * 100) / 100, rate: 0 }

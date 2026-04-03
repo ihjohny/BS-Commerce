@@ -16,6 +16,16 @@ function getBeforeChangeHook(multivendor = false, allowGuestCheckout = true) {
   return hook as any
 }
 
+function getCartsAccess(multivendor = false, allowGuestCheckout = true) {
+  const cfg = createCartsConfig(multivendor, allowGuestCheckout)
+  return cfg.access as {
+    create: (args: { req: any }) => unknown
+    read: (args: { req: any }) => unknown
+    update: (args: { req: any }) => unknown
+    delete: (args: { req: any }) => unknown
+  }
+}
+
 function couponRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'cp-1',
@@ -264,4 +274,52 @@ test('should default admin create user to self when user omitted', async () => {
   }
   const result = await hook({ operation: 'create', data, req })
   assert.equal(result.user, 'admin-1')
+})
+
+test('guestReadFilter: admin sees all, customer scoped to user id', () => {
+  const access = getCartsAccess(false, true)
+  assert.equal(access.read({ req: { user: { id: 'a', role: 'admin' }, headers: mockHeaders({}) } }), true)
+  const cust = access.read({ req: { user: { id: 'u-9', role: 'customer' }, headers: mockHeaders({}) } }) as any
+  assert.equal(cust.user?.equals, 'u-9')
+})
+
+test('guestReadFilter: valid guest UUID returns constrained query', () => {
+  const guestId = '550e8400-e29b-41d4-a716-446655440000'
+  const access = getCartsAccess(false, true)
+  const q = access.read({
+    req: { user: undefined, headers: mockHeaders({ 'x-guest-id': guestId }) },
+  }) as any
+  assert.ok(q?.and)
+  assert.equal(q.and[0].guestId.equals, guestId)
+})
+
+test('guestReadFilter: invalid guest UUID denies guest read', () => {
+  const access = getCartsAccess(false, true)
+  assert.equal(
+    access.read({ req: { user: undefined, headers: mockHeaders({ 'x-guest-id': 'not-a-uuid' }) } }),
+    false,
+  )
+})
+
+test('guestReadFilter: guest checkout disabled denies unauthenticated read', () => {
+  const access = getCartsAccess(false, false)
+  assert.equal(access.read({ req: { user: undefined, headers: mockHeaders({}) } }), false)
+})
+
+test('access create allows guest with valid UUID when allowGuestCheckout', () => {
+  const guestId = '550e8400-e29b-41d4-a716-446655440000'
+  const access = getCartsAccess(false, true)
+  assert.equal(
+    access.create({ req: { user: undefined, headers: mockHeaders({ 'x-guest-id': guestId }) } }),
+    true,
+  )
+})
+
+test('access create denies guest when allowGuestCheckout is false', () => {
+  const guestId = '550e8400-e29b-41d4-a716-446655440000'
+  const access = getCartsAccess(false, false)
+  assert.equal(
+    access.create({ req: { user: undefined, headers: mockHeaders({ 'x-guest-id': guestId }) } }),
+    false,
+  )
 })

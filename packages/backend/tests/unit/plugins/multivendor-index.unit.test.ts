@@ -130,3 +130,34 @@ test('should not duplicate media tenant field when media already has tenant', as
   assert.equal(tenantCount, 1)
   assert.equal(media.access, undefined)
 })
+
+test('should evaluate media access for anonymous, admin, vendor, and customer', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const result = await plugin({
+    collections: [
+      { slug: 'users', fields: [{ name: 'email', type: 'email' }] },
+      { slug: 'media', fields: [{ name: 'alt', type: 'text' }] },
+    ],
+  } as any)
+  const media = (result.collections || []).find((c: any) => c.slug === 'media') as any
+  const { read, update, delete: del, create } = media.access
+
+  assert.equal(read({ req: {} }), true)
+  assert.equal(read({ req: { user: { role: 'admin' } } }), true)
+  assert.equal(read({ req: { user: { role: 'customer' } } }), true)
+  const vendorRead = read({ req: { user: { role: 'vendor', tenant: 't-1' } } })
+  assert.ok(typeof vendorRead === 'object' && (vendorRead as any).tenant?.equals === 't-1')
+
+  assert.equal(create({ req: {} }), false)
+  assert.equal(create({ req: { user: { role: 'admin' } } }), true)
+
+  assert.equal(update({ req: {} }), false)
+  assert.equal(update({ req: { user: { role: 'admin' } } }), true)
+  const vendorUpd = update({ req: { user: { role: 'vendor', tenant: { id: 'tx' } } } })
+  assert.ok(typeof vendorUpd === 'object')
+
+  assert.equal(del({ req: {} }), false)
+  assert.equal(del({ req: { user: { role: 'admin' } } }), true)
+  const vendorDel = del({ req: { user: { role: 'vendor', tenant: 't-2' } } })
+  assert.ok(typeof vendorDel === 'object')
+})

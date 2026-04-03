@@ -12,7 +12,10 @@ test('should return same config when discounts plugin is disabled', () => {
 
 test('should register coupons collection and coupon usage endpoint when enabled', () => {
   const plugin = discountsPlugin({ enabled: true })
-  const result = plugin({ collections: [], endpoints: [] } as any)
+  const result = plugin({ collections: [], endpoints: [] } as any) as {
+    collections?: { slug?: string }[]
+    endpoints?: { path?: string }[]
+  }
   const slugs = (result.collections || []).map((c: any) => c.slug)
   assert.ok(slugs.includes('coupons'))
   const paths = (result.endpoints || []).map((e: any) => e.path)

@@ -1,9 +1,19 @@
-import test from 'node:test'
+import test, { beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 // @ts-ignore
 import { mockHandlerReq } from '../../_helpers/mock-request.ts'
 // @ts-ignore
 import { checkoutProcessHandler } from '../../../src/endpoints/checkout-process.ts'
+
+const procEnv = process.env as Record<string, string | undefined>
+let nodeEnvBackup: string | undefined
+beforeEach(() => {
+  nodeEnvBackup = procEnv.NODE_ENV
+})
+afterEach(() => {
+  if (nodeEnvBackup === undefined) Reflect.deleteProperty(procEnv, 'NODE_ENV')
+  else procEnv.NODE_ENV = nodeEnvBackup
+})
 
 const validAddr = {
   firstName: 'A',
@@ -178,4 +188,88 @@ test('should accept valid UUID idempotencyKey', async () => {
   })
   assert.equal(res.status, 201)
   assert.equal(seenKey, '123e4567-e89b-12d3-a456-426614174000')
+})
+
+test('should return 400 when billing address field missing', async () => {
+  const req = mockHandlerReq({
+    body: {
+      cartId: 'c1',
+      shippingAddress: validAddr,
+      billingAddress: { ...validAddr, country: '' },
+      guestEmail: 'guest@example.com',
+    },
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'billingAddress.country is required')
+})
+
+test('should strip simulatePayment for non-admin when NODE_ENV is production', async () => {
+  procEnv.NODE_ENV = 'production'
+  let seenSimulate: boolean | undefined
+  const req = mockHandlerReq({
+    body: {
+      cartId: 'c1',
+      shippingAddress: validAddr,
+      billingAddress: validAddr,
+      simulatePayment: true,
+    },
+    user: { id: 'u-1', role: 'customer' },
+  })
+  await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async (_p, input) => {
+      seenSimulate = input.simulatePayment
+      return { order: { id: 'o1', orderNumber: 'ORD-1' } }
+    },
+  })
+  assert.equal(seenSimulate, false)
+})
+
+test('should pass simulatePayment for admin in production', async () => {
+  procEnv.NODE_ENV = 'production'
+  let seenSimulate: boolean | undefined
+  const req = mockHandlerReq({
+    body: {
+      cartId: 'c1',
+      shippingAddress: validAddr,
+      billingAddress: validAddr,
+      simulatePayment: true,
+    },
+    user: { id: 'a', role: 'admin' },
+  })
+  await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async (_p, input) => {
+      seenSimulate = input.simulatePayment
+      return { order: { id: 'o1', orderNumber: 'ORD-1' } }
+    },
+  })
+  assert.equal(seenSimulate, true)
+})
+
+test('should pass simulatePayment for customer when NODE_ENV is development', async () => {
+  procEnv.NODE_ENV = 'development'
+  let seenSimulate: boolean | undefined
+  const req = mockHandlerReq({
+    body: {
+      cartId: 'c1',
+      shippingAddress: validAddr,
+      billingAddress: validAddr,
+      simulatePayment: true,
+    },
+    user: { id: 'u-1', role: 'customer' },
+  })
+  await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async (_p, input) => {
+      seenSimulate = input.simulatePayment
+      return { order: { id: 'o1', orderNumber: 'ORD-1' } }
+    },
+  })
+  assert.equal(seenSimulate, true)
 })

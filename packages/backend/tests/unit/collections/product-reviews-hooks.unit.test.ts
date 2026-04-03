@@ -12,6 +12,16 @@ function getHooks(requireApproval = true) {
   return { before: before as any, after: after as any }
 }
 
+function getAccess(requireApproval = true) {
+  const cfg = createProductReviewsConfig({ requireApproval })
+  return cfg.access as {
+    read: (args: { req: any }) => unknown
+    update: (args: { req: any }) => unknown
+    delete: (args: { req: any }) => unknown
+    create: (args: { req: any }) => unknown
+  }
+}
+
 test('should reject create when customer has not purchased product', async () => {
   const { before } = getHooks(true)
   const req = {
@@ -161,4 +171,38 @@ test('should allow customer to update own review content without status change',
   })
   assert.equal(result.comment, 'updated')
   assert.equal(result.author, 'u-1')
+})
+
+test('access read: admin sees all', () => {
+  assert.equal(getAccess(true).read({ req: { user: { role: 'admin' } } }), true)
+})
+
+test('access read: public sees approved only when moderation on', () => {
+  const r = getAccess(true).read({ req: {} }) as any
+  assert.equal(r.status?.equals, 'approved')
+})
+
+test('access read: public sees all when moderation off', () => {
+  assert.equal(getAccess(false).read({ req: {} }), true)
+})
+
+test('access update: unauthenticated denied', () => {
+  assert.equal(getAccess(true).update({ req: {} }), false)
+})
+
+test('access update: customer allowed', () => {
+  assert.equal(getAccess(true).update({ req: { user: { role: 'customer' } } }), true)
+})
+
+test('access delete: admin only', () => {
+  const del = getAccess(true).delete
+  assert.equal(del({ req: { user: { role: 'admin' } } }), true)
+  assert.equal(del({ req: { user: { role: 'customer' } } }), false)
+})
+
+test('access create: customer role only', () => {
+  const { create } = getAccess(true)
+  assert.equal(create({ req: { user: { role: 'customer' } } }), true)
+  assert.equal(create({ req: { user: { role: 'admin' } } }), false)
+  assert.equal(create({ req: {} }), false)
 })

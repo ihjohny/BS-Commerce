@@ -12,7 +12,7 @@ test('should no-op when items array is empty', async () => {
     },
     update: async () => ({}),
   }
-  await releaseOrderInventory(payload as any, [], {})
+  await releaseOrderInventory(payload as any, [], undefined)
   assert.equal(findCalls, 0)
 })
 

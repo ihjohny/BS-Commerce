@@ -12,7 +12,8 @@
  *   node tests/run-all-profiles-safe-parallel-observe.mjs
  *   node tests/run-all-profiles-safe-parallel-observe.mjs --quick
  *   node tests/run-all-profiles-safe-parallel-observe.mjs --profiles=default,phone-only
- *   node tests/run-all-profiles-safe-parallel-observe.mjs --max-parallel=4 --slot-start=0
+ *   node tests/run-all-profiles-safe-parallel-observe.mjs --max-parallel=4 --slot-start=4  # matches yarn test:all-profiles:safe:parallel:observe
+ *   node tests/run-all-profiles-safe-parallel-observe.mjs --max-parallel=4 --slot-start=0  # CI / clean machine
  */
 
 import fs from 'node:fs'
