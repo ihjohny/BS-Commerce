@@ -88,3 +88,38 @@ test('should recompute vendor profile rating in afterChange for tenant', async (
   assert.equal(updateCalls[0].id, 'vp-1')
   assert.equal(updateCalls[0].data.rating, 3)
 })
+
+test('should not recompute vendor rating when doc has no tenant id', async () => {
+  const { after } = getHooks(true)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async () => {
+        findCalls++
+        return { docs: [], totalDocs: 0 }
+      },
+      update: async () => ({}),
+    },
+  }
+  await after({ doc: { id: 'r-1' }, req })
+  assert.equal(findCalls, 0)
+})
+
+test('should reject create when user already reviewed vendor', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: {
+      find: async ({ collection }: any) => {
+        if (collection === 'orders') return { docs: [{ id: 'o-1' }], totalDocs: 1 }
+        if (collection === 'sub-orders') return { docs: [{ id: 'so-1' }], totalDocs: 1 }
+        if (collection === 'vendor-reviews') return { docs: [{ id: 'r-0' }], totalDocs: 1 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  await assert.rejects(
+    () => before({ operation: 'create', data: { tenant: 't-1', rating: 5 }, req }),
+    /already reviewed this vendor/i,
+  )
+})

@@ -87,3 +87,17 @@ test('should return 200 with order payload when match exists', async () => {
   const json = await res.json()
   assert.equal(json.order.orderNumber, 'ORD-1')
 })
+
+test('should treat failed json() as empty body and return 400', async () => {
+  const req = {
+    json: async () => {
+      throw new Error('parse error')
+    },
+    headers: { get: () => null },
+    payload: { find: async () => ({ docs: [] }) },
+  } as any
+  const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
+  assert.equal(res.status, 400)
+  const json = await res.json()
+  assert.equal(json.error, 'orderNumber is required')
+})

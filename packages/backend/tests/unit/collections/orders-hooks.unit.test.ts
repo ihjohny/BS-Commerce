@@ -4,8 +4,12 @@ import assert from 'node:assert/strict'
 import { createOrdersConfig } from '../../../src/plugins/orders/collections/orders.ts'
 
 const cfg = createOrdersConfig(false)
+const cfgMultivendor = createOrdersConfig(true)
 const beforeChangeHook = cfg.hooks?.beforeChange?.[0] as any
+const beforeDeleteHook = cfg.hooks?.beforeDelete?.[0] as any
+const beforeDeleteHookMv = cfgMultivendor.hooks?.beforeDelete?.[0] as any
 const afterChangeHook = cfg.hooks?.afterChange?.[0] as any
+const afterChangeHookMv = cfgMultivendor.hooks?.afterChange?.[0] as any
 
 test('should generate orderNumber on create when missing', () => {
   assert.ok(beforeChangeHook)
@@ -52,6 +56,7 @@ test('should create order status history when status changes and not skipped', a
   assert.equal(createCalls[0].collection, 'order-status-history')
   assert.equal(createCalls[0].data.fromStatus, 'pending')
   assert.equal(createCalls[0].data.toStatus, 'processing')
+  assert.equal(createCalls[0].data.changedBy, 'admin-1')
 })
 
 test('should skip order status history when context flag is enabled', async () => {
@@ -71,4 +76,154 @@ test('should skip order status history when context flag is enabled', async () =
   const previousDoc = { id: 'order-2', status: 'pending' } as any
   await afterChangeHook({ operation: 'update', doc, previousDoc, req })
   assert.equal(createCalls.length, 0)
+})
+
+test('afterChange should no-op inventory release when order cancelled with no items', async () => {
+  assert.ok(afterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async () => {
+        findCalls++
+        return { docs: [] }
+      },
+      create: async () => ({}),
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-x', status: 'cancelled' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.ok(findCalls >= 1)
+})
+
+test('afterChange single-vendor should no-op consume when shipped with no order-items', async () => {
+  assert.ok(afterChangeHook)
+  let findCalls = 0
+  const createCalls: any[] = []
+  const req = {
+    payload: {
+      find: async () => {
+        findCalls++
+        return { docs: [] }
+      },
+      create: async (args: any) => {
+        createCalls.push(args)
+        return {}
+      },
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-s', status: 'shipped' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.ok(findCalls >= 1)
+  assert.equal(createCalls.length, 1)
+})
+
+test('afterChange multivendor should not consume inventory on shipped (sub-orders own stock)', async () => {
+  assert.ok(afterChangeHookMv)
+  let findCalls = 0
+  const createCalls: any[] = []
+  const req = {
+    payload: {
+      find: async () => {
+        findCalls++
+        return { docs: [] }
+      },
+      create: async (args: any) => {
+        createCalls.push(args)
+        return {}
+      },
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHookMv({
+    operation: 'update',
+    doc: { id: 'order-mv', status: 'shipped' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(findCalls, 0)
+  assert.equal(createCalls.length, 1)
+})
+
+test('afterChange should not write status history when status unchanged', async () => {
+  const createCalls: any[] = []
+  const req = {
+    payload: {
+      create: async (args: any) => {
+        createCalls.push(args)
+        return {}
+      },
+      find: async () => ({ docs: [] }),
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-same', status: 'pending' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(createCalls.length, 0)
+})
+
+test('beforeDelete should remove history, transactions, order-items and release inventory', async () => {
+  assert.ok(beforeDeleteHook)
+  const deleteCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        const c = args.collection
+        if (c === 'order-items') {
+          return { docs: [{ id: 'oi-1', product: 'p-1', quantity: 1 }] }
+        }
+        if (c === 'order-status-history') return { docs: [{ id: 'h-1' }] }
+        if (c === 'transactions') return { docs: [{ id: 'tx-1' }] }
+        if (c === 'stock-levels') return { docs: [] }
+        return { docs: [] }
+      },
+      delete: async (args: any) => {
+        deleteCalls.push(args)
+        return {}
+      },
+      update: async () => ({}),
+    },
+  }
+  await beforeDeleteHook({ id: 'order-del-1', req })
+  assert.ok(deleteCalls.some((d) => d.collection === 'order-status-history' && d.id === 'h-1'))
+  assert.ok(deleteCalls.some((d) => d.collection === 'transactions' && d.id === 'tx-1'))
+  assert.ok(deleteCalls.some((d) => d.collection === 'order-items' && d.id === 'oi-1'))
+})
+
+test('beforeDelete multivendor should also delete sub-orders for parent order', async () => {
+  assert.ok(beforeDeleteHookMv)
+  const deleteCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        const c = args.collection
+        if (c === 'order-items') return { docs: [] }
+        if (c === 'order-status-history') return { docs: [] }
+        if (c === 'sub-orders') return { docs: [{ id: 'so-1' }] }
+        if (c === 'transactions') return { docs: [] }
+        if (c === 'stock-levels') return { docs: [] }
+        return { docs: [] }
+      },
+      delete: async (args: any) => {
+        deleteCalls.push(args)
+        return {}
+      },
+      update: async () => ({}),
+    },
+  }
+  await beforeDeleteHookMv({ id: 'order-mv-del', req })
+  assert.ok(deleteCalls.some((d) => d.collection === 'sub-orders' && d.id === 'so-1'))
 })

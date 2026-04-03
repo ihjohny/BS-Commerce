@@ -21,8 +21,6 @@ function reqWithTransaction(req: PayloadRequest | undefined, transactionID: stri
   return { ...base, transactionID }
 }
 
-const splitByVendor = process.env.MULTIVENDOR_ENABLED === 'true'
-
 export interface ProcessCheckoutInput {
   cartId: string | number
   shippingAddress: {
@@ -66,6 +64,7 @@ export async function processCheckout(
   userId?: string | number,
   req?: PayloadRequest
 ): Promise<ProcessCheckoutResult> {
+  const splitByVendor = process.env.MULTIVENDOR_ENABLED === 'true'
   const { cartId, shippingAddress, billingAddress, simulatePayment = false, idempotencyKey } = input
   // Normalize guestEmail once: trim + lowercase so stored value always matches lookup queries
   const guestEmail = input.guestEmail ? input.guestEmail.trim().toLowerCase() : undefined

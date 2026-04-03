@@ -25,6 +25,18 @@ test('should return 400 when code is not a string', async () => {
   assert.equal(res.status, 400)
 })
 
+test('should return 400 when code is only whitespace after trim', async () => {
+  const req = mockHandlerReq({ body: { code: '   ', phone: '+1234567890' } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when phone is only whitespace after trim', async () => {
+  const req = mockHandlerReq({ body: { code: '123456', phone: '  \t  ' } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when no matching verification record', async () => {
   const req = mockHandlerReq({
     body: { code: '999999', phone: '+1234567890' },

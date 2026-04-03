@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { processCheckout } from '../../../src/lib/process-checkout.ts'
 
 let envBackups: Record<string, string | undefined> = {}
-const envKeys = ['MULTIVENDOR_ENABLED', 'REQUIRE_VERIFIED_FOR_CHECKOUT']
+const envKeys = ['MULTIVENDOR_ENABLED', 'REQUIRE_VERIFIED_FOR_CHECKOUT', 'DEFAULT_COMMISSION_RATE']
 beforeEach(() => { envBackups = {}; for (const k of envKeys) envBackups[k] = process.env[k] })
 afterEach(() => { for (const k of envKeys) { if (envBackups[k] === undefined) delete process.env[k]; else process.env[k] = envBackups[k] } })
 
@@ -39,6 +39,7 @@ function buildPayload(overrides: Record<string, Function> = {}) {
       calls.create.push(args)
       if (overrides.create) return overrides.create(args)
       if (args.collection === 'orders') return { id: 'order-1', orderNumber: 'ORD-TEST', status: 'pending' }
+      if (args.collection === 'sub-orders') return { id: 'so-1' }
       if (args.collection === 'order-items') return { id: `oi-${calls.create.length}` }
       if (args.collection === 'order-status-history') return { id: 'osh-1' }
       if (args.collection === 'transactions') return { id: 'txn-1' }
@@ -287,4 +288,219 @@ test('should rollback transaction on error', async () => {
     processCheckout(payload, { ...baseInput, guestEmail: 'g@t.com' }, undefined, guestReq()),
   )
   assert.ok(rolledBack)
+})
+
+test('should create simulated transaction when simulatePayment is true', async () => {
+  const payload = buildPayload()
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, guestEmail: 'pay@test.com', simulatePayment: true },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.error, undefined)
+  assert.ok(result.transaction?.id)
+  const txnCreates = payload._calls.create.filter((c: any) => c.collection === 'transactions')
+  assert.equal(txnCreates.length, 1)
+  assert.equal(txnCreates[0].data.status, 'succeeded')
+  const orderUpdates = payload._calls.update.filter((c: any) => c.collection === 'orders')
+  const paidUpdate = orderUpdates.find((c: any) => c.data?.paymentStatus === 'paid')
+  assert.ok(paidUpdate)
+})
+
+test('should use variant price when cart line has variant', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [
+            {
+              product: { id: 'prod-1' },
+              variant: { id: 'var-99' },
+              quantity: 1,
+              unitPrice: 1,
+            },
+          ],
+        }
+      }
+      if (args.collection === 'products') {
+        return { id: 'prod-1', name: 'P', basePrice: 50, sku: 'P-SKU', tenant: null }
+      }
+      if (args.collection === 'product-variants') {
+        return { id: 'var-99', price: 33.5, product: 'prod-1', name: 'Size M', sku: 'V-SKU' }
+      }
+      return { id: args.id }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'v@test.com' }, undefined, guestReq())
+  assert.ok(result.order.id)
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates.length, 1)
+  assert.equal(itemCreates[0].data.unitPrice, 33.5)
+  assert.ok(String(itemCreates[0].data.variant || '').includes('var-99') || itemCreates[0].data.variant === 'var-99')
+})
+
+test('should increment coupon totalUses after checkout with valid cart coupon', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          couponCode: 'SAVE10',
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      if (args.collection === 'coupons') return { id: 'cpn-1', code: 'SAVE10', totalUses: 3 }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'coupons') {
+        return {
+          docs: [
+            {
+              id: 'cpn-1',
+              code: 'SAVE10',
+              type: 'percentage',
+              value: 10,
+              isActive: true,
+              totalUses: 3,
+            },
+          ],
+          totalDocs: 1,
+        }
+      }
+      if (args.collection === 'orders') return { docs: [] }
+      if (args.collection === 'stock-levels') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'coupon@test.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+  const couponUpdates = payload._calls.update.filter((c: any) => c.collection === 'coupons')
+  assert.equal(couponUpdates.length, 1)
+  assert.equal(couponUpdates[0].data.totalUses, 4)
+})
+
+test('should create sub-orders and platform line items when multivendor is enabled', async () => {
+  process.env.MULTIVENDOR_ENABLED = 'true'
+  process.env.DEFAULT_COMMISSION_RATE = '10'
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [
+            { product: { id: 'p-v' }, quantity: 1, unitPrice: 10 },
+            { product: { id: 'p-plat' }, quantity: 1, unitPrice: 5 },
+          ],
+        }
+      }
+      if (args.collection === 'products') {
+        if (args.id === 'p-v') {
+          return { id: 'p-v', name: 'Vendor P', basePrice: 100, sku: 'V', tenant: { id: 't-1' } }
+        }
+        return { id: 'p-plat', name: 'Platform P', basePrice: 20, sku: 'P', tenant: null }
+      }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'vendor-settings') return { docs: [] }
+      if (args.collection === 'orders') return { docs: [] }
+      if (args.collection === 'stock-levels') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'mv@test.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+  const subCreates = payload._calls.create.filter((c: any) => c.collection === 'sub-orders')
+  assert.equal(subCreates.length, 1)
+  assert.equal(subCreates[0].data.tenant, 't-1')
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates.length, 2)
+  const withSub = itemCreates.filter((c: any) => c.data.subOrder != null)
+  const platformOnly = itemCreates.filter((c: any) => c.data.subOrder == null && c.data.product === 'p-plat')
+  assert.equal(withSub.length, 1)
+  assert.equal(platformOnly.length, 1)
+})
+
+test('should reserve stock when matching stock-level exists', async () => {
+  const payload = buildPayload({
+    find: async (args: any) => {
+      if (args.collection === 'stock-levels') {
+        return {
+          docs: [
+            {
+              id: 'sl-1',
+              product: 'prod-1',
+              reservedQuantity: 1,
+            },
+          ],
+        }
+      }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  await processCheckout(payload, { ...baseInput, guestEmail: 'stock@test.com' }, undefined, guestReq())
+  const stockUpdates = payload._calls.update.filter((c: any) => c.collection === 'stock-levels')
+  assert.equal(stockUpdates.length, 1)
+  assert.equal(stockUpdates[0].data.reservedQuantity, 3)
+})
+
+test('should skip commit when adapter returns no transaction id', async () => {
+  let committed = false
+  const payload = buildPayload()
+  payload.db.beginTransaction = async () => null
+  payload.db.commitTransaction = async () => { committed = true }
+  await processCheckout(payload, { ...baseInput, guestEmail: 'notx@test.com' }, undefined, guestReq())
+  assert.equal(committed, false)
+})
+
+test('should load user email for confirmation when checkout is authenticated', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          user: { id: 'u-1' },
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      if (args.collection === 'users') return { id: 'u-1', email: 'buyer@test.com' }
+      return { id: args.id }
+    },
+  })
+  const req = { headers: { get: () => null }, user: { id: 'u-1', role: 'customer' }, context: {} } as any
+  await processCheckout(payload, baseInput, 'u-1', req)
+  const userLookups = payload._calls.findByID.filter((c: any) => c.collection === 'users')
+  assert.ok(userLookups.some((c: any) => c.id === 'u-1'))
+})
+
+test('should set changedBy on simulated payment history when user is logged in', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          user: { id: 'u-1' },
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      return { id: args.id }
+    },
+  })
+  const req = { headers: { get: () => null }, user: { id: 'u-1', role: 'customer' }, context: {} } as any
+  await processCheckout(payload, { ...baseInput, simulatePayment: true }, 'u-1', req)
+  const histCreates = payload._calls.create.filter((c: any) => c.collection === 'order-status-history')
+  assert.ok(histCreates.some((c: any) => c.data?.changedBy === 'u-1' && c.data?.toStatus === 'processing'))
 })
