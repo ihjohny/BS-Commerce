@@ -138,6 +138,7 @@ export default buildConfig({
     }),
     inventoryPlugin({
       enabled: process.env.INVENTORY_ENABLED !== 'false',
+      multivendorEnabled: process.env.MULTIVENDOR_ENABLED === 'true',
       trackMovements: true,
       lowStockThreshold: Number(process.env.LOW_STOCK_THRESHOLD || '10'),
     }),

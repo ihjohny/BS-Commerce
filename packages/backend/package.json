@@ -14,6 +14,8 @@
     "test:cov:check": "c8 check-coverage",
     "test:e2e": "node tests/run-e2e.mjs",
     "test:e2e:safe": "node tests/run-e2e-safe.mjs",
+    "test:e2e:safe:profile": "node tests/run-e2e-safe.mjs",
+    "test:matrix:e2e:parallel": "node tests/run-all-profiles-safe-parallel-observe.mjs",
     "test:e2e:verification": "node tests/run-e2e.mjs --suite verification",
     "test:e2e:guest": "node tests/run-e2e.mjs --suite guest",
     "test:e2e:multivendor": "node tests/run-e2e.mjs --profile multivendor",

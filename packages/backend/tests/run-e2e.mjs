@@ -177,6 +177,10 @@ async function main() {
       run('Guest checkout', 'tests/e2e/checkout/guest-checkout.e2e.test.mjs', sharedEnv),
       run('Authenticated checkout', 'tests/e2e/checkout/authenticated-checkout.e2e.test.mjs', sharedEnv),
       run('Checkout security', 'tests/e2e/checkout/checkout-security.e2e.test.mjs', sharedEnv),
+      run('Multivendor inventory checkout', 'tests/e2e/checkout/multivendor-inventory-checkout.e2e.test.mjs', sharedEnv),
+      run('Multivendor inventory lifecycle', 'tests/e2e/inventory/multivendor-inventory-lifecycle.e2e.test.mjs', sharedEnv),
+      run('Inventory lifecycle', 'tests/e2e/inventory/inventory-lifecycle.e2e.test.mjs', sharedEnv),
+      run('Inventory allocation & vendor reassign', 'tests/e2e/inventory/inventory-allocation-reassign.e2e.test.mjs', sharedEnv),
     )
   }
 

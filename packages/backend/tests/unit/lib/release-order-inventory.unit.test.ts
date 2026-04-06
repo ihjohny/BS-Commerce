@@ -1,190 +1,305 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 // @ts-ignore
-import { releaseOrderInventory } from '../../../src/lib/release-order-inventory.ts'
+import { releaseOrderInventory, stockLevelIdFromItem } from '../../../src/lib/release-order-inventory.ts'
 
-test('should no-op when items array is empty', async () => {
-  let findCalls = 0
-  const payload = {
-    find: async () => {
-      findCalls++
-      return { docs: [] }
-    },
-    update: async () => ({}),
-  }
-  await releaseOrderInventory(payload as any, [], undefined)
-  assert.equal(findCalls, 0)
+test('stockLevelIdFromItem: null and object', () => {
+  assert.equal(stockLevelIdFromItem({ stockLevel: null }), null)
+  assert.equal(stockLevelIdFromItem({ stockLevel: { id: 'x' } }), 'x')
+  assert.equal(stockLevelIdFromItem({ stockLevel: 'y' }), 'y')
 })
 
-test('should decrement reservedQuantity when matching stock level exists', async () => {
-  const updates: any[] = []
+test('releaseOrderInventory: empty items', async () => {
+  await releaseOrderInventory({} as never, [])
+})
+
+test('releaseOrderInventory: direct path uses quantity 1 when item quantity is zero', async () => {
+  const updates: Array<{ data: { reservedQuantity: number } }> = []
   const payload = {
-    find: async () => ({
-      docs: [
-        {
-          id: 'sl-1',
-          product: 'p-1',
-          variant: null,
-          reservedQuantity: 5,
-        },
-      ],
-    }),
-    update: async (args: any) => {
+    find: async () => ({ docs: [] }),
+    findByID: async () => ({ id: 'sl-1', reservedQuantity: 3 }),
+    update: async (args: { data: { reservedQuantity: number } }) => {
+      updates.push(args)
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ stockLevel: 'sl-1', quantity: 0, product: 'p1' } as never])
+  assert.equal(updates[0]?.data.reservedQuantity, 2)
+})
+
+test('releaseOrderInventory: direct path coerces missing reservedQuantity', async () => {
+  const updates: Array<{ data: { reservedQuantity: number } }> = []
+  const payload = {
+    find: async () => ({ docs: [] }),
+    findByID: async () => ({ id: 'sl-1', reservedQuantity: undefined }),
+    update: async (args: { data: { reservedQuantity: number } }) => {
+      updates.push(args)
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ stockLevel: 'sl-1', quantity: 1, product: 'p1' } as never])
+  assert.equal(updates[0]?.data.reservedQuantity, 0)
+})
+
+test('releaseOrderInventory: direct stockLevel decreases reserved only', async () => {
+  const updates: Array<{ id: string; data: { reservedQuantity: number } }> = []
+  const payload = {
+    find: async () => ({ docs: [] }),
+    findByID: async () => ({ id: 'sl-1', reservedQuantity: 10 }),
+    update: async (args: { id: string; data: { reservedQuantity: number } }) => {
       updates.push(args)
       return {}
     },
   }
   await releaseOrderInventory(
-    payload as any,
-    [{ product: 'p-1', quantity: 2 }],
-    {} as any,
+    payload as never,
+    [{ stockLevel: 'sl-1', quantity: 3, product: 'p1' } as never],
+    {} as never,
   )
-  assert.equal(updates.length, 1)
-  assert.equal(updates[0].data.reservedQuantity, 3)
+  assert.equal(updates[0]?.data.reservedQuantity, 7)
 })
 
-test('should match variant-specific stock level', async () => {
+test('releaseOrderInventory: skips update when level doc missing', async () => {
+  let updates = 0
+  const payload = {
+    find: async () => ({ docs: [] }),
+    findByID: async () => null,
+    update: async () => {
+      updates++
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ stockLevel: 'gone', quantity: 1, product: 'p1' } as never])
+  assert.equal(updates, 0)
+})
+
+test('releaseOrderInventory: legacy product match', async () => {
+  const updates: Array<{ id: string }> = []
+  const payload = {
+    find: async () => ({
+      docs: [
+        {
+          id: 'sl-r',
+          product: 'p1',
+          variant: null,
+          reservedQuantity: 5,
+        },
+      ],
+    }),
+    update: async (args: { id: string }) => {
+      updates.push(args)
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ product: 'p1', quantity: 2 } as never])
+  assert.equal(updates[0]?.id, 'sl-r')
+})
+
+test('releaseOrderInventory: all direct stockLevel skips bulk find', async () => {
+  let findCalls = 0
+  const payload = {
+    find: async (args: { collection: string }) => {
+      if (args.collection === 'stock-levels') findCalls++
+      return { docs: [] }
+    },
+    findByID: async () => ({ id: 'sl-1', reservedQuantity: 3 }),
+    update: async () => ({}),
+  }
+  await releaseOrderInventory(payload as never, [
+    { stockLevel: 'sl-1', quantity: 1, product: 'p1' } as never,
+  ])
+  assert.equal(findCalls, 0)
+})
+
+test('releaseOrderInventory: legacy skips without product', async () => {
+  let updates = 0
+  const payload = {
+    find: async () => ({ docs: [] }),
+    update: async () => {
+      updates++
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ quantity: 1 } as never])
+  assert.equal(updates, 0)
+})
+
+test('releaseOrderInventory: legacy matches row with variant stored as object', async () => {
+  const updates: Array<{ id: string }> = []
+  const payload = {
+    find: async () => ({
+      docs: [
+        {
+          id: 'sl-vo',
+          product: 'p1',
+          variant: { id: 'vz' },
+          reservedQuantity: 4,
+        },
+      ],
+    }),
+    update: async (args: { id: string }) => {
+      updates.push(args)
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ product: 'p1', variant: 'vz', quantity: 1 } as never])
+  assert.equal(updates[0]?.id, 'sl-vo')
+})
+
+test('releaseOrderInventory: legacy variant object id', async () => {
+  const updates: Array<{ id: string }> = []
   const payload = {
     find: async () => ({
       docs: [
         {
           id: 'sl-v',
-          product: 'p-1',
-          variant: 'v-1',
-          reservedQuantity: 1,
+          product: 'p1',
+          variant: 'v-2',
+          reservedQuantity: 4,
         },
       ],
     }),
-    update: async (args: any) => {
-      assert.equal(args.data.reservedQuantity, 0)
+    update: async (args: { id: string }) => {
+      updates.push(args)
       return {}
     },
   }
-  await releaseOrderInventory(
-    payload as any,
-    [{ product: 'p-1', variant: 'v-1', quantity: 1 }],
-    {} as any,
-  )
+  await releaseOrderInventory(payload as never, [
+    { product: 'p1', variant: { id: 'v-2' }, quantity: 1 } as never,
+  ])
+  assert.equal(updates[0]?.id, 'sl-v')
 })
 
-test('should no-op when product ids list is empty', async () => {
-  let findCalls = 0
-  const payload = {
-    find: async () => {
-      findCalls++
-      return { docs: [] }
-    },
-    update: async () => ({}),
-  }
-  await releaseOrderInventory(payload as any, [{ product: undefined, quantity: 1 }] as any)
-  assert.equal(findCalls, 0)
-})
-
-test('should skip update when no stock level matches', async () => {
+test('releaseOrderInventory: legacy no matching row', async () => {
   let updates = 0
   const payload = {
     find: async () => ({
-      docs: [{ id: 'sl-1', product: 'p-2', variant: null, reservedQuantity: 1 }],
+      docs: [{ id: 'x', product: 'p1', variant: 'a', reservedQuantity: 1 }],
     }),
     update: async () => {
       updates++
       return {}
     },
   }
-  await releaseOrderInventory(payload as any, [{ product: 'p-1', quantity: 1 }])
+  await releaseOrderInventory(payload as never, [{ product: 'p1', variant: 'b', quantity: 1 } as never])
   assert.equal(updates, 0)
 })
 
-test('should resolve object product and variant ids and match object stock rows', async () => {
-  const updates: any[] = []
+test('releaseOrderInventory: legacy coerces missing reserved on matched row', async () => {
+  const updates: Array<{ data: { reservedQuantity: number } }> = []
   const payload = {
     find: async () => ({
       docs: [
         {
-          id: 'sl-obj',
-          product: { id: 'p-obj' },
-          variant: { id: 'v-obj' },
-          reservedQuantity: 4,
+          id: 'sl-u',
+          product: 'p1',
+          variant: null,
+          reservedQuantity: undefined,
         },
       ],
     }),
-    update: async (args: any) => {
+    update: async (args: { data: { reservedQuantity: number } }) => {
       updates.push(args)
       return {}
     },
   }
-  await releaseOrderInventory(
-    payload as any,
-    [{ product: { id: 'p-obj' }, variant: { id: 'v-obj' }, quantity: 2 }],
-    undefined,
-  )
-  assert.equal(updates.length, 1)
-  assert.equal(updates[0].data.reservedQuantity, 2)
-  assert.equal(updates[0].req, undefined)
+  await releaseOrderInventory(payload as never, [{ product: 'p1', quantity: 1 } as never])
+  assert.equal(updates[0]?.data.reservedQuantity, 0)
 })
 
-test('should skip items without product while still processing others', async () => {
-  const updates: any[] = []
+test('releaseOrderInventory: legacy uses explicit item quantity', async () => {
+  const updates: Array<{ data: { reservedQuantity: number } }> = []
   const payload = {
     find: async () => ({
-      docs: [{ id: 'sl-1', product: 'p-1', variant: null, reservedQuantity: 5 }],
+      docs: [
+        {
+          id: 'sl-q',
+          product: 'p1',
+          variant: null,
+          reservedQuantity: 9,
+        },
+      ],
     }),
-    update: async (args: any) => {
+    update: async (args: { data: { reservedQuantity: number } }) => {
       updates.push(args)
       return {}
     },
   }
-  await releaseOrderInventory(payload as any, [
-    { product: 'p-1', quantity: 1 },
-    { product: undefined, quantity: 99 },
-  ] as any)
-  assert.equal(updates.length, 1)
-  assert.equal(updates[0].data.reservedQuantity, 4)
+  await releaseOrderInventory(payload as never, [{ product: 'p1', quantity: 4 } as never])
+  assert.equal(updates[0]?.data.reservedQuantity, 5)
 })
 
-test('should treat falsy quantity as 1 when releasing', async () => {
-  const updates: any[] = []
+test('releaseOrderInventory: legacy coerces NaN item quantity to 1', async () => {
+  const updates: Array<{ data: { reservedQuantity: number } }> = []
   const payload = {
     find: async () => ({
-      docs: [{ id: 'sl-q', product: 'p-q', variant: null, reservedQuantity: 5 }],
+      docs: [
+        {
+          id: 'sl-n',
+          product: 'p1',
+          variant: null,
+          reservedQuantity: 3,
+        },
+      ],
     }),
-    update: async (args: any) => {
+    update: async (args: { data: { reservedQuantity: number } }) => {
       updates.push(args)
       return {}
     },
   }
-  await releaseOrderInventory(payload as any, [{ product: 'p-q', quantity: 0 }])
-  assert.equal(updates.length, 1)
-  assert.equal(updates[0].data.reservedQuantity, 4)
+  await releaseOrderInventory(payload as never, [{ product: 'p1', quantity: Number.NaN } as never])
+  assert.equal(updates[0]?.data.reservedQuantity, 2)
 })
 
-test('should treat missing reservedQuantity on level as zero', async () => {
-  let newReserved: number | undefined
+test('releaseOrderInventory: legacy uses Number on reservedQuantity with explicit value', async () => {
+  const updates: Array<{ data: { reservedQuantity: number } }> = []
   const payload = {
     find: async () => ({
-      docs: [{ id: 'sl-mr', product: 'p-mr', variant: null }],
+      docs: [
+        {
+          id: 'sl-rn',
+          product: 'p1',
+          variant: null,
+          reservedQuantity: 6,
+        },
+      ],
     }),
-    update: async (args: any) => {
-      newReserved = args.data.reservedQuantity
-      return {}
-    },
-  }
-  await releaseOrderInventory(payload as any, [{ product: 'p-mr', quantity: 1 }])
-  assert.equal(newReserved, 0)
-})
-
-test('should match stock level when variant is null on item and stock', async () => {
-  const updates: any[] = []
-  const payload = {
-    find: async () => ({
-      docs: [{ id: 'sl-nv', product: 'p-x', variant: null, reservedQuantity: 1 }],
-    }),
-    update: async (args: any) => {
+    update: async (args: { data: { reservedQuantity: number } }) => {
       updates.push(args)
       return {}
     },
   }
-  const reqCtx = { x: 1 }
-  await releaseOrderInventory(payload as any, [{ product: 'p-x', variant: null, quantity: 1 }], reqCtx as any)
-  assert.equal(updates[0].req, reqCtx)
+  await releaseOrderInventory(payload as never, [{ product: 'p1', quantity: 2 } as never])
+  assert.equal(updates[0]?.data.reservedQuantity, 4)
+})
+
+test('releaseOrderInventory: legacy passes req on update', async () => {
+  const seen: unknown[] = []
+  const fakeReq = { tag: 'lr' }
+  const payload = {
+    find: async () => ({
+      docs: [{ id: 'sl-1', product: 'p1', variant: null, reservedQuantity: 2 }],
+    }),
+    update: async (args: { req?: unknown }) => {
+      seen.push(args.req)
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ product: 'p1', quantity: 1 } as never], fakeReq as never)
+  assert.equal(seen[0], fakeReq)
+})
+
+test('releaseOrderInventory: direct path passes req', async () => {
+  const seen: unknown[] = []
+  const fakeReq = { r: 1 }
+  const payload = {
+    find: async () => ({ docs: [] }),
+    findByID: async () => ({ id: 'sl-1', reservedQuantity: 2 }),
+    update: async (args: { req?: unknown }) => {
+      seen.push(args.req)
+      return {}
+    },
+  }
+  await releaseOrderInventory(payload as never, [{ stockLevel: 'sl-1', quantity: 1, product: 'p' } as never], fakeReq as never)
+  assert.equal(seen[0], fakeReq)
 })

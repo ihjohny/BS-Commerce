@@ -6,7 +6,7 @@
  * Used by: SubOrders afterChange (status -> shipped).
  */
 import type { Payload, PayloadRequest } from 'payload'
-import type { OrderItemLike } from './release-order-inventory'
+import { stockLevelIdFromItem, type OrderItemLike } from './release-order-inventory'
 
 export async function consumeOrderInventory(
   payload: Payload,
@@ -15,17 +15,46 @@ export async function consumeOrderInventory(
 ): Promise<void> {
   if (!items?.length) return
 
-  const productIds = [...new Set(items.map((i) => (typeof i.product === 'object' ? i.product?.id : i.product)).filter(Boolean) as string[])]
-  if (!productIds.length) return
+  const legacyItems = items.filter((i) => !stockLevelIdFromItem(i))
+  const productIds = [
+    ...new Set(legacyItems.map((i) => (typeof i.product === 'object' ? i.product?.id : i.product)).filter(Boolean) as string[]),
+  ]
 
-  const stockLevels = await payload.find({
-    collection: 'stock-levels',
-    where: { product: { in: productIds } },
-    limit: 100,
-    depth: 1,
-  })
+  const stockLevels =
+    productIds.length > 0
+      ? await payload.find({
+          collection: 'stock-levels',
+          where: { product: { in: productIds } },
+          limit: 100,
+          depth: 1,
+        })
+      : { docs: [] }
 
   for (const item of items) {
+    const directId = stockLevelIdFromItem(item)
+    if (directId) {
+      const quantity = Number(item.quantity) || 1
+      const levelDoc = await payload.findByID({
+        collection: 'stock-levels',
+        id: directId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      if (!levelDoc) continue
+      const currentQty = Number((levelDoc as { quantity?: number }).quantity) || 0
+      const reserved = Number((levelDoc as { reservedQuantity?: number }).reservedQuantity) || 0
+      const newQuantity = Math.max(0, currentQty - quantity)
+      const newReserved = Math.max(0, reserved - quantity)
+      await payload.update({
+        collection: 'stock-levels',
+        id: directId,
+        overrideAccess: true,
+        data: { quantity: newQuantity, reservedQuantity: newReserved },
+        ...(req && { req }),
+      })
+      continue
+    }
+
     if (!item.product) continue
     const productId = typeof item.product === 'object' ? item.product?.id : item.product
     const variantId = item.variant

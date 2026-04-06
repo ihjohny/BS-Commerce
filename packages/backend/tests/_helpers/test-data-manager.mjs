@@ -300,7 +300,56 @@ export class TestDataManager {
     }
     const doc = res.json?.doc || res.json
     this.#track('products', doc?.id)
+    await this.#ensureStockForProductIfNeeded(doc)
     return doc
+  }
+
+  /**
+   * Phase 12: when inventory is on, checkout allocates a stock-level per line — seed a row for API-created products.
+   */
+  async #ensureStockForProductIfNeeded(productDoc) {
+    if (process.env.INVENTORY_ENABLED === 'false') return
+
+    const productId = String(productDoc?.id ?? '')
+    if (!productId) return
+
+    const multivendor = process.env.MULTIVENDOR_ENABLED === 'true'
+    const t = productDoc?.tenant
+    const tenantId =
+      t == null ? null : typeof t === 'object' && t !== null ? t.id : String(t)
+
+    const locBody = {
+      name: `E2E Default Warehouse ${this.#uid()}`,
+      code: `E2E-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
+      isActive: true,
+    }
+    if (multivendor && tenantId) {
+      locBody.tenant = tenantId
+    }
+
+    const locRes = await this.#request('/stock-locations', { method: 'POST', body: locBody })
+    if (![200, 201].includes(locRes.status)) {
+      throw new Error(`createProduct stock-location (${locRes.status}): ${locRes.text?.slice(0, 400)}`)
+    }
+    const loc = locRes.json?.doc || locRes.json
+    const locationId = loc?.id
+    if (!locationId) throw new Error('createProduct: missing stock-location id')
+    this.#track('stock-locations', locationId)
+
+    const slRes = await this.#request('/stock-levels', {
+      method: 'POST',
+      body: {
+        product: productId,
+        location: locationId,
+        quantity: 100_000,
+        reservedQuantity: 0,
+      },
+    })
+    if (![200, 201].includes(slRes.status)) {
+      throw new Error(`createProduct stock-level (${slRes.status}): ${slRes.text?.slice(0, 400)}`)
+    }
+    const sl = slRes.json?.doc || slRes.json
+    if (sl?.id) this.#track('stock-levels', sl.id)
   }
 
   async createTenant(overrides = {}) {
@@ -378,31 +427,65 @@ export class TestDataManager {
   }
 
   /**
-   * Delete all tracked entities in reverse creation order.
+   * Delete all tracked entities in FK-safe order (not strict reverse creation order).
+   * Example: carts reference products; stock-levels reference locations — delete children first.
    * Silently ignores 404s (already deleted / cascade).
    */
   async cleanup() {
-    const items = [...this.#created].reverse()
-    let errors = 0
-    for (const { collection, id } of items) {
-      try {
-        // Tenant teardown can violate FK constraints via deep references
-        // (products/order-items/sub-orders). Skip here; infra down -v resets DB
-        // in automated runs.
-        if (collection === 'tenants') {
-          continue
-        }
+    /** Lower index = delete first (dependents before parents). */
+    const CLEANUP_PRIORITY = [
+      'stock-levels',
+      'stock-locations',
+      'carts',
+      'order-items',
+      'sub-orders',
+      'transactions',
+      'orders',
+      'verification-codes',
+      'products',
+      'categories',
+      'coupons',
+      'users',
+    ]
 
-        const res = await this.#request(`/${collection}/${id}`, { method: 'DELETE' })
-        if (res.status !== 200 && res.status !== 404) {
-          if (this.#verbose) console.log(`  [DM] cleanup ${collection}/${id}: ${res.status}`)
+    const priority = (collection) => {
+      const i = CLEANUP_PRIORITY.indexOf(collection)
+      return i === -1 ? 1000 : i
+    }
+
+    const byColl = new Map()
+    for (const { collection, id } of this.#created) {
+      if (!byColl.has(collection)) byColl.set(collection, [])
+      byColl.get(collection).push(id)
+    }
+
+    const collections = [...byColl.keys()].sort((a, b) => {
+      const d = priority(a) - priority(b)
+      return d !== 0 ? d : a.localeCompare(b)
+    })
+
+    let errors = 0
+    const total = this.#created.length
+    for (const collection of collections) {
+      // Tenant teardown can violate FK constraints via deep references
+      // (products/order-items/sub-orders). Skip here; infra down -v resets DB
+      // in automated runs.
+      if (collection === 'tenants') continue
+
+      const ids = byColl.get(collection) || []
+      for (const id of [...ids].reverse()) {
+        try {
+          const res = await this.#request(`/${collection}/${id}`, { method: 'DELETE' })
+          if (res.status !== 200 && res.status !== 404) {
+            if (this.#verbose) console.log(`  [DM] cleanup ${collection}/${id}: ${res.status}`)
+            errors++
+          }
+        } catch {
           errors++
         }
-      } catch {
-        errors++
       }
     }
     this.#created = []
-    if (this.#verbose) console.log(`  [DM] cleanup complete (${items.length} items, ${errors} errors)`)
+    if (this.#verbose) console.log(`  [DM] cleanup complete (${total} items, ${errors} errors)`)
   }
 }
