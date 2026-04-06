@@ -103,6 +103,45 @@ test('should map customer object id and string customer id in sampled orders', a
   assert.equal(json.usage.totalDiscountGiven, 1.11)
 })
 
+test('should map customer object without id and nullish discount totals', async () => {
+  const req = mockHandlerReq({
+    user: { role: 'admin' },
+    params: { id: 'coupon-1' },
+    payloadOverrides: {
+      find: async () => ({
+        totalDocs: 1,
+        docs: [
+          {
+            id: 'o-1',
+            orderNumber: 'ORD-1',
+            customer: 0,
+            discountTotal: undefined,
+            grandTotal: undefined,
+            createdAt: '2026-01-01',
+          },
+        ],
+      }),
+    } as any,
+  })
+  req.payload.findByID = async () => ({
+    id: 'coupon-1',
+    code: 'X',
+    type: 'percentage',
+    value: undefined,
+    isActive: true,
+    totalUses: 0,
+    maxTotalUses: null,
+    maxUsesPerUser: null,
+    expiresAt: null,
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 200)
+  const json = await res.json()
+  assert.equal(json.usage.sampledOrders[0].customer, null)
+  assert.equal(json.usage.totalDiscountGiven, 0)
+  assert.equal(json.coupon.value, 0)
+})
+
 test('should cap sampled orders at 20 when many redemptions exist', async () => {
   const docs = Array.from({ length: 25 }, (_, i) => ({
     id: `o-${i}`,

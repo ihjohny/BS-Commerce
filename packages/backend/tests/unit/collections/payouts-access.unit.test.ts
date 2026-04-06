@@ -19,6 +19,12 @@ test('read: vendor with tenant is scoped to tenant', () => {
   assert.ok(typeof r === 'object' && r.tenant?.equals === 'ten-9')
 })
 
+test('read: vendor with string tenant id is scoped', () => {
+  const read = Payouts.access?.read as any
+  const r = read({ req: { user: { id: 'v-1', role: 'vendor', tenant: 'ten-str' } } })
+  assert.ok(typeof r === 'object' && r.tenant?.equals === 'ten-str')
+})
+
 test('read: vendor without tenant is denied', () => {
   const read = Payouts.access?.read as any
   assert.equal(read({ req: { user: { id: 'v-1', role: 'vendor' } } }), false)

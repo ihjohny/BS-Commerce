@@ -78,6 +78,28 @@ test('should throw when variant price is NaN', async () => {
   await assert.rejects(() => hook({ operation: 'update', data, req }), /Invalid variant price/)
 })
 
+test('should resolve variant.product when stored as populated object', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: { id: 'prod-obj' }, variant: { id: 'var-obj' }, quantity: 1 }],
+  } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'prod-obj', basePrice: 100 }
+        if (collection === 'product-variants') {
+          return { id: 'var-obj', price: 25, product: { id: 'prod-obj' } }
+        }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items[0].unitPrice, 25)
+})
+
 test('should resolve product and variant ids from object references', async () => {
   const hook = getBeforeChangeHook()
   const data = {
@@ -147,6 +169,25 @@ test('should force non-admin user assignment to self id', async () => {
   const req = { user: { id: 'self-user', role: 'customer' }, headers: mockHeaders({}), payload: {} }
   const result = await hook({ operation: 'create', data, req })
   assert.equal(result.user, 'self-user')
+})
+
+test('should treat zero quantity as zero in subtotal reduce', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: 'p-z', quantity: 0, unitPrice: 10 }],
+  } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-z', basePrice: 7 }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.subtotal, 0)
 })
 
 test('should derive unitPrice and totals from product price', async () => {

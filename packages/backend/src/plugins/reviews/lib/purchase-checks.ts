@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import { toStringId } from '../../../lib/relation-id'
 
 /**
  * Reviews should only be allowed after the relevant fulfillment happened:
@@ -16,11 +17,6 @@ type RelevantParentOrderStatus = (typeof RELEVANT_PARENT_ORDER_STATUSES_SINGLE_V
 
 const RELEVANT_PARENT_ORDER_STATUSES_VENDOR = ['partially-shipped', 'shipped', 'delivered', 'completed'] as const
 type RelevantParentOrderStatusVendor = (typeof RELEVANT_PARENT_ORDER_STATUSES_VENDOR)[number]
-
-function toStringId(value: unknown): string {
-  if (value == null) return ''
-  return typeof value === 'string' ? value : String(value)
-}
 
 async function getProductTenantId(payload: Payload, productId: string, req?: any): Promise<string> {
   const product = await payload.findByID({

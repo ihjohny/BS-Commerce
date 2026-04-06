@@ -10,6 +10,12 @@ function getBeforeValidateHook() {
   return hook as any
 }
 
+test('beforeValidate should return early when data is null', () => {
+  const hook = getBeforeValidateHook()
+  const out = hook({ data: null, req: { user: { role: 'vendor', tenant: 't' } } })
+  assert.equal(out, null)
+})
+
 test('should auto-assign tenant for vendor when tenant missing', () => {
   const hook = getBeforeValidateHook()
   const data = { name: 'Product A' } as any

@@ -35,6 +35,26 @@ test('should register multivendor collections when enabled', async () => {
   assert.ok(slugs.includes('vendor-applications'))
 })
 
+test('should inject tenant when user fields array contains non-object entries', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const incoming = {
+    collections: [{ slug: 'users', fields: [false as any, { name: 'email', type: 'email' }] }],
+  } as any
+  const result = await plugin(incoming)
+  const users = (result.collections || []).find((c: any) => c.slug === 'users') as any
+  assert.ok((users.fields || []).some((f: any) => f?.name === 'tenant'))
+})
+
+test('should inject tenant field when some user fields omit name key', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const incoming = {
+    collections: [{ slug: 'users', fields: [{ type: 'row' }, { name: 'email', type: 'email' }] }],
+  } as any
+  const result = await plugin(incoming)
+  const users = (result.collections || []).find((c: any) => c.slug === 'users') as any
+  assert.ok((users.fields || []).some((f: any) => f?.name === 'tenant'))
+})
+
 test('should inject tenant field into users when enabled', async () => {
   const plugin = multivendorPlugin({ enabled: true })
   const incoming = {
@@ -45,6 +65,27 @@ test('should inject tenant field into users when enabled', async () => {
   assert.ok(users)
   const fieldNames = (users.fields || []).map((f: any) => f.name)
   assert.ok(fieldNames.includes('tenant'))
+})
+
+test('should inject tenant when users collection omits fields (falsy users.fields)', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const incoming = { collections: [{ slug: 'users' }] } as any
+  const result = await plugin(incoming)
+  const users = (result.collections || []).find((c: any) => c.slug === 'users') as any
+  assert.ok((users.fields || []).some((f: any) => f?.name === 'tenant'))
+})
+
+test('should inject media tenant when media collection omits fields', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const incoming = {
+    collections: [
+      { slug: 'users', fields: [{ name: 'email', type: 'email' }] },
+      { slug: 'media' },
+    ],
+  } as any
+  const result = await plugin(incoming)
+  const media = (result.collections || []).find((c: any) => c.slug === 'media') as any
+  assert.ok((media.fields || []).some((f: any) => f?.name === 'tenant'))
 })
 
 test('should insert users tenant field immediately after locale when locale exists', async () => {
@@ -86,6 +127,25 @@ test('should not duplicate tenant field on users if already present', async () =
   const users = (result.collections || []).find((c: any) => c.slug === 'users') as { fields?: unknown[] }
   const tenantCount = (users.fields || []).filter((f: any) => f?.name === 'tenant').length
   assert.equal(tenantCount, 1)
+})
+
+test('should merge media beforeValidate when it is already an array', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const existing = () => ({})
+  const incoming = {
+    collections: [
+      { slug: 'users', fields: [{ name: 'email', type: 'email' }] },
+      {
+        slug: 'media',
+        fields: [{ name: 'alt', type: 'text' }],
+        hooks: { beforeValidate: [existing] },
+      },
+    ],
+  } as any
+  const result = await plugin(incoming)
+  const media = (result.collections || []).find((c: any) => c.slug === 'media') as any
+  const hooks = media.hooks?.beforeValidate
+  assert.ok(Array.isArray(hooks) && hooks.length >= 2)
 })
 
 test('should augment media when beforeValidate is a single function', async () => {
@@ -138,11 +198,29 @@ test('should augment media with tenant field, access, and beforeValidate when me
     req: { user: { role: 'vendor', tenant: 'ten-str' } },
   })
   assert.equal(withTenantString.tenant, 'ten-str')
+  const withEmptyTenantObj = hook({
+    data: { alt: 'w' },
+    req: { user: { role: 'vendor', tenant: {} } },
+  })
+  assert.deepEqual(withEmptyTenantObj.tenant, {})
   const unchanged = hook({
     data: { alt: 'y' },
     req: { user: { role: 'customer' } },
   })
   assert.deepEqual(unchanged, { alt: 'y' })
+})
+
+test('should inject media tenant when media fields include non-object entry', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const incoming = {
+    collections: [
+      { slug: 'users', fields: [{ name: 'email', type: 'email' }] },
+      { slug: 'media', fields: [null as any, { name: 'alt', type: 'text' }] },
+    ],
+  } as any
+  const result = await plugin(incoming)
+  const media = (result.collections || []).find((c: any) => c.slug === 'media') as any
+  assert.ok((media.fields || []).some((f: any) => f?.name === 'tenant'))
 })
 
 test('should not duplicate media tenant field when media already has tenant', async () => {

@@ -21,6 +21,13 @@ test('should return invalid when no coupon code provided', async () => {
   assert.ok(result.discountReason?.includes('No coupon'))
 })
 
+test('should return invalid when coupon code is not a string', async () => {
+  const payload = mockPayload()
+  const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: null as any, subtotal: 100 })
+  assert.equal(result.valid, false)
+  assert.ok(result.discountReason?.includes('No coupon'))
+})
+
 test('should return invalid when coupon not found', async () => {
   const payload = mockPayload({ find: async () => ({ docs: [] }) })
   const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'UNKNOWN', subtotal: 100 })
@@ -83,6 +90,24 @@ test('should calculate fixed discount correctly', async () => {
   const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'FLAT25', subtotal: 100 })
   assert.equal(result.valid, true)
   assert.equal(result.discountTotal, 25)
+})
+
+test('should coerce missing coupon value to zero for percentage branch', async () => {
+  const payload = mockPayload({
+    find: async () => ({ docs: [couponDoc({ type: 'percentage', value: undefined as any })], totalDocs: 0 }),
+  })
+  const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'PCT', subtotal: 100 })
+  assert.equal(result.valid, true)
+  assert.equal(result.discountTotal, 0)
+})
+
+test('should coerce missing coupon value to zero for fixed branch', async () => {
+  const payload = mockPayload({
+    find: async () => ({ docs: [couponDoc({ type: 'fixed', value: undefined as any })], totalDocs: 0 }),
+  })
+  const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'FX', subtotal: 100 })
+  assert.equal(result.valid, true)
+  assert.equal(result.discountTotal, 0)
 })
 
 test('should cap discount at subtotal (no negative total)', async () => {

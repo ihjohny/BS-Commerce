@@ -3,6 +3,14 @@ import assert from 'node:assert/strict'
 // @ts-ignore
 import { createOrderItemsConfig } from '../../../src/plugins/orders/collections/order-items.ts'
 
+test('beforeChange uses NaN quantity when quantity is undefined but productName set', () => {
+  const cfg = createOrderItemsConfig(false)
+  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const data = { productName: 'Widget', quantity: undefined } as any
+  const out = hook({ data })
+  assert.ok(String(out.itemLabel).includes('NaN'))
+})
+
 test('beforeChange should set itemLabel from productName and quantity', () => {
   const cfg = createOrderItemsConfig(false)
   const hook = cfg.hooks?.beforeChange?.[0] as any

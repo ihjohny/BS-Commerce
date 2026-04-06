@@ -78,6 +78,63 @@ test('should skip order status history when context flag is enabled', async () =
   assert.equal(createCalls.length, 0)
 })
 
+test('afterChange handles cancelled when previousDoc is missing', async () => {
+  assert.ok(afterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        findCalls++
+        if (args.collection === 'order-items') return { docs: [{ id: 'oi-1', product: 'p-1', quantity: 1 }] }
+        return { docs: [] }
+      },
+      update: async () => ({}),
+      create: async () => ({}),
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-x', status: 'cancelled' },
+    previousDoc: undefined,
+    req,
+  })
+  assert.ok(findCalls >= 1)
+})
+
+test('afterChange should release inventory when order cancelled with line items', async () => {
+  assert.ok(afterChangeHook)
+  let releaseCalls = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'order-items') {
+          return { docs: [{ id: 'oi-1', product: 'p-1', quantity: 2, variant: null }] }
+        }
+        if (args.collection === 'stock-levels') {
+          return {
+            docs: [{ id: 'sl-1', product: 'p-1', variant: null, quantity: 10, reservedQuantity: 2 }],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async () => {
+        releaseCalls++
+        return {}
+      },
+      create: async () => ({}),
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-x', status: 'cancelled' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.ok(releaseCalls >= 1)
+})
+
 test('afterChange should no-op inventory release when order cancelled with no items', async () => {
   assert.ok(afterChangeHook)
   let findCalls = 0
@@ -221,6 +278,31 @@ test('currency field defaultValue resolves when callable', () => {
   assert.ok(currencyField && typeof currencyField.defaultValue === 'function')
   const v = (currencyField.defaultValue as () => string)()
   assert.ok(typeof v === 'string' && v.length > 0)
+})
+
+test('afterChange should not consume again when order was already shipped', async () => {
+  assert.ok(afterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        findCalls++
+        if (args.collection === 'order-items') {
+          return { docs: [{ id: 'oi-1', product: 'p-1', quantity: 1 }] }
+        }
+        return { docs: [] }
+      },
+      create: async () => ({}),
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-already', status: 'shipped' },
+    previousDoc: { status: 'shipped' },
+    req,
+  })
+  assert.equal(findCalls, 0)
 })
 
 test('afterChange single-vendor should consume inventory when shipped items exist', async () => {

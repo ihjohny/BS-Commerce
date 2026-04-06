@@ -10,6 +10,30 @@ function getBeforeValidateHook(mv: boolean) {
   return hook as (args: { data: any; req: any }) => Promise<any>
 }
 
+test('beforeValidate should return early when data is null', async () => {
+  const hook = getBeforeValidateHook(true)
+  const out = await hook({ data: null, req: { user: { role: 'admin' }, payload: {} } })
+  assert.equal(out, null)
+})
+
+test('should resolve product id from object product reference when copying tenant', async () => {
+  const hook = getBeforeValidateHook(true)
+  const data = { product: { id: 'obj-prod' }, name: 'V', sku: 'SKU-O', price: 3 } as any
+  const req = {
+    payload: {
+      findByID: async ({ collection, id }: any) => {
+        if (collection === 'products' && id === 'obj-prod') {
+          return { id: 'obj-prod', tenant: { id: 't-obj' } }
+        }
+        return null
+      },
+    },
+    user: { role: 'admin' },
+  }
+  const out = await hook({ data: { ...data }, req })
+  assert.equal(out.tenant, 't-obj')
+})
+
 test('should copy tenant from product when multivendor and tenant missing on variant', async () => {
   const hook = getBeforeValidateHook(true)
   const data = { product: 'prod-99', name: 'V', sku: 'SKU-1', price: 10 } as any
@@ -39,6 +63,19 @@ test('should set tenant from vendor user when product has no tenant', async () =
   }
   const out = await hook({ data: { ...data }, req })
   assert.equal(out.tenant, 'tenant-vendor')
+})
+
+test('should set tenant from vendor user when tenant id is a plain string', async () => {
+  const hook = getBeforeValidateHook(true)
+  const data = { product: 'prod-1', name: 'V', sku: 'SKU-TN', price: 2 } as any
+  const req = {
+    payload: {
+      findByID: async () => ({ id: 'prod-1', tenant: null }),
+    },
+    user: { role: 'vendor', tenant: 'tenant-plain' },
+  }
+  const out = await hook({ data: { ...data }, req })
+  assert.equal(out.tenant, 'tenant-plain')
 })
 
 test('should not inject hooks when multivendor is disabled', () => {

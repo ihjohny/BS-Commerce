@@ -114,6 +114,42 @@ test('should reset emailVerified when email casing changes', async () => {
   assert.equal(result.emailVerified, false)
 })
 
+test('should not reset emailVerified when email omitted but phone is in payload', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'either'
+  const hook = await getHook()
+  const originalDoc = { email: 'a@b.com', phone: '+100', emailVerified: true }
+  const data = { phone: '+100' }
+  const result = hook({ data, originalDoc, req: {} } as any)
+  assert.equal(result.emailVerified, undefined)
+})
+
+test('should not reset phoneVerified when phone omitted but email is in payload', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'either'
+  const hook = await getHook()
+  const originalDoc = { email: 'a@b.com', phone: '+100', phoneVerified: true }
+  const data = { email: 'a@b.com' }
+  const result = hook({ data, originalDoc, req: {} } as any)
+  assert.equal(result.phoneVerified, undefined)
+})
+
+test('should reset emailVerified when email set to null with phone unchanged', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'either'
+  const hook = await getHook()
+  const originalDoc = { email: 'a@b.com', phone: '+100', emailVerified: true }
+  const data = { email: null, phone: '+100' } as any
+  const result = hook({ data, originalDoc, req: {} } as any)
+  assert.equal(result.emailVerified, false)
+})
+
+test('should reset phoneVerified when phone set to null with email unchanged', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'either'
+  const hook = await getHook()
+  const originalDoc = { email: 'a@b.com', phone: '+100', phoneVerified: true }
+  const data = { email: 'a@b.com', phone: null } as any
+  const result = hook({ data, originalDoc, req: {} } as any)
+  assert.equal(result.phoneVerified, false)
+})
+
 test('should not reset emailVerified when email unchanged', async () => {
   process.env.AUTH_REQUIRED_IDENTIFIER = 'email'
   const hook = await getHook()

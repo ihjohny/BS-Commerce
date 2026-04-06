@@ -22,6 +22,14 @@ function getAccess(requireApproval = true) {
   }
 }
 
+test('should reject create when unauthenticated', async () => {
+  const { before } = getHooks(true)
+  await assert.rejects(
+    () => before({ operation: 'create', data: { product: 'p-1', rating: 5 }, req: {} }),
+    /Forbidden/,
+  )
+})
+
 test('should reject create when customer has not purchased product', async () => {
   const { before } = getHooks(true)
   const req = {
@@ -78,6 +86,70 @@ test('should set author and pending status on valid create when approval require
   const result = await before({ operation: 'create', data, req })
   assert.equal(result.author, 'u-1')
   assert.equal(result.status, 'pending')
+})
+
+test('should reject create when non-customer submits review', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'vendor' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  await assert.rejects(
+    () => before({ operation: 'create', data: { product: 'p-1', rating: 5 }, req }),
+    /Forbidden/,
+  )
+})
+
+test('should reject create when product id is missing', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  await assert.rejects(
+    () => before({ operation: 'create', data: { product: null, rating: 5 }, req }),
+    /product is required/i,
+  )
+})
+
+test('should set author and approved status on valid create when moderation off', async () => {
+  const { before } = getHooks(false)
+  const data = { product: 'p-1', rating: 5 } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: {
+      findByID: async () => ({ id: 'p-1' }),
+      find: async ({ collection }: any) => {
+        if (collection === 'orders') return { docs: [{ id: 'o-1' }], totalDocs: 1 }
+        if (collection === 'order-items') return { docs: [{ id: 'oi-1' }], totalDocs: 1 }
+        if (collection === 'product-reviews') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  const result = await before({ operation: 'create', data, req })
+  assert.equal(result.status, 'approved')
+})
+
+test('should allow admin to change review status on update', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'admin-1', role: 'admin' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  const result = await before({
+    operation: 'update',
+    data: { status: 'approved' },
+    originalDoc: { author: 'u-9', status: 'pending' },
+    req,
+  })
+  assert.equal(result.status, 'approved')
+})
+
+test('afterChange should no-op when doc is missing', async () => {
+  const { after } = getHooks(true)
+  const out = await after({ doc: undefined, req: { payload: {} } })
+  assert.equal(out, undefined)
 })
 
 test('should recompute product rating in afterChange when product id exists', async () => {
@@ -218,6 +290,10 @@ test('access read: public sees approved only when moderation on', () => {
 
 test('access read: public sees all when moderation off', () => {
   assert.equal(getAccess(false).read({ req: {} }), true)
+})
+
+test('access update: admin allowed', () => {
+  assert.equal(getAccess(true).update({ req: { user: { role: 'admin' } } }), true)
 })
 
 test('access update: unauthenticated denied', () => {

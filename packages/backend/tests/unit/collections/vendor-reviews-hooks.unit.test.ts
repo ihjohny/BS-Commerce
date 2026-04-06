@@ -22,6 +22,99 @@ function getAccess(requireApproval = true) {
   }
 }
 
+test('beforeChange should reject when user is missing', async () => {
+  const { before } = getHooks(true)
+  await assert.rejects(
+    () => before({ operation: 'create', data: { tenant: 't-1', rating: 5 }, req: {} }),
+    /Forbidden/,
+  )
+})
+
+test('should resolve numeric tenant id for create', async () => {
+  const { before } = getHooks(true)
+  const data = { tenant: 55 as any, rating: 5 } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: {
+      find: async ({ collection }: any) => {
+        if (collection === 'orders') return { docs: [{ id: 'o-1' }], totalDocs: 1 }
+        if (collection === 'sub-orders') return { docs: [{ id: 'so-1' }], totalDocs: 1 }
+        if (collection === 'vendor-reviews') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  const result = await before({ operation: 'create', data, req })
+  assert.equal(result.author, 'u-1')
+})
+
+test('should allow create when tenant is a populated relationship object', async () => {
+  const { before } = getHooks(true)
+  const data = { tenant: { id: 't-obj' }, rating: 5 } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: {
+      find: async ({ collection }: any) => {
+        if (collection === 'orders') return { docs: [{ id: 'o-1' }], totalDocs: 1 }
+        if (collection === 'sub-orders') return { docs: [{ id: 'so-1' }], totalDocs: 1 }
+        if (collection === 'vendor-reviews') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  const result = await before({ operation: 'create', data, req })
+  assert.equal(result.author, 'u-1')
+})
+
+test('should set pending status when review moderation is enabled', async () => {
+  const { before } = getHooks(true)
+  const data = { tenant: 't-1', rating: 5 } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: {
+      find: async ({ collection }: any) => {
+        if (collection === 'orders') return { docs: [{ id: 'o-1' }], totalDocs: 1 }
+        if (collection === 'sub-orders') return { docs: [{ id: 'so-1' }], totalDocs: 1 }
+        if (collection === 'vendor-reviews') return { docs: [], totalDocs: 0 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  const result = await before({ operation: 'create', data, req })
+  assert.equal(result.status, 'pending')
+})
+
+test('afterChange should not recompute when doc is missing', async () => {
+  const { after } = getHooks(true)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async () => {
+        findCalls++
+        return { docs: [], totalDocs: 0 }
+      },
+      update: async () => ({}),
+    },
+  }
+  await after({ doc: undefined, req })
+  assert.equal(findCalls, 0)
+})
+
+test('should allow customer update when original doc has no author', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  const result = await before({
+    operation: 'update',
+    data: { comment: 'only' },
+    originalDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(result.comment, 'only')
+})
+
 test('should reject vendor review create when user has no fulfilled tenant purchase', async () => {
   const { before } = getHooks(true)
   const req = {
@@ -94,6 +187,39 @@ test('should reject update when customer attempts to change author', async () =>
   )
 })
 
+test('should reject update when customer is not the review author', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  await assert.rejects(
+    () =>
+      before({
+        operation: 'update',
+        data: { comment: 'hijack' },
+        originalDoc: { author: 'u-2', status: 'pending' },
+        req,
+      }),
+    /Forbidden/,
+  )
+})
+
+test('should allow customer to repeat same author id in payload', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  const result = await before({
+    operation: 'update',
+    data: { author: 'u-1', comment: 'same' },
+    originalDoc: { author: 'u-1', status: 'pending' },
+    req,
+  })
+  assert.equal(result.author, 'u-1')
+})
+
 test('should pin author from original doc when customer omits author on update', async () => {
   const { before } = getHooks(true)
   const req = {
@@ -108,6 +234,21 @@ test('should pin author from original doc when customer omits author on update',
   })
   assert.equal(result.author, 'u-1')
   assert.equal(result.comment, 'only comment')
+})
+
+test('should allow customer update when originalDoc is missing', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  const result = await before({
+    operation: 'update',
+    data: { comment: 'orphan' },
+    originalDoc: undefined,
+    req,
+  })
+  assert.equal(result.comment, 'orphan')
 })
 
 test('should recompute vendor profile rating in afterChange for tenant', async () => {
@@ -185,6 +326,11 @@ test('access read: vendor without tenant uses public rule (approved-only when mo
   assert.equal(r.status?.equals, 'approved')
 })
 
+test('access read: vendor with empty tenant object resolves to false', () => {
+  const read = getAccess(true).read
+  assert.equal(read({ req: { user: { role: 'vendor', tenant: {} } } }), false)
+})
+
 test('access read: customer with moderation sees approved or own', () => {
   const read = getAccess(true).read
   const r = read({ req: { user: { id: 'u-1', role: 'customer' } } }) as any
@@ -254,4 +400,31 @@ test('beforeChange should reject non-customer create', async () => {
     () => before({ operation: 'create', data: { tenant: 't-1', rating: 5 }, req }),
     /Forbidden/,
   )
+})
+
+test('beforeChange create should reject when tenant resolves to empty id', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  await assert.rejects(
+    () => before({ operation: 'create', data: { tenant: {}, rating: 5 }, req }),
+    /tenant is required/i,
+  )
+})
+
+test('beforeChange update allows incoming author when previous author was missing', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  const result = await before({
+    operation: 'update',
+    data: { author: 'u-1', comment: 'claim' },
+    originalDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(result.author, 'u-1')
 })

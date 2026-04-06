@@ -61,6 +61,21 @@ test('should derive parent order status on sub-order update', async () => {
   assert.equal(updateCalls[0].data.status, 'partially-shipped')
 })
 
+test('afterRead should resolve parent order id when parentOrder is a populated object', async () => {
+  assert.ok(afterReadHook)
+  const doc = { id: 'so-1', parentOrder: { id: 'ord-obj' } } as any
+  const req = {
+    payload: {
+      findByID: async ({ id }: any) => {
+        assert.equal(id, 'ord-obj')
+        return { orderNumber: 'ORD-OBJ' }
+      },
+    },
+  }
+  const out = await afterReadHook({ doc: { ...doc }, req })
+  assert.equal(out.parentOrderNumber, 'ORD-OBJ')
+})
+
 test('afterRead should hydrate parentOrderNumber from parent order', async () => {
   assert.ok(afterReadHook)
   const doc = { id: 'so-1', parentOrder: 'ord-99' } as any
@@ -406,6 +421,98 @@ test('parent derivation uses strict strategy when mixed cancel and ship', async 
   assert.equal(updateCalls[0].data.status, 'partially-shipped')
 })
 
+test('parent derivation resolves parentOrder id when parentOrder is object', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') {
+          return {
+            docs: [
+              { id: 'sub-1', status: 'shipped' },
+              { id: 'sub-2', status: 'shipped' },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-1', status: 'shipped', parentOrder: { id: 'order-po' } as any }
+  const previousDoc = { id: 'sub-1', status: 'pending' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls.length, 1)
+  assert.equal(updateCalls[0].id, 'order-po')
+})
+
+test('inventory afterChange uses undefined when previous status key is undefined', async () => {
+  assert.ok(inventoryAfterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        findCalls++
+        if (args.collection === 'order-items') {
+          return { docs: [{ id: 'oi-1', product: 'p-1', quantity: 1 }] }
+        }
+        return { docs: [] }
+      },
+    },
+  }
+  await inventoryAfterChangeHook({
+    operation: 'update',
+    doc: { id: 'so-1', status: 'shipped', parentOrder: 'p-1' },
+    previousDoc: { status: undefined } as any,
+    req,
+  })
+  assert.ok(findCalls >= 1)
+})
+
+test('inventory afterChange uses undefined previous status when previousDoc missing', async () => {
+  assert.ok(inventoryAfterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        findCalls++
+        return { docs: [] }
+      },
+    },
+  }
+  await inventoryAfterChangeHook({
+    operation: 'update',
+    doc: { id: 'so-1', status: 'shipped', parentOrder: 'p-1' },
+    previousDoc: undefined,
+    req,
+  })
+  assert.ok(findCalls >= 1)
+})
+
+test('inventory afterChange returns early on create', async () => {
+  assert.ok(inventoryAfterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async () => {
+        findCalls++
+        return { docs: [] }
+      },
+    },
+  }
+  const out = await inventoryAfterChangeHook({
+    operation: 'create',
+    doc: { id: 'new-so', status: 'pending', parentOrder: 'p-1' },
+    previousDoc: undefined,
+    req,
+  })
+  assert.equal(out.id, 'new-so')
+  assert.equal(findCalls, 0)
+})
+
 test('parent derivation should not update parent when no sub-orders returned', async () => {
   const updateCalls: any[] = []
   const req = {
@@ -442,4 +549,31 @@ test('read: vendor scoped to tenant string id', () => {
 test('read: vendor without tenant denied', () => {
   const read = SubOrders.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
   assert.equal(read({ req: { user: { role: 'vendor' } } }), false)
+})
+
+test('read: vendor with empty tenant object yields tenant filter with undefined equals', () => {
+  const read = SubOrders.access?.read as (args: { req: { user?: { role?: string; tenant?: unknown } } }) => unknown
+  const r = read({ req: { user: { role: 'vendor', tenant: {} } } }) as { tenant?: { equals?: unknown } }
+  assert.ok(typeof r === 'object')
+  assert.equal(r.tenant?.equals, undefined)
+})
+
+test('read: unauthenticated denied', () => {
+  const read = SubOrders.access?.read as (args: { req: { user?: unknown } }) => unknown
+  assert.equal(read({ req: {} }), false)
+})
+
+test('read: admin sees all', () => {
+  const read = SubOrders.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
+  assert.equal(read({ req: { user: { role: 'admin' } } }), true)
+})
+
+test('parent derivation second hook returns doc on create', async () => {
+  const out = await parentDerivationAfterChangeHook({
+    operation: 'create',
+    doc: { id: 'new-so' },
+    previousDoc: undefined,
+    req: { payload: {} },
+  })
+  assert.equal(out.id, 'new-so')
 })
