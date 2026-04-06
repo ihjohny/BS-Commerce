@@ -25,15 +25,23 @@ export const verificationPlugin =
     const { enabled = true } = options
     if (!enabled) return incomingConfig
 
-    const collections = [...(incomingConfig.collections || []), VerificationCodes]
-    const endpoints = [
-      ...(incomingConfig.endpoints || []),
+    const existingCollections = incomingConfig.collections || []
+    const hasVerificationCodes = existingCollections.some((c) => c?.slug === VerificationCodes.slug)
+    const collections = hasVerificationCodes
+      ? existingCollections
+      : [...existingCollections, VerificationCodes]
+
+    const pluginEndpoints = [
       sendVerificationEndpoint,
       verifyEmailPostEndpoint,
       verifyPhoneEndpoint,
       verifyEmailLinkGetEndpoint,
       verifyIdentifierAdminEndpoint,
     ]
+    const existingEndpoints = incomingConfig.endpoints || []
+    const existingEndpointPaths = new Set(existingEndpoints.map((e) => e?.path))
+    const dedupedPluginEndpoints = pluginEndpoints.filter((e) => !existingEndpointPaths.has(e.path))
+    const endpoints = [...existingEndpoints, ...dedupedPluginEndpoints]
 
     return {
       ...incomingConfig,

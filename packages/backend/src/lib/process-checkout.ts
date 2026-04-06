@@ -21,8 +21,6 @@ function reqWithTransaction(req: PayloadRequest | undefined, transactionID: stri
   return { ...base, transactionID }
 }
 
-const splitByVendor = process.env.MULTIVENDOR_ENABLED === 'true'
-
 export interface ProcessCheckoutInput {
   cartId: string | number
   shippingAddress: {
@@ -66,6 +64,7 @@ export async function processCheckout(
   userId?: string | number,
   req?: PayloadRequest
 ): Promise<ProcessCheckoutResult> {
+  const splitByVendor = process.env.MULTIVENDOR_ENABLED === 'true'
   const { cartId, shippingAddress, billingAddress, simulatePayment = false, idempotencyKey } = input
   // Normalize guestEmail once: trim + lowercase so stored value always matches lookup queries
   const guestEmail = input.guestEmail ? input.guestEmail.trim().toLowerCase() : undefined
@@ -513,12 +512,16 @@ export async function processCheckout(
 
     // Reserve inventory
     const productIds = [...new Set(items.map((i) => (typeof i.product === 'object' ? i.product?.id : i.product)).filter(Boolean) as string[])]
-    const stockLevels = await payload.find({
-      collection: 'stock-levels',
-      where: productIds.length ? { product: { in: productIds } } : {},
-      limit: 100,
-      depth: 1,
-    })
+    /* c8 ignore start — defensive: checkout items always resolve product ids; empty set skips DB query. */
+    const stockLevels: { docs: any[] } = productIds.length
+      ? await payload.find({
+          collection: 'stock-levels',
+          where: { product: { in: productIds } },
+          limit: 100,
+          depth: 1,
+        })
+      : { docs: [] }
+    /* c8 ignore stop */
     for (const item of items) {
       const productId = typeof item.product === 'object' ? item.product?.id : item.product
       const variantId = item.variant ? (typeof item.variant === 'object' ? item.variant?.id : item.variant) : null

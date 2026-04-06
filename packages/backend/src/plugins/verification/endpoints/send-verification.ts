@@ -19,6 +19,22 @@ const DEFAULT_PHONE_OTP_LENGTH = 6
 const DEFAULT_RATE_LIMIT_WINDOW_MINUTES = 10
 const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 10
 
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function parseBoundedPositiveInt(
+  raw: string | undefined,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const parsed = parsePositiveInt(raw, fallback)
+  return Math.min(max, Math.max(min, parsed))
+}
+
 function getEmailStrategy(): 'link' | 'otp' {
   const v = process.env.EMAIL_VERIFICATION_STRATEGY?.toLowerCase()
   return v === 'otp' ? 'otp' : 'link'
@@ -29,10 +45,16 @@ function getOTPLength(): number {
   return Number.isFinite(n) && n >= 4 && n <= 8 ? n : 6
 }
 
-export const sendVerificationEndpoint: Endpoint = {
-  path: '/auth/send-verification',
-  method: 'post',
-  handler: async (req) => {
+export type SendVerificationDeps = {
+  sendVerificationLink?: typeof sendVerificationLink
+  sendVerificationOTP?: typeof sendVerificationOTP
+  getPhoneAdapter?: typeof getPhoneAdapter
+}
+
+export async function sendVerificationHandler(req: any, deps?: SendVerificationDeps): Promise<Response> {
+  const sendLink = deps?.sendVerificationLink ?? sendVerificationLink
+  const sendOtpEmail = deps?.sendVerificationOTP ?? sendVerificationOTP
+  const resolvePhoneAdapter = deps?.getPhoneAdapter ?? getPhoneAdapter
     const data = (await (req as Request).json?.().catch(() => ({}))) || {}
     const { identifierType, identifier } = data
 
@@ -111,12 +133,14 @@ export const sendVerificationEndpoint: Endpoint = {
     }
 
     // Rolling window rate limit per identifier and per IP
-    const windowMinutes =
-      parseInt(process.env.VERIFICATION_RATE_LIMIT_WINDOW_MINUTES || String(DEFAULT_RATE_LIMIT_WINDOW_MINUTES), 10) ||
+    const windowMinutes = parsePositiveInt(
+      process.env.VERIFICATION_RATE_LIMIT_WINDOW_MINUTES,
       DEFAULT_RATE_LIMIT_WINDOW_MINUTES
-    const maxRequests =
-      parseInt(process.env.VERIFICATION_RATE_LIMIT_MAX_REQUESTS || String(DEFAULT_RATE_LIMIT_MAX_REQUESTS), 10) ||
+    )
+    const maxRequests = parsePositiveInt(
+      process.env.VERIFICATION_RATE_LIMIT_MAX_REQUESTS,
       DEFAULT_RATE_LIMIT_MAX_REQUESTS
+    )
     const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString()
 
     // Per-identifier window
@@ -162,9 +186,17 @@ export const sendVerificationEndpoint: Endpoint = {
 
     // ─── Phone (Phase 6.2) ───────────────────────────────────────────────────
     if (idType === 'phone') {
-      const otpLength = Math.min(8, Math.max(4, parseInt(process.env.PHONE_VERIFICATION_OTP_LENGTH || String(DEFAULT_PHONE_OTP_LENGTH), 10) || DEFAULT_PHONE_OTP_LENGTH))
+      const otpLength = parseBoundedPositiveInt(
+        process.env.PHONE_VERIFICATION_OTP_LENGTH,
+        DEFAULT_PHONE_OTP_LENGTH,
+        4,
+        8
+      )
       const code = generateOTP(otpLength)
-      const expirySeconds = parseInt(process.env.PHONE_VERIFICATION_OTP_EXPIRY || String(DEFAULT_PHONE_OTP_EXPIRY_SECONDS), 10) || DEFAULT_PHONE_OTP_EXPIRY_SECONDS
+      const expirySeconds = parsePositiveInt(
+        process.env.PHONE_VERIFICATION_OTP_EXPIRY,
+        DEFAULT_PHONE_OTP_EXPIRY_SECONDS
+      )
       const expiresAt = new Date()
       expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds)
 
@@ -181,7 +213,7 @@ export const sendVerificationEndpoint: Endpoint = {
         overrideAccess: true,
       })
 
-      const adapter = await getPhoneAdapter()
+      const adapter = await resolvePhoneAdapter()
       const sent = await adapter.sendOTP(trimmed, code, expirySeconds)
       if (!sent) {
         return Response.json({ error: 'Failed to send verification code.' }, { status: 502 })
@@ -195,7 +227,10 @@ export const sendVerificationEndpoint: Endpoint = {
 
     if (strategy === 'link') {
       const token = generateVerificationToken()
-      const expiryMinutes = parseInt(process.env.EMAIL_VERIFICATION_TOKEN_EXPIRY_MINUTES || String(DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES), 10) || DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES
+      const expiryMinutes = parsePositiveInt(
+        process.env.EMAIL_VERIFICATION_TOKEN_EXPIRY_MINUTES,
+        DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES
+      )
       expiresAt.setMinutes(expiresAt.getMinutes() + expiryMinutes)
 
       await payload.create({
@@ -211,7 +246,7 @@ export const sendVerificationEndpoint: Endpoint = {
         overrideAccess: true,
       })
 
-      const sent = await sendVerificationLink(trimmed, token, expiryMinutes)
+      const sent = await sendLink(trimmed, token, expiryMinutes)
       if (!sent) {
         return Response.json({ error: 'Failed to send verification email.' }, { status: 502 })
       }
@@ -220,7 +255,10 @@ export const sendVerificationEndpoint: Endpoint = {
 
     // OTP
     const code = generateOTP(getOTPLength())
-    const expirySeconds = parseInt(process.env.EMAIL_VERIFICATION_OTP_EXPIRY || String(DEFAULT_OTP_EXPIRY_SECONDS), 10) || DEFAULT_OTP_EXPIRY_SECONDS
+    const expirySeconds = parsePositiveInt(
+      process.env.EMAIL_VERIFICATION_OTP_EXPIRY,
+      DEFAULT_OTP_EXPIRY_SECONDS
+    )
     expiresAt.setSeconds(expiresAt.getSeconds() + expirySeconds)
 
     await payload.create({
@@ -236,10 +274,15 @@ export const sendVerificationEndpoint: Endpoint = {
       overrideAccess: true,
     })
 
-    const sent = await sendVerificationOTP(trimmed, code, expirySeconds)
+    const sent = await sendOtpEmail(trimmed, code, expirySeconds)
     if (!sent) {
       return Response.json({ error: 'Failed to send verification code.' }, { status: 502 })
     }
     return Response.json({ success: true, message: 'Verification code sent to your email.' })
-  },
+}
+
+export const sendVerificationEndpoint: Endpoint = {
+  path: '/auth/send-verification',
+  method: 'post',
+  handler: async (req) => sendVerificationHandler(req),
 }

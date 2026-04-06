@@ -114,3 +114,49 @@ test('should throw when order transition is invalid', () => {
     (err: any) => err.message.includes('Cannot change'),
   )
 })
+
+test('validateSubOrderStatusTransition throws with none (terminal) when no next states', () => {
+  assert.throws(
+    () => validateSubOrderStatusTransition('completed', 'pending'),
+    (err: any) => err.message.includes('none (terminal)') && err.message.includes('Cannot change'),
+  )
+})
+
+test('validateOrderStatusTransition throws with none (terminal) for completed to pending', () => {
+  assert.throws(
+    () => validateOrderStatusTransition('completed', 'pending'),
+    (err: any) => err.message.includes('none (terminal)'),
+  )
+})
+
+test('validateOrderStatusTransition no-ops when to is undefined', () => {
+  assert.doesNotThrow(() => validateOrderStatusTransition('pending', undefined))
+})
+
+test('validateOrderStatusTransition defaults from to pending when from is undefined', () => {
+  assert.doesNotThrow(() => validateOrderStatusTransition(undefined, 'processing'))
+})
+
+test('validateSubOrderStatusTransition no-ops when to is undefined', () => {
+  assert.doesNotThrow(() => validateSubOrderStatusTransition('shipped', undefined))
+})
+
+test('isAllowedSubOrderStatusTransition denies unknown from status', () => {
+  assert.equal(isAllowedSubOrderStatusTransition('not-a-real-status', 'pending'), false)
+})
+
+test('isAllowedSubOrderStatusTransition allows when to is empty string', () => {
+  assert.equal(isAllowedSubOrderStatusTransition('pending', ''), true)
+})
+
+test('isAllowedOrderStatusTransition allows when to is empty string', () => {
+  assert.equal(isAllowedOrderStatusTransition('pending', ''), true)
+})
+
+test('validateSubOrderStatusTransition returns early when to is null', () => {
+  assert.doesNotThrow(() => validateSubOrderStatusTransition('pending', null as any))
+})
+
+test('validateOrderStatusTransition returns early when to is null', () => {
+  assert.doesNotThrow(() => validateOrderStatusTransition('pending', null as any))
+})

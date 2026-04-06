@@ -44,3 +44,29 @@ test('should return currency options as array of label/value objects', async () 
     assert.ok(typeof opt.value === 'string')
   }
 })
+
+test('should use raw code as label when currency is not in LABELS map', async () => {
+  process.env.SUPPORTED_CURRENCIES = 'EUR'
+  const url = new URL('../../../src/lib/currencies.ts', import.meta.url)
+  url.searchParams.set('v', String(Date.now()))
+  // @ts-ignore fresh module so SUPPORTED is re-read with EUR only
+  const { getCurrencyOptions } = await import(url.href)
+  const options = getCurrencyOptions()
+  assert.equal(options.length, 1)
+  assert.equal(options[0].value, 'EUR')
+  assert.equal(options[0].label, 'EUR')
+})
+
+test('should default SUPPORTED_CURRENCIES from env when unset', async () => {
+  const prev = process.env.SUPPORTED_CURRENCIES
+  delete process.env.SUPPORTED_CURRENCIES
+  const url = new URL('../../../src/lib/currencies.ts', import.meta.url)
+  url.searchParams.set('v', String(Date.now()))
+  // @ts-ignore
+  const { getCurrencyOptions } = await import(url.href)
+  const options = getCurrencyOptions()
+  assert.ok(options.some((o: { value: string }) => o.value === 'USD'))
+  assert.ok(options.some((o: { value: string }) => o.value === 'BDT'))
+  if (prev === undefined) delete process.env.SUPPORTED_CURRENCIES
+  else process.env.SUPPORTED_CURRENCIES = prev
+})

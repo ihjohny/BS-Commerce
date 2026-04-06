@@ -26,3 +26,9 @@ test('should return false when unauthenticated', () => {
   const fn = isOwnerOrAdmin()
   assert.equal(fn({ req: mockReq(null) }), false)
 })
+
+test('should support nested-like field path string', () => {
+  const fn = isOwnerOrAdmin('owner.id')
+  const result = fn({ req: mockReq({ id: 'u-77', role: 'customer' }) })
+  assert.deepEqual(result, { 'owner.id': { equals: 'u-77' } })
+})

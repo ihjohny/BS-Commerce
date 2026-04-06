@@ -33,6 +33,9 @@ export async function sendOrderConfirmationEmail(
   grandTotal: number,
   currency: string
 ): Promise<boolean> {
+  if (process.env.BS_TEST_ORDER_EMAIL_REJECT === 'true') {
+    return Promise.reject(new Error('simulated order email failure'))
+  }
   const subject = `Order Confirmation: ${orderNumber}`
   const text = `Thank you for your order ${orderNumber}. Total: ${currency} ${grandTotal}.`
   const html = `<p>Thank you for your order <strong>${orderNumber}</strong>.</p><p>Total: ${currency} ${grandTotal}</p>`

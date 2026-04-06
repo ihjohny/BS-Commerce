@@ -22,6 +22,11 @@ const tenantField = {
   },
 }
 
+/** Payload field entries may include sparse/null slots; `typeof null === 'object'` so guard before `in`. */
+function fieldHasName(f: unknown, name: string): boolean {
+  return f != null && typeof f === 'object' && 'name' in f && (f as { name?: unknown }).name === name
+}
+
 /**
  * Multivendor plugin — Tenants, VendorProfiles, VendorSettings, VendorApplications.
  * Adds tenant field to Users when enabled.
@@ -39,8 +44,8 @@ export const multivendorPlugin =
     if (usersIdx >= 0) {
       const users = collections[usersIdx] as CollectionConfig
       const fields = [...(users.fields || [])]
-      if (!fields.some((f) => typeof f === 'object' && 'name' in f && f.name === 'tenant')) {
-        const localeIdx = fields.findIndex((f) => typeof f === 'object' && 'name' in f && f.name === 'locale')
+      if (!fields.some((f) => fieldHasName(f, 'tenant'))) {
+        const localeIdx = fields.findIndex((f) => fieldHasName(f, 'locale'))
         const insertIdx = localeIdx >= 0 ? localeIdx + 1 : fields.length
         fields.splice(insertIdx, 0, tenantField)
         collections[usersIdx] = { ...users, fields }
@@ -51,7 +56,7 @@ export const multivendorPlugin =
     if (mediaIdx >= 0) {
       const media = collections[mediaIdx] as CollectionConfig
       const mediaFields = [...(media.fields || [])]
-      if (!mediaFields.some((f) => typeof f === 'object' && 'name' in f && f.name === 'tenant')) {
+      if (!mediaFields.some((f) => fieldHasName(f, 'tenant'))) {
         mediaFields.unshift({
           name: 'tenant',
           type: 'relationship' as const,

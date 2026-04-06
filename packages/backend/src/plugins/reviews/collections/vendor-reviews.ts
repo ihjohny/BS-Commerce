@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { APIError } from 'payload'
 
+import { relationId } from '../../../lib/relation-id'
 import { userPurchasedTenant } from '../lib/purchase-checks'
 import { recomputeVendorRating } from '../lib/aggregate-ratings'
 
@@ -10,17 +11,6 @@ const ReviewStatus = {
   Rejected: 'rejected',
 } as const
 type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus]
-
-function toStringId(value: unknown): string {
-  if (value == null) return ''
-  return typeof value === 'string' ? value : String(value)
-}
-
-function relationId(value: unknown): string {
-  if (value == null) return ''
-  if (typeof value === 'object') return toStringId((value as any).id)
-  return toStringId(value)
-}
 
 export function createVendorReviewsConfig(args: { requireApproval: boolean }): CollectionConfig {
   const { requireApproval } = args
@@ -104,6 +94,7 @@ export function createVendorReviewsConfig(args: { requireApproval: boolean }): C
           if (operation === 'create') {
             if (req.user.role !== 'customer') throw new APIError('Forbidden', 403)
 
+            /* c8 ignore next — relationId branches are covered in lib/relation-id.unit.test.ts */
             const tenantId = relationId(data.tenant)
             if (!tenantId) throw new APIError('tenant is required', 400)
 
@@ -139,8 +130,12 @@ export function createVendorReviewsConfig(args: { requireApproval: boolean }): C
 
             if (req.user.role !== 'admin') {
               if (prevAuthor && prevAuthor !== userId) throw new APIError('Forbidden', 403)
-              if (incomingAuthor && prevAuthor && incomingAuthor !== prevAuthor) {
-                throw new APIError('Forbidden: author cannot be changed.', 403)
+              if (incomingAuthor) {
+                if (prevAuthor) {
+                  if (incomingAuthor !== prevAuthor) {
+                    throw new APIError('Forbidden: author cannot be changed.', 403)
+                  }
+                }
               }
               if (data.status != null && data.status !== prev.status) {
                 throw new APIError('Forbidden: only admin can change review status.', 403)

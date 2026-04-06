@@ -13,6 +13,25 @@ test('should return 400 when code is missing', async () => {
   assert.equal(res.status, 400)
 })
 
+test('should treat failed json() as empty body', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = {
+    ...base,
+    json: async () => {
+      throw new Error('invalid json')
+    },
+  }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
+test('should treat json() resolving to null as empty body', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = { ...base, json: async () => null }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when phone is missing', async () => {
   const req = mockHandlerReq({ body: { code: '123456' } })
   const res = await handler(req)
@@ -21,6 +40,18 @@ test('should return 400 when phone is missing', async () => {
 
 test('should return 400 when code is not a string', async () => {
   const req = mockHandlerReq({ body: { code: 123456, phone: '+1234567890' } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when code is only whitespace after trim', async () => {
+  const req = mockHandlerReq({ body: { code: '   ', phone: '+1234567890' } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when phone is only whitespace after trim', async () => {
+  const req = mockHandlerReq({ body: { code: '123456', phone: '  \t  ' } })
   const res = await handler(req)
   assert.equal(res.status, 400)
 })
@@ -55,6 +86,24 @@ test('should return 400 when code is expired', async () => {
   assert.equal(res.status, 400)
   const json = await res.json()
   assert.ok(json.error.includes('expired'))
+})
+
+test('should return 400 when record has no expiresAt', async () => {
+  const req = mockHandlerReq({
+    body: { code: '123456', phone: '+1234567890' },
+    payloadOverrides: {
+      find: async (args: any) => {
+        if (args.collection === 'verification-codes') {
+          return { docs: [{ id: 'vc-no-exp', code: '123456' }] }
+        }
+        return { docs: [] }
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+  const json = await res.json()
+  assert.ok(String(json.error).toLowerCase().includes('expired'))
 })
 
 test('should return 200 and mark phone verified on success', async () => {

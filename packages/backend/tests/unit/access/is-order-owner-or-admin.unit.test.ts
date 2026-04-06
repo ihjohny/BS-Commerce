@@ -64,3 +64,13 @@ test('should return false when payload.find throws for vendor', async () => {
   const result = await isOrderOwnerOrAdmin({ req })
   assert.equal(result, false)
 })
+
+test('should ignore sub-orders without parentOrder and return false', async () => {
+  const req = mockReq({ role: 'vendor', tenant: 'tenant-1' }, {
+    find: async () => ({
+      docs: [{ parentOrder: null }, {} as any],
+    }),
+  })
+  const result = await isOrderOwnerOrAdmin({ req })
+  assert.equal(result, false)
+})

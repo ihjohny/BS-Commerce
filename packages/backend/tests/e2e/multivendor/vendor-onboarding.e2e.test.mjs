@@ -11,6 +11,11 @@ import { createClient } from '../../_helpers/live-api-client.mjs'
 const { request, ok, fail, skip, printSummary } = createClient()
 const RUN = process.env.RUN_INTEGRATION_TESTS === 'true'
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || null
+const AUTH_REQUIRED = (process.env.AUTH_REQUIRED_IDENTIFIER || 'either').toLowerCase()
+
+function randomPhone() {
+  return `+1555${String(1000000000 + Math.floor(Math.random() * 8999999999))}`
+}
 
 async function main() {
   console.log('Running vendor onboarding E2E tests')
@@ -28,11 +33,28 @@ async function main() {
     process.exit(0)
   }
 
-  // Create a vendor application as admin (on behalf of a user)
-  const me = await request('/users/me', {
-    headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },
+  // Create an applicant user and apply on their behalf.
+  // Never use the seeded admin as applicant in auto-approve mode because that
+  // can mutate admin role and break downstream suites.
+  const applicantEmail = `vendor-applicant-${Date.now()}@test.local`
+  const applicantBody = {
+    email: applicantEmail,
+    password: 'VendorApply1234!',
+    firstName: 'Vendor',
+    lastName: 'Applicant',
+  }
+  if (AUTH_REQUIRED === 'phone') applicantBody.phone = randomPhone()
+  const applicantCreate = await request('/users', {
+    method: 'POST',
+    body: applicantBody,
   })
-  const applicantId = me.json?.user?.id || me.json?.id
+  const applicantId = applicantCreate.json?.doc?.id || applicantCreate.json?.id
+  if (![200, 201].includes(applicantCreate.status) || !applicantId) {
+    fail('vendor applicant created', `status=${applicantCreate.status} body=${applicantCreate.text?.slice(0, 300)}`)
+    printSummary('Vendor onboarding E2E')
+    process.exit(1)
+  }
+
   const app = await request('/vendor-applications', {
     method: 'POST',
     headers: { Authorization: `Bearer ${ADMIN_TOKEN}` },

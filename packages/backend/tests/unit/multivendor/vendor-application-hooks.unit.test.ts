@@ -137,6 +137,92 @@ test('should not provision when status is not approved', async () => {
   assert.equal(created.length, 0)
 })
 
+test('beforeValidate should return unchanged when data is falsy', () => {
+  const result = beforeValidateHook({
+    data: null,
+    operation: 'create',
+    req: { user: { id: 'u-1', role: 'customer' } },
+  } as any)
+  assert.equal(result, null)
+})
+
+test('afterChange should no-op when req.payload is missing', async () => {
+  await afterChangeHook({
+    doc: { id: 'app-1', applicant: 'u-1', businessName: 'X', status: 'approved' },
+    previousDoc: { status: 'pending' },
+    operation: 'update',
+    req: {},
+  } as any)
+})
+
+test('afterChange should provision on create when status is approved', async () => {
+  const created: any[] = []
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+      create: async (args: any) => {
+        created.push(args)
+        return { id: 'new-1' }
+      },
+      update: async () => ({}),
+    },
+  }
+  await afterChangeHook({
+    doc: { id: 'app-new', applicant: 'u-1', businessName: 'Create Approved', status: 'approved' },
+    previousDoc: undefined,
+    operation: 'create',
+    req,
+  } as any)
+  assert.ok(created.some((c: any) => c.collection === 'tenants'))
+})
+
+test('afterChange should read status from select-shaped doc.status', async () => {
+  const created: any[] = []
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+      create: async (args: any) => {
+        created.push(args)
+        return { id: 't-1' }
+      },
+      update: async () => ({}),
+    },
+  }
+  await afterChangeHook({
+    doc: {
+      id: 'app-1',
+      applicant: { id: 'u-obj' },
+      businessName: 'Obj Applicant',
+      status: { value: 'approved' },
+    },
+    previousDoc: { status: { value: 'pending' } },
+    operation: 'update',
+    req,
+  } as any)
+  assert.ok(created.length >= 1)
+})
+
+test('afterChange should skip provisioning when businessName is blank', async () => {
+  const created: any[] = []
+  const req = {
+    payload: {
+      find: async () => ({ docs: [] }),
+      create: async (args: any) => {
+        created.push(args)
+        return { id: 'x' }
+      },
+      update: async () => ({}),
+    },
+  }
+  await afterChangeHook({
+    doc: { id: 'app-1', applicant: 'u-1', businessName: '   ', status: 'approved' },
+    previousDoc: { status: 'pending' },
+    operation: 'update',
+    req,
+  } as any)
+  assert.equal(created.length, 0)
+})
+
 test('should generate unique slug when duplicate exists', async () => {
   let slugAttempts = 0
   const req = {

@@ -2,15 +2,20 @@
 /**
  * Auth login E2E tests (live API).
  *
- * Requires: RUN_INTEGRATION_TESTS=true, ADMIN_TOKEN, TEST_EMAIL
+ * Requires: RUN_INTEGRATION_TESTS=true, ADMIN_TOKEN
+ * Login identifier: TEST_LOGIN_IDENTIFIER (preferred) or TEST_EMAIL for /auth/login success path
  * Optional: TEST_ADMIN_PASSWORD (defaults to AdminTest1234!)
  */
 import { createClient } from '../../_helpers/live-api-client.mjs'
+
+const EMAIL_LIKE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const { request, ok, fail, skip, printSummary } = createClient()
 const RUN = process.env.RUN_INTEGRATION_TESTS === 'true'
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || null
 const TEST_EMAIL = process.env.TEST_EMAIL || null
+const TEST_LOGIN =
+  process.env.TEST_LOGIN_IDENTIFIER || process.env.TEST_EMAIL || null
 const TEST_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'AdminTest1234!'
 
 async function main() {
@@ -38,11 +43,11 @@ async function main() {
   if (r3.status === 401) ok('login rejects wrong credentials')
   else fail('login rejects wrong credentials', `status=${r3.status}`)
 
-  // Successful login with admin email
-  if (TEST_EMAIL && TEST_PASSWORD) {
+  // Successful login with admin identifier (email or phone per profile)
+  if (TEST_LOGIN && TEST_PASSWORD) {
     const r4 = await request('/auth/login', {
       method: 'POST',
-      body: { identifier: TEST_EMAIL, password: TEST_PASSWORD },
+      body: { identifier: TEST_LOGIN, password: TEST_PASSWORD },
     })
     
     // Handle verification gate (403 with specific message)
@@ -52,24 +57,34 @@ async function main() {
     if (r4.status === 200 && r4.json?.token) {
       ok('login succeeds with valid credentials')
       
-      // Case-insensitive email login
-      const r5 = await request('/auth/login', {
-        method: 'POST',
-        body: { identifier: TEST_EMAIL.toUpperCase(), password: TEST_PASSWORD },
-      })
-      if (r5.status === 200) ok('login is case-insensitive for email')
-      else fail('login is case-insensitive for email', `status=${r5.status}`)
+      if (EMAIL_LIKE.test(String(TEST_LOGIN))) {
+        const r5 = await request('/auth/login', {
+          method: 'POST',
+          body: { identifier: TEST_LOGIN.toUpperCase(), password: TEST_PASSWORD },
+        })
+        if (r5.status === 200) ok('login is case-insensitive for email')
+        else fail('login is case-insensitive for email', `status=${r5.status}`)
+      } else {
+        const r5 = await request('/auth/login', {
+          method: 'POST',
+          body: { identifier: TEST_LOGIN, password: TEST_PASSWORD },
+        })
+        if (r5.status === 200) ok('login succeeds again with same phone identifier')
+        else fail('login succeeds again with same phone identifier', `status=${r5.status}`)
+      }
     } else if (isVerificationGate) {
       // If verification gate is ON and user not verified, this is expected behavior
       // for gates-on profile. Skip these tests with explanation.
       skip('login succeeds with valid credentials', 'AUTH_REQUIRE_VERIFIED_EMAIL_FOR_LOGIN=true and user not verified')
       skip('login is case-insensitive for email', 'requires successful login first')
+      skip('login succeeds again with same phone identifier', 'requires successful login first')
     } else {
       fail('login succeeds with valid credentials', `status=${r4.status} body=${r4.text?.slice(0, 200)}`)
       skip('login is case-insensitive for email', 'first login failed')
+      skip('login succeeds again with same phone identifier', 'first login failed')
     }
   } else {
-    skip('login success tests', 'set TEST_EMAIL + TEST_ADMIN_PASSWORD')
+    skip('login success tests', 'set TEST_LOGIN_IDENTIFIER or TEST_EMAIL + TEST_ADMIN_PASSWORD')
   }
 
   const failCount = printSummary('Auth login E2E')

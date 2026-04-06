@@ -21,6 +21,13 @@ test('should return invalid when no coupon code provided', async () => {
   assert.ok(result.discountReason?.includes('No coupon'))
 })
 
+test('should return invalid when coupon code is not a string', async () => {
+  const payload = mockPayload()
+  const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: null as any, subtotal: 100 })
+  assert.equal(result.valid, false)
+  assert.ok(result.discountReason?.includes('No coupon'))
+})
+
 test('should return invalid when coupon not found', async () => {
   const payload = mockPayload({ find: async () => ({ docs: [] }) })
   const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'UNKNOWN', subtotal: 100 })
@@ -85,11 +92,52 @@ test('should calculate fixed discount correctly', async () => {
   assert.equal(result.discountTotal, 25)
 })
 
+test('should coerce missing coupon value to zero for percentage branch', async () => {
+  const payload = mockPayload({
+    find: async () => ({ docs: [couponDoc({ type: 'percentage', value: undefined as any })], totalDocs: 0 }),
+  })
+  const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'PCT', subtotal: 100 })
+  assert.equal(result.valid, true)
+  assert.equal(result.discountTotal, 0)
+})
+
+test('should coerce missing coupon value to zero for fixed branch', async () => {
+  const payload = mockPayload({
+    find: async () => ({ docs: [couponDoc({ type: 'fixed', value: undefined as any })], totalDocs: 0 }),
+  })
+  const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'FX', subtotal: 100 })
+  assert.equal(result.valid, true)
+  assert.equal(result.discountTotal, 0)
+})
+
 test('should cap discount at subtotal (no negative total)', async () => {
   const payload = mockPayload({ find: async () => ({ docs: [couponDoc({ type: 'fixed', value: 200 })], totalDocs: 0 }) })
   const result = await validateCouponForSubtotal({ payload: payload as any, couponCode: 'BIG', subtotal: 50 })
   assert.equal(result.valid, true)
   assert.equal(result.discountTotal, 50)
+})
+
+test('should skip per-user limit when userId is not provided', async () => {
+  let ordersFindCalls = 0
+  const payload = mockPayload({
+    find: async (args: any) => {
+      if (args.collection === 'coupons') {
+        return { docs: [couponDoc({ maxUsesPerUser: 1 })], totalDocs: 1 }
+      }
+      if (args.collection === 'orders') {
+        ordersFindCalls++
+        return { docs: [], totalDocs: 99 }
+      }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  const result = await validateCouponForSubtotal({
+    payload: payload as any,
+    couponCode: 'SAVE10',
+    subtotal: 100,
+  })
+  assert.equal(result.valid, true)
+  assert.equal(ordersFindCalls, 0)
 })
 
 test('should normalize coupon code to uppercase', async () => {

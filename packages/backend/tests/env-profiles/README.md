@@ -2,6 +2,8 @@
 
 This directory contains all test environment configuration files for E2E testing.
 
+**Verification (baseline):** A full **`yarn test:all-profiles:safe:parallel:observe`** run (from `packages/backend`) executes the **safe** E2E path (`tests/run-e2e-safe.mjs`) once per profile—parallel batches with isolated slots—and aggregates results. (Sequential equivalent: `yarn test:all-profiles:safe`.) As of **2026-04-02**, all listed profiles passed (212 suite passes total across 12 profiles). Authoritative numbers and interpretation: **`docs/PHASE-9-TEST-COVERAGE-PLAN.md`** § *Verification record*.
+
 **Reference:** See `docs/ENV-REGISTRY.md` for complete variable documentation.
 
 ---
@@ -136,8 +138,15 @@ No gaps remaining in pairwise coverage.
 # Run with specific profile
 node tests/run-e2e.mjs --profile multivendor
 
+# Safe local run (recommended)
+yarn test:e2e:safe --profile multivendor
+
 # Run specific suite with profile
 node tests/run-e2e.mjs --profile gates-on --suite auth
+
+# Safe matrix run (recommended)
+yarn test:all-profiles:safe
+yarn test:all-profiles:safe:quick
 
 # List available profiles
 node -e "import('./tests/_helpers/load-env-profile.mjs').then(m => console.log(m.getAvailableProfiles()))"

@@ -60,6 +60,20 @@ test('sendOrderConfirmationEmail should handle zero total', async () => {
   assert.equal(result, true)
 })
 
+test('sendOrderConfirmationEmail rejects when BS_TEST_ORDER_EMAIL_REJECT is set', async () => {
+  process.env.BS_TEST_ORDER_EMAIL_REJECT = 'true'
+  try {
+    // @ts-ignore
+    const { sendOrderConfirmationEmail } = await import('../../../src/plugins/notifications/lib/send-email.ts')
+    await assert.rejects(
+      () => sendOrderConfirmationEmail('ORD-X', 'c@test.com', 1, 'USD'),
+      /simulated order email failure/,
+    )
+  } finally {
+    delete process.env.BS_TEST_ORDER_EMAIL_REJECT
+  }
+})
+
 test('sendEmail should extend preview for verification links', async () => {
   // @ts-ignore
   const { sendEmail } = await import('../../../src/plugins/notifications/lib/send-email.ts')

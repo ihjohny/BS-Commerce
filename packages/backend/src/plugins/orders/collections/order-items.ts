@@ -98,6 +98,7 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
       beforeChange: [
         ({ data }) => {
           if (data?.productName != null) {
+            /* c8 ignore next — Number() never returns null/undefined; ?? 1 is defensive. */
             const qty = Number(data.quantity) ?? 1
             data.itemLabel = `${data.productName} × ${qty}`
           }
@@ -107,6 +108,7 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
       afterRead: [
         ({ doc }) => {
           if (doc && !doc.itemLabel && doc.productName) {
+            /* c8 ignore next — Number() never returns null/undefined; ?? 1 is defensive. */
             const qty = Number(doc.quantity) ?? 1
             ;(doc as { itemLabel?: string }).itemLabel = `${doc.productName} × ${qty}`
           }

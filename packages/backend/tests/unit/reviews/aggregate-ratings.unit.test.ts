@@ -44,6 +44,37 @@ test('should round rating to 2 decimal places', async () => {
   assert.equal(updateArgs.data.rating, 3.67)
 })
 
+test('should treat NaN review rating as 0 in product average', async () => {
+  let updateArgs: any = null
+  const payload = mockPayload({
+    find: async () => ({ docs: [{ rating: 4 }, { rating: NaN }] }),
+    update: async (args: any) => {
+      updateArgs = args
+      return {}
+    },
+  })
+  await recomputeProductRating(payload as any, { productId: 'p-1' })
+  assert.equal(updateArgs.data.rating, 2)
+  assert.equal(updateArgs.data.totalReviews, 2)
+})
+
+test('should treat NaN review rating as 0 in vendor average', async () => {
+  let updateArgs: any = null
+  const payload = mockPayload({
+    find: async (args: any) => {
+      if (args.collection === 'vendor-reviews') return { docs: [{ rating: 10 }, { rating: NaN }] }
+      if (args.collection === 'vendor-profiles') return { docs: [{ id: 'vp-1' }] }
+      return { docs: [] }
+    },
+    update: async (args: any) => {
+      updateArgs = args
+      return {}
+    },
+  })
+  await recomputeVendorRating(payload as any, { tenantId: 't-1' })
+  assert.equal(updateArgs.data.rating, 5)
+})
+
 test('should compute vendor rating from vendor-reviews', async () => {
   let updateArgs: any = null
   const payload = mockPayload({
@@ -58,6 +89,38 @@ test('should compute vendor rating from vendor-reviews', async () => {
   assert.ok(updateArgs)
   assert.equal(updateArgs.collection, 'vendor-profiles')
   assert.equal(updateArgs.data.rating, 4.5)
+})
+
+test('should update vendor profile to zero rating when no approved reviews', async () => {
+  let updateArgs: any = null
+  const payload = mockPayload({
+    find: async (args: any) => {
+      if (args.collection === 'vendor-reviews') return { docs: [] }
+      if (args.collection === 'vendor-profiles') return { docs: [{ id: 'vp-1' }] }
+      return { docs: [] }
+    },
+    update: async (args: any) => {
+      updateArgs = args
+      return {}
+    },
+  })
+  await recomputeVendorRating(payload as any, { tenantId: 't-1', req: { x: 1 } })
+  assert.equal(updateArgs.data.rating, 0)
+  assert.ok(updateArgs.req)
+})
+
+test('should pass req through to product rating update', async () => {
+  let updateArgs: any = null
+  const payload = mockPayload({
+    find: async () => ({ docs: [{ rating: 5 }] }),
+    update: async (args: any) => {
+      updateArgs = args
+      return {}
+    },
+  })
+  const req = { trace: 'r1' }
+  await recomputeProductRating(payload as any, { productId: 'p-1', req })
+  assert.equal(updateArgs.req, req)
 })
 
 test('should skip update when no vendor profile found', async () => {

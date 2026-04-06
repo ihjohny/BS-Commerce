@@ -13,6 +13,11 @@ export type PhoneProvider = 'twilio' | 'sslwireless' | 'console' | 'custom'
 
 let customAdapterCache: PhoneVerificationAdapter | null = null
 
+/** Clears the cached custom adapter (used by unit tests when switching fixtures). */
+export function resetPhoneAdapterCache(): void {
+  customAdapterCache = null
+}
+
 function isAdapter(obj: unknown): obj is PhoneVerificationAdapter {
   return typeof obj === 'object' && obj !== null && typeof (obj as PhoneVerificationAdapter).sendOTP === 'function'
 }

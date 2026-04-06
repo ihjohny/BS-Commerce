@@ -1,3 +1,7 @@
+# E2E test Build Outputs
+.next-e2e-slot-*/
+tsconfig.e2e-slot-*.json
+
 # Dependencies
 node_modules/
 

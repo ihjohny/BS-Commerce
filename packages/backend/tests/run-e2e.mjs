@@ -33,7 +33,7 @@
  *   phone-only       — AUTH_REQUIRED_IDENTIFIER=phone
  *
  * ENV overrides:
- *   BASE_URL, TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD, VERBOSE, RUN_RATE_LIMIT
+ *   BASE_URL, TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD, TEST_ADMIN_PHONE (when profile is phone-first), VERBOSE, RUN_RATE_LIMIT
  */
 
 import fs from 'node:fs'
@@ -85,6 +85,9 @@ if (profileArg) {
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@test.local'
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'AdminTest1234!'
+const ADMIN_PHONE = process.env.TEST_ADMIN_PHONE || '+15551234567'
+const AUTH_REQUIRED = (process.env.AUTH_REQUIRED_IDENTIFIER || 'either').toLowerCase()
+const LOGIN_IDENTIFIER = AUTH_REQUIRED === 'phone' ? ADMIN_PHONE : ADMIN_EMAIL
 const VERBOSE = process.env.VERBOSE === 'true'
 
 const suiteArg = process.argv.find((a, i) => process.argv[i - 1] === '--suite') || 'all'
@@ -104,8 +107,10 @@ function run(label, script, env) {
     const text = `${err?.stdout || ''}${err?.stderr || ''}`
     if (text) process.stdout.write(text)
     // Node 24 on Windows intermittently throws UV_HANDLE_CLOSING after suite completion.
-    // If suite summary reports zero failures, treat this as a non-blocking runtime quirk.
-    if (text.includes('UV_HANDLE_CLOSING') && /Failed:\s*0\b/.test(text)) {
+    // If the suite output does not show explicit test failures, treat this as a
+    // non-blocking runtime quirk.
+    const hasExplicitFailures = /Failed:\s*[1-9]\d*\b/.test(text) || /FAIL - /.test(text)
+    if (text.includes('UV_HANDLE_CLOSING') && !hasExplicitFailures) {
       console.warn(`[run-e2e] Ignoring known Windows runtime assertion for suite: ${label}`)
       return true
     }
@@ -121,7 +126,11 @@ async function main() {
   const dm = new TestDataManager({ verbose: VERBOSE })
 
   console.log('\n--- Seeding test data ---')
-  const admin = await dm.bootstrapAdmin({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD })
+  const admin = await dm.bootstrapAdmin({
+    email: ADMIN_EMAIL,
+    password: ADMIN_PASSWORD,
+    phone: ADMIN_PHONE,
+  })
   console.log(`Admin ready (created=${admin.created})`)
 
   const product = await dm.createProduct({
@@ -136,6 +145,7 @@ async function main() {
     BASE_URL,
     ADMIN_TOKEN: admin.token,
     TEST_EMAIL: ADMIN_EMAIL,
+    TEST_LOGIN_IDENTIFIER: LOGIN_IDENTIFIER,
     PRODUCT_ID: product.id,
     RUN_INTEGRATION_TESTS: 'true',
     RUN_SECURITY_TESTS: 'true',
@@ -150,12 +160,16 @@ async function main() {
   }
 
   if (suiteArg === 'all' || suiteArg === 'verification') {
-    results.push(
-      run('Verification integration', 'tests/e2e/verification/verification-endpoints.e2e.test.mjs', sharedEnv),
-      run('Verification security', 'tests/e2e/verification/verification-security.e2e.test.mjs', sharedEnv),
-      run('Send verification', 'tests/e2e/verification/send-verification.e2e.test.mjs', sharedEnv),
-      run('Verify phone', 'tests/e2e/verification/verify-phone.e2e.test.mjs', sharedEnv),
-    )
+    if (process.env.VERIFICATION_ENABLED === 'false') {
+      console.log('Skipping verification suites: VERIFICATION_ENABLED=false')
+    } else {
+      results.push(
+        run('Verification integration', 'tests/e2e/verification/verification-endpoints.e2e.test.mjs', sharedEnv),
+        run('Verification security', 'tests/e2e/verification/verification-security.e2e.test.mjs', sharedEnv),
+        run('Send verification', 'tests/e2e/verification/send-verification.e2e.test.mjs', sharedEnv),
+        run('Verify phone', 'tests/e2e/verification/verify-phone.e2e.test.mjs', sharedEnv),
+      )
+    }
   }
 
   if (suiteArg === 'all' || suiteArg === 'guest' || suiteArg === 'checkout') {

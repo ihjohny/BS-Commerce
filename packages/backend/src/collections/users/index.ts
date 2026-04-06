@@ -6,6 +6,7 @@ import {
   toLoginIdentifier,
   validateAuthIdentifier,
 } from '../../lib/auth-config'
+import { shouldResetEmailVerified, shouldResetPhoneVerified } from '../../lib/user-verification-reset'
 
 // Field-level access: must return boolean only (FieldAccess, not collection Access)
 const adminOnly: FieldAccess = ({ req }) => req.user?.role === 'admin'
@@ -182,10 +183,10 @@ export const Users: CollectionConfig = {
         }
 
         // Reset verification when identifier changes
-        if (originalDoc && data.email !== undefined && String(data.email || '').trim() !== String(originalDoc.email || '').trim()) {
+        if (shouldResetEmailVerified(originalDoc, data)) {
           data.emailVerified = false
         }
-        if (originalDoc && data.phone !== undefined && String(data.phone || '').trim() !== String(originalDoc.phone || '').trim()) {
+        if (shouldResetPhoneVerified(originalDoc, data)) {
           data.phoneVerified = false
         }
 
