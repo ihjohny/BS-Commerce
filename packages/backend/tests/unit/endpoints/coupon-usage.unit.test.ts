@@ -68,3 +68,68 @@ test('should return usage summary for existing coupon', async () => {
   assert.equal(json.usage.totalDiscountGiven, 25)
   assert.equal(json.usage.sampledOrders.length, 2)
 })
+
+test('should map customer object id and string customer id in sampled orders', async () => {
+  const req = mockHandlerReq({
+    user: { role: 'admin' },
+    params: { id: 'coupon-1' },
+    payloadOverrides: {
+      find: async () => ({
+        totalDocs: 2,
+        docs: [
+          { id: 'o-1', orderNumber: 'ORD-1', customer: { id: 'cust-obj' }, discountTotal: undefined, grandTotal: 10, createdAt: '2026-01-01' },
+          { id: 'o-2', orderNumber: 'ORD-2', customer: 'cust-str', discountTotal: 1.111, grandTotal: 20, createdAt: '2026-01-02' },
+        ],
+      }),
+    } as any,
+  })
+  req.payload.findByID = async () => ({
+    id: 'coupon-1',
+    code: 'X',
+    type: 'percentage',
+    value: 5,
+    isActive: true,
+    totalUses: 0,
+    maxTotalUses: null,
+    maxUsesPerUser: null,
+    expiresAt: null,
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 200)
+  const json = await res.json()
+  assert.equal(json.coupon.maxTotalUses, null)
+  assert.equal(json.usage.sampledOrders[0].customer, 'cust-obj')
+  assert.equal(json.usage.sampledOrders[1].customer, 'cust-str')
+  assert.equal(json.usage.totalDiscountGiven, 1.11)
+})
+
+test('should cap sampled orders at 20 when many redemptions exist', async () => {
+  const docs = Array.from({ length: 25 }, (_, i) => ({
+    id: `o-${i}`,
+    orderNumber: `ORD-${i}`,
+    customer: null,
+    discountTotal: 1,
+    grandTotal: 10,
+    createdAt: '2026-01-01',
+  }))
+  const req = mockHandlerReq({
+    user: { role: 'admin' },
+    params: { id: 'coupon-1' },
+    payloadOverrides: {
+      find: async () => ({ totalDocs: 25, docs }),
+    } as any,
+  })
+  req.payload.findByID = async () => ({
+    id: 'coupon-1',
+    code: 'BIG',
+    type: 'fixed',
+    value: 1,
+    isActive: true,
+    totalUses: 25,
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 200)
+  const json = await res.json()
+  assert.equal(json.usage.totalRedemptions, 25)
+  assert.equal(json.usage.sampledOrders.length, 20)
+})

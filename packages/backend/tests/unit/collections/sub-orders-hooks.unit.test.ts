@@ -221,6 +221,162 @@ test('parent derivation should skip when sub-order has no parentOrder', async ()
   assert.equal(updateCalls.length, 0)
 })
 
+test('afterRead should swallow errors when parent order lookup fails', async () => {
+  const doc = { id: 'so-1', parentOrder: 'ord-bad' } as any
+  const req = {
+    payload: {
+      findByID: async () => {
+        throw new Error('not found')
+      },
+    },
+  }
+  const out = await afterReadHook({ doc: { ...doc }, req })
+  assert.equal(out.parentOrderNumber, undefined)
+})
+
+test('beforeChange should skip validation when status is not in update data', () => {
+  const data = { subtotal: 10 } as any
+  const result = beforeChangeHook({
+    operation: 'update',
+    data,
+    originalDoc: { status: 'pending' },
+  })
+  assert.equal(result, data)
+})
+
+test('inventory afterChange should consume stock when sub-order moves to shipped', async () => {
+  let updateCount = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'order-items') {
+          return {
+            docs: [{ id: 'oi-1', product: 'p-1', quantity: 2, variant: null }],
+          }
+        }
+        if (args.collection === 'stock-levels') {
+          return {
+            docs: [
+              {
+                id: 'sl-1',
+                product: 'p-1',
+                variant: null,
+                quantity: 10,
+                reservedQuantity: 2,
+              },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async () => {
+        updateCount++
+        return {}
+      },
+    },
+  }
+  await inventoryAfterChangeHook({
+    operation: 'update',
+    doc: { id: 'so-1', status: 'shipped', parentOrder: 'po-1' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.ok(updateCount >= 1)
+})
+
+test('inventory afterChange should release reserved stock when sub-order is cancelled', async () => {
+  let updateCount = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'order-items') {
+          return {
+            docs: [{ id: 'oi-1', product: 'p-1', quantity: 1, variant: 'v-1' }],
+          }
+        }
+        if (args.collection === 'stock-levels') {
+          return {
+            docs: [
+              {
+                id: 'sl-v',
+                product: 'p-1',
+                variant: 'v-1',
+                reservedQuantity: 3,
+              },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async () => {
+        updateCount++
+        return {}
+      },
+    },
+  }
+  await inventoryAfterChangeHook({
+    operation: 'update',
+    doc: { id: 'so-1', status: 'cancelled', parentOrder: 'po-1' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.ok(updateCount >= 1)
+})
+
+test('parent derivation should set parent to delivered when all active sub-orders are delivered', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') {
+          return {
+            docs: [
+              { id: 'sub-1', status: 'processing' },
+              { id: 'sub-2', status: 'delivered' },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-1', status: 'delivered', parentOrder: 'order-parent' }
+  const previousDoc = { id: 'sub-1', status: 'processing' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls[0].data.status, 'delivered')
+})
+
+test('parent derivation should set parent to shipped when all active sub-orders are shipped', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') {
+          return {
+            docs: [
+              { id: 'sub-1', status: 'processing' },
+              { id: 'sub-2', status: 'shipped' },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-1', status: 'shipped', parentOrder: 'order-parent' }
+  const previousDoc = { id: 'sub-1', status: 'processing' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls[0].data.status, 'shipped')
+})
+
 test('parent derivation uses strict strategy when mixed cancel and ship', async () => {
   process.env.PARENT_ORDER_STATUS_STRATEGY = 'strict'
   const updateCalls: any[] = []
@@ -248,4 +404,42 @@ test('parent derivation uses strict strategy when mixed cancel and ship', async 
   await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
   assert.equal(updateCalls.length, 1)
   assert.equal(updateCalls[0].data.status, 'partially-shipped')
+})
+
+test('parent derivation should not update parent when no sub-orders returned', async () => {
+  const updateCalls: any[] = []
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        if (args.collection === 'sub-orders') return { docs: [] }
+        return { docs: [] }
+      },
+      update: async (args: any) => {
+        updateCalls.push(args)
+        return {}
+      },
+    },
+  }
+  const doc = { id: 'sub-1', status: 'shipped', parentOrder: 'order-parent' }
+  const previousDoc = { id: 'sub-1', status: 'pending' }
+  await parentDerivationAfterChangeHook({ operation: 'update', doc, previousDoc, req })
+  assert.equal(updateCalls.length, 0)
+})
+
+test('read: vendor scoped to tenant object id', () => {
+  const read = SubOrders.access?.read as (args: { req: { user?: { role?: string; tenant?: unknown } } }) => unknown
+  assert.ok(read)
+  const r = read({ req: { user: { role: 'vendor', tenant: { id: 't-99' } } } }) as any
+  assert.equal(r.tenant?.equals, 't-99')
+})
+
+test('read: vendor scoped to tenant string id', () => {
+  const read = SubOrders.access?.read as (args: { req: { user?: { role?: string; tenant?: unknown } } }) => unknown
+  const r = read({ req: { user: { role: 'vendor', tenant: 't-str' } } }) as any
+  assert.equal(r.tenant?.equals, 't-str')
+})
+
+test('read: vendor without tenant denied', () => {
+  const read = SubOrders.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
+  assert.equal(read({ req: { user: { role: 'vendor' } } }), false)
 })

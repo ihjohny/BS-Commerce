@@ -14,6 +14,25 @@ afterEach(() => {
   else process.env.AUTH_REQUIRE_VERIFIED_EMAIL_FOR_LOGIN = envBackup
 })
 
+test('should return 400 when json() fails', async () => {
+  const base = mockHandlerReq({ body: { identifier: 'a@b.com', password: 'x' } })
+  const req = {
+    ...base,
+    json: async () => {
+      throw new Error('bad json')
+    },
+  }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when json() resolves to null', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = { ...base, json: async () => null }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when identifier is missing', async () => {
   const req = mockHandlerReq({ body: { password: 'pass' } })
   const res = await handler(req)

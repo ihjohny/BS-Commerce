@@ -10,6 +10,15 @@ test('should return same config when multivendor plugin is disabled', async () =
   assert.equal(result, incoming)
 })
 
+test('should start from empty collections when incoming has none', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const incoming = {} as any
+  const result = await plugin(incoming)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('tenants'))
+  assert.ok(slugs.includes('vendor-applications'))
+})
+
 test('should register multivendor collections when enabled', async () => {
   const plugin = multivendorPlugin({
     enabled: true,
@@ -79,6 +88,27 @@ test('should not duplicate tenant field on users if already present', async () =
   assert.equal(tenantCount, 1)
 })
 
+test('should augment media when beforeValidate is a single function', async () => {
+  const plugin = multivendorPlugin({ enabled: true })
+  const existingBefore = () => ({})
+  const incoming = {
+    collections: [
+      { slug: 'users', fields: [{ name: 'email', type: 'email' }] },
+      {
+        slug: 'media',
+        fields: [{ name: 'alt', type: 'text' }],
+        hooks: { beforeValidate: existingBefore },
+      },
+    ],
+  } as any
+  const result = await plugin(incoming)
+  const media = (result.collections || []).find((c: any) => c.slug === 'media') as any
+  assert.ok(media)
+  const hooks = media.hooks?.beforeValidate
+  assert.ok(Array.isArray(hooks))
+  assert.ok(hooks.length >= 1)
+})
+
 test('should augment media with tenant field, access, and beforeValidate when media has no tenant', async () => {
   const plugin = multivendorPlugin({ enabled: true })
   const incoming = {
@@ -103,6 +133,11 @@ test('should augment media with tenant field, access, and beforeValidate when me
     req: { user: { role: 'vendor', tenant: { id: 'ten-1' } } },
   })
   assert.equal(withTenant.tenant, 'ten-1')
+  const withTenantString = hook({
+    data: { alt: 'z' },
+    req: { user: { role: 'vendor', tenant: 'ten-str' } },
+  })
+  assert.equal(withTenantString.tenant, 'ten-str')
   const unchanged = hook({
     data: { alt: 'y' },
     req: { user: { role: 'customer' } },
@@ -160,4 +195,6 @@ test('should evaluate media access for anonymous, admin, vendor, and customer', 
   assert.equal(del({ req: { user: { role: 'admin' } } }), true)
   const vendorDel = del({ req: { user: { role: 'vendor', tenant: 't-2' } } })
   assert.ok(typeof vendorDel === 'object')
+  assert.equal(update({ req: { user: { role: 'customer' } } }), false)
+  assert.equal(del({ req: { user: { role: 'customer' } } }), false)
 })

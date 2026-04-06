@@ -4,7 +4,12 @@ import assert from 'node:assert/strict'
 import { processCheckout } from '../../../src/lib/process-checkout.ts'
 
 let envBackups: Record<string, string | undefined> = {}
-const envKeys = ['MULTIVENDOR_ENABLED', 'REQUIRE_VERIFIED_FOR_CHECKOUT', 'DEFAULT_COMMISSION_RATE']
+const envKeys = [
+  'MULTIVENDOR_ENABLED',
+  'REQUIRE_VERIFIED_FOR_CHECKOUT',
+  'DEFAULT_COMMISSION_RATE',
+  'BS_TEST_ORDER_EMAIL_REJECT',
+]
 beforeEach(() => { envBackups = {}; for (const k of envKeys) envBackups[k] = process.env[k] })
 afterEach(() => { for (const k of envKeys) { if (envBackups[k] === undefined) delete process.env[k]; else process.env[k] = envBackups[k] } })
 
@@ -503,4 +508,331 @@ test('should set changedBy on simulated payment history when user is logged in',
   await processCheckout(payload, { ...baseInput, simulatePayment: true }, 'u-1', req)
   const histCreates = payload._calls.create.filter((c: any) => c.collection === 'order-status-history')
   assert.ok(histCreates.some((c: any) => c.data?.changedBy === 'u-1' && c.data?.toStatus === 'processing'))
+})
+
+test('should allow admin to checkout a cart owned by another customer', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          user: { id: 'customer-other' },
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      return { id: args.id }
+    },
+  })
+  const req = { headers: { get: () => null }, user: { id: 'admin-1', role: 'admin' }, context: {} } as any
+  const result = await processCheckout(payload, { ...baseInput }, 'admin-1', req)
+  assert.equal(result.error, undefined)
+})
+
+test('should treat cart.user as id when stored as string for authenticated checkout', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          user: 'user-1',
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      return { id: args.id }
+    },
+  })
+  const req = { headers: { get: () => null }, user: { id: 'user-1', role: 'customer' }, context: {} } as any
+  const result = await processCheckout(payload, { ...baseInput }, 'user-1', req)
+  assert.equal(result.error, undefined)
+})
+
+test('should resolve variant id when cart line stores variant as string', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [{ product: { id: 'prod-1' }, variant: 'var-str', quantity: 1, unitPrice: 1 }],
+        }
+      }
+      if (args.collection === 'products') {
+        return { id: 'prod-1', name: 'P', basePrice: 50, sku: 'PSKU', tenant: null }
+      }
+      if (args.collection === 'product-variants' && args.id === 'var-str') {
+        return { id: 'var-str', name: 'VarStr', sku: 'VSKU', price: 44, product: 'prod-1' }
+      }
+      return { id: args.id }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'varstr@test.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates[0].data.unitPrice, 44)
+  assert.ok(String(itemCreates[0].data.variant || '').includes('var-str'))
+})
+
+test('should match idempotency when existing order customer id is a string', async () => {
+  const payload = buildPayload({
+    find: async (args: any) => {
+      if (args.collection === 'orders' && args.where?.idempotencyKey) {
+        return {
+          docs: [
+            {
+              id: 'o-idem',
+              orderNumber: 'ORD-IDEM',
+              customer: 'user-1',
+            },
+          ],
+        }
+      }
+      return { docs: [] }
+    },
+  })
+  const req = { headers: { get: () => null }, user: { id: 'user-1', role: 'customer' }, context: {} } as any
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, idempotencyKey: '123e4567-e89b-12d3-a456-426614174000' },
+    'user-1',
+    req,
+  )
+  assert.equal(result.order.id, 'o-idem')
+  assert.equal(result.error, undefined)
+})
+
+test('should resolve product id when cart line stores product as string', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [{ product: 'prod-str', quantity: 1, unitPrice: 10 }],
+        }
+      }
+      if (args.collection === 'products' && args.id === 'prod-str') {
+        return { id: 'prod-str', name: 'Str', basePrice: 10, sku: 'SKU', tenant: null }
+      }
+      return { id: args.id }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'g@t.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates[0].data.product, 'prod-str')
+})
+
+test('should record string and object tenant ids on sub-order line items when multivendor is on', async () => {
+  process.env.MULTIVENDOR_ENABLED = 'true'
+  process.env.DEFAULT_COMMISSION_RATE = '10'
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [
+            { product: { id: 'p1' }, quantity: 1, unitPrice: 10 },
+            { product: { id: 'p2' }, quantity: 1, unitPrice: 10 },
+          ],
+        }
+      }
+      if (args.collection === 'products' && args.id === 'p1') {
+        return { id: 'p1', name: 'A', basePrice: 10, sku: 'a', tenant: 'tenant-string' }
+      }
+      if (args.collection === 'products' && args.id === 'p2') {
+        return { id: 'p2', name: 'B', basePrice: 10, sku: 'b', tenant: { id: 'tenant-obj' } }
+      }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'vendor-settings') return { docs: [] }
+      if (args.collection === 'orders') return { docs: [] }
+      if (args.collection === 'stock-levels') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'tenantmv@test.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  const tenants = itemCreates.map((c: any) => c.data.tenant).filter(Boolean)
+  assert.ok(tenants.includes('tenant-string'))
+  assert.ok(tenants.includes('tenant-obj'))
+})
+
+test('should keep line unitPrice when variant id is set but variant document is missing', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [
+            {
+              product: { id: 'prod-1' },
+              variant: { id: 'var-gone' },
+              quantity: 1,
+              unitPrice: 77,
+            },
+          ],
+        }
+      }
+      if (args.collection === 'products') {
+        return { id: 'prod-1', name: 'P', basePrice: 50, sku: 'P', tenant: null }
+      }
+      if (args.collection === 'product-variants') return null
+      return { id: args.id }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'v@t.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates[0].data.unitPrice, 77)
+})
+
+test('should default quantity to 1 when line quantity is zero', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [{ product: { id: 'prod-1' }, quantity: 0, unitPrice: 10 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 10, tenant: null }
+      return { id: args.id }
+    },
+  })
+  await processCheckout(payload, { ...baseInput, guestEmail: 'q@t.com' }, undefined, guestReq())
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates[0].data.quantity, 1)
+})
+
+test('should persist idempotencyKey on new order create', async () => {
+  const key = '123e4567-e89b-12d3-a456-426614174000'
+  const payload = buildPayload()
+  await processCheckout(payload, { ...baseInput, guestEmail: 'idem@t.com', idempotencyKey: key }, undefined, guestReq())
+  const orderCreate = payload._calls.create.find((c: any) => c.collection === 'orders')
+  assert.equal(orderCreate.data.idempotencyKey, key)
+})
+
+test('should use pending in status history when created order has no status field', async () => {
+  const payload = buildPayload({
+    create: async (args: any) => {
+      if (args.collection === 'orders') return { id: 'order-1' }
+      if (args.collection === 'order-items') return { id: `oi-${Math.random()}` }
+      if (args.collection === 'order-status-history') return { id: 'osh-1' }
+      if (args.collection === 'transactions') return { id: 'txn-1' }
+      return { id: 'x' }
+    },
+  })
+  await processCheckout(payload, { ...baseInput, guestEmail: 'hist@t.com' }, undefined, guestReq())
+  const hist = payload._calls.create.find((c: any) => c.collection === 'order-status-history')
+  assert.equal(hist.data.toStatus, 'pending')
+})
+
+test('should reserve stock matching product and variant on stock level', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [
+            {
+              product: { id: 'prod-1' },
+              variant: { id: 'var-1' },
+              quantity: 2,
+              unitPrice: 10,
+            },
+          ],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 10, tenant: null }
+      if (args.collection === 'product-variants') {
+        return { id: 'var-1', price: 10, sku: 'V1' }
+      }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'stock-levels') {
+        return {
+          docs: [
+            {
+              id: 'sl-v',
+              product: 'prod-1',
+              variant: 'var-1',
+              reservedQuantity: 1,
+            },
+          ],
+        }
+      }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  await processCheckout(payload, { ...baseInput, guestEmail: 'sv@t.com' }, undefined, guestReq())
+  const stockUpdates = payload._calls.update.filter((c: any) => c.collection === 'stock-levels')
+  assert.equal(stockUpdates.length, 1)
+  assert.equal(stockUpdates[0].data.reservedQuantity, 3)
+})
+
+test('should return error when product lookup returns null', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [{ product: { id: 'missing-prod' }, quantity: 1, unitPrice: 10 }],
+        }
+      }
+      if (args.collection === 'products' && args.id === 'missing-prod') return null
+      return { id: args.id, name: 'P', basePrice: 10, tenant: null }
+    },
+  })
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'g@t.com' }, undefined, guestReq())
+  assert.ok(result.error?.includes('missing-prod') || result.error?.includes('not found'))
+})
+
+test('should propagate when cart fetch throws a non-NotFound error', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') throw new Error('database connection lost')
+      return { id: args.id }
+    },
+  })
+  await assert.rejects(
+    () => processCheckout(payload, { ...baseInput, guestEmail: 'g@t.com' }, undefined, guestReq()),
+    /database connection lost/,
+  )
+})
+
+test('should log when order confirmation email promise rejects', async () => {
+  process.env.BS_TEST_ORDER_EMAIL_REJECT = 'true'
+  const errors: string[] = []
+  const orig = console.error
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(' '))
+  }
+  try {
+    const payload = buildPayload()
+    await processCheckout(payload, { ...baseInput, guestEmail: 'notify@test.com' }, undefined, guestReq())
+    // sendOrderConfirmationEmail is fire-and-forget; flush microtasks so .catch(console.error) runs
+    await new Promise<void>((resolve) => setImmediate(resolve))
+  } finally {
+    console.error = orig
+    delete process.env.BS_TEST_ORDER_EMAIL_REJECT
+  }
+  assert.ok(errors.some((e) => e.includes('Failed to send order email')))
 })

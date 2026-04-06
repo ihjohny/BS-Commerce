@@ -42,3 +42,9 @@ test('update and delete access match owner-or-admin pattern', () => {
   assert.ok(typeof scoped === 'object' && scoped.user?.equals === 'u-2')
   assert.deepEqual(del({ req: { user: { id: 'u-2', role: 'customer' } } }), scoped)
 })
+
+test('create access requires authenticated user', () => {
+  const create = Addresses.access?.create as (args: { req: { user?: unknown } }) => boolean
+  assert.equal(create({ req: {} }), false)
+  assert.equal(create({ req: { user: { id: 'u-1' } } }), true)
+})

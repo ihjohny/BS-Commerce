@@ -203,6 +203,80 @@ test('beforeDelete should remove history, transactions, order-items and release 
   assert.ok(deleteCalls.some((d) => d.collection === 'order-items' && d.id === 'oi-1'))
 })
 
+test('access: delete always false; create/update use admin', () => {
+  const del = cfg.access?.delete as (args: { req: unknown }) => boolean
+  const create = cfg.access?.create as (args: { req: { user?: { role?: string } } }) => boolean
+  const update = cfg.access?.update as (args: { req: { user?: { role?: string } } }) => boolean
+  assert.equal(del({ req: {} }), false)
+  assert.equal(create({ req: { user: { role: 'admin' } } }), true)
+  assert.equal(create({ req: { user: { role: 'customer' } } }), false)
+  assert.equal(update({ req: { user: { role: 'admin' } } }), true)
+  assert.equal(update({ req: { user: { role: 'customer' } } }), false)
+})
+
+test('currency field defaultValue resolves when callable', () => {
+  const currencyField = cfg.fields?.find((f: any) => typeof f === 'object' && f?.name === 'currency') as
+    | { defaultValue?: () => string }
+    | undefined
+  assert.ok(currencyField && typeof currencyField.defaultValue === 'function')
+  const v = (currencyField.defaultValue as () => string)()
+  assert.ok(typeof v === 'string' && v.length > 0)
+})
+
+test('afterChange single-vendor should consume inventory when shipped items exist', async () => {
+  assert.ok(afterChangeHook)
+  let findCalls = 0
+  const req = {
+    payload: {
+      find: async (args: any) => {
+        findCalls++
+        if (args.collection === 'order-items') {
+          return { docs: [{ id: 'oi-1', product: 'p-1', quantity: 1 }] }
+        }
+        if (args.collection === 'stock-levels') {
+          return {
+            docs: [
+              { id: 'sl-1', product: 'p-1', variant: null, quantity: 10, reservedQuantity: 0 },
+            ],
+          }
+        }
+        return { docs: [] }
+      },
+      create: async () => ({}),
+      update: async () => ({}),
+    },
+    user: { id: 'u-1' },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-ship', status: 'shipped' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.ok(findCalls >= 2)
+})
+
+test('afterChange status history omits changedBy when req.user missing', async () => {
+  assert.ok(afterChangeHook)
+  const createCalls: any[] = []
+  const req = {
+    payload: {
+      create: async (args: any) => {
+        createCalls.push(args)
+        return {}
+      },
+      find: async () => ({ docs: [] }),
+    },
+  }
+  await afterChangeHook({
+    operation: 'update',
+    doc: { id: 'order-1', status: 'processing' },
+    previousDoc: { status: 'pending' },
+    req,
+  })
+  assert.equal(createCalls[0].data.changedBy, undefined)
+})
+
 test('beforeDelete multivendor should also delete sub-orders for parent order', async () => {
   assert.ok(beforeDeleteHookMv)
   const deleteCalls: any[] = []

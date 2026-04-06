@@ -45,3 +45,57 @@ test('should not inject hooks when multivendor is disabled', () => {
   const cfg = createProductVariantsConfig(false)
   assert.equal(cfg.hooks, undefined)
 })
+
+test('read: logged-in customer sees active variants only when multivendor off', () => {
+  const cfg = createProductVariantsConfig(false)
+  const read = cfg.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
+  assert.ok(read)
+  const r = read({ req: { user: { role: 'customer' } } }) as { isActive?: { equals?: boolean } }
+  assert.equal(r.isActive?.equals, true)
+})
+
+test('read: anonymous sees active variants only when multivendor off', () => {
+  const cfg = createProductVariantsConfig(false)
+  const read = cfg.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
+  const r = read({ req: {} }) as { isActive?: { equals?: boolean } }
+  assert.equal(r.isActive?.equals, true)
+})
+
+test('read: admin sees all when multivendor off', () => {
+  const cfg = createProductVariantsConfig(false)
+  const read = cfg.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
+  assert.equal(read({ req: { user: { role: 'admin' } } }), true)
+})
+
+test('read: vendor scoped to tenant when multivendor on', () => {
+  const cfg = createProductVariantsConfig(true)
+  const read = cfg.access?.read as (args: { req: { user?: { role?: string; tenant?: unknown } } }) => unknown
+  const r = read({
+    req: { user: { role: 'vendor', tenant: { id: 'tenant-x' } } },
+  }) as { tenant?: { equals?: string } }
+  assert.equal(r.tenant?.equals, 'tenant-x')
+})
+
+test('should copy tenant string from product when multivendor', async () => {
+  const hook = getBeforeValidateHook(true)
+  const data = { product: 'p-1', name: 'V', sku: 'SKU-T', price: 1 } as any
+  const req = {
+    payload: {
+      findByID: async () => ({ id: 'p-1', tenant: 'tenant-plain' }),
+    },
+    user: { role: 'admin' },
+  }
+  const out = await hook({ data, req })
+  assert.equal(out.tenant, 'tenant-plain')
+})
+
+test('should not set tenant when product has no tenant and user is admin', async () => {
+  const hook = getBeforeValidateHook(true)
+  const data = { product: 'p-1', name: 'V', sku: 'SKU-N', price: 1 } as any
+  const req = {
+    payload: { findByID: async () => ({ id: 'p-1', tenant: null }) },
+    user: { role: 'admin' },
+  }
+  const out = await hook({ data, req })
+  assert.equal(out.tenant, undefined)
+})

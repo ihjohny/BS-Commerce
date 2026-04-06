@@ -45,6 +45,31 @@ test('should return 400 when identifier is missing', async () => {
   assert.equal(res.status, 400)
 })
 
+test('should return 400 when identifier is not a string', async () => {
+  const req = mockHandlerReq({ body: { identifierType: 'email', identifier: 12345 } })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+})
+
+test('should treat failed json() as empty body', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = {
+    ...base,
+    json: async () => {
+      throw new Error('invalid json')
+    },
+  }
+  const res = await sendVerificationHandler(req as any)
+  assert.equal(res.status, 400)
+})
+
+test('should treat json() resolving to null as empty body', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = { ...base, json: async () => null }
+  const res = await sendVerificationHandler(req as any)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when identifierType is invalid', async () => {
   const req = mockHandlerReq({ body: { identifierType: 'fax', identifier: 'x' } })
   const res = await handler(req)

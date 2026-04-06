@@ -76,6 +76,40 @@ test('should block non-admin from changing review status during update', async (
   )
 })
 
+test('should reject update when customer attempts to change author', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  await assert.rejects(
+    () =>
+      before({
+        operation: 'update',
+        data: { author: 'u-2' },
+        originalDoc: { author: 'u-1', status: 'pending' },
+        req,
+      }),
+    /author cannot be changed/i,
+  )
+})
+
+test('should pin author from original doc when customer omits author on update', async () => {
+  const { before } = getHooks(true)
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    payload: { find: async () => ({ docs: [], totalDocs: 0 }) },
+  }
+  const result = await before({
+    operation: 'update',
+    data: { comment: 'only comment' },
+    originalDoc: { author: 'u-1', status: 'pending' },
+    req,
+  })
+  assert.equal(result.author, 'u-1')
+  assert.equal(result.comment, 'only comment')
+})
+
 test('should recompute vendor profile rating in afterChange for tenant', async () => {
   const { after } = getHooks(true)
   const updateCalls: any[] = []

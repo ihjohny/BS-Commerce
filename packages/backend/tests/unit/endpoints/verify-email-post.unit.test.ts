@@ -13,6 +13,25 @@ test('should return 400 when body has neither token nor otp payload', async () =
   assert.equal(res.status, 400)
 })
 
+test('should treat failed json() as empty body', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = {
+    ...base,
+    json: async () => {
+      throw new Error('invalid json')
+    },
+  }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
+test('should treat json() resolving to null as empty body', async () => {
+  const base = mockHandlerReq({ body: {} })
+  const req = { ...base, json: async () => null }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when otp email format is invalid', async () => {
   const req = mockHandlerReq({ body: { code: '123456', email: 'invalid-email' } })
   const res = await handler(req)
@@ -117,6 +136,24 @@ test('should return 400 when otp code is expired', async () => {
       find: async ({ collection }: any) => {
         if (collection === 'verification-codes') {
           return { docs: [{ id: 'vc-1', expiresAt: past }] }
+        }
+        return { docs: [] }
+      },
+    },
+  })
+  const res = await handler(req)
+  assert.equal(res.status, 400)
+  const json = await res.json()
+  assert.ok(String(json.error).toLowerCase().includes('expired'))
+})
+
+test('should return 400 when otp record has no expiresAt', async () => {
+  const req = mockHandlerReq({
+    body: { code: '123456', email: 'user@example.com' },
+    payloadOverrides: {
+      find: async ({ collection }: any) => {
+        if (collection === 'verification-codes') {
+          return { docs: [{ id: 'vc-no-exp' }] }
         }
         return { docs: [] }
       },

@@ -18,6 +18,16 @@ function getCheckoutLimiter(): RateLimiterRedis {
   return checkoutLimiter
 }
 
+/** @internal Clears cached limiter so tests can re-run lazy init with a mocked Redis factory. */
+export function resetCheckoutLimiterForTests(): void {
+  checkoutLimiter = undefined
+}
+
+/** @internal Exercises lazy `createRateLimiter` wiring without going through HTTP. */
+export function getCheckoutLimiterForTests(): RateLimiterRedis {
+  return getCheckoutLimiter()
+}
+
 export type CheckoutProcessDeps = {
   enforceRateLimit?: typeof enforceRateLimit
   processCheckout?: typeof processCheckout

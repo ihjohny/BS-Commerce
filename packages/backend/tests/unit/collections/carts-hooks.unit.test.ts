@@ -51,6 +51,71 @@ afterEach(() => {
   else process.env.MULTIVENDOR_ENABLED = mvBackup
 })
 
+test('beforeChange should return when data is falsy', async () => {
+  const hook = getBeforeChangeHook()
+  const result = await hook({
+    operation: 'update',
+    data: undefined,
+    req: { user: { id: 'u-1', role: 'customer' }, headers: mockHeaders({}), payload: {} },
+  })
+  assert.equal(result, undefined)
+})
+
+test('should throw when variant price is NaN', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ product: 'p-1', variant: 'v-1', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 10 }
+        if (collection === 'product-variants') return { id: 'v-1', price: NaN, product: 'p-1' }
+        return null
+      },
+    },
+  }
+  await assert.rejects(() => hook({ operation: 'update', data, req }), /Invalid variant price/)
+})
+
+test('should resolve product and variant ids from object references', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: { id: 'prod-obj' }, variant: { id: 'var-obj' }, quantity: 1 }],
+  } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'prod-obj', basePrice: 100 }
+        if (collection === 'product-variants') return { id: 'var-obj', price: 25, product: 'prod-obj' }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items[0].unitPrice, 25)
+})
+
+test('should denormalize tenant string id when multivendor env is on', async () => {
+  process.env.MULTIVENDOR_ENABLED = 'true'
+  const hook = getBeforeChangeHook(true, true)
+  const data = { items: [{ product: 'p-1', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 10, tenant: 'tenant-str-id' }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items[0].vendor, 'tenant-str-id')
+})
+
 test('should require valid X-Guest-Id for guest cart create', async () => {
   const hook = getBeforeChangeHook()
   await assert.rejects(
@@ -322,4 +387,58 @@ test('access create denies guest when allowGuestCheckout is false', () => {
     access.create({ req: { user: undefined, headers: mockHeaders({ 'x-guest-id': guestId }) } }),
     false,
   )
+})
+
+test('access read: create user is truthy', () => {
+  const access = getCartsAccess(false, true)
+  assert.equal(access.create({ req: { user: { id: 'u-1', role: 'customer' }, headers: mockHeaders({}) } }), true)
+})
+
+test('access update and delete mirror read for guest and admin', () => {
+  const access = getCartsAccess(false, true)
+  const guestId = '550e8400-e29b-41d4-a716-446655440000'
+  const custUpd = access.update({
+    req: { user: { id: 'u-9', role: 'customer' }, headers: mockHeaders({}) },
+  }) as { user?: { equals?: string } }
+  const custDel = access.delete({
+    req: { user: { id: 'u-9', role: 'customer' }, headers: mockHeaders({}) },
+  }) as { user?: { equals?: string } }
+  assert.equal(custUpd.user?.equals, 'u-9')
+  assert.equal(custDel.user?.equals, 'u-9')
+  assert.equal(access.update({ req: { user: { id: 'a', role: 'admin' }, headers: mockHeaders({}) } }), true)
+  assert.equal(access.delete({ req: { user: { id: 'a', role: 'admin' }, headers: mockHeaders({}) } }), true)
+  const gq = access.update({
+    req: { user: undefined, headers: mockHeaders({ 'x-guest-id': guestId }) },
+  }) as any
+  assert.ok(gq?.and)
+})
+
+test('beforeChange skips line item when product id missing', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [{ quantity: 1, product: null }, { product: 'p-1', quantity: 1 }] } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 5 }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.items[0].unitPrice, undefined)
+  assert.equal(result.items[1].unitPrice, 5)
+})
+
+test('beforeChange admin update preserves explicit user on update', async () => {
+  const hook = getBeforeChangeHook()
+  const data = { items: [], user: 'other-user' } as any
+  const req = {
+    user: { id: 'admin-1', role: 'admin' },
+    headers: mockHeaders({}),
+    payload: {},
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.user, 'other-user')
 })

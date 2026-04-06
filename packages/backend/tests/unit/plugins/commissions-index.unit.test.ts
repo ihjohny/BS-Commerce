@@ -16,3 +16,10 @@ test('should register commission-rules collection when enabled', async () => {
   const slugs = (result.collections || []).map((c: any) => c.slug)
   assert.ok(slugs.includes('commission-rules'))
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = commissionsPlugin({ enabled: true })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('commission-rules'))
+})

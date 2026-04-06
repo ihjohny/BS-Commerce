@@ -63,6 +63,38 @@ test('should return safe invalid error when token is expired', async () => {
   assert.equal(updateCalls.length, 0)
 })
 
+test('should mark code used and succeed when no user matches email', async () => {
+  const updateCalls: MockCall[] = []
+  const req = buildReq({
+    find: async (args: any) => {
+      if (args.collection === 'verification-codes') {
+        return {
+          docs: [
+            {
+              id: 'code-no-user',
+              identifier: 'nobody@example.com',
+              expiresAt: new Date(Date.now() + 60_000).toISOString(),
+            },
+          ],
+        }
+      }
+      if (args.collection === 'users') {
+        return { docs: [] }
+      }
+      return { docs: [] }
+    },
+    update: async (args) => {
+      updateCalls.push({ args })
+      return {}
+    },
+  })
+
+  const result = await consumeEmailVerificationToken({ token: 'valid-no-user', req })
+  assert.deepEqual(result, { success: true })
+  assert.equal(updateCalls.length, 1)
+  assert.equal(updateCalls[0].args.collection, 'verification-codes')
+})
+
 test('should mark token as used and verify user when token is valid', async () => {
   const updateCalls: MockCall[] = []
   let findStep = 0
@@ -122,6 +154,53 @@ test('should reject replay when the same token is consumed twice', async () => {
   const second = await consumeEmailVerificationToken({ token: 'single-use-token', req })
   assert.equal(second.success, false)
   if (!second.success) assert.equal(second.error, INVALID_LINK_ERROR)
+})
+
+test('should reject when record has no expiresAt (treated as expired)', async () => {
+  const updateCalls: MockCall[] = []
+  const req = buildReq({
+    find: async () => ({
+      docs: [
+        {
+          id: 'code-no-exp',
+          identifier: 'user@example.com',
+        },
+      ],
+    }),
+    update: async (args) => {
+      updateCalls.push({ args })
+      return {}
+    },
+  })
+
+  const result = await consumeEmailVerificationToken({ token: 'tok', req })
+  assert.equal(result.success, false)
+  if (!result.success) assert.equal(result.error, INVALID_LINK_ERROR)
+  assert.equal(updateCalls.length, 0)
+})
+
+test('should succeed when record identifier is null', async () => {
+  const updateCalls: MockCall[] = []
+  const req = buildReq({
+    find: async () => ({
+      docs: [
+        {
+          id: 'code-null-id',
+          identifier: null,
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        },
+      ],
+    }),
+    update: async (args) => {
+      updateCalls.push({ args })
+      return {}
+    },
+  })
+
+  const result = await consumeEmailVerificationToken({ token: 'tok-null-id', req })
+  assert.deepEqual(result, { success: true })
+  assert.equal(updateCalls.length, 1)
+  assert.equal(updateCalls[0].args.collection, 'verification-codes')
 })
 
 test('should succeed without user update when identifier is not an email shape', async () => {

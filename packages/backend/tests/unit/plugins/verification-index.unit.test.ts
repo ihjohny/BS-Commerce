@@ -34,3 +34,19 @@ test('should not duplicate verification-codes collection if already present', as
   const slugs = (result.collections || []).map((c: any) => c.slug)
   assert.equal(slugs.filter((s: string) => s === 'verification-codes').length, 1)
 })
+
+test('should merge when incoming config omits collections and endpoints keys', async () => {
+  const plugin = verificationPlugin({ enabled: true })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('verification-codes'))
+  assert.ok((result.endpoints || []).length > 0)
+})
+
+test('should skip duplicate endpoints when paths already exist', async () => {
+  const plugin = verificationPlugin({ enabled: true })
+  const existing = { path: '/auth/send-verification', method: 'post' as const, handler: async () => new Response() }
+  const result = await plugin({ collections: [], endpoints: [existing] } as any)
+  const paths = (result.endpoints || []).map((e: any) => e.path)
+  assert.equal(paths.filter((p: string) => p === '/auth/send-verification').length, 1)
+})

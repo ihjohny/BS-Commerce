@@ -92,6 +92,29 @@ test('should cap discount at subtotal (no negative total)', async () => {
   assert.equal(result.discountTotal, 50)
 })
 
+test('should skip per-user limit when userId is not provided', async () => {
+  let ordersFindCalls = 0
+  const payload = mockPayload({
+    find: async (args: any) => {
+      if (args.collection === 'coupons') {
+        return { docs: [couponDoc({ maxUsesPerUser: 1 })], totalDocs: 1 }
+      }
+      if (args.collection === 'orders') {
+        ordersFindCalls++
+        return { docs: [], totalDocs: 99 }
+      }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+  const result = await validateCouponForSubtotal({
+    payload: payload as any,
+    couponCode: 'SAVE10',
+    subtotal: 100,
+  })
+  assert.equal(result.valid, true)
+  assert.equal(ordersFindCalls, 0)
+})
+
 test('should normalize coupon code to uppercase', async () => {
   let findArgs: any = null
   const payload = mockPayload({

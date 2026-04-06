@@ -24,3 +24,10 @@ test('should register vendor-reviews when vendorReviews is true', async () => {
   const slugs = (result.collections || []).map((c: any) => c.slug)
   assert.ok(slugs.includes('vendor-reviews'))
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = reviewsPlugin({ enabled: true, vendorReviews: false })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('product-reviews'))
+})

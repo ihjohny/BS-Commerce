@@ -68,3 +68,35 @@ test('custom provider loads valid default export from path', async () => {
   const ok = await adapter.sendOTP('+8801712345678', '123456', 120)
   assert.equal(ok, true)
 })
+
+test('custom provider reuses cached adapter on second call', async () => {
+  process.env.PHONE_VERIFICATION_PROVIDER = 'custom'
+  process.env.VERIFICATION_PHONE_ADAPTER_PATH = path.join(
+    'tests',
+    'fixtures',
+    'custom-phone-adapter.mjs',
+  )
+  const a = await getPhoneAdapter()
+  const b = await getPhoneAdapter()
+  assert.strictEqual(a, b)
+})
+
+test('custom provider loads module with only named sendOTP export', async () => {
+  process.env.PHONE_VERIFICATION_PROVIDER = 'custom'
+  process.env.VERIFICATION_PHONE_ADAPTER_PATH = path.join(
+    'tests',
+    'fixtures',
+    'named-export-phone-adapter.mjs',
+  )
+  const adapter = await getPhoneAdapter()
+  const ok = await adapter.sendOTP('+1', '000000', 60)
+  assert.equal(ok, true)
+})
+
+test('custom provider treats whitespace-only adapter path as unset', async () => {
+  process.env.PHONE_VERIFICATION_PROVIDER = 'custom'
+  process.env.VERIFICATION_PHONE_ADAPTER_PATH = '  \t  '
+  const adapter = await getPhoneAdapter()
+  const ok = await adapter.sendOTP('+1', '000000', 60)
+  assert.equal(ok, true)
+})

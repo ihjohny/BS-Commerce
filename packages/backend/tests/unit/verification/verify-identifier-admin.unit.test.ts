@@ -24,6 +24,31 @@ test('should return 403 when unauthenticated', async () => {
   assert.equal(res.status, 403)
 })
 
+test('should return 400 when json() fails', async () => {
+  const base = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'a@b.com' },
+    user: { role: 'admin' },
+  })
+  const req = {
+    ...base,
+    json: async () => {
+      throw new Error('bad json')
+    },
+  }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
+test('should return 400 when json() resolves to null', async () => {
+  const base = mockHandlerReq({
+    body: { identifierType: 'email', identifier: 'a@b.com' },
+    user: { role: 'admin' },
+  })
+  const req = { ...base, json: async () => null }
+  const res = await handler(req as any)
+  assert.equal(res.status, 400)
+})
+
 test('should return 400 when identifierType is missing', async () => {
   const req = mockHandlerReq({
     body: { identifier: 'a@b.com' },

@@ -1,9 +1,21 @@
 import test, { beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import type Redis from 'ioredis'
 // @ts-ignore
 import { mockHandlerReq } from '../../_helpers/mock-request.ts'
 // @ts-ignore
-import { checkoutProcessHandler } from '../../../src/endpoints/checkout-process.ts'
+import {
+  checkoutProcessHandler,
+  checkoutProcessEndpoint,
+  resetCheckoutLimiterForTests,
+  getCheckoutLimiterForTests,
+} from '../../../src/endpoints/checkout-process.ts'
+// @ts-ignore
+import {
+  setRedisClientFactoryForTests,
+  resetRedisClientFactoryToDefaultForTests,
+  resetRedisClientSingletonForTests,
+} from '../../../src/lib/rate-limiter.ts'
 
 const procEnv = process.env as Record<string, string | undefined>
 let nodeEnvBackup: string | undefined
@@ -11,6 +23,9 @@ beforeEach(() => {
   nodeEnvBackup = procEnv.NODE_ENV
 })
 afterEach(() => {
+  resetCheckoutLimiterForTests()
+  resetRedisClientFactoryToDefaultForTests()
+  resetRedisClientSingletonForTests()
   if (nodeEnvBackup === undefined) Reflect.deleteProperty(procEnv, 'NODE_ENV')
   else procEnv.NODE_ENV = nodeEnvBackup
 })
@@ -33,6 +48,22 @@ const baseBody = {
 async function jsonBody(res: Response) {
   return res.json() as Promise<Record<string, unknown>>
 }
+
+test('lazy checkout limiter builds via createRateLimiter factory', () => {
+  const fake = {} as Redis
+  setRedisClientFactoryForTests(() => fake)
+  const lim = getCheckoutLimiterForTests()
+  assert.ok(lim)
+})
+
+test('endpoint handler delegates to checkoutProcessHandler', async () => {
+  const fake = {} as Redis
+  setRedisClientFactoryForTests(() => fake)
+  resetCheckoutLimiterForTests()
+  const req = mockHandlerReq({ body: { cartId: 'c1' } })
+  const res = await checkoutProcessEndpoint.handler(req)
+  assert.equal(res.status, 400)
+})
 
 test('should return 429 when rate limit rejects', async () => {
   const req = mockHandlerReq({ body: baseBody })
@@ -158,6 +189,20 @@ test('should return processCheckout error status when business logic fails', asy
   assert.equal(j.error, 'Cart not found')
 })
 
+test('should default to 400 when processCheckout error omits statusCode', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({
+      order: { id: '', orderNumber: '' },
+      error: 'No status',
+    }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'No status')
+})
+
 test('should return 500 when processCheckout throws', async () => {
   const req = mockHandlerReq({ body: baseBody })
   const res = await checkoutProcessHandler(req, {
@@ -272,4 +317,39 @@ test('should pass simulatePayment for customer when NODE_ENV is development', as
     },
   })
   assert.equal(seenSimulate, true)
+})
+
+test('should return 500 with generic message when processCheckout throws non-Error', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => {
+      throw 'boom'
+    },
+  })
+  assert.equal(res.status, 500)
+  const j = await jsonBody(res)
+  assert.equal(j.error, 'Checkout failed')
+})
+
+test('should treat failed JSON body as empty and return 400', async () => {
+  const req = mockHandlerReq({ body: baseBody }) as any
+  req.json = async () => {
+    throw new Error('bad json')
+  }
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+})
+
+test('should treat json() resolving to null as empty body', async () => {
+  const base = mockHandlerReq({ body: baseBody })
+  const req = { ...base, json: async () => null }
+  const res = await checkoutProcessHandler(req as any, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
 })

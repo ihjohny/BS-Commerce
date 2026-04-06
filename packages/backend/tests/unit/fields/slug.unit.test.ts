@@ -24,3 +24,14 @@ test('should preserve explicit slug value', () => {
   })
   assert.equal(out, 'custom-slug')
 })
+
+test('should return undefined when no slug value and empty source', () => {
+  const field = slugField('title') as { hooks?: { beforeValidate?: Array<(args: any) => unknown> } }
+  const hook = field.hooks?.beforeValidate?.[0]
+  assert.ok(hook)
+  const out = hook({
+    value: undefined,
+    data: { title: '' },
+  })
+  assert.equal(out, undefined)
+})

@@ -26,3 +26,10 @@ test('should include sub-orders when splitByVendor is true', async () => {
   const slugs = (result.collections || []).map((c: any) => c.slug)
   assert.equal(slugs.includes('sub-orders'), true)
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = ordersPlugin({ enabled: true, splitByVendor: false })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('orders'))
+})

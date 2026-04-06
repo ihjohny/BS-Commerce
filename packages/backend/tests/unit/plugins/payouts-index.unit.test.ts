@@ -18,3 +18,10 @@ test('should register payout collections in dependency order when enabled', asyn
   assert.ok(slugs.includes('payouts'))
   assert.ok(slugs.indexOf('payout-items') < slugs.indexOf('payouts'))
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = payoutsPlugin({ enabled: true })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('payouts'))
+})

@@ -16,3 +16,9 @@ test('should register transactions collection when enabled', async () => {
   const slugs = (result.collections || []).map((c: any) => c.slug)
   assert.ok(slugs.includes('transactions'))
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = paymentsPlugin({ enabled: true })
+  const result = await plugin({} as any)
+  assert.ok((result.collections || []).some((c: any) => c.slug === 'transactions'))
+})

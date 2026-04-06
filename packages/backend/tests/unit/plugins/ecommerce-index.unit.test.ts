@@ -20,3 +20,11 @@ test('should register ecommerce collections when enabled', async () => {
   assert.ok(slugs.includes('carts'))
   assert.ok(slugs.includes('addresses'))
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = ecommercePlugin({ enabled: true })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('products'))
+  assert.ok(slugs.includes('addresses'))
+})

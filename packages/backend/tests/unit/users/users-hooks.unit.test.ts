@@ -105,6 +105,15 @@ test('should reset phoneVerified when phone changes', async () => {
   assert.equal(result.phoneVerified, false)
 })
 
+test('should reset emailVerified when email casing changes', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'either'
+  const hook = await getHook()
+  const originalDoc = { email: 'a@b.com', phone: '+100', emailVerified: true }
+  const data = { email: 'A@B.COM', phone: '+100' }
+  const result = hook({ data, originalDoc, req: {} } as any)
+  assert.equal(result.emailVerified, false)
+})
+
 test('should not reset emailVerified when email unchanged', async () => {
   process.env.AUTH_REQUIRED_IDENTIFIER = 'email'
   const hook = await getHook()
@@ -118,4 +127,23 @@ test('should return data unchanged when data is falsy', async () => {
   const hook = await getHook()
   const result = hook({ data: undefined, originalDoc: undefined, req: {} } as any)
   assert.equal(result, undefined)
+})
+
+test('should not reset phoneVerified when phone unchanged after trim', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'phone'
+  const hook = await getHook()
+  const originalDoc = { phone: '+111', phoneVerified: true }
+  const data = { phone: '  +111  ' }
+  const result = hook({ data, originalDoc, req: {} } as any)
+  assert.equal(result.phoneVerified, undefined)
+})
+
+test('emailVerified field update access is admin-only', async () => {
+  const { Users } = await import('../../../src/collections/users/index.ts')
+  const field = Users.fields?.find((f: any) => f.name === 'emailVerified') as {
+    access?: { update?: (args: { req: { user?: { role?: string } } }) => boolean }
+  }
+  assert.ok(field?.access?.update)
+  assert.equal(field.access!.update!({ req: { user: { role: 'admin' } } }), true)
+  assert.equal(field.access!.update!({ req: { user: { role: 'customer' } } }), false)
 })

@@ -1,9 +1,46 @@
-import test from 'node:test'
+import test, { afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import type Redis from 'ioredis'
 // @ts-ignore
 import { mockHandlerReq } from '../../_helpers/mock-request.ts'
 // @ts-ignore
-import { guestOrderLookupHandler } from '../../../src/endpoints/guest-order-lookup.ts'
+import {
+  guestOrderLookupHandler,
+  guestOrderLookupEndpoint,
+  resetGuestLookupLimiterForTests,
+  getGuestLookupLimiterForTests,
+} from '../../../src/endpoints/guest-order-lookup.ts'
+// @ts-ignore
+import {
+  setRedisClientFactoryForTests,
+  resetRedisClientFactoryToDefaultForTests,
+  resetRedisClientSingletonForTests,
+} from '../../../src/lib/rate-limiter.ts'
+
+afterEach(() => {
+  resetGuestLookupLimiterForTests()
+  resetRedisClientFactoryToDefaultForTests()
+  resetRedisClientSingletonForTests()
+})
+
+test('lazy guest lookup limiter builds via createRateLimiter factory', () => {
+  const fake = {} as Redis
+  setRedisClientFactoryForTests(() => fake)
+  const lim = getGuestLookupLimiterForTests()
+  assert.ok(lim)
+})
+
+test('endpoint handler delegates to guestOrderLookupHandler', async () => {
+  const fake = {} as Redis
+  setRedisClientFactoryForTests(() => fake)
+  resetGuestLookupLimiterForTests()
+  const req = mockHandlerReq({
+    body: { orderNumber: 'ORD-E', guestEmail: 'e@example.com' },
+    payloadOverrides: { find: async () => ({ docs: [] }) },
+  })
+  const res = await guestOrderLookupEndpoint.handler(req)
+  assert.equal(res.status, 404)
+})
 
 test('should return 429 when rate limit rejects request', async () => {
   const req = mockHandlerReq({
@@ -17,6 +54,26 @@ test('should return 429 when rate limit rejects request', async () => {
       }),
   })
   assert.equal(res.status, 429)
+})
+
+test('should return 400 when orderNumber is only whitespace', async () => {
+  const req = mockHandlerReq({
+    body: { orderNumber: '   ', guestEmail: 'guest@example.com' },
+  })
+  const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
+  assert.equal(res.status, 400)
+  const json = await res.json()
+  assert.equal(json.error, 'orderNumber is required')
+})
+
+test('should return 400 when guestEmail is only whitespace', async () => {
+  const req = mockHandlerReq({
+    body: { orderNumber: 'ORD-1', guestEmail: '  \t  ' },
+  })
+  const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
+  assert.equal(res.status, 400)
+  const json = await res.json()
+  assert.equal(json.error, 'guestEmail is required')
 })
 
 test('should return 400 when orderNumber is missing', async () => {
@@ -100,4 +157,14 @@ test('should treat failed json() as empty body and return 400', async () => {
   assert.equal(res.status, 400)
   const json = await res.json()
   assert.equal(json.error, 'orderNumber is required')
+})
+
+test('should treat json() resolving to null as empty body', async () => {
+  const req = {
+    json: async () => null,
+    headers: { get: () => null },
+    payload: { find: async () => ({ docs: [] }) },
+  } as any
+  const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
+  assert.equal(res.status, 400)
 })

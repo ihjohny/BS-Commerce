@@ -17,3 +17,10 @@ test('should register stock collections when enabled', async () => {
   assert.ok(slugs.includes('stock-locations'))
   assert.ok(slugs.includes('stock-levels'))
 })
+
+test('should merge when incoming config omits collections key', async () => {
+  const plugin = inventoryPlugin({ enabled: true })
+  const result = await plugin({} as any)
+  const slugs = (result.collections || []).map((c: any) => c.slug)
+  assert.ok(slugs.includes('stock-levels'))
+})
