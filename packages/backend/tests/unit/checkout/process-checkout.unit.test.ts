@@ -6,11 +6,16 @@ import { processCheckout } from '../../../src/lib/process-checkout.ts'
 let envBackups: Record<string, string | undefined> = {}
 const envKeys = [
   'MULTIVENDOR_ENABLED',
+  'INVENTORY_ENABLED',
   'REQUIRE_VERIFIED_FOR_CHECKOUT',
   'DEFAULT_COMMISSION_RATE',
   'BS_TEST_ORDER_EMAIL_REJECT',
 ]
-beforeEach(() => { envBackups = {}; for (const k of envKeys) envBackups[k] = process.env[k] })
+beforeEach(() => {
+  envBackups = {}
+  for (const k of envKeys) envBackups[k] = process.env[k]
+  process.env.INVENTORY_ENABLED = 'false'
+})
 afterEach(() => { for (const k of envKeys) { if (envBackups[k] === undefined) delete process.env[k]; else process.env[k] = envBackups[k] } })
 
 function buildPayload(overrides: Record<string, Function> = {}) {
@@ -38,6 +43,9 @@ function buildPayload(overrides: Record<string, Function> = {}) {
       }
       if (args.collection === 'products') return defaultProduct
       if (args.collection === 'users') return { id: args.id, email: 'u@test.com', emailVerified: true }
+      if (args.collection === 'stock-levels') {
+        return { id: args.id, reservedQuantity: 0, quantity: 999 }
+      }
       return { id: args.id }
     },
     create: async (args: any) => {
@@ -436,7 +444,94 @@ test('should create sub-orders and platform line items when multivendor is enabl
   assert.equal(platformOnly.length, 1)
 })
 
+test('when multivendor and inventory enabled, should set stockLevel on vendor and platform line items', async () => {
+  process.env.MULTIVENDOR_ENABLED = 'true'
+  process.env.INVENTORY_ENABLED = 'true'
+  process.env.DEFAULT_COMMISSION_RATE = '10'
+
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'stock-levels' && args.id === 'sl-v-t1') {
+        return { id: 'sl-v-t1', reservedQuantity: 0, quantity: 100 }
+      }
+      if (args.collection === 'stock-levels' && args.id === 'sl-plat') {
+        return { id: 'sl-plat', reservedQuantity: 0, quantity: 100 }
+      }
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [
+            { product: { id: 'p-v' }, quantity: 1, unitPrice: 10 },
+            { product: { id: 'p-plat' }, quantity: 1, unitPrice: 5 },
+          ],
+        }
+      }
+      if (args.collection === 'products') {
+        if (args.id === 'p-v') {
+          return { id: 'p-v', name: 'Vendor P', basePrice: 100, sku: 'V', tenant: { id: 't-1' } }
+        }
+        return { id: 'p-plat', name: 'Platform P', basePrice: 20, sku: 'P', tenant: null }
+      }
+      if (args.collection === 'stock-levels') return { id: args.id, reservedQuantity: 0, quantity: 999 }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'stock-levels') {
+        const pid = args.where?.product?.equals
+        if (pid === 'p-v') {
+          return {
+            docs: [
+              {
+                id: 'sl-v-t1',
+                product: 'p-v',
+                variant: null,
+                quantity: 100,
+                reservedQuantity: 0,
+                location: { tenant: { id: 't-1' } },
+              },
+            ],
+          }
+        }
+        if (pid === 'p-plat') {
+          return {
+            docs: [
+              {
+                id: 'sl-plat',
+                product: 'p-plat',
+                variant: null,
+                quantity: 100,
+                reservedQuantity: 0,
+                location: { tenant: null },
+              },
+            ],
+          }
+        }
+        return { docs: [] }
+      }
+      if (args.collection === 'vendor-settings') return { docs: [] }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'mv-inv@test.com' }, undefined, guestReq())
+  assert.equal(result.error, undefined)
+
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates.length, 2)
+  const vendorLine = itemCreates.find((c: any) => c.data.product === 'p-v')
+  const platLine = itemCreates.find((c: any) => c.data.product === 'p-plat')
+  assert.equal(vendorLine?.data.stockLevel, 'sl-v-t1')
+  assert.equal(platLine?.data.stockLevel, 'sl-plat')
+
+  const stockUpdates = payload._calls.update.filter((c: any) => c.collection === 'stock-levels')
+  assert.equal(stockUpdates.length, 2)
+})
+
 test('should reserve stock when matching stock-level exists', async () => {
+  process.env.INVENTORY_ENABLED = 'true'
   const payload = buildPayload({
     find: async (args: any) => {
       if (args.collection === 'stock-levels') {
@@ -445,13 +540,33 @@ test('should reserve stock when matching stock-level exists', async () => {
             {
               id: 'sl-1',
               product: 'prod-1',
+              variant: null,
+              quantity: 100,
               reservedQuantity: 1,
+              location: { tenant: null },
             },
           ],
         }
       }
       if (args.collection === 'orders') return { docs: [] }
       return { docs: [], totalDocs: 0 }
+    },
+    findByID: async (args: any) => {
+      if (args.collection === 'stock-levels' && args.id === 'sl-1') {
+        return { id: 'sl-1', reservedQuantity: 1, quantity: 100 }
+      }
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [{ product: { id: 'prod-1' }, quantity: 2, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'Test', basePrice: 50, tenant: null }
+      if (args.collection === 'users') return { id: args.id, email: 'u@test.com', emailVerified: true }
+      if (args.collection === 'stock-levels') return { id: args.id, reservedQuantity: 0, quantity: 999 }
+      return { id: args.id }
     },
   })
   await processCheckout(payload, { ...baseInput, guestEmail: 'stock@test.com' }, undefined, guestReq())
@@ -740,8 +855,30 @@ test('should use pending in status history when created order has no status fiel
 })
 
 test('should reserve stock matching product and variant on stock level', async () => {
+  process.env.INVENTORY_ENABLED = 'true'
   const payload = buildPayload({
+    find: async (args: any) => {
+      if (args.collection === 'stock-levels') {
+        return {
+          docs: [
+            {
+              id: 'sl-v',
+              product: 'prod-1',
+              variant: 'var-1',
+              quantity: 50,
+              reservedQuantity: 1,
+              location: { tenant: null },
+            },
+          ],
+        }
+      }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
     findByID: async (args: any) => {
+      if (args.collection === 'stock-levels' && args.id === 'sl-v') {
+        return { id: 'sl-v', reservedQuantity: 1, quantity: 50 }
+      }
       if (args.collection === 'carts') {
         return {
           id: 'cart-1',
@@ -761,23 +898,8 @@ test('should reserve stock matching product and variant on stock level', async (
       if (args.collection === 'product-variants') {
         return { id: 'var-1', price: 10, sku: 'V1' }
       }
+      if (args.collection === 'stock-levels') return { id: args.id, reservedQuantity: 0, quantity: 999 }
       return { id: args.id }
-    },
-    find: async (args: any) => {
-      if (args.collection === 'stock-levels') {
-        return {
-          docs: [
-            {
-              id: 'sl-v',
-              product: 'prod-1',
-              variant: 'var-1',
-              reservedQuantity: 1,
-            },
-          ],
-        }
-      }
-      if (args.collection === 'orders') return { docs: [] }
-      return { docs: [], totalDocs: 0 }
     },
   })
   await processCheckout(payload, { ...baseInput, guestEmail: 'sv@t.com' }, undefined, guestReq())
@@ -1084,6 +1206,7 @@ test('should increment coupon uses when totalUses is undefined on stored coupon'
 })
 
 test('should reserve stock when stock level uses object ids', async () => {
+  process.env.INVENTORY_ENABLED = 'true'
   const payload = buildPayload({
     find: async (args: any) => {
       if (args.collection === 'stock-levels') {
@@ -1093,7 +1216,9 @@ test('should reserve stock when stock level uses object ids', async () => {
               id: 'sl-obj',
               product: { id: 'prod-1' },
               variant: { id: 'var-1' },
+              quantity: 50,
               reservedQuantity: 0,
+              location: { tenant: null },
             },
           ],
         }
@@ -1102,6 +1227,9 @@ test('should reserve stock when stock level uses object ids', async () => {
       return { docs: [], totalDocs: 0 }
     },
     findByID: async (args: any) => {
+      if (args.collection === 'stock-levels' && args.id === 'sl-obj') {
+        return { id: 'sl-obj', reservedQuantity: 0, quantity: 50 }
+      }
       if (args.collection === 'carts') {
         return {
           id: 'cart-1',
@@ -1119,6 +1247,7 @@ test('should reserve stock when stock level uses object ids', async () => {
       }
       if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 10, tenant: null }
       if (args.collection === 'product-variants') return { id: 'var-1', price: 10, sku: 'V1' }
+      if (args.collection === 'stock-levels') return { id: args.id, reservedQuantity: 0, quantity: 999 }
       return { id: args.id }
     },
   })
@@ -1128,7 +1257,8 @@ test('should reserve stock when stock level uses object ids', async () => {
   assert.equal(stockUpdates[0].data.reservedQuantity, 2)
 })
 
-test('should skip stock update when no stock level row matches', async () => {
+test('should return error when no stock level row matches product variant', async () => {
+  process.env.INVENTORY_ENABLED = 'true'
   const payload = buildPayload({
     find: async (args: any) => {
       if (args.collection === 'stock-levels') {
@@ -1138,7 +1268,9 @@ test('should skip stock update when no stock level row matches', async () => {
               id: 'sl-x',
               product: 'prod-1',
               variant: 'other-variant',
+              quantity: 10,
               reservedQuantity: 0,
+              location: { tenant: null },
             },
           ],
         }
@@ -1147,7 +1279,48 @@ test('should skip stock update when no stock level row matches', async () => {
       return { docs: [], totalDocs: 0 }
     },
   })
-  await processCheckout(payload, { ...baseInput, guestEmail: 'slmiss@test.com' }, undefined, guestReq())
+  const result = await processCheckout(payload, { ...baseInput, guestEmail: 'slmiss@test.com' }, undefined, guestReq())
+  assert.equal(result.statusCode, 400)
+  assert.ok(result.error?.includes('stock') || result.error?.includes('warehouse'))
+})
+
+test('should skip stock reserve update when stock-level doc missing at reserve time', async () => {
+  process.env.INVENTORY_ENABLED = 'true'
+  const payload = buildPayload({
+    find: async (args: any) => {
+      if (args.collection === 'stock-levels') {
+        return {
+          docs: [
+            {
+              id: 'sl-m',
+              product: 'prod-1',
+              variant: null,
+              quantity: 100,
+              reservedQuantity: 0,
+              location: { tenant: null },
+            },
+          ],
+        }
+      }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          items: [{ product: { id: 'prod-1' }, quantity: 2, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      if (args.collection === 'stock-levels' && args.id === 'sl-m') return null
+      if (args.collection === 'stock-levels') return { id: args.id, reservedQuantity: 0, quantity: 999 }
+      return { id: args.id }
+    },
+  })
+  await processCheckout(payload, { ...baseInput, guestEmail: 'resgap@test.com' }, undefined, guestReq())
   const stockUpdates = payload._calls.update.filter((c: any) => c.collection === 'stock-levels')
   assert.equal(stockUpdates.length, 0)
 })

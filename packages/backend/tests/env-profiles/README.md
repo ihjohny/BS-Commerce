@@ -2,7 +2,7 @@
 
 This directory contains all test environment configuration files for E2E testing.
 
-**Verification (baseline):** A full **`yarn test:all-profiles:safe:parallel:observe`** run (from `packages/backend`) executes the **safe** E2E path (`tests/run-e2e-safe.mjs`) once per profile—parallel batches with isolated slots—and aggregates results. (Sequential equivalent: `yarn test:all-profiles:safe`.) As of **2026-04-02**, all listed profiles passed (212 suite passes total across 12 profiles). Authoritative numbers and interpretation: **`docs/PHASE-9-TEST-COVERAGE-PLAN.md`** § *Verification record*.
+**Verification (baseline):** A full **`yarn test:all-profiles:safe:parallel:observe`** run (from `packages/backend`) executes the **safe** E2E path (`tests/run-e2e-safe.mjs`) once per profile—parallel batches with isolated slots—and aggregates results. (Sequential equivalent: `yarn test:all-profiles:safe`.) Per-profile suite counts differ slightly (e.g. `verify-off-gate-on` runs fewer steps); the matrix **Final Summary** should show **PASS** for every profile when green. Authoritative numbers and interpretation: **`docs/PHASE-9-TEST-COVERAGE-PLAN.md`** § *Verification record*.
 
 **Reference:** See `docs/ENV-REGISTRY.md` for complete variable documentation.
 
@@ -132,6 +132,46 @@ No gaps remaining in pairwise coverage.
 
 ---
 
+## Developer guide: Inventory (Phase 12)
+
+Use this when **`MULTIVENDOR_ENABLED=true`** and **`INVENTORY_ENABLED=true`** (warehouse rows, `order-items.stockLevel`, reserve/consume).
+
+**Unit and security (no server):**
+
+```bash
+cd packages/backend
+yarn test:unit
+# Focused:
+node --test --experimental-strip-types --import ./tests/_helpers/register-ts-resolve.mjs \
+  tests/unit/lib/allocate-stock-level.unit.test.ts \
+  tests/unit/checkout/process-checkout.unit.test.ts \
+  tests/security/inventory/allocate-stock-multivendor.security.test.ts
+```
+
+**E2E (server must match profile):**
+
+With `INVENTORY_ENABLED` on, **`tests/_helpers/test-data-manager.mjs`** `createProduct()` creates a **stock-location + stock-level** for that product so checkout allocation (Phase 12) succeeds — no changes to `run-e2e.mjs` or matrix runners are required.
+
+- Full safe path: `yarn test:e2e:safe -- --profile multivendor` (or `yarn test:e2e:safe:profile -- --profile multivendor`)
+- Checkout + inventory script runs as part of the normal guest/checkout suite when `suite` includes it.
+
+**Parallel matrix (many profiles at once, isolated slots/ports):**
+
+```bash
+yarn test:all-profiles:safe:parallel:observe
+# Subset of profiles (yarn forwards args after `--`; last `--max-parallel=` wins):
+yarn test:matrix:e2e:parallel -- --profiles=default,multivendor --max-parallel=2 --slot-start=0
+```
+
+**Sequential matrix (one profile at a time, same port):**
+
+```bash
+yarn test:all-profiles:safe
+node tests/run-all-profiles-safe.mjs --profiles=multivendor,gates-on
+```
+
+---
+
 ## Usage
 
 ```bash
@@ -139,7 +179,7 @@ No gaps remaining in pairwise coverage.
 node tests/run-e2e.mjs --profile multivendor
 
 # Safe local run (recommended)
-yarn test:e2e:safe --profile multivendor
+yarn test:e2e:safe -- --profile multivendor
 
 # Run specific suite with profile
 node tests/run-e2e.mjs --profile gates-on --suite auth

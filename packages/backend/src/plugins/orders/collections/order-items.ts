@@ -1,6 +1,19 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
 import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
+import { orderItemRelationId } from '../../../lib/order-item-relation-id'
+import { transferStockReservation } from '../../../lib/transfer-stock-reservation'
+
+/** True when PATCH value is the same as the stored document (Payload often merges full doc into `data`). */
+function vendorPatchValueUnchanged(incoming: unknown, previous: unknown): boolean {
+  if (incoming === previous) return true
+  const inc = orderItemRelationId(incoming)
+  const prev = orderItemRelationId(previous)
+  if (inc != null && prev != null) return inc === prev
+  /* Both nullish: relation id is only null when val == null, so values are absent-equivalent. */
+  if (inc == null && prev == null) return true
+  return false
+}
 
 export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig {
   const fields: NonNullable<CollectionConfig['fields']> = [
@@ -39,6 +52,15 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
       type: 'relationship',
       relationTo: 'product-variants',
       admin: { description: 'Variant if applicable.' },
+    },
+    {
+      name: 'stockLevel',
+      type: 'relationship',
+      relationTo: 'stock-levels',
+      admin: {
+        description:
+          'Warehouse stock row used for fulfillment (Phase 12). Changes move reservation between warehouses.',
+      },
     },
     {
       name: 'productName',
@@ -80,8 +102,8 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
     admin: {
       useAsTitle: 'itemLabel',
       defaultColumns: splitByVendor
-        ? ['order', 'subOrder', 'productName', 'variantName', 'quantity', 'unitPrice', 'totalPrice']
-        : ['order', 'productName', 'variantName', 'quantity', 'unitPrice', 'totalPrice'],
+        ? ['order', 'subOrder', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice']
+        : ['order', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice'],
       group: 'Orders',
       description: 'Line items for an order. Created at checkout from cart.',
     },
@@ -89,13 +111,39 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
       create: isAdmin,
       // Vendors need read so relationship titles (itemLabel) resolve in admin when viewing sub-orders
       read: splitByVendor ? isAdminOrVendorOwner : isAdmin,
-      update: isAdmin,
+      update: splitByVendor ? isAdminOrVendorOwner : isAdmin,
       delete: isAdmin,
     },
     fields,
     timestamps: true,
     hooks: {
       beforeChange: [
+        ({ data, originalDoc, req, operation }) => {
+          if (operation === 'update' && req.user?.role === 'vendor' && data && originalDoc) {
+            const orig = originalDoc as Record<string, unknown>
+            const patch = data as Record<string, unknown>
+            for (const key of Object.keys(patch)) {
+              if (key === 'updatedAt') continue
+              if (key === 'stockLevel') continue
+              if (vendorPatchValueUnchanged(patch[key], orig[key])) continue
+              throw new Error('Vendors may only update fulfillment warehouse (stock level).')
+            }
+          }
+          return data
+        },
+        async ({ data, originalDoc, req, operation }) => {
+          if (operation !== 'update' || !data || data.stockLevel === undefined || !originalDoc) {
+            return data
+          }
+          const oldId = orderItemRelationId(originalDoc.stockLevel)
+          const newId = orderItemRelationId(data.stockLevel)
+          if (!oldId || !newId || oldId === newId) {
+            return data
+          }
+          const qty = Number(originalDoc.quantity) || 1
+          await transferStockReservation(req.payload, { fromStockLevelId: oldId, toStockLevelId: newId, quantity: qty }, req)
+          return data
+        },
         ({ data }) => {
           if (data?.productName != null) {
             /* c8 ignore next — Number() never returns null/undefined; ?? 1 is defensive. */

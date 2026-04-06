@@ -1,20 +1,9 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
+import { stockLocationTenantRead } from '../../../access/is-admin-or-vendor-stock-tenant'
 
-export const StockLocations: CollectionConfig = {
-  slug: 'stock-locations',
-  admin: {
-    useAsTitle: 'name',
-    defaultColumns: ['name', 'code', 'isActive'],
-    group: 'Inventory',
-  },
-  access: {
-    create: isAdmin,
-    read: isAdmin,
-    update: isAdmin,
-    delete: isAdmin,
-  },
-  fields: [
+export function createStockLocationsConfig(multivendorEnabled: boolean): CollectionConfig {
+  const fields: NonNullable<CollectionConfig['fields']> = [
     { name: 'name', type: 'text', required: true },
     { name: 'code', type: 'text', required: true, unique: true },
     {
@@ -29,6 +18,36 @@ export const StockLocations: CollectionConfig = {
       ],
     },
     { name: 'isActive', type: 'checkbox', defaultValue: true },
-  ],
-  timestamps: true,
+  ]
+
+  if (multivendorEnabled) {
+    fields.splice(1, 0, {
+      name: 'tenant',
+      type: 'relationship',
+      relationTo: 'tenants',
+      admin: {
+        description: 'Vendor owning this warehouse. Leave empty for platform-managed warehouses.',
+      },
+    })
+  }
+
+  return {
+    slug: 'stock-locations',
+    admin: {
+      useAsTitle: 'name',
+      defaultColumns: multivendorEnabled ? ['name', 'code', 'tenant', 'isActive'] : ['name', 'code', 'isActive'],
+      group: 'Inventory',
+    },
+    access: {
+      create: isAdmin,
+      read: stockLocationTenantRead,
+      update: isAdmin,
+      delete: isAdmin,
+    },
+    fields,
+    timestamps: true,
+  }
 }
+
+/** @deprecated use createStockLocationsConfig */
+export const StockLocations = createStockLocationsConfig(false)

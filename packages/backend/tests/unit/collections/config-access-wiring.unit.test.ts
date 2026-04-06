@@ -14,6 +14,8 @@ import { VendorApplications } from '../../../src/plugins/multivendor/collections
 import { ShippingMethods } from '../../../src/plugins/shipping/collections/shipping-methods.ts'
 // @ts-ignore
 import { ShippingZones } from '../../../src/plugins/shipping/collections/shipping-zones.ts'
+// @ts-ignore
+import { createStockLocationsConfig } from '../../../src/plugins/inventory/collections/stock-locations.ts'
 
 test('Users access.create allows registration', () => {
   const create = Users.access?.create as (args: { req?: unknown }) => boolean
@@ -74,4 +76,17 @@ test('ShippingZones access.read is public', () => {
   const read = ShippingZones.access?.read as (args: { req?: unknown }) => boolean
   assert.ok(typeof read === 'function')
   assert.equal(read({ req: {} } as never), true)
+})
+
+test('createStockLocationsConfig(true) adds tenant field and column (multivendor inventory)', () => {
+  const cfg = createStockLocationsConfig(true)
+  const names = (cfg.fields ?? []).map((f) => (f as { name?: string }).name)
+  assert.ok(names.includes('tenant'))
+  assert.ok(cfg.admin?.defaultColumns?.includes('tenant'))
+})
+
+test('createStockLocationsConfig(false) has no tenant field', () => {
+  const cfg = createStockLocationsConfig(false)
+  const names = (cfg.fields ?? []).map((f) => (f as { name?: string }).name)
+  assert.ok(!names.includes('tenant'))
 })

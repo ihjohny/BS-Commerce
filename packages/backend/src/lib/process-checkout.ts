@@ -13,6 +13,8 @@ import { DefaultOrderSplitter, getPlatformItems } from '../plugins/orders/strate
 import type { CartItemForSplit } from '../plugins/orders/strategies/order-splitter'
 import { getCommissionRateForTenant, calculateCommission } from './commission'
 import { validateCouponForSubtotal } from '../plugins/discounts/lib/coupon'
+import { allocateStockLevelForLine } from './allocate-stock-level'
+import { buildReserveQuantitiesByStockLevel } from './build-reserve-quantities-by-stock-level'
 
 /** Creates req with transactionID when adapter supports transactions. */
 function reqWithTransaction(req: PayloadRequest | undefined, transactionID: string | number | null): PayloadRequest {
@@ -262,6 +264,30 @@ export async function processCheckout(
   }
   const grandTotal = Math.round((subtotalCalc + shippingTotal + taxTotal - discountTotal) * 100) / 100
 
+  const inventoryEnabled = process.env.INVENTORY_ENABLED !== 'false'
+  if (inventoryEnabled) {
+    for (const d of orderItemData) {
+      const alloc = await allocateStockLevelForLine(
+        payload,
+        {
+          productId: d.productId,
+          variantId: d.variantId,
+          quantity: d.quantity,
+          tenantId: d.tenantId,
+        },
+        req,
+      )
+      if ('error' in alloc) {
+        return {
+          order: { id: '', orderNumber: '' },
+          error: alloc.error,
+          statusCode: 400,
+        }
+      }
+      d.stockLevelId = alloc.stockLevelId
+    }
+  }
+
   const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
   const transactionID = await payload.db.beginTransaction()
@@ -372,6 +398,7 @@ export async function processCheckout(
             productImage: d.productImage,
           }
           if (d.variantId != null) itemData.variant = d.variantId
+          if (inventoryEnabled && d.stockLevelId) itemData.stockLevel = d.stockLevelId
 
           const orderItem = await payload.create({
             collection: 'order-items',
@@ -407,6 +434,7 @@ export async function processCheckout(
           productImage: d.productImage,
         }
         if (d.variantId != null) itemData.variant = d.variantId
+        if (inventoryEnabled && d.stockLevelId) itemData.stockLevel = d.stockLevelId
 
         const orderItem = await payload.create({
           collection: 'order-items',
@@ -431,6 +459,7 @@ export async function processCheckout(
           productImage: d.productImage,
         }
         if (d.variantId != null) itemData.variant = d.variantId
+        if (inventoryEnabled && d.stockLevelId) itemData.stockLevel = d.stockLevelId
 
         const orderItem = await payload.create({
           collection: 'order-items',
@@ -510,35 +539,23 @@ export async function processCheckout(
       })
     }
 
-    // Reserve inventory
-    const productIds = [...new Set(items.map((i) => (typeof i.product === 'object' ? i.product?.id : i.product)).filter(Boolean) as string[])]
-    /* c8 ignore start — defensive: checkout items always resolve product ids; empty set skips DB query. */
-    const stockLevels: { docs: any[] } = productIds.length
-      ? await payload.find({
+    // Reserve inventory (Phase 12: aggregate by chosen stock-level id)
+    if (inventoryEnabled) {
+      const reserveByLevel = buildReserveQuantitiesByStockLevel(orderItemData)
+      for (const [stockLevelId, qty] of reserveByLevel) {
+        const levelDoc = await payload.findByID({
           collection: 'stock-levels',
-          where: { product: { in: productIds } },
-          limit: 100,
-          depth: 1,
+          id: stockLevelId,
+          depth: 0,
+          overrideAccess: true,
         })
-      : { docs: [] }
-    /* c8 ignore stop */
-    for (const item of items) {
-      const productId = typeof item.product === 'object' ? item.product?.id : item.product
-      const variantId = item.variant ? (typeof item.variant === 'object' ? item.variant?.id : item.variant) : null
-      const quantity = Number((item as { quantity: number }).quantity) || 1
-
-      const level = stockLevels.docs.find((sl: any) => {
-        const slProduct = typeof sl.product === 'object' ? sl.product?.id : sl.product
-        const slVariant = typeof sl.variant === 'object' ? sl.variant?.id : sl.variant
-        return slProduct === productId && (variantId ? slVariant === variantId : !slVariant)
-      })
-      if (level) {
-        const reserved = Number((level as any).reservedQuantity) || 0
+        if (!levelDoc) continue
+        const reserved = Number((levelDoc as { reservedQuantity?: number }).reservedQuantity) || 0
         await payload.update({
           collection: 'stock-levels',
-          id: level.id,
+          id: stockLevelId,
           overrideAccess: true,
-          data: { reservedQuantity: reserved + quantity },
+          data: { reservedQuantity: reserved + qty },
           req: reqTx,
         })
       }

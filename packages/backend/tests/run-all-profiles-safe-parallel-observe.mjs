@@ -27,7 +27,8 @@ const logsDir = path.join(backendRoot, 'tests', 'logs')
 fs.mkdirSync(logsDir, { recursive: true })
 
 function parseProfilesArg(allProfiles, args) {
-  const profilesArg = args.find((a) => a.startsWith('--profiles='))
+  const matches = args.filter((a) => a.startsWith('--profiles='))
+  const profilesArg = matches[matches.length - 1]
   if (!profilesArg) return allProfiles
   return profilesArg
     .replace('--profiles=', '')
@@ -36,8 +37,10 @@ function parseProfilesArg(allProfiles, args) {
     .filter(Boolean)
 }
 
+/** Last `--name=value` wins so `yarn script -- --max-parallel=1` overrides package.json defaults. */
 function parseNumberArg(args, name, fallback) {
-  const v = args.find((a) => a.startsWith(`${name}=`))
+  const matches = args.filter((a) => a.startsWith(`${name}=`))
+  const v = matches[matches.length - 1]
   if (!v) return fallback
   const parsed = Number(v.split('=')[1])
   return Number.isFinite(parsed) ? parsed : fallback
@@ -172,7 +175,7 @@ function runProfile(profile, slot, { postgresPort, redisPort, backendPort }) {
         exitCode: code ?? 1,
         passed,
         total,
-        success: (code ?? 1) === 0 && passed === total,
+        success: (code ?? 1) === 0 && total > 0 && passed === total,
         logPath,
       })
     })
