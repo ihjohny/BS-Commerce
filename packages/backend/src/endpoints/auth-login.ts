@@ -33,7 +33,6 @@ export const authLoginEndpoint: Endpoint = {
       const result = await payload.login({
         collection: 'users',
         // loginWithUsername accepts email or username; Payload's generated types expect email
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: loginData as any,
         req,
       })

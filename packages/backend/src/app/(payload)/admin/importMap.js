@@ -21,6 +21,10 @@ import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93
 import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { default as default_7be396d0766c6c490887ef074dd0ced4 } from '../../../components/admin/AdminIcon'
+import { default as default_27eed1898e8caadb2fd2266b54bb4509 } from '../../../components/admin/AdminLogo'
+import { default as default_55ec1d976c5dcd4e3cfd7b939f831e0c } from '../../../components/admin/AdminBrandingCssVarsProvider'
+import { default as default_84cd845a8766cfd3c2cceae49d5dee3d } from '../../../components/admin/DashboardHome'
 import { default as default_94dc7064f1ac3d729baa1339d079c9c1 } from '../../../components/CreateFirstUser'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -48,6 +52,10 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#UnderlineFeatureClient": UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/components/admin/AdminIcon#default": default_7be396d0766c6c490887ef074dd0ced4,
+  "/components/admin/AdminLogo#default": default_27eed1898e8caadb2fd2266b54bb4509,
+  "/components/admin/AdminBrandingCssVarsProvider#default": default_55ec1d976c5dcd4e3cfd7b939f831e0c,
+  "/components/admin/DashboardHome#default": default_84cd845a8766cfd3c2cceae49d5dee3d,
   "/components/CreateFirstUser#default": default_94dc7064f1ac3d729baa1339d079c9c1,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

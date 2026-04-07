@@ -40,7 +40,7 @@ export class FlatFeeCommissionStrategy implements CommissionStrategy {
     this.flatAmount = flatAmount
   }
 
-  calculate(ctx: CommissionContext): CommissionResult {
+  calculate(_ctx: CommissionContext): CommissionResult {
     return { amount: Math.round(this.flatAmount * 100) / 100, rate: 0 }
   }
 }

@@ -11,7 +11,9 @@
     "src/plugins/verification/adapters/phone-types.ts",
     "src/collections/categories/index.ts",
     "src/collections/media/index.ts",
-    "src/collections/pages/index.ts"
+    "src/collections/pages/index.ts",
+    "src/components/admin/useAdminBranding.ts",
+    "src/lib/admin-branding-chrome.ts"
   ],
   "reporter": ["text", "text-summary", "html", "lcov"],
   "report-dir": "coverage",

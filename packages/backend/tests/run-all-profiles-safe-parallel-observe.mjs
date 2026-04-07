@@ -75,9 +75,11 @@ const queryableTimeoutMs = (() => {
 
 const nodeOptions = (() => {
   const existing = process.env.NODE_OPTIONS?.trim()
-  // Running many Next dev servers concurrently can exceed Node's default heap.
-  // Allow user override via NODE_OPTIONS.
-  const extra = '--max-old-space-size=8192'
+  // Running many Next dev servers concurrently can exceed Node's default heap, but a
+  // fixed 8192 MB × maxParallel processes often exhausts Windows virtual memory
+  // (ENOMEM / VirtualAlloc failures). Scale the cap down as parallelism rises.
+  const heapMb = Math.min(4096, Math.max(1024, Math.floor(12000 / Math.max(1, maxParallel))))
+  const extra = `--max-old-space-size=${heapMb}`
   if (!existing) return extra
   if (existing.includes('--max-old-space-size=')) return existing
   return `${existing} ${extra}`
@@ -256,7 +258,10 @@ async function allocatePortsForAllJobs() {
   const usedRedis = new Set()
   const usedBackend = new Set()
 
-  const assignments = jobs.map(async (job) => {
+  // Allocate sequentially so two jobs never pass `isPortFree` for the same port
+  // before either calls `usedPorts.add` (Promise.all caused duplicate Redis ports).
+  const assignments = []
+  for (const job of jobs) {
     const postgresStart = 5433 + job.slot
     const redisStart = 6380 + job.slot
     const backendStart = 3000 + job.slot
@@ -265,15 +270,15 @@ async function allocatePortsForAllJobs() {
     const redisPort = await findFreePort(redisStart, usedRedis)
     const backendPort = await findFreePort(backendStart, usedBackend)
 
-    return {
+    assignments.push({
       ...job,
       postgresPort,
       redisPort,
       backendPort,
-    }
-  })
+    })
+  }
 
-  return await Promise.all(assignments)
+  return assignments
 }
 
 preCleanDockerTestInfra()
@@ -326,7 +331,13 @@ for (const r of finalResults) {
   totalSuites += r.total
   const status = r.success ? 'PASS' : 'FAIL'
   anyFail = anyFail || !r.success
-  console.log(`| ${r.profile.padEnd(12)} | ${String(r.slot).padStart(4)} | ${String(r.passed).padStart(6)} | ${String(r.total).padStart(5)} | ${status.padEnd(6)} |`)
+  const failHint =
+    !r.success && r.total === 0
+      ? ` (exit ${r.exitCode}; no E2E RESULT in tail — see ${path.relative(backendRoot, r.logPath)})`
+      : ''
+  console.log(
+    `| ${r.profile.padEnd(12)} | ${String(r.slot).padStart(4)} | ${String(r.passed).padStart(6)} | ${String(r.total).padStart(5)} | ${status.padEnd(6)} |${failHint}`,
+  )
 }
 
 console.log('|---------|------|--------|-------|--------|')

@@ -129,7 +129,7 @@ export const VendorApplications: CollectionConfig = {
         if (!businessName.trim()) return
 
         // Ensure unique slug for tenant
-        let baseSlug = slugify(businessName) || 'vendor'
+        const baseSlug = slugify(businessName) || 'vendor'
         /* c8 ignore stop */
         let slug = baseSlug
         let suffix = 0
