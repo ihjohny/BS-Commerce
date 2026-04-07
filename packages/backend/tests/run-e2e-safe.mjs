@@ -13,6 +13,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { resolveE2eInfraEnv } from './_helpers/e2e-infra-env.mjs'
 import { findNextCliJs } from './_helpers/e2e-next-dev.mjs'
 
@@ -20,7 +21,7 @@ const profileArg = process.argv.find((a, i) => process.argv[i - 1] === '--profil
 const suiteArg = process.argv.find((a, i) => process.argv[i - 1] === '--suite') || ''
 const keepInfra = process.argv.includes('--keep-infra')
 
-const backendRoot = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'))
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const profileDir = path.join(backendRoot, 'tests', 'env-profiles')
 
 function loadEnvFile(filePath) {
@@ -37,7 +38,10 @@ function loadEnvFile(filePath) {
 }
 
 function yarnInvocation(args) {
-  if (process.platform === 'win32') return { command: 'cmd', args: ['/c', 'yarn', ...args] }
+  if (process.platform === 'win32') {
+    const shell = process.env.ComSpec || 'cmd.exe'
+    return { command: shell, args: ['/c', 'yarn', ...args] }
+  }
   return { command: 'yarn', args }
 }
 
@@ -56,7 +60,8 @@ function runStep(name, args, env = process.env, stdio = 'inherit') {
 function sleepSyncMs(ms) {
   if (ms <= 0) return
   if (process.platform === 'win32') {
-    spawnSync('cmd', ['/c', `timeout /t ${Math.ceil(ms / 1000)} /nobreak >nul`], { stdio: 'ignore' })
+    const shell = process.env.ComSpec || 'cmd.exe'
+    spawnSync(shell, ['/c', `timeout /t ${Math.ceil(ms / 1000)} /nobreak >nul`], { stdio: 'ignore' })
   } else {
     spawnSync('sleep', [`${Math.ceil(ms / 1000)}`], { stdio: 'ignore' })
   }

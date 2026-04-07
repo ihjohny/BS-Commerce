@@ -12,7 +12,25 @@ export const customEndpointsOpenApi = {
   paths: {
     '/api/users/login': {
       post: {
-        summary: 'Payload auth login (username/email + password)',
+        summary: 'Payload auth login (email/username + password)',
+        description:
+          'Use this endpoint with `email` + `password` (or `username` + `password`). For identifier-based login use `/api/auth/login`.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['password'],
+                properties: {
+                  email: { type: 'string', format: 'email' },
+                  username: { type: 'string' },
+                  password: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
         responses: {
           200: { description: 'Authenticated.' },
           400: { description: 'Validation error.' },
@@ -33,6 +51,7 @@ export const customEndpointsOpenApi = {
     '/api/users/me': {
       get: {
         summary: 'Current authenticated user profile',
+        security: [{ bearerAuth: [] }],
         responses: {
           200: { description: 'Current user payload.' },
           401: { description: 'Unauthorized.' },

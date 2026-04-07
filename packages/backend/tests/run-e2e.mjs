@@ -39,11 +39,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { waitForServer } from './_helpers/wait-for-server.mjs'
 import { TestDataManager } from './_helpers/test-data-manager.mjs'
 
 const profileArg = process.argv.find((a, i) => process.argv[i - 1] === '--profile') || ''
-const backendRoot = new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return false
