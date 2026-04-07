@@ -1,6 +1,5 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
-import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 
 /**
  * Payouts — vendor earnings disbursement records.

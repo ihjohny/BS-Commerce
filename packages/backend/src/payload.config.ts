@@ -35,6 +35,8 @@ import { redisConfig, cachedCollections } from './lib/redis'
 import { authLoginEndpoint } from './endpoints/auth-login'
 import { guestOrderLookupEndpoint } from './endpoints/guest-order-lookup'
 import { checkoutProcessEndpoint } from './endpoints/checkout-process'
+import { dashboardStatsEndpoint } from './endpoints/dashboard-stats'
+import { adminBrandingEndpoint } from './endpoints/admin-branding'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -48,9 +50,24 @@ export default buildConfig({
     },
     meta: {
       titleSuffix: '— BS-Commerce Admin',
+      icons: [{ url: '/branding/brainstation-23-symbol.png', type: 'image/png' }],
     },
     components: {
+      providers: [
+        {
+          path: '/components/admin/AdminBrandingCssVarsProvider',
+        },
+      ],
+      graphics: {
+        Logo: '/components/admin/AdminLogo',
+        Icon: '/components/admin/AdminIcon',
+      },
       views: {
+        dashboard: {
+          Component: '/components/admin/DashboardHome',
+          path: '/',
+          exact: true,
+        },
         'create-first-user': {
           Component: '/components/CreateFirstUser',
           path: '/create-first-user',
@@ -108,7 +125,13 @@ export default buildConfig({
   globals: [Header, Footer, PlatformSettings],
 
   // ─── Custom Endpoints ────────────────────────────────────────────────────────
-  endpoints: [authLoginEndpoint, guestOrderLookupEndpoint, checkoutProcessEndpoint],
+  endpoints: [
+    authLoginEndpoint,
+    guestOrderLookupEndpoint,
+    checkoutProcessEndpoint,
+    dashboardStatsEndpoint,
+    adminBrandingEndpoint,
+  ],
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────
   // Order matters — dependencies must come first.

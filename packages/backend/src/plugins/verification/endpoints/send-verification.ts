@@ -103,7 +103,6 @@ export async function sendVerificationHandler(req: any, deps?: SendVerificationD
     const payload = req.payload
     const ip =
       // PayloadRequest has ip on Node; fall back to header for edge adapters
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (req as any).ip ||
       req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
       req.headers.get('x-real-ip') ||

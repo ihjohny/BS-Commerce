@@ -1,0 +1,35 @@
+/**
+ * Show Platform Settings / default logo on menu toggler buttons (Payload does not expose a component slot).
+ * --bs-admin-logo-url is set in AdminBrandingCssVarsProvider (see src/lib/admin-branding-chrome.ts).
+ */
+:root {
+  --bs-admin-logo-url: url('/branding/brainstation-23-symbol.png');
+}
+
+/* Outer sidebar toggler + in-header mobile toggler: same hit target, logo instead of hamburger */
+button.nav-toggler.template-default__nav-toggler,
+button.nav-toggler.app-header__mobile-nav-toggler {
+  position: relative;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  background-color: transparent;
+  background-image: var(--bs-admin-logo-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+button.nav-toggler.template-default__nav-toggler .hamburger,
+button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
+  display: none;
+}
+
+/**
+ * ≤768px: Payload hides the outer slot’s hamburger and shows `app-header__mobile-nav-toggler`.
+ * Without this, both buttons still get our background logo → double mark on small screens.
+ */
+@media (max-width: 768px) {
+  .template-default__nav-toggler-wrapper {
+    display: none !important;
+  }
+}

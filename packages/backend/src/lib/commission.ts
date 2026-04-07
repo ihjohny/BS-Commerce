@@ -26,7 +26,7 @@ export async function getCommissionRateForTenant(
     if (settings?.commissionRate != null && !isNaN(settings.commissionRate)) {
       return Math.min(100, Math.max(0, settings.commissionRate))
     }
-  } catch (_) {
+  } catch {
     // vendor-settings may not exist or tenant may be invalid
   }
   return defaultRate

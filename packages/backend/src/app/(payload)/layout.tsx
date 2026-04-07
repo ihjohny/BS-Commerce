@@ -1,6 +1,7 @@
 import type { ServerFunctionClientArgs } from 'payload'
 import { RootLayout, handleServerFunctions } from '@payloadcms/next/layouts'
 import '@payloadcms/next/css'
+import '../../admin-branding-overrides.css'
 import React from 'react'
 import configPromise from '../../payload.config'
 import { importMap } from './admin/importMap'

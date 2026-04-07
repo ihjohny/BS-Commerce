@@ -28,6 +28,43 @@ export const PlatformSettings: GlobalConfig = {
       type: 'text',
     },
 
+    // ─── Admin UI branding (Payload admin login + nav) ────────────────────────
+    {
+      name: 'adminBranding',
+      type: 'group',
+      label: 'Admin panel branding',
+      admin: {
+        description:
+          'Custom logo and favicon for the Payload admin (login screen and sidebar). Upload files in Media first, then select them here. Leave empty to use the built-in default marks.',
+      },
+      fields: [
+        {
+          name: 'logo',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Main logo or wordmark (PNG, WebP, or SVG).',
+          },
+        },
+        {
+          name: 'favicon',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Browser tab icon — square PNG or ICO, at least 32×32.',
+          },
+        },
+        {
+          name: 'loginTagline',
+          type: 'text',
+          admin: {
+            description:
+              'Optional line under the logo on the login screen (e.g. "My Store · Admin"). Leave empty for the default tagline.',
+          },
+        },
+      ],
+    },
+
     // ─── Feature Flags ────────────────────────────────────────────────────────
     {
       name: 'features',
