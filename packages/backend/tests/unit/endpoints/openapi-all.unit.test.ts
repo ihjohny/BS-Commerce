@@ -12,14 +12,20 @@ test('openapiAllEndpoint merges generated + legacy + supplemental paths', async 
       JSON.stringify({
         openapi: '3.0.3',
         info: { title: 'Generated API', version: '0.0.1' },
+        components: {
+          securitySchemes: {
+            ApiKey: { type: 'apiKey', in: 'header', name: 'Authorization' },
+          },
+          schemas: {
+            GeneratedOnly: { type: 'object' },
+          },
+        },
         paths: {
           '/api/only-generated': {
             get: { summary: 'generated route' },
           },
-        },
-        components: {
-          schemas: {
-            GeneratedOnly: { type: 'object' },
+          '/api/users/me': {
+            get: { security: [{ jwt: [] }] },
           },
         },
       }),
@@ -39,6 +45,59 @@ test('openapiAllEndpoint merges generated + legacy + supplemental paths', async 
   // Supplemental/custom routes should exist.
   assert.ok(body.paths['/api/checkout/process']?.post)
   assert.ok(body.components?.schemas?.GeneratedOnly)
+  assert.ok((body as any).components?.securitySchemes?.bearerAuth)
+  assert.deepEqual((body.paths['/api/users/me'] as any)?.get?.security, [{ bearerAuth: [] }])
+
+  globalThis.fetch = originalFetch
+})
+
+test('openapiAllEndpoint normalizes mixed/invalid security requirement shapes', async () => {
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({
+        openapi: '3.0.3',
+        info: { title: 'Generated API', version: '0.0.1' },
+        components: {
+          securitySchemes: {
+            ApiKey: { type: 'apiKey', in: 'header', name: 'Authorization' },
+          },
+        },
+        paths: {
+          '/api/non-object-op': null,
+          '/api/mixed-security': {
+            get: {
+              security: [
+                null,
+                { first: [], second: [] },
+                { unknownScheme: ['scope-a'] },
+                { unknownScheme: 'scope-non-array' },
+                { ApiKey: [] },
+                { jwt: [] },
+                { bearerAuth: [] },
+                { bearerAuth: 'bad-scope' },
+              ],
+            },
+          },
+        },
+      }),
+      { status: 200 },
+    )) as typeof fetch
+
+  const req = { url: 'http://localhost:3000/api/openapi-all.json' } as any
+  const res = await openapiAllEndpoint.handler(req)
+  assert.equal(res.status, 200)
+  const body = (await res.json()) as any
+
+  assert.deepEqual(body.paths['/api/mixed-security'].get.security, [
+    null,
+    { first: [], second: [] },
+    { bearerAuth: ['scope-a'] },
+    { bearerAuth: [] },
+    { bearerAuth: [] },
+    { bearerAuth: [] },
+    { bearerAuth: [] },
+    { bearerAuth: [] },
+  ])
 
   globalThis.fetch = originalFetch
 })

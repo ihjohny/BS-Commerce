@@ -33,7 +33,7 @@
     "test:all-profiles:quick": "node tests/run-all-profiles.mjs --quick",
     "test:all-profiles:safe": "node tests/run-all-profiles-safe.mjs",
     "test:all-profiles:safe:quick": "node tests/run-all-profiles-safe.mjs --quick",
-    "test:all-profiles:safe:parallel:observe": "node tests/run-all-profiles-safe-parallel-observe.mjs --max-parallel=1 --slot-start=4",
+    "test:all-profiles:safe:parallel:observe": "node tests/run-all-profiles-safe-parallel-observe.mjs --max-parallel=2 --slot-start=4",
     "test:infra:up": "docker compose -f docker-compose.test.yml up -d",
     "test:infra:down": "docker compose -f docker-compose.test.yml down -v",
     "generate:types": "payload generate:types",

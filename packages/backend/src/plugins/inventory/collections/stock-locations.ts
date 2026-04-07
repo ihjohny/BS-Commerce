@@ -1,6 +1,10 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
-import { stockLocationTenantRead } from '../../../access/is-admin-or-vendor-stock-tenant'
+import {
+  stockLocationTenantCreate,
+  stockLocationTenantMutate,
+  stockLocationTenantRead,
+} from '../../../access/is-admin-or-vendor-stock-tenant'
 
 export function createStockLocationsConfig(multivendorEnabled: boolean): CollectionConfig {
   const fields: NonNullable<CollectionConfig['fields']> = [
@@ -39,11 +43,23 @@ export function createStockLocationsConfig(multivendorEnabled: boolean): Collect
       group: 'Inventory',
     },
     access: {
-      create: isAdmin,
+      create: multivendorEnabled ? stockLocationTenantCreate : isAdmin,
       read: stockLocationTenantRead,
-      update: isAdmin,
-      delete: isAdmin,
+      update: multivendorEnabled ? stockLocationTenantMutate : isAdmin,
+      delete: multivendorEnabled ? stockLocationTenantMutate : isAdmin,
     },
+    hooks: multivendorEnabled
+      ? {
+          beforeValidate: [
+            ({ req, data }) => {
+              if (req.user?.role !== 'vendor' || !req.user?.tenant) return data
+              const tid = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
+              if (!tid) return data
+              return { ...(data || {}), tenant: tid }
+            },
+          ],
+        }
+      : undefined,
     fields,
     timestamps: true,
   }

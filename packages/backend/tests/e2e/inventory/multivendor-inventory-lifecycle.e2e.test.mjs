@@ -61,6 +61,17 @@ async function main() {
   const auth = { Authorization: `Bearer ${token}` }
   const suffix = `${Date.now()}-${crypto.randomInt(1000, 9999)}`
 
+  async function loginVendor(email, password) {
+    const r = await request('/auth/login', {
+      method: 'POST',
+      body: { identifier: email, password },
+    })
+    assert(r.status === 200, `vendor login ${r.status}: ${r.text?.slice(0, 200)}`)
+    const t = r.json?.token
+    assert(t, 'vendor token')
+    return t
+  }
+
   async function seedTenantProductStock(tag = suffix) {
     const tRes = await request('/tenants', {
       method: 'POST',
@@ -185,6 +196,84 @@ async function main() {
   }
 
   try {
+    logStep('Vendor can create stock location/level for own tenant (MV enabled)')
+    const tenantForVendor = await request('/tenants', {
+      method: 'POST',
+      headers: auth,
+      body: { name: `E2E Vendor Tenant ${suffix}` },
+    })
+    assert(
+      tenantForVendor.status === 200 || tenantForVendor.status === 201,
+      `vendor tenant ${tenantForVendor.status}: ${tenantForVendor.text?.slice(0, 200)}`,
+    )
+    const vendorTenantId = tenantForVendor.json?.doc?.id || tenantForVendor.json?.id
+    assert(vendorTenantId, 'vendor tenant id')
+
+    const vendorEmail = `vendor-stock-${suffix}@example.com`
+    const vendorPhone = `+88017${String(crypto.randomInt(10000000, 99999999))}`
+    const vendorPassword = 'VendorPass1234!'
+    const vendorUser = await request('/users', {
+      method: 'POST',
+      headers: auth,
+      body: {
+        email: vendorEmail,
+        phone: vendorPhone,
+        password: vendorPassword,
+        role: 'vendor',
+        status: 'active',
+        tenant: vendorTenantId,
+        emailVerified: true,
+      },
+    })
+    assert(vendorUser.status === 200 || vendorUser.status === 201, `vendor user ${vendorUser.status}`)
+    const vendorToken = await loginVendor(vendorEmail, vendorPassword)
+    const vendorAuth = { Authorization: `Bearer ${vendorToken}` }
+
+    const vendorProduct = await request('/products', {
+      method: 'POST',
+      headers: auth,
+      body: {
+        name: `Vendor Stock Product ${suffix}`,
+        basePrice: 11,
+        currency: 'USD',
+        status: 'published',
+        tenant: vendorTenantId,
+      },
+    })
+    assert(vendorProduct.status === 200 || vendorProduct.status === 201, `vendor product ${vendorProduct.status}`)
+    const vendorProductId = vendorProduct.json?.doc?.id || vendorProduct.json?.id
+    assert(vendorProductId, 'vendor product id')
+
+    const vendorLoc = await request('/stock-locations', {
+      method: 'POST',
+      headers: vendorAuth,
+      body: {
+        name: `Vendor WH ${suffix}`,
+        code: `VWH-${suffix}`,
+        tenant: 'spoof-tenant-should-be-overridden',
+        isActive: true,
+      },
+    })
+    assert(vendorLoc.status === 200 || vendorLoc.status === 201, `vendor location ${vendorLoc.status}: ${vendorLoc.text?.slice(0, 200)}`)
+    const vendorLocId = vendorLoc.json?.doc?.id || vendorLoc.json?.id
+    assert(vendorLocId, 'vendor location id')
+    const locTenant = typeof vendorLoc.json?.doc?.tenant === 'object' ? vendorLoc.json?.doc?.tenant?.id : vendorLoc.json?.doc?.tenant
+    assert(String(locTenant) === String(vendorTenantId), 'vendor location tenant is enforced from vendor user')
+    ok('vendor can create stock location (tenant enforced)')
+
+    const vendorStock = await request('/stock-levels', {
+      method: 'POST',
+      headers: vendorAuth,
+      body: {
+        product: vendorProductId,
+        location: vendorLocId,
+        quantity: 12,
+        reservedQuantity: 0,
+      },
+    })
+    assert(vendorStock.status === 200 || vendorStock.status === 201, `vendor stock-level ${vendorStock.status}: ${vendorStock.text?.slice(0, 200)}`)
+    ok('vendor can create stock level for own product/location')
+
     logStep('Seed tenant, product, stock')
     const { productId, stockLevelId } = await seedTenantProductStock()
 

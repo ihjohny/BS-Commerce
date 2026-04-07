@@ -20,8 +20,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
 import net from 'node:net'
+import { fileURLToPath } from 'node:url'
 
-const backendRoot = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'))
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const profileDir = path.join(backendRoot, 'tests', 'env-profiles')
 const logsDir = path.join(backendRoot, 'tests', 'logs')
 fs.mkdirSync(logsDir, { recursive: true })
