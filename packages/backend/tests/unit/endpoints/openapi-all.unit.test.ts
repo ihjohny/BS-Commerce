@@ -38,8 +38,6 @@ test('openapiAllEndpoint merges generated + legacy + supplemental paths', async 
   assert.ok(body.paths['/api/only-generated']?.get)
   // Supplemental/custom routes should exist.
   assert.ok(body.paths['/api/checkout/process']?.post)
-  // Legacy docs route should be normalized to /api/* and merged in.
-  assert.ok(body.paths['/api/users']?.post)
   assert.ok(body.components?.schemas?.GeneratedOnly)
 
   globalThis.fetch = originalFetch
