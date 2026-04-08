@@ -17,14 +17,15 @@ export const Tenants: CollectionConfig = {
   access: {
     create: isAdmin,
     read: ({ req }) => {
-      if (!req.user) return false
+      // Storefront needs public tenant name/slug for /store/[slug] and nested REST depth.
+      if (!req.user) return true
       if (req.user.role === 'admin') return true
       // Vendor: can only read their own tenant
       if (req.user.role === 'vendor' && req.user.tenant) {
         const tenantId = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
         return { id: { equals: tenantId } }
       }
-      return false
+      return true
     },
     update: isAdmin,
     delete: isAdmin,

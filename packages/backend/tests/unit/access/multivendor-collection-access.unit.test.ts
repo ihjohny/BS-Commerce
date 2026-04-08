@@ -18,9 +18,9 @@ test('tenants.read should scope vendor to own tenant id', () => {
   assert.deepEqual(result, { id: { equals: 't-1' } })
 })
 
-test('tenants.read should deny customer', () => {
-  const result = tenantsAccess.read({ req: mockReq({ role: 'customer' }) })
-  assert.equal(result, false)
+test('tenants.read should allow guest and customer for public storefront', () => {
+  assert.equal(tenantsAccess.read({ req: mockReq(null) }), true)
+  assert.equal(tenantsAccess.read({ req: mockReq({ role: 'customer' }) }), true)
 })
 
 test('vendor-profiles.read should allow guest and customer', () => {
