@@ -26,7 +26,8 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
+            value:
+              'Content-Type, Authorization, X-Guest-Id, Accept-Language',
           },
           {
             key: 'Access-Control-Allow-Credentials',

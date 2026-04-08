@@ -7,6 +7,9 @@
   ],
   "scripts": {
     "dev": "yarn workspace @bs-commerce/backend dev",
+    "dev:host:sv": "node scripts/run-backend-host.mjs ../docker/.env.singlevendor 3000",
+    "dev:host:mv": "node scripts/run-backend-host.mjs ../docker/.env.multivendor 3010",
+    "seed:frontend-demo": "node scripts/seed-frontend-demo.mjs",
     "build": "yarn workspaces run build",
     "lint": "yarn workspaces run lint",
     "typecheck": "yarn workspaces run typecheck"
