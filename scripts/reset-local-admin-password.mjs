@@ -9,7 +9,7 @@
  *
  * Optional env:
  *   RESET_ADMIN_EMAIL   — defaults to first admin with non-null email (from DB)
- *   RESET_ADMIN_PASSWORD — new password (default: LocalDevSeed2026!)
+ *   RESET_ADMIN_PASSWORD — new password (else DEMO_UNIFIED_PASSWORD, else LocalDevSeed2026!)
  *
  * Optional first arg: path to .env file (KEY=value) to load DATABASE_URI
  */
@@ -67,7 +67,8 @@ if (!databaseUri) {
   process.exit(1)
 }
 
-const newPassword = process.env.RESET_ADMIN_PASSWORD || 'LocalDevSeed2026!'
+const newPassword =
+  process.env.RESET_ADMIN_PASSWORD || process.env.DEMO_UNIFIED_PASSWORD || 'Asd@1234'
 let email = process.env.RESET_ADMIN_EMAIL?.trim()
 
 if (!email) {

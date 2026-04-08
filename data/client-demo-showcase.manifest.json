@@ -1,0 +1,339 @@
+{
+  "name": "client-demo-showcase",
+  "version": 2,
+  "description": "Canonical catalog copy, Unsplash image URLs, and vendor layout for BS Commerce client demos. Edit this file to change demo content; seed scripts load it automatically.",
+  "imageAttribution": "Product and hero images use Unsplash (https://unsplash.com/license) for demonstration only.",
+  "imageLibrary": {
+    "earbuds": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80",
+    "speaker": "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=1200&q=80",
+    "hub": "https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=1200&q=80",
+    "keyboard": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+    "webcam": "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=1200&q=80",
+    "vase": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80",
+    "linen": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=1200&q=80",
+    "deskLamp": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1200&q=80",
+    "bannerTech": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80",
+    "bannerHome": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1600&q=80",
+    "bannerOffice": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1600&q=80",
+    "logoAbstract": "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&w=400&q=80",
+    "logoLeaf": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=400&q=80",
+    "logoGrid": "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=400&q=80",
+    "phone": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
+    "watch": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80",
+    "laptop": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=80",
+    "headphonesOverEar": "https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=80",
+    "cableUsb": "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1200&q=80",
+    "powerBank": "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=1200&q=80",
+    "candle": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+    "pillows": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=80",
+    "wallFrame": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1200&q=80",
+    "plantIndoor": "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=1200&q=80",
+    "mouse": "https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=1200&q=80",
+    "monitor": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=1200&q=80",
+    "deskMat": "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80",
+    "tablet": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=1200&q=80"
+  },
+  "categories": [
+    { "name": "Demo Electronics", "slug": "demo-electronics" },
+    { "name": "Demo Home & Living", "slug": "demo-home-living" },
+    { "name": "Demo Office Gear", "slug": "demo-office-gear" }
+  ],
+  "multivendor": {
+    "vendors": [
+      {
+        "tenantName": "Demo Vendor Co.",
+        "tenantSlug": "demo-vendor-co",
+        "profile": {
+          "displayName": "Demo Vendor Co.",
+          "contactEmail": "hello@demovendor.example",
+          "website": "https://example.com",
+          "socialLinks": [
+            { "platform": "Instagram", "url": "https://instagram.com/example" },
+            { "platform": "Facebook", "url": "https://facebook.com/example" }
+          ],
+          "rating": 4.7,
+          "totalSales": 1280,
+          "descriptionText": "Electronics and accessories with fast fulfillment. Demo seller for local marketplace testing.",
+          "logoKey": "logoAbstract",
+          "bannerKey": "bannerTech"
+        },
+        "products": [
+          {
+            "name": "Demo Wireless Earbuds",
+            "slug": "demo-wireless-earbuds",
+            "basePrice": 49.99,
+            "shortDescription": "Compact earbuds with charging case. Seeded for cart and checkout demos.",
+            "imageKey": "earbuds",
+            "imageFile": "demo-earbuds.jpg",
+            "categorySlugs": ["demo-electronics"],
+            "featured": true
+          },
+          {
+            "name": "Portable Bluetooth Speaker",
+            "slug": "demo-bluetooth-speaker",
+            "basePrice": 79,
+            "shortDescription": "Water-resistant speaker with 12h battery. Great for desk or patio.",
+            "imageKey": "speaker",
+            "imageFile": "demo-speaker.jpg",
+            "categorySlugs": ["demo-electronics"]
+          },
+          {
+            "name": "USB-C 7-in-1 Hub",
+            "slug": "demo-usb-c-hub",
+            "basePrice": 36.5,
+            "shortDescription": "HDMI, USB-A, SD, and power delivery in one compact hub.",
+            "imageKey": "hub",
+            "imageFile": "demo-hub.jpg",
+            "categorySlugs": ["demo-electronics"]
+          },
+          {
+            "name": "Studio Over-Ear Headphones",
+            "slug": "demo-studio-headphones",
+            "basePrice": 149,
+            "shortDescription": "Closed-back drivers, detachable cable, fold-flat design for travel.",
+            "imageKey": "headphonesOverEar",
+            "imageFile": "demo-studio-headphones.jpg",
+            "categorySlugs": ["demo-electronics"]
+          },
+          {
+            "name": "Fast Charge USB-C Cable (2m)",
+            "slug": "demo-usbc-cable-2m",
+            "basePrice": 14.99,
+            "shortDescription": "Braided sleeve, 100W rated, strain-relief ends.",
+            "imageKey": "cableUsb",
+            "imageFile": "demo-usbc-cable.jpg",
+            "categorySlugs": ["demo-electronics"]
+          },
+          {
+            "name": "20,000mAh Power Bank",
+            "slug": "demo-power-bank-20k",
+            "basePrice": 42,
+            "shortDescription": "Dual USB-C + USB-A, LED charge indicator, airline-friendly capacity.",
+            "imageKey": "powerBank",
+            "imageFile": "demo-powerbank.jpg",
+            "categorySlugs": ["demo-electronics"]
+          },
+          {
+            "name": "Minimalist Smartwatch",
+            "slug": "demo-minimal-smartwatch",
+            "basePrice": 199,
+            "shortDescription": "AMOLED face, 7-day battery, swim tracking.",
+            "imageKey": "watch",
+            "imageFile": "demo-smartwatch.jpg",
+            "categorySlugs": ["demo-electronics"]
+          },
+          {
+            "name": "Compact Android Phone (Demo SKU)",
+            "slug": "demo-compact-phone",
+            "basePrice": 399,
+            "shortDescription": "6.1-inch OLED demo listing — not a real device for sale.",
+            "imageKey": "phone",
+            "imageFile": "demo-phone.jpg",
+            "categorySlugs": ["demo-electronics"]
+          }
+        ]
+      },
+      {
+        "tenantName": "Artisan Home Goods",
+        "tenantSlug": "artisan-home-goods",
+        "profile": {
+          "displayName": "Artisan Home Goods",
+          "contactEmail": "care@artisanhome.example",
+          "website": "https://example.com/artisan",
+          "socialLinks": [{ "platform": "Pinterest", "url": "https://pinterest.com/example" }],
+          "rating": 4.9,
+          "totalSales": 542,
+          "descriptionText": "Hand-picked ceramics, textiles, and decor. Curated looks for modern living rooms.",
+          "logoKey": "logoLeaf",
+          "bannerKey": "bannerHome"
+        },
+        "products": [
+          {
+            "name": "Handmade Ceramic Vase Set",
+            "slug": "demo-ceramic-vase-set",
+            "basePrice": 68,
+            "shortDescription": "Set of three matte vases. Food-safe glaze, stackable for storage.",
+            "imageKey": "vase",
+            "imageFile": "demo-vase.jpg",
+            "categorySlugs": ["demo-home-living"]
+          },
+          {
+            "name": "Woven Linen Throw",
+            "slug": "demo-linen-throw",
+            "basePrice": 54,
+            "shortDescription": "Breathable linen blend, 130×170 cm. Machine wash cold.",
+            "imageKey": "linen",
+            "imageFile": "demo-linen.jpg",
+            "categorySlugs": ["demo-home-living"]
+          },
+          {
+            "name": "Soy Wax Candle — Sandalwood",
+            "slug": "demo-candle-sandalwood",
+            "basePrice": 28,
+            "shortDescription": "45h burn, cotton wick, reusable glass vessel.",
+            "imageKey": "candle",
+            "imageFile": "demo-candle.jpg",
+            "categorySlugs": ["demo-home-living"]
+          },
+          {
+            "name": "Velvet Accent Pillows (Pair)",
+            "slug": "demo-velvet-pillows",
+            "basePrice": 44,
+            "shortDescription": "45×45 cm covers with hidden zips; feather inserts.",
+            "imageKey": "pillows",
+            "imageFile": "demo-pillows.jpg",
+            "categorySlugs": ["demo-home-living"]
+          },
+          {
+            "name": "Gallery Wall Frame Set",
+            "slug": "demo-gallery-frames",
+            "basePrice": 89,
+            "shortDescription": "Five-piece mixed-size frames, mat boards included.",
+            "imageKey": "wallFrame",
+            "imageFile": "demo-frames.jpg",
+            "categorySlugs": ["demo-home-living"]
+          },
+          {
+            "name": "Monstera in Ceramic Pot",
+            "slug": "demo-monstera-plant",
+            "basePrice": 62,
+            "shortDescription": "Faux plant for zero maintenance showrooms; realistic texture.",
+            "imageKey": "plantIndoor",
+            "imageFile": "demo-monstera.jpg",
+            "categorySlugs": ["demo-home-living"]
+          }
+        ]
+      },
+      {
+        "tenantName": "Metro Tech Outlet",
+        "tenantSlug": "metro-tech-outlet",
+        "profile": {
+          "displayName": "Metro Tech Outlet",
+          "contactEmail": "sales@metrotech.example",
+          "website": "https://example.com/metro",
+          "socialLinks": [{ "platform": "X", "url": "https://x.com/example" }],
+          "rating": 4.5,
+          "totalSales": 2103,
+          "descriptionText": "Office peripherals and desk upgrades. Same-day pack for demo inventory.",
+          "logoKey": "logoGrid",
+          "bannerKey": "bannerOffice"
+        },
+        "products": [
+          {
+            "name": "Mechanical Keyboard 87-Key",
+            "slug": "demo-mechanical-keyboard",
+            "basePrice": 112,
+            "shortDescription": "Hot-swappable switches, PBT keycaps, USB-C cable included.",
+            "imageKey": "keyboard",
+            "imageFile": "demo-keyboard.jpg",
+            "categorySlugs": ["demo-office-gear"]
+          },
+          {
+            "name": "1080p Webcam with Mic",
+            "slug": "demo-webcam-hd",
+            "basePrice": 89.99,
+            "shortDescription": "Autofocus, privacy shutter, dual noise-cancelling mics.",
+            "imageKey": "webcam",
+            "imageFile": "demo-webcam.jpg",
+            "categorySlugs": ["demo-office-gear"]
+          },
+          {
+            "name": "LED Desk Lamp Pro",
+            "slug": "demo-led-desk-lamp",
+            "basePrice": 45,
+            "shortDescription": "Warm to cool white, touch dimmer, memory brightness.",
+            "imageKey": "deskLamp",
+            "imageFile": "demo-lamp.jpg",
+            "categorySlugs": ["demo-office-gear"]
+          },
+          {
+            "name": "Ergonomic Wireless Mouse",
+            "slug": "demo-wireless-mouse",
+            "basePrice": 39,
+            "shortDescription": "Silent clicks, multi-device Bluetooth, USB receiver stored in shell.",
+            "imageKey": "mouse",
+            "imageFile": "demo-mouse.jpg",
+            "categorySlugs": ["demo-office-gear"]
+          },
+          {
+            "name": "27-inch 4K Monitor (Demo)",
+            "slug": "demo-monitor-27-4k",
+            "basePrice": 349,
+            "shortDescription": "IPS panel, USB-C 65W PD, height-adjust stand.",
+            "imageKey": "monitor",
+            "imageFile": "demo-monitor.jpg",
+            "categorySlugs": ["demo-office-gear", "demo-electronics"]
+          },
+          {
+            "name": "Extended Desk Mat",
+            "slug": "demo-desk-mat-extended",
+            "basePrice": 32,
+            "shortDescription": "900×400 mm stitched edge, non-slip rubber base.",
+            "imageKey": "deskMat",
+            "imageFile": "demo-deskmat.jpg",
+            "categorySlugs": ["demo-office-gear"]
+          },
+          {
+            "name": "Ultrabook 13-inch (Demo SKU)",
+            "slug": "demo-ultrabook-13",
+            "basePrice": 999,
+            "shortDescription": "Demo listing for hero layouts — aluminum chassis, backlit keyboard.",
+            "imageKey": "laptop",
+            "imageFile": "demo-laptop.jpg",
+            "categorySlugs": ["demo-electronics", "demo-office-gear"]
+          },
+          {
+            "name": "Drawing Tablet 10-inch",
+            "slug": "demo-drawing-tablet",
+            "basePrice": 129,
+            "shortDescription": "8192 pressure levels, USB-C, bundled stylus.",
+            "imageKey": "tablet",
+            "imageFile": "demo-tablet.jpg",
+            "categorySlugs": ["demo-office-gear"]
+          }
+        ]
+      }
+    ]
+  },
+  "singleVendor": {
+    "coreProduct": {
+      "name": "Demo Wireless Earbuds",
+      "slug": "demo-wireless-earbuds",
+      "basePrice": 49.99,
+      "shortDescription": "Compact earbuds with charging case. Seeded for cart and checkout demos.",
+      "imageKey": "earbuds",
+      "imageFile": "sv-demo-earbuds.jpg",
+      "categorySlugs": ["demo-electronics"],
+      "featured": true
+    },
+    "extraProducts": [
+      {
+        "name": "Stainless Travel Mug",
+        "slug": "demo-travel-mug",
+        "basePrice": 24,
+        "shortDescription": "Insulated 16oz mug, leak-proof lid.",
+        "imageKey": "deskLamp",
+        "imageFile": "demo-mug.jpg",
+        "categorySlugs": ["demo-electronics"]
+      },
+      {
+        "name": "Desk Organizer Tray",
+        "slug": "demo-desk-organizer",
+        "basePrice": 19.5,
+        "shortDescription": "Bamboo tray with pen and phone slots.",
+        "imageKey": "hub",
+        "imageFile": "demo-organizer.jpg",
+        "categorySlugs": ["demo-home-living"]
+      },
+      {
+        "name": "USB-C Fast Wall Charger 65W",
+        "slug": "demo-wall-charger-65w",
+        "basePrice": 29.99,
+        "shortDescription": "GaN compact brick, foldable prongs, PPS support.",
+        "imageKey": "cableUsb",
+        "imageFile": "sv-charger.jpg",
+        "categorySlugs": ["demo-electronics"]
+      }
+    ]
+  }
+}

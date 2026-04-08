@@ -9,6 +9,8 @@
  * `first-register` — use an admin account (see docs in this repo).
  *
  * From BS-Commerce root:
+ *   yarn demo:bootstrap
+ *   — or —
  *   SEED_ADMIN_EMAIL_SV=you@local SEED_ADMIN_PASSWORD_SV=secret \
  *   SEED_ADMIN_EMAIL_MV=you@local SEED_ADMIN_PASSWORD_MV=secret \
  *   node scripts/seed-frontend-demo.mjs
@@ -16,40 +18,31 @@
  * Or set SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD for both stacks.
  *
  * SEED_SKIP_REMOTE_IMAGES=true — skip downloading images (faster / offline).
+ *
+ * DEMO_MANIFEST_PATH — optional absolute path to a JSON manifest (defaults to
+ * data/client-demo-showcase.manifest.json). Edit that file to change demo copy and image URLs.
  */
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+function loadManifest() {
+  const manifestPath =
+    process.env.DEMO_MANIFEST_PATH || join(__dirname, '../data/client-demo-showcase.manifest.json')
+  const raw = readFileSync(manifestPath, 'utf8')
+  const m = JSON.parse(raw)
+  if (!m?.imageLibrary || !Array.isArray(m?.categories) || !m?.multivendor?.vendors || !m?.singleVendor) {
+    throw new Error(`Invalid demo manifest at ${manifestPath}`)
+  }
+  return m
+}
+
+const manifest = loadManifest()
 
 const SV = { base: 'http://localhost:3000', key: 'SV' }
 const MV = { base: 'http://localhost:3010', key: 'MV' }
-
-/** Unsplash — permitted for demo use; URLs are stable photo IDs. */
-const IMG = {
-  earbuds:
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80',
-  speaker:
-    'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=1200&q=80',
-  hub: 'https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=1200&q=80',
-  keyboard:
-    'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80',
-  webcam:
-    'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=1200&q=80',
-  vase: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80',
-  linen:
-    'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=1200&q=80',
-  deskLamp:
-    'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1200&q=80',
-  bannerTech:
-    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80',
-  bannerHome:
-    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1600&q=80',
-  bannerOffice:
-    'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1600&q=80',
-  logoAbstract:
-    'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&w=400&q=80',
-  logoLeaf:
-    'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=400&q=80',
-  logoGrid:
-    'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=400&q=80',
-}
 
 function credsForStack(stackKey) {
   const e =
@@ -433,168 +426,17 @@ async function ensureStockLevel(base, token, productId, locationId) {
   }
 }
 
-const MV_VENDORS = [
-  {
-    tenantName: 'Demo Vendor Co.',
-    tenantSlug: 'demo-vendor-co',
-    profile: {
-      displayName: 'Demo Vendor Co.',
-      contactEmail: 'hello@demovendor.example',
-      website: 'https://example.com',
-      socialLinks: [
-        { platform: 'Instagram', url: 'https://instagram.com/example' },
-        { platform: 'Facebook', url: 'https://facebook.com/example' },
-      ],
-      rating: 4.7,
-      totalSales: 1280,
-      descriptionText:
-        'Electronics and accessories with fast fulfillment. Demo seller for local marketplace testing.',
-      logoKey: 'logoAbstract',
-      bannerKey: 'bannerTech',
-    },
-    products: [
-      {
-        name: 'Demo Wireless Earbuds',
-        slug: 'demo-wireless-earbuds',
-        basePrice: 49.99,
-        shortDescription: 'Compact earbuds with charging case. Seeded for cart and checkout demos.',
-        imageKey: 'earbuds',
-        imageFile: 'demo-earbuds.jpg',
-      },
-      {
-        name: 'Portable Bluetooth Speaker',
-        slug: 'demo-bluetooth-speaker',
-        basePrice: 79.0,
-        shortDescription: 'Water-resistant speaker with 12h battery. Great for desk or patio.',
-        imageKey: 'speaker',
-        imageFile: 'demo-speaker.jpg',
-      },
-      {
-        name: 'USB-C 7-in-1 Hub',
-        slug: 'demo-usb-c-hub',
-        basePrice: 36.5,
-        shortDescription: 'HDMI, USB-A, SD, and power delivery in one compact hub.',
-        imageKey: 'hub',
-        imageFile: 'demo-hub.jpg',
-      },
-    ],
-  },
-  {
-    tenantName: 'Artisan Home Goods',
-    tenantSlug: 'artisan-home-goods',
-    profile: {
-      displayName: 'Artisan Home Goods',
-      contactEmail: 'care@artisanhome.example',
-      website: 'https://example.com/artisan',
-      socialLinks: [{ platform: 'Pinterest', url: 'https://pinterest.com/example' }],
-      rating: 4.9,
-      totalSales: 542,
-      descriptionText:
-        'Hand-picked ceramics, textiles, and decor. Curated looks for modern living rooms.',
-      logoKey: 'logoLeaf',
-      bannerKey: 'bannerHome',
-    },
-    products: [
-      {
-        name: 'Handmade Ceramic Vase Set',
-        slug: 'demo-ceramic-vase-set',
-        basePrice: 68.0,
-        shortDescription: 'Set of three matte vases. Food-safe glaze, stackable for storage.',
-        imageKey: 'vase',
-        imageFile: 'demo-vase.jpg',
-      },
-      {
-        name: 'Woven Linen Throw',
-        slug: 'demo-linen-throw',
-        basePrice: 54.0,
-        shortDescription: 'Breathable linen blend, 130×170 cm. Machine wash cold.',
-        imageKey: 'linen',
-        imageFile: 'demo-linen.jpg',
-      },
-    ],
-  },
-  {
-    tenantName: 'Metro Tech Outlet',
-    tenantSlug: 'metro-tech-outlet',
-    profile: {
-      displayName: 'Metro Tech Outlet',
-      contactEmail: 'sales@metrotech.example',
-      website: 'https://example.com/metro',
-      socialLinks: [{ platform: 'X', url: 'https://x.com/example' }],
-      rating: 4.5,
-      totalSales: 2103,
-      descriptionText:
-        'Office peripherals and desk upgrades. Same-day pack for demo inventory.',
-      logoKey: 'logoGrid',
-      bannerKey: 'bannerOffice',
-    },
-    products: [
-      {
-        name: 'Mechanical Keyboard 87-Key',
-        slug: 'demo-mechanical-keyboard',
-        basePrice: 112.0,
-        shortDescription: 'Hot-swappable switches, PBT keycaps, USB-C cable included.',
-        imageKey: 'keyboard',
-        imageFile: 'demo-keyboard.jpg',
-      },
-      {
-        name: '1080p Webcam with Mic',
-        slug: 'demo-webcam-hd',
-        basePrice: 89.99,
-        shortDescription: 'Autofocus, privacy shutter, dual noise-cancelling mics.',
-        imageKey: 'webcam',
-        imageFile: 'demo-webcam.jpg',
-      },
-      {
-        name: 'LED Desk Lamp Pro',
-        slug: 'demo-led-desk-lamp',
-        basePrice: 45.0,
-        shortDescription: 'Warm to cool white, touch dimmer, memory brightness.',
-        imageKey: 'deskLamp',
-        imageFile: 'demo-lamp.jpg',
-      },
-    ],
-  },
-]
-
-const SV_EXTRA_PRODUCTS = [
-  {
-    name: 'Stainless Travel Mug',
-    slug: 'demo-travel-mug',
-    basePrice: 24.0,
-    shortDescription: 'Insulated 16oz mug, leak-proof lid.',
-    imageKey: 'deskLamp',
-    imageFile: 'demo-mug.jpg',
-    categorySlug: 'demo-electronics',
-  },
-  {
-    name: 'Desk Organizer Tray',
-    slug: 'demo-desk-organizer',
-    basePrice: 19.5,
-    shortDescription: 'Bamboo tray with pen and phone slots.',
-    imageKey: 'hub',
-    imageFile: 'demo-organizer.jpg',
-    categorySlug: 'demo-home-living',
-  },
-]
-
 async function seedMultivendorStack(base, token) {
   console.log('\n--- Multivendor catalog & vendors ---')
+  const IMG = manifest.imageLibrary
 
-  const catElectronics = await ensureCategory(base, token, {
-    name: 'Demo Electronics',
-    slug: 'demo-electronics',
-  })
-  const catHome = await ensureCategory(base, token, {
-    name: 'Demo Home & Living',
-    slug: 'demo-home-living',
-  })
-  const catOffice = await ensureCategory(base, token, {
-    name: 'Demo Office Gear',
-    slug: 'demo-office-gear',
-  })
+  const categoryBySlug = new Map()
+  for (const c of manifest.categories) {
+    const doc = await ensureCategory(base, token, { name: c.name, slug: c.slug })
+    if (doc) categoryBySlug.set(c.slug, doc)
+  }
 
-  for (const v of MV_VENDORS) {
+  for (const v of manifest.multivendor.vendors) {
     const tenant = await ensureTenant(base, token, {
       name: v.tenantName,
       slug: v.tenantSlug,
@@ -631,22 +473,17 @@ async function seedMultivendorStack(base, token) {
     if (process.env.INVENTORY_ENABLED === 'false') continue
 
     for (const p of v.products) {
-      const imageId = await uploadRemoteImage(
-        base,
-        token,
-        IMG[p.imageKey],
-        `${v.tenantSlug}-${p.imageFile}`,
-        p.name,
-      )
+      const imageUrl = IMG[p.imageKey]
+      if (!imageUrl) {
+        console.warn('Unknown imageKey on product', p.slug, p.imageKey)
+      }
+      const imageId = imageUrl
+        ? await uploadRemoteImage(base, token, imageUrl, `${v.tenantSlug}-${p.imageFile}`, p.name)
+        : null
       const categoryIds = []
-      if (['demo-ceramic-vase-set', 'demo-linen-throw'].includes(p.slug)) {
-        if (catHome?.id) categoryIds.push(catHome.id)
-      } else if (
-        ['demo-mechanical-keyboard', 'demo-webcam-hd', 'demo-led-desk-lamp'].includes(p.slug)
-      ) {
-        if (catOffice?.id) categoryIds.push(catOffice.id)
-      } else if (catElectronics?.id) {
-        categoryIds.push(catElectronics.id)
+      for (const slug of p.categorySlugs || []) {
+        const cat = categoryBySlug.get(slug)
+        if (cat?.id) categoryIds.push(cat.id)
       }
 
       const productBody = {
@@ -657,7 +494,7 @@ async function seedMultivendorStack(base, token) {
         status: 'published',
         tenant: tenant.id,
         shortDescription: p.shortDescription,
-        featured: p.slug === 'demo-wireless-earbuds',
+        featured: Boolean(p.featured),
         ...(categoryIds.length ? { categories: categoryIds } : {}),
         ...(imageId ? { images: [{ image: imageId }] } : {}),
       }
@@ -672,45 +509,28 @@ async function seedMultivendorStack(base, token) {
 
 async function seedSingleVendorStack(base, token) {
   console.log('\n--- Single-vendor catalog ---')
+  const IMG = manifest.imageLibrary
+  const sv = manifest.singleVendor
 
-  const catElectronics = await ensureCategory(base, token, {
-    name: 'Demo Electronics',
-    slug: 'demo-electronics',
-  })
-  const catHome = await ensureCategory(base, token, {
-    name: 'Demo Home & Living',
-    slug: 'demo-home-living',
-  })
+  const categoryBySlug = new Map()
+  for (const c of manifest.categories) {
+    const doc = await ensureCategory(base, token, { name: c.name, slug: c.slug })
+    if (doc) categoryBySlug.set(c.slug, doc)
+  }
 
   const location = await getOrCreateStockLocation(base, token, null, null, false)
   if (process.env.INVENTORY_ENABLED === 'false') return
 
-  const core = {
-    name: 'Demo Wireless Earbuds',
-    slug: 'demo-wireless-earbuds',
-    basePrice: 49.99,
-    currency: 'USD',
-    status: 'published',
-    shortDescription: 'Compact earbuds with charging case. Seeded for cart and checkout demos.',
-    categories: catElectronics?.id ? [catElectronics.id] : undefined,
-  }
-  const imgId = await uploadRemoteImage(base, token, IMG.earbuds, 'sv-demo-earbuds.jpg', core.name)
-  const doc = await ensureProduct(base, token, {
-    ...core,
-    ...(imgId ? { images: [{ image: imgId }] } : {}),
-  })
-  if (doc?.id && location?.id) await ensureStockLevel(base, token, doc.id, location.id)
-
-  for (const p of SV_EXTRA_PRODUCTS) {
-    const cid =
-      p.categorySlug === 'demo-home-living' ? catHome?.id : catElectronics?.id
-    const imageId = await uploadRemoteImage(
-      base,
-      token,
-      IMG[p.imageKey],
-      `sv-${p.imageFile}`,
-      p.name,
-    )
+  async function seedSvProduct(p, filenamePrefix) {
+    const categoryIds = []
+    for (const slug of p.categorySlugs || []) {
+      const cat = categoryBySlug.get(slug)
+      if (cat?.id) categoryIds.push(cat.id)
+    }
+    const imageUrl = IMG[p.imageKey]
+    const imageId = imageUrl
+      ? await uploadRemoteImage(base, token, imageUrl, filenamePrefix, p.name)
+      : null
     const created = await ensureProduct(base, token, {
       name: p.name,
       slug: p.slug,
@@ -718,10 +538,16 @@ async function seedSingleVendorStack(base, token) {
       currency: 'USD',
       status: 'published',
       shortDescription: p.shortDescription,
-      ...(cid ? { categories: [cid] } : {}),
+      featured: Boolean(p.featured),
+      ...(categoryIds.length ? { categories: categoryIds } : {}),
       ...(imageId ? { images: [{ image: imageId }] } : {}),
     })
     if (created?.id && location?.id) await ensureStockLevel(base, token, created.id, location.id)
+  }
+
+  await seedSvProduct(sv.coreProduct, sv.coreProduct.imageFile)
+  for (const p of sv.extraProducts) {
+    await seedSvProduct(p, `sv-${p.imageFile}`)
   }
 }
 
