@@ -737,11 +737,24 @@ async function seedStack(label, cfg, multivendor) {
   }
 }
 
-try {
-  await seedStack('Single-vendor', SV, false)
-  await seedStack('Multivendor', MV, true)
-  console.log('\nDone.')
-} catch (e) {
-  console.error(e)
+let anyOk = false
+for (const { label, cfg, multivendor } of [
+  { label: 'Single-vendor', cfg: SV, multivendor: false },
+  { label: 'Multivendor', cfg: MV, multivendor: true },
+]) {
+  try {
+    await seedStack(label, cfg, multivendor)
+    anyOk = true
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.warn(`\n[WARN] ${label} (${cfg.base}) skipped: ${msg}`)
+  }
+}
+
+if (!anyOk) {
+  console.error(
+    '\nNo API was seeded. Start backends (e.g. port 3000 single-vendor, 3010 multivendor) or check SEED_ADMIN_* credentials.',
+  )
   process.exit(1)
 }
+console.log('\nDone.')
