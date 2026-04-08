@@ -26,13 +26,13 @@ const IMG = {
   earbuds:
     'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80',
   speaker:
-    'https://images.unsplash.com/photo-1608043152269-423dbba4e7e5?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=1200&q=80',
   hub: 'https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=1200&q=80',
   keyboard:
     'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80',
   webcam:
     'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=1200&q=80',
-  vase: 'https://images.unsplash.com/photo-1578500494199-246f612d84b7?auto=format&fit=crop&w=1200&q=80',
+  vase: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80',
   linen:
     'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=1200&q=80',
   deskLamp:
