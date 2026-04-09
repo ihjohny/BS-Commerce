@@ -1,8 +1,8 @@
 {
   "name": "client-demo-showcase",
-  "version": 5,
-  "description": "Canonical catalog copy, stable placeholder image URLs, and vendor layout for BS Commerce client demos. Edit this file to change demo content; seed scripts load it automatically.",
-  "imageAttribution": "Demo images are downloaded from Lorem Picsum (https://picsum.photos) during seeding and stored in your Payload media library. Picsum serves photos from Unsplash’s collection; see https://unsplash.com/license for Unsplash’s terms. Suitable for local/staging demos only—not a claim of public-domain status for every underlying photo.",
+  "version": 6,
+  "description": "Canonical catalog copy with richer, storefront-like demo products for both single-vendor and multivendor stacks. Includes broader pricing ranges and category coverage so sorting/filtering/cart/checkout flows look realistic.",
+  "imageAttribution": "Demo images are deterministic placeholders from Lorem Picsum (https://picsum.photos) downloaded into local Payload media during seeding. They are for local/staging demo use only.",
   "imageLibrary": {
     "earbuds": "https://picsum.photos/seed/bscommerce-earbuds/1200/900",
     "speaker": "https://picsum.photos/seed/bscommerce-speaker/1200/900",
@@ -31,12 +31,34 @@
     "mouse": "https://picsum.photos/seed/bscommerce-mouse/1200/900",
     "monitor": "https://picsum.photos/seed/bscommerce-monitor/1200/900",
     "deskMat": "https://picsum.photos/seed/bscommerce-desk-mat/1200/900",
-    "tablet": "https://picsum.photos/seed/bscommerce-tablet/1200/900"
+    "tablet": "https://picsum.photos/seed/bscommerce-tablet/1200/900",
+    "travelMug": "https://picsum.photos/seed/bscommerce-travel-mug/1200/900",
+    "deskOrganizer": "https://picsum.photos/seed/bscommerce-desk-organizer/1200/900",
+    "charger65w": "https://picsum.photos/seed/bscommerce-charger-65w/1200/900",
+    "monitorArm": "https://picsum.photos/seed/bscommerce-monitor-arm/1200/900",
+    "standingDesk": "https://picsum.photos/seed/bscommerce-standing-desk/1200/900",
+    "officeChair": "https://picsum.photos/seed/bscommerce-office-chair/1200/900",
+    "taskLight": "https://picsum.photos/seed/bscommerce-task-light/1200/900",
+    "deskShelf": "https://picsum.photos/seed/bscommerce-desk-shelf/1200/900",
+    "airPurifier": "https://picsum.photos/seed/bscommerce-air-purifier/1200/900",
+    "waterBottle": "https://picsum.photos/seed/bscommerce-water-bottle/1200/900",
+    "notebookSet": "https://picsum.photos/seed/bscommerce-notebook-set/1200/900",
+    "smartPlug": "https://picsum.photos/seed/bscommerce-smart-plug/1200/900",
+    "routerWifi6": "https://picsum.photos/seed/bscommerce-router-wifi6/1200/900",
+    "ssdPortable": "https://picsum.photos/seed/bscommerce-ssd-portable/1200/900",
+    "microphoneUsb": "https://picsum.photos/seed/bscommerce-microphone-usb/1200/900",
+    "ringLight": "https://picsum.photos/seed/bscommerce-ring-light/1200/900",
+    "laptopStand": "https://picsum.photos/seed/bscommerce-laptop-stand/1200/900",
+    "mousePadPro": "https://picsum.photos/seed/bscommerce-mousepad-pro/1200/900",
+    "surgeProtector": "https://picsum.photos/seed/bscommerce-surge-protector/1200/900"
   },
   "categories": [
     { "name": "Demo Electronics", "slug": "demo-electronics", "imageKey": "bannerTech" },
     { "name": "Demo Home & Living", "slug": "demo-home-living", "imageKey": "bannerHome" },
-    { "name": "Demo Office Gear", "slug": "demo-office-gear", "imageKey": "bannerOffice" }
+    { "name": "Demo Office Gear", "slug": "demo-office-gear", "imageKey": "bannerOffice" },
+    { "name": "Demo Smart Home", "slug": "demo-smart-home", "imageKey": "bannerHome" },
+    { "name": "Demo Creator Studio", "slug": "demo-creator-studio", "imageKey": "bannerTech" },
+    { "name": "Demo Workspace Furniture", "slug": "demo-workspace-furniture", "imageKey": "bannerOffice" }
   ],
   "shipping": {
     "zones": [
@@ -156,7 +178,7 @@
             "shortDescription": "6.1-inch OLED demo listing — not a real device for sale.",
             "imageKey": "phone",
             "imageFile": "demo-phone.jpg",
-            "categorySlugs": ["demo-electronics"]
+            "categorySlugs": ["demo-electronics", "demo-smart-home"]
           }
         ]
       },
@@ -289,7 +311,7 @@
             "shortDescription": "IPS panel, USB-C 65W PD, height-adjust stand.",
             "imageKey": "monitor",
             "imageFile": "demo-monitor.jpg",
-            "categorySlugs": ["demo-office-gear", "demo-electronics"]
+            "categorySlugs": ["demo-office-gear", "demo-electronics", "demo-creator-studio"]
           },
           {
             "name": "Extended Desk Mat",
@@ -307,7 +329,7 @@
             "shortDescription": "Demo listing for hero layouts — aluminum chassis, backlit keyboard.",
             "imageKey": "laptop",
             "imageFile": "demo-laptop.jpg",
-            "categorySlugs": ["demo-electronics", "demo-office-gear"]
+            "categorySlugs": ["demo-electronics", "demo-office-gear", "demo-workspace-furniture"]
           },
           {
             "name": "Drawing Tablet 10-inch",
@@ -316,7 +338,7 @@
             "shortDescription": "8192 pressure levels, USB-C, bundled stylus.",
             "imageKey": "tablet",
             "imageFile": "demo-tablet.jpg",
-            "categorySlugs": ["demo-office-gear"]
+            "categorySlugs": ["demo-office-gear", "demo-creator-studio"]
           }
         ]
       }
@@ -328,9 +350,10 @@
       "slug": "demo-wireless-earbuds",
       "basePrice": 49.99,
       "shortDescription": "Compact earbuds with charging case. Seeded for cart and checkout demos.",
+      "fullDescription": "Compact true-wireless earbuds tuned for everyday listening with a pocket charging case. The demo listing includes realistic copy for product detail pages, cart summaries, and order snapshots.",
       "imageKey": "earbuds",
       "imageFile": "sv-demo-earbuds.jpg",
-      "categorySlugs": ["demo-electronics"],
+      "categorySlugs": ["demo-electronics", "demo-creator-studio"],
       "featured": true
     },
     "extraProducts": [
@@ -338,28 +361,179 @@
         "name": "Stainless Travel Mug",
         "slug": "demo-travel-mug",
         "basePrice": 24,
-        "shortDescription": "Insulated 16oz mug, leak-proof lid.",
-        "imageKey": "deskLamp",
+        "shortDescription": "Insulated 16oz mug with leak-proof lid for commute and office use.",
+        "imageKey": "travelMug",
         "imageFile": "demo-mug.jpg",
-        "categorySlugs": ["demo-electronics"]
+        "categorySlugs": ["demo-home-living"]
       },
       {
         "name": "Desk Organizer Tray",
         "slug": "demo-desk-organizer",
         "basePrice": 19.5,
-        "shortDescription": "Bamboo tray with pen and phone slots.",
-        "imageKey": "hub",
+        "shortDescription": "Bamboo tray with pen/phone slots and hidden cable pass-through.",
+        "imageKey": "deskOrganizer",
         "imageFile": "demo-organizer.jpg",
-        "categorySlugs": ["demo-home-living"]
+        "categorySlugs": ["demo-office-gear"]
       },
       {
         "name": "USB-C Fast Wall Charger 65W",
         "slug": "demo-wall-charger-65w",
         "basePrice": 29.99,
         "shortDescription": "GaN compact brick, foldable prongs, PPS support.",
-        "imageKey": "cableUsb",
+        "imageKey": "charger65w",
         "imageFile": "sv-charger.jpg",
         "categorySlugs": ["demo-electronics"]
+      },
+      {
+        "name": "Dual Monitor Arm",
+        "slug": "demo-dual-monitor-arm",
+        "basePrice": 129,
+        "shortDescription": "Gas-spring VESA arm, cable channels, supports two 27-inch monitors.",
+        "imageKey": "monitorArm",
+        "imageFile": "sv-monitor-arm.jpg",
+        "categorySlugs": ["demo-office-gear"],
+        "featured": true
+      },
+      {
+        "name": "Electric Standing Desk 140cm",
+        "slug": "demo-standing-desk-140",
+        "basePrice": 549,
+        "shortDescription": "Memory presets, anti-collision motor, 2-stage frame.",
+        "fullDescription": "Electric standing desk with memory presets and anti-collision safety. Sized for dual monitors with cable pass-through and stable frame for everyday remote-work setups.",
+        "imageKey": "standingDesk",
+        "imageFile": "sv-standing-desk.jpg",
+        "categorySlugs": ["demo-office-gear", "demo-workspace-furniture"],
+        "featured": true
+      },
+      {
+        "name": "Ergonomic Office Chair",
+        "slug": "demo-ergonomic-office-chair",
+        "basePrice": 279,
+        "shortDescription": "Adjustable lumbar support, breathable mesh back, 4D armrests.",
+        "imageKey": "officeChair",
+        "imageFile": "sv-office-chair.jpg",
+        "categorySlugs": ["demo-office-gear", "demo-workspace-furniture"]
+      },
+      {
+        "name": "USB Task Light",
+        "slug": "demo-usb-task-light",
+        "basePrice": 39,
+        "shortDescription": "Flicker-free desk light with touch controls and warm/cool modes.",
+        "imageKey": "taskLight",
+        "imageFile": "sv-task-light.jpg",
+        "categorySlugs": ["demo-office-gear"]
+      },
+      {
+        "name": "Desktop Riser Shelf",
+        "slug": "demo-desktop-riser-shelf",
+        "basePrice": 58,
+        "shortDescription": "Monitor riser shelf with dual storage compartments.",
+        "imageKey": "deskShelf",
+        "imageFile": "sv-desk-shelf.jpg",
+        "categorySlugs": ["demo-office-gear"]
+      },
+      {
+        "name": "HEPA Air Purifier (Room 25m2)",
+        "slug": "demo-air-purifier-25m2",
+        "basePrice": 189,
+        "shortDescription": "3-stage filtration, quiet sleep mode, air quality indicator.",
+        "fullDescription": "HEPA purifier sized for small rooms and home offices. Includes low-noise night mode and quick-access filter status indicator for realistic appliance-style catalog content.",
+        "imageKey": "airPurifier",
+        "imageFile": "sv-air-purifier.jpg",
+        "categorySlugs": ["demo-home-living", "demo-smart-home"],
+        "featured": true
+      },
+      {
+        "name": "Vacuum Insulated Bottle 1L",
+        "slug": "demo-vacuum-bottle-1l",
+        "basePrice": 29,
+        "shortDescription": "Keeps drinks cold 24h or hot 12h. BPA-free body.",
+        "imageKey": "waterBottle",
+        "imageFile": "sv-water-bottle.jpg",
+        "categorySlugs": ["demo-home-living"]
+      },
+      {
+        "name": "Premium Notebook Set (3 Pack)",
+        "slug": "demo-notebook-set-3",
+        "basePrice": 17.99,
+        "shortDescription": "A5 ruled notebooks with 100gsm paper and lay-flat binding.",
+        "imageKey": "notebookSet",
+        "imageFile": "sv-notebook-set.jpg",
+        "categorySlugs": ["demo-office-gear", "demo-home-living"]
+      },
+      {
+        "name": "Smart Wi-Fi Plug (2 Pack)",
+        "slug": "demo-smart-plug-2pack",
+        "basePrice": 34,
+        "shortDescription": "App + voice control, schedules, energy monitoring.",
+        "imageKey": "smartPlug",
+        "imageFile": "sv-smart-plug.jpg",
+        "categorySlugs": ["demo-electronics", "demo-smart-home"]
+      },
+      {
+        "name": "Wi-Fi 6 Router AX3000",
+        "slug": "demo-router-ax3000",
+        "basePrice": 159,
+        "shortDescription": "Dual-band mesh-ready router for high-density home offices.",
+        "imageKey": "routerWifi6",
+        "imageFile": "sv-router-ax3000.jpg",
+        "categorySlugs": ["demo-electronics", "demo-smart-home"],
+        "featured": true
+      },
+      {
+        "name": "Portable SSD 1TB USB-C",
+        "slug": "demo-portable-ssd-1tb",
+        "basePrice": 139,
+        "shortDescription": "Up to 1000MB/s transfer, shock-resistant shell.",
+        "imageKey": "ssdPortable",
+        "imageFile": "sv-ssd-1tb.jpg",
+        "categorySlugs": ["demo-electronics"]
+      },
+      {
+        "name": "USB Condenser Microphone",
+        "slug": "demo-usb-condenser-mic",
+        "basePrice": 119,
+        "shortDescription": "Cardioid capsule with gain knob and mute touch key.",
+        "fullDescription": "USB microphone kit for streaming, podcasts, and remote meetings. Ships with gain control and mute function to simulate realistic creator-workflow catalog content.",
+        "imageKey": "microphoneUsb",
+        "imageFile": "sv-usb-mic.jpg",
+        "categorySlugs": ["demo-electronics", "demo-office-gear", "demo-creator-studio"]
+      },
+      {
+        "name": "10-inch Creator Ring Light",
+        "slug": "demo-ring-light-10in",
+        "basePrice": 49,
+        "shortDescription": "Bi-color ring light with phone mount and mini tripod.",
+        "imageKey": "ringLight",
+        "imageFile": "sv-ring-light.jpg",
+        "categorySlugs": ["demo-electronics", "demo-office-gear", "demo-creator-studio"]
+      },
+      {
+        "name": "Aluminum Laptop Stand",
+        "slug": "demo-laptop-stand-aluminum",
+        "basePrice": 45,
+        "shortDescription": "Ventilated, foldable stand compatible with 11-17 inch laptops.",
+        "imageKey": "laptopStand",
+        "imageFile": "sv-laptop-stand.jpg",
+        "categorySlugs": ["demo-office-gear"]
+      },
+      {
+        "name": "Pro Gaming Mouse Pad XL",
+        "slug": "demo-mousepad-xl",
+        "basePrice": 26,
+        "shortDescription": "Micro-texture surface and stitched anti-fray edges.",
+        "imageKey": "mousePadPro",
+        "imageFile": "sv-mousepad-xl.jpg",
+        "categorySlugs": ["demo-office-gear"]
+      },
+      {
+        "name": "8-Outlet Surge Protector",
+        "slug": "demo-surge-protector-8",
+        "basePrice": 31,
+        "shortDescription": "8 AC outlets + 2 USB ports with over-voltage protection.",
+        "imageKey": "surgeProtector",
+        "imageFile": "sv-surge-protector.jpg",
+        "categorySlugs": ["demo-electronics", "demo-office-gear"]
       }
     ]
   }

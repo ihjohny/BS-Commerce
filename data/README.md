@@ -11,10 +11,10 @@ Single source of truth for **categories**, **multivendor vendors** (profiles + p
 
 ## Demo password (not in git)
 
-Scripts read **`DEMO_UNIFIED_PASSWORD`** from:
+Scripts read `**DEMO_UNIFIED_PASSWORD`** from:
 
-1. Your shell environment (highest priority), or  
-2. **`.env.demo-seed`** / **`.env.demo-seed.local`** in the BS-Commerce repo root (gitignored).
+1. Your shell environment (highest priority), or
+2. `**.env.demo-seed**` / `**.env.demo-seed.local**` in the BS-Commerce repo root (gitignored).
 
 Copy the template once:
 
@@ -49,8 +49,11 @@ DEMO_UNIFIED_PASSWORD='YourSecret' yarn demo:bootstrap
 
 ## Related scripts
 
-| Script | Purpose |
-|--------|---------|
-| `yarn demo:sync-passwords` | Only step 1 (all users → same password). |
-| `yarn seed:frontend-demo` | Only catalog/media seed (needs `SEED_ADMIN_*`). |
+
+| Script                            | Purpose                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| `yarn demo:sync-passwords`        | Only step 1 (all users → same password).                                     |
+| `yarn seed:frontend-demo`         | Only catalog/media seed (needs `SEED_ADMIN_`*).                              |
 | `yarn reset:local-admin-password` | Reset one admin; respects `RESET_ADMIN_PASSWORD` or `DEMO_UNIFIED_PASSWORD`. |
+
+

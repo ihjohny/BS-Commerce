@@ -43,34 +43,66 @@ function loadManifest() {
 
 const manifest = loadManifest()
 
-const DEFAULT_DEMO_SHIPPING = {
-  zones: [{ name: 'Demo - worldwide', countries: [], isActive: true }],
-  methods: [
-    {
-      name: 'Standard (5-7 business days)',
-      zoneName: 'Demo - worldwide',
-      type: 'flat',
-      rate: 5.99,
-      currency: 'USD',
-      isActive: true,
-    },
-    {
-      name: 'Express (2-3 business days)',
-      zoneName: 'Demo - worldwide',
-      type: 'flat',
-      rate: 14.99,
-      currency: 'USD',
-      isActive: true,
-    },
-  ],
+function envBool(name, fallback = false) {
+  const v = String(process.env[name] ?? '').toLowerCase().trim()
+  if (!v) return fallback
+  return ['1', 'true', 'yes', 'on'].includes(v)
+}
+
+function buildDefaultShippingConfig() {
+  const currency = process.env.DEFAULT_CURRENCY || 'USD'
+  return {
+    zones: [{ name: 'Bangladesh Nationwide', countries: ['BD'], isActive: true }],
+    methods: [
+      {
+        name: 'Dhaka Metro (Next Day)',
+        zoneName: 'Bangladesh Nationwide',
+        type: 'flat',
+        rate: 2.49,
+        currency,
+        isActive: true,
+        minOrderValue: 0,
+      },
+      {
+        name: 'Nationwide Standard (3-5 days)',
+        zoneName: 'Bangladesh Nationwide',
+        type: 'flat',
+        rate: 4.49,
+        currency,
+        isActive: true,
+        minOrderValue: 0,
+      },
+      {
+        name: 'Nationwide Express (1-2 days)',
+        zoneName: 'Bangladesh Nationwide',
+        type: 'flat',
+        rate: 7.99,
+        currency,
+        isActive: true,
+        minOrderValue: 0,
+      },
+      {
+        name: 'Cash on Delivery',
+        zoneName: 'Bangladesh Nationwide',
+        type: 'flat',
+        rate: 1.99,
+        currency,
+        isActive: true,
+        minOrderValue: 0,
+        maxOrderValue: 250,
+      },
+    ],
+  }
 }
 
 function getDemoShippingConfig() {
-  const d = manifest.shipping
-  if (d && Array.isArray(d.zones) && d.zones.length && Array.isArray(d.methods) && d.methods.length) {
-    return d
+  if (envBool('SEED_USE_MANIFEST_SHIPPING', false)) {
+    const d = manifest.shipping
+    if (d && Array.isArray(d.zones) && d.zones.length && Array.isArray(d.methods) && d.methods.length) {
+      return d
+    }
   }
-  return DEFAULT_DEMO_SHIPPING
+  return buildDefaultShippingConfig()
 }
 
 function normalizeZoneCountries(countries) {
@@ -80,6 +112,218 @@ function normalizeZoneCountries(countries) {
 
 const SV = { base: 'http://localhost:3000', key: 'SV' }
 const MV = { base: 'http://localhost:3010', key: 'MV' }
+
+const PHASE2 = {
+  users: [
+    {
+      email: 'alex.rahman@example.com',
+      password: 'DemoCustomer2026!',
+      firstName: 'Alex',
+      lastName: 'Rahman',
+      locale: 'en',
+    },
+    {
+      email: 'mina.sultana@example.com',
+      password: 'DemoCustomer2026!',
+      firstName: 'Mina',
+      lastName: 'Sultana',
+      locale: 'en',
+    },
+    {
+      email: 'liam.carter@example.com',
+      password: 'DemoCustomer2026!',
+      firstName: 'Liam',
+      lastName: 'Carter',
+      locale: 'en',
+    },
+    {
+      email: 'ava.stone@example.com',
+      password: 'DemoCustomer2026!',
+      firstName: 'Ava',
+      lastName: 'Stone',
+      locale: 'en',
+    },
+    {
+      email: 'nora.hassan@example.com',
+      password: 'DemoCustomer2026!',
+      firstName: 'Nora',
+      lastName: 'Hassan',
+      locale: 'en',
+    },
+    {
+      email: 'ethan.brooks@example.com',
+      password: 'DemoCustomer2026!',
+      firstName: 'Ethan',
+      lastName: 'Brooks',
+      locale: 'en',
+    },
+  ],
+  addresses: [
+    {
+      label: 'Home',
+      firstName: 'Alex',
+      lastName: 'Rahman',
+      street1: '221 Demo Lane',
+      city: 'Dhaka',
+      state: 'Dhaka',
+      postalCode: '1207',
+      country: 'BD',
+      phone: '+8801700000001',
+      isDefault: true,
+    },
+    {
+      label: 'Office',
+      firstName: 'Mina',
+      lastName: 'Sultana',
+      street1: '45 Commerce Avenue',
+      city: 'Dhaka',
+      state: 'Dhaka',
+      postalCode: '1212',
+      country: 'BD',
+      phone: '+8801700000002',
+      isDefault: true,
+    },
+    {
+      label: 'Apartment',
+      firstName: 'Liam',
+      lastName: 'Carter',
+      street1: '18 Lakeview Terrace',
+      city: 'Chittagong',
+      state: 'Chittagong',
+      postalCode: '4000',
+      country: 'BD',
+      phone: '+8801700000003',
+      isDefault: true,
+    },
+    {
+      label: 'Family Home',
+      firstName: 'Ava',
+      lastName: 'Stone',
+      street1: '72 Orchard Street',
+      city: 'Sylhet',
+      state: 'Sylhet',
+      postalCode: '3100',
+      country: 'BD',
+      phone: '+8801700000004',
+      isDefault: true,
+    },
+    {
+      label: 'Primary',
+      firstName: 'Nora',
+      lastName: 'Hassan',
+      street1: '12 Riverside Road',
+      city: 'Khulna',
+      state: 'Khulna',
+      postalCode: '9100',
+      country: 'BD',
+      phone: '+8801700000005',
+      isDefault: true,
+    },
+    {
+      label: 'HQ',
+      firstName: 'Ethan',
+      lastName: 'Brooks',
+      street1: '300 Market Street',
+      city: 'Dhaka',
+      state: 'Dhaka',
+      postalCode: '1229',
+      country: 'BD',
+      phone: '+8801700000006',
+      isDefault: true,
+    },
+  ],
+  coupons: [
+    { code: 'WELCOME10', type: 'percentage', value: 10, minOrderValue: 50, isActive: true },
+    { code: 'SAVE25', type: 'fixed', value: 25, minOrderValue: 200, isActive: true },
+    { code: 'FREESHIP80', type: 'fixed', value: 15, minOrderValue: 80, isActive: true },
+    { code: 'WEEKEND12', type: 'percentage', value: 12, minOrderValue: 120, isActive: true },
+    { code: 'BULKDEAL20', type: 'percentage', value: 20, minOrderValue: 350, isActive: true },
+  ],
+}
+
+const BULK_SERIES = [
+  { key: 'pro', label: 'Pro' },
+  { key: 'plus', label: 'Plus' },
+  { key: 'max', label: 'Max' },
+]
+
+const BANGLADESH_LOGISTICS_PROFILES = [
+  {
+    district: 'Dhaka',
+    area: 'Dhanmondi',
+    division: 'Dhaka',
+    postalCode: '1209',
+    preferredShippingMethod: 'Dhaka Metro (Next Day)',
+    slaLabel: 'Next day',
+    codEligible: true,
+  },
+  {
+    district: 'Chattogram',
+    area: 'GEC Circle',
+    division: 'Chattogram',
+    postalCode: '4000',
+    preferredShippingMethod: 'Nationwide Express (1-2 days)',
+    slaLabel: '1-2 business days',
+    codEligible: true,
+  },
+  {
+    district: 'Sylhet',
+    area: 'Zindabazar',
+    division: 'Sylhet',
+    postalCode: '3100',
+    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    slaLabel: '3-5 business days',
+    codEligible: true,
+  },
+  {
+    district: 'Khulna',
+    area: 'Sonadanga',
+    division: 'Khulna',
+    postalCode: '9100',
+    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    slaLabel: '3-5 business days',
+    codEligible: false,
+  },
+  {
+    district: 'Rajshahi',
+    area: 'Shaheb Bazar',
+    division: 'Rajshahi',
+    postalCode: '6000',
+    preferredShippingMethod: 'Nationwide Express (1-2 days)',
+    slaLabel: '1-2 business days',
+    codEligible: true,
+  },
+  {
+    district: 'Barishal',
+    area: 'Nathullabad',
+    division: 'Barishal',
+    postalCode: '8200',
+    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    slaLabel: '3-5 business days',
+    codEligible: false,
+  },
+  {
+    district: 'Rangpur',
+    area: 'Jahaj Company More',
+    division: 'Rangpur',
+    postalCode: '5400',
+    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    slaLabel: '3-5 business days',
+    codEligible: true,
+  },
+]
+
+function cleanName(v = '') {
+  return String(v)
+    .replace(/\bDemo\b/gi, '')
+    .replace(/^\s*[-:]+\s*/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+function cleanSlug(v = '') {
+  return String(v).replace(/^demo-/, '').replace(/-demo$/g, '')
+}
 
 function credsForStack(stackKey) {
   const e =
@@ -208,6 +452,15 @@ function lexicalParagraph(text) {
   }
 }
 
+function buildProductDescription(product, context = '') {
+  const raw =
+    product.fullDescription ||
+    `${product.shortDescription || product.name}. ${
+      context || 'Designed for realistic storefront demo browsing and checkout tests.'
+    }`
+  return lexicalParagraph(raw)
+}
+
 async function findBySlug(base, token, collection, slug) {
   const { status, json } = await request(
     base,
@@ -216,6 +469,227 @@ async function findBySlug(base, token, collection, slug) {
   )
   if (status !== 200 || !json?.docs?.length) return null
   return json.docs[0]
+}
+
+async function findUserByEmail(base, token, email) {
+  const { status, json } = await request(
+    base,
+    `/api/users?where[email][equals]=${encodeURIComponent(email)}&limit=1`,
+    { token },
+  )
+  if (status !== 200 || !json?.docs?.length) return null
+  return json.docs[0]
+}
+
+async function ensureCustomerUser(base, token, userSeed) {
+  const existing = await findUserByEmail(base, token, userSeed.email)
+  if (existing) {
+    const patch = await request(base, `/api/users/${existing.id}`, {
+      method: 'PATCH',
+      token,
+      body: {
+        firstName: userSeed.firstName,
+        lastName: userSeed.lastName,
+        locale: userSeed.locale || 'en',
+        role: 'customer',
+        status: 'active',
+        emailVerified: true,
+      },
+    })
+    if ([200, 201].includes(patch.status)) return patch.json?.doc ?? patch.json
+    return existing
+  }
+  const cr = await request(base, '/api/users', {
+    method: 'POST',
+    token,
+    body: {
+      email: userSeed.email,
+      password: userSeed.password,
+      role: 'customer',
+      status: 'active',
+      emailVerified: true,
+      firstName: userSeed.firstName,
+      lastName: userSeed.lastName,
+      locale: userSeed.locale || 'en',
+    },
+  })
+  if ([200, 201].includes(cr.status)) return cr.json?.doc ?? cr.json
+  const retry = await findUserByEmail(base, token, userSeed.email)
+  return retry
+}
+
+async function loginCustomer(base, email, password) {
+  const { status, json } = await request(base, '/api/users/login', {
+    method: 'POST',
+    body: { email, password },
+  })
+  if (status === 200 && json?.token) return json.token
+  return null
+}
+
+async function ensureAddress(base, token, userId, seedAddress) {
+  const { status, json } = await request(
+    base,
+    `/api/addresses?where[user][equals]=${encodeURIComponent(userId)}&where[label][equals]=${encodeURIComponent(seedAddress.label)}&limit=1`,
+    { token },
+  )
+  const body = { ...seedAddress, user: userId }
+  if (status === 200 && json?.docs?.[0]?.id) {
+    const patch = await request(base, `/api/addresses/${json.docs[0].id}`, {
+      method: 'PATCH',
+      token,
+      body,
+    })
+    return patch.json?.doc ?? patch.json ?? json.docs[0]
+  }
+  const cr = await request(base, '/api/addresses', { method: 'POST', token, body })
+  return cr.json?.doc ?? cr.json ?? null
+}
+
+async function ensureCoupon(base, token, coupon) {
+  const { status, json } = await request(
+    base,
+    `/api/coupons?where[code][equals]=${encodeURIComponent(coupon.code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]?.id) {
+    const patch = await request(base, `/api/coupons/${json.docs[0].id}`, {
+      method: 'PATCH',
+      token,
+      body: coupon,
+    })
+    return patch.json?.doc ?? patch.json ?? json.docs[0]
+  }
+  const cr = await request(base, '/api/coupons', { method: 'POST', token, body: coupon })
+  return cr.json?.doc ?? cr.json ?? null
+}
+
+async function ensureGlobal(base, token, slug, body) {
+  const res = await request(base, `/api/globals/${slug}`, { method: 'POST', token, body })
+  if ([200, 201].includes(res.status)) return res.json
+  const patch = await request(base, `/api/globals/${slug}`, { method: 'PATCH', token, body })
+  return patch.json
+}
+
+async function createOrderAndItem(base, token, { userId, product, address, stackKey, isMultivendor }) {
+  if (!userId || !product?.id) return null
+  const now = new Date()
+  const logistics = BANGLADESH_LOGISTICS_PROFILES[Math.floor(Math.random() * BANGLADESH_LOGISTICS_PROFILES.length)]
+  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase()
+  const orderNumber = `ORD-${now.toISOString().slice(0, 10).replace(/-/g, '')}-${stackKey}-${suffix}`
+  const unitPrice = Number(product.basePrice || 0)
+  const qty = 1
+  const total = unitPrice * qty
+  const addressSnapshot = {
+    firstName: address.firstName,
+    lastName: address.lastName,
+    street1: address.street1,
+    street2: address.street2 || undefined,
+    city: address.city,
+    state: address.state || undefined,
+    postalCode: address.postalCode || undefined,
+    country: address.country,
+    phone: address.phone || undefined,
+  }
+  const orderRes = await request(base, '/api/orders', {
+    method: 'POST',
+    token,
+    body: {
+      orderNumber,
+      customer: userId,
+      status: 'delivered',
+      shippingAddress: addressSnapshot,
+      billingAddress: addressSnapshot,
+      subtotal: total,
+      shippingTotal: 0,
+      taxTotal: 0,
+      discountTotal: 0,
+      grandTotal: total,
+      currency: 'USD',
+      paymentStatus: 'paid',
+      placedAt: now.toISOString(),
+      notes: `Seeded order for account history and review eligibility. District=${logistics.district}; Area=${logistics.area}; SLA=${logistics.slaLabel}; PaymentMode=${logistics.codEligible ? 'cod' : 'prepaid'}.`,
+    },
+  })
+  const orderDoc = orderRes.json?.doc ?? orderRes.json
+  if (!orderDoc?.id) return null
+
+  let subOrderId = null
+  if (isMultivendor) {
+    const tenantRaw = product?.tenant
+    const tenantId = tenantRaw && typeof tenantRaw === 'object' ? tenantRaw.id : tenantRaw
+    if (tenantId) {
+      const subOrderRes = await request(base, '/api/sub-orders', {
+        method: 'POST',
+        token,
+        body: {
+          parentOrder: orderDoc.id,
+          tenant: tenantId,
+          subOrderNumber: `${orderNumber}-A`,
+          status: 'delivered',
+          subtotal: total,
+          shippingTotal: 0,
+          taxTotal: 0,
+          commissionAmount: 0,
+          commissionRate: 0,
+          vendorEarnings: total,
+          shippingMethod: logistics.preferredShippingMethod,
+          trackingNumber: `BD-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+          trackingUrl: 'https://www.pathao.com/track/',
+          shippedAt: new Date(now.getTime() - 1000 * 60 * 60 * 12).toISOString(),
+          deliveredAt: new Date(now.getTime() - 1000 * 60 * 30).toISOString(),
+        },
+      })
+      const subOrderDoc = subOrderRes.json?.doc ?? subOrderRes.json
+      subOrderId = subOrderDoc?.id || null
+    }
+  }
+
+  const itemPayload = {
+    order: orderDoc.id,
+    product: product.id,
+    productName: product.name,
+    sku: product.sku || `SKU-${product.slug?.toUpperCase?.() || 'DEMO'}`,
+    quantity: qty,
+    unitPrice,
+    totalPrice: total,
+  }
+  if (subOrderId) {
+    itemPayload.subOrder = subOrderId
+    itemPayload.tenant = product?.tenant?.id || product?.tenant
+  }
+  const itemRes = await request(base, '/api/order-items', { method: 'POST', token, body: itemPayload })
+  const itemDoc = itemRes.json?.doc ?? itemRes.json
+  if (itemDoc?.id) {
+    await request(base, `/api/orders/${orderDoc.id}`, {
+      method: 'PATCH',
+      token,
+      body: { items: [itemDoc.id] },
+    })
+    if (subOrderId) {
+      await request(base, `/api/sub-orders/${subOrderId}`, {
+        method: 'PATCH',
+        token,
+        body: { items: [itemDoc.id] },
+      })
+    }
+  }
+  return { order: orderDoc, item: itemDoc }
+}
+
+async function ensureProductReview(base, customerToken, { productId, title, comment, rating = 5 }) {
+  const existing = await request(
+    base,
+    `/api/product-reviews?where[product][equals]=${encodeURIComponent(productId)}&limit=1`,
+    { token: customerToken },
+  )
+  if (existing.status === 200 && existing.json?.docs?.length) return existing.json.docs[0]
+  const cr = await request(base, '/api/product-reviews', {
+    method: 'POST',
+    token: customerToken,
+    body: { product: productId, rating, title, comment, status: 'approved' },
+  })
+  return cr.json?.doc ?? cr.json ?? null
 }
 
 async function findVendorProfileByTenant(base, token, tenantId) {
@@ -279,23 +753,24 @@ async function findShippingZoneByName(base, token, name) {
 }
 
 async function ensureShippingZone(base, token, zone) {
-  const existing = await findShippingZoneByName(base, token, zone.name)
+  const normalizedZoneName = cleanName(zone.name)
+  const existing = await findShippingZoneByName(base, token, normalizedZoneName)
   if (existing) {
-    console.log('Shipping zone exists:', zone.name)
+    console.log('Shipping zone exists:', normalizedZoneName)
     return existing
   }
   const body = {
-    name: zone.name,
+    name: normalizedZoneName,
     countries: normalizeZoneCountries(zone.countries),
     isActive: zone.isActive !== false,
   }
   const res = await request(base, '/api/shipping-zones', { method: 'POST', token, body })
   if ([200, 201].includes(res.status)) {
     const doc = res.json?.doc ?? res.json
-    console.log('Created shipping zone', zone.name)
+    console.log('Created shipping zone', normalizedZoneName)
     return doc
   }
-  console.warn('Shipping zone create:', zone.name, res.status, JSON.stringify(res.json).slice(0, 280))
+  console.warn('Shipping zone create:', normalizedZoneName, res.status, JSON.stringify(res.json).slice(0, 280))
   return null
 }
 
@@ -317,13 +792,14 @@ async function findShippingMethodByNameAndZone(base, token, name, zoneId) {
 }
 
 async function ensureShippingMethod(base, token, method, zoneId) {
-  const existing = await findShippingMethodByNameAndZone(base, token, method.name, zoneId)
+  const normalizedMethodName = cleanName(method.name)
+  const existing = await findShippingMethodByNameAndZone(base, token, normalizedMethodName, zoneId)
   if (existing) {
-    console.log('Shipping method exists:', method.name)
+    console.log('Shipping method exists:', normalizedMethodName)
     return existing
   }
   const body = {
-    name: method.name,
+    name: normalizedMethodName,
     zone: zoneId,
     type: method.type || 'flat',
     rate: method.rate,
@@ -335,12 +811,12 @@ async function ensureShippingMethod(base, token, method, zoneId) {
   const res = await request(base, '/api/shipping-methods', { method: 'POST', token, body })
   if ([200, 201].includes(res.status)) {
     const doc = res.json?.doc ?? res.json
-    console.log('Created shipping method', method.name)
+    console.log('Created shipping method', normalizedMethodName)
     return doc
   }
   console.warn(
     'Shipping method create:',
-    method.name,
+    normalizedMethodName,
     res.status,
     JSON.stringify(res.json).slice(0, 280),
   )
@@ -363,6 +839,290 @@ async function seedDemoShipping(base, token) {
     }
     await ensureShippingMethod(base, token, m, zoneDoc.id)
   }
+}
+
+async function cleanupShippingDuplicates(base, token) {
+  const cfg = getDemoShippingConfig()
+  const canonicalZoneNames = new Set(cfg.zones.map((z) => cleanName(z.name)))
+  const canonicalMethodNames = new Set(cfg.methods.map((m) => cleanName(m.name)))
+
+  const zones = await request(base, '/api/shipping-zones?limit=200', { token })
+  const methods = await request(base, '/api/shipping-methods?limit=500&depth=1', { token })
+  const zoneDocs = zones.json?.docs || []
+  const methodDocs = methods.json?.docs || []
+
+  // Remove methods not in canonical set.
+  for (const m of methodDocs) {
+    const name = cleanName(m.name || '')
+    if (!canonicalMethodNames.has(name) && m.id) {
+      await request(base, `/api/shipping-methods/${m.id}`, { method: 'DELETE', token })
+    }
+  }
+
+  // Keep only first zone per canonical name; delete legacy zone names.
+  const seen = new Set()
+  for (const z of zoneDocs) {
+    const name = cleanName(z.name || '')
+    const shouldKeep = canonicalZoneNames.has(name) && !seen.has(name)
+    if (shouldKeep) {
+      seen.add(name)
+      continue
+    }
+    if (z.id) {
+      await request(base, `/api/shipping-zones/${z.id}`, { method: 'DELETE', token })
+    }
+  }
+}
+
+function toTenantId(ref) {
+  if (!ref) return null
+  if (typeof ref === 'object') return ref.id ?? null
+  return ref
+}
+
+async function cleanupLegacyWarehouseData(base, token) {
+  const locRes = await request(base, '/api/stock-locations?limit=500&depth=1', { token })
+  const lvlRes = await request(base, '/api/stock-levels?limit=2000&depth=0', { token })
+  const locations = locRes.json?.docs || []
+  const levels = lvlRes.json?.docs || []
+
+  const canonicalByTenant = new Map()
+  for (const loc of locations) {
+    const tenantId = toTenantId(loc.tenant) || 'single'
+    const code = String(loc.code || '')
+    if (code.startsWith('WH-DEMO-') || code.startsWith('WH-BD-')) {
+      if (!canonicalByTenant.has(tenantId)) canonicalByTenant.set(tenantId, loc)
+    }
+  }
+
+  for (const loc of locations) {
+    const code = String(loc.code || '')
+    const name = String(loc.name || '')
+    const isLegacy = /^WH-[a-f0-9]{8}$/i.test(code) || name.startsWith('Demo Warehouse ')
+    if (!isLegacy) continue
+
+    const tenantId = toTenantId(loc.tenant) || 'single'
+    const canonical = canonicalByTenant.get(tenantId)
+    if (!canonical?.id || canonical.id === loc.id) continue
+
+    for (const lvl of levels.filter((x) => String(toTenantId(x.location)) === String(loc.id))) {
+      await request(base, `/api/stock-levels/${lvl.id}`, {
+        method: 'PATCH',
+        token,
+        body: { location: canonical.id },
+      })
+    }
+
+    await request(base, `/api/stock-locations/${loc.id}`, { method: 'DELETE', token })
+  }
+}
+
+async function findByName(base, token, collection, name) {
+  const { status, json } = await request(
+    base,
+    `/api/${collection}?where[name][equals]=${encodeURIComponent(name)}&limit=1`,
+    { token },
+  )
+  if (status !== 200 || !json?.docs?.length) return null
+  return json.docs[0]
+}
+
+async function ensureRecordByName(base, token, collection, name, body) {
+  const existing = await findByName(base, token, collection, name)
+  if (existing?.id) {
+    const patch = await request(base, `/api/${collection}/${existing.id}`, {
+      method: 'PATCH',
+      token,
+      body,
+    })
+    return patch.json?.doc ?? patch.json ?? existing
+  }
+  const cr = await request(base, `/api/${collection}`, { method: 'POST', token, body: { name, ...body } })
+  return cr.json?.doc ?? cr.json ?? null
+}
+
+async function seedCommissionAndVendorSettings(base, token) {
+  if (!envBool('MULTIVENDOR_ENABLED', false)) return
+
+  const categoriesRes = await request(base, '/api/categories?limit=200', { token })
+  const categories = categoriesRes.json?.docs || []
+  const electronics = categories.find((c) => String(c.slug) === 'electronics')
+  const home = categories.find((c) => String(c.slug) === 'home-living')
+
+  await ensureRecordByName(base, token, 'commission-rules', 'Global Percentage Commission', {
+    type: 'percentage',
+    rate: Number(process.env.DEFAULT_COMMISSION_RATE || 8),
+    priority: 10,
+    isActive: true,
+  })
+  await ensureRecordByName(base, token, 'commission-rules', 'Electronics Margin Rule', {
+    type: 'category-based',
+    categoryRate: 9,
+    categories: electronics?.id ? [electronics.id] : undefined,
+    priority: 20,
+    isActive: true,
+  })
+  await ensureRecordByName(base, token, 'commission-rules', 'Home Goods Margin Rule', {
+    type: 'category-based',
+    categoryRate: 7,
+    categories: home?.id ? [home.id] : undefined,
+    priority: 15,
+    isActive: true,
+  })
+  await ensureRecordByName(base, token, 'commission-rules', 'High Value Tiered Rule', {
+    type: 'tiered',
+    tiers: [
+      { minAmount: 0, maxAmount: 100, rate: 10 },
+      { minAmount: 100, maxAmount: 300, rate: 8.5 },
+      { minAmount: 300, rate: 7 },
+    ],
+    priority: 12,
+    isActive: true,
+  })
+
+  const tenantRes = await request(base, '/api/tenants?limit=200', { token })
+  const tenants = tenantRes.json?.docs || []
+  for (const t of tenants) {
+    const tenantId = t.id
+    const slug = String(t.slug || '')
+    const existing = await request(
+      base,
+      `/api/vendor-settings?where[tenant][equals]=${encodeURIComponent(tenantId)}&limit=1`,
+      { token },
+    )
+    const body = {
+      tenant: tenantId,
+      commissionRate: slug.includes('tech') ? 9 : 7.5,
+      commissionType: 'percentage',
+      payoutMethod: 'bank-transfer',
+      bankDetails: {
+        bankName: 'Dutch-Bangla Bank PLC',
+        accountNumber: `01${String(tenantId).replace(/-/g, '').slice(0, 10)}`,
+        routingNumber: '090260201',
+        iban: '',
+      },
+      shippingModel: 'platform',
+      autoPublishProducts: true,
+      maxProducts: 0,
+      isActive: true,
+      suspensionReason: '',
+    }
+    if (existing.json?.docs?.[0]?.id) {
+      await request(base, `/api/vendor-settings/${existing.json.docs[0].id}`, {
+        method: 'PATCH',
+        token,
+        body,
+      })
+    } else {
+      await request(base, '/api/vendor-settings', { method: 'POST', token, body })
+    }
+  }
+}
+
+async function cleanupStaleMultivendorRecords(base, token) {
+  if (!envBool('MULTIVENDOR_ENABLED', false)) return
+
+  const expectedTenantSlugs = new Set(manifest.multivendor.vendors.map((v) => cleanSlug(v.tenantSlug)))
+  const expectedProductSlugs = new Set()
+  for (const v of manifest.multivendor.vendors) {
+    for (const p of v.products || []) {
+      const s = cleanSlug(p.slug)
+      expectedProductSlugs.add(s)
+      for (const series of BULK_SERIES) expectedProductSlugs.add(`${s}-${series.key}`)
+    }
+  }
+
+  const tenantsRes = await request(base, '/api/tenants?limit=500', { token })
+  const tenants = tenantsRes.json?.docs || []
+  const staleTenantIds = tenants
+    .filter((t) => !expectedTenantSlugs.has(String(t.slug || '')))
+    .map((t) => String(t.id))
+  if (!staleTenantIds.length) return
+
+  const vendorSettingsRes = await request(base, '/api/vendor-settings?limit=500', { token })
+  for (const row of vendorSettingsRes.json?.docs || []) {
+    const tid = String(toTenantId(row.tenant) || '')
+    if (tid && staleTenantIds.includes(tid)) {
+      await request(base, `/api/vendor-settings/${row.id}`, { method: 'DELETE', token })
+    }
+  }
+
+  const vendorProfilesRes = await request(base, '/api/vendor-profiles?limit=500', { token })
+  for (const row of vendorProfilesRes.json?.docs || []) {
+    const tid = String(toTenantId(row.tenant) || '')
+    if (tid && staleTenantIds.includes(tid)) {
+      await request(base, `/api/vendor-profiles/${row.id}`, { method: 'DELETE', token })
+    }
+  }
+
+  const productsRes = await request(base, '/api/products?limit=2000&depth=0', { token })
+  for (const row of productsRes.json?.docs || []) {
+    const tid = String(toTenantId(row.tenant) || '')
+    const slug = String(row.slug || '')
+    if (tid && staleTenantIds.includes(tid)) {
+      await request(base, `/api/products/${row.id}`, { method: 'DELETE', token })
+      continue
+    }
+    // Keep MV catalog coherent with current manifest expansion.
+    if (tid && !expectedProductSlugs.has(slug)) {
+      await request(base, `/api/products/${row.id}`, { method: 'DELETE', token })
+    }
+  }
+
+  const locationsRes = await request(base, '/api/stock-locations?limit=500&depth=0', { token })
+  for (const row of locationsRes.json?.docs || []) {
+    const tid = String(toTenantId(row.tenant) || '')
+    if (tid && staleTenantIds.includes(tid)) {
+      await request(base, `/api/stock-locations/${row.id}`, { method: 'DELETE', token })
+    }
+  }
+
+  const rulesRes = await request(base, '/api/commission-rules?limit=500&depth=0', { token })
+  for (const row of rulesRes.json?.docs || []) {
+    const tid = String(toTenantId(row.tenant) || '')
+    if (tid && staleTenantIds.includes(tid)) {
+      await request(base, `/api/commission-rules/${row.id}`, { method: 'DELETE', token })
+    }
+  }
+
+  for (const tenantId of staleTenantIds) {
+    await request(base, `/api/tenants/${tenantId}`, { method: 'DELETE', token })
+  }
+}
+
+async function consolidateLegacyTenantAliases(base, token) {
+  if (!envBool('MULTIVENDOR_ENABLED', false)) return
+  const tenantsRes = await request(base, '/api/tenants?limit=500', { token })
+  const tenants = tenantsRes.json?.docs || []
+  const canonical = tenants.find((t) => String(t.slug) === 'vendor-co')
+  const legacy = tenants.find((t) => String(t.slug) === 'demo-vendor-co')
+  if (!canonical?.id || !legacy?.id) return
+
+  const migrateByTenant = async (collection, field = 'tenant') => {
+    const rows = await request(
+      base,
+      `/api/${collection}?where[${field}][equals]=${encodeURIComponent(legacy.id)}&limit=2000`,
+      { token },
+    )
+    for (const doc of rows.json?.docs || []) {
+      await request(base, `/api/${collection}/${doc.id}`, {
+        method: 'PATCH',
+        token,
+        body: { [field]: canonical.id },
+      })
+    }
+  }
+
+  await migrateByTenant('products')
+  await migrateByTenant('stock-locations')
+  await migrateByTenant('vendor-profiles')
+  await migrateByTenant('vendor-settings')
+  await migrateByTenant('vendor-reviews')
+  await migrateByTenant('sub-orders')
+  await migrateByTenant('order-items')
+  await migrateByTenant('commission-rules')
+
+  await request(base, `/api/tenants/${legacy.id}`, { method: 'DELETE', token })
 }
 
 async function ensureCategory(base, token, { name, slug, imageId = null }) {
@@ -530,7 +1290,28 @@ async function ensureProduct(base, token, productBody) {
   const slug = productBody.slug
   const existing = await findBySlug(base, token, 'products', slug)
   if (existing) {
-    console.log('Product exists:', slug)
+    const patchBody = {
+      name: productBody.name,
+      basePrice: productBody.basePrice,
+      currency: productBody.currency,
+      status: productBody.status,
+      shortDescription: productBody.shortDescription,
+      description: productBody.description,
+      featured: productBody.featured,
+      ...(productBody.tenant ? { tenant: productBody.tenant } : {}),
+      ...(productBody.categories ? { categories: productBody.categories } : {}),
+      ...(productBody.images ? { images: productBody.images } : {}),
+    }
+    const patch = await request(base, `/api/products/${existing.id}`, {
+      method: 'PATCH',
+      token,
+      body: patchBody,
+    })
+    if ([200, 201].includes(patch.status)) {
+      console.log('Updated product', slug)
+      return patch.json?.doc ?? patch.json
+    }
+    console.warn('Product patch', slug, patch.status, JSON.stringify(patch.json).slice(0, 280))
     return existing
   }
   const pr = await request(base, '/api/products', {
@@ -545,6 +1326,99 @@ async function ensureProduct(base, token, productBody) {
   }
   console.warn('Product create', slug, pr.status, JSON.stringify(pr.json).slice(0, 320))
   return null
+}
+
+async function findVariantBySku(base, token, sku) {
+  const { status, json } = await request(
+    base,
+    `/api/product-variants?where[sku][equals]=${encodeURIComponent(sku)}&limit=1`,
+    { token },
+  )
+  if (status !== 200 || !json?.docs?.length) return null
+  return json.docs[0]
+}
+
+async function ensureVariant(base, token, variantBody) {
+  const existing = await findVariantBySku(base, token, variantBody.sku)
+  if (existing?.id) {
+    const patch = await request(base, `/api/product-variants/${existing.id}`, {
+      method: 'PATCH',
+      token,
+      body: variantBody,
+    })
+    return patch.json?.doc ?? patch.json ?? existing
+  }
+  const cr = await request(base, '/api/product-variants', { method: 'POST', token, body: variantBody })
+  return cr.json?.doc ?? cr.json ?? null
+}
+
+async function seedVariantsForProduct(base, token, productDoc, imageId, isMultivendor) {
+  if (!productDoc?.id || !productDoc?.slug) return
+  const basePrice = Number(productDoc.basePrice || 0)
+  const tenantId = typeof productDoc.tenant === 'object' ? productDoc.tenant?.id : productDoc.tenant
+  const rows = [
+    {
+      sku: `${String(productDoc.slug).toUpperCase()}-STD-BLK`,
+      name: `${cleanName(productDoc.name)} - Standard / Black`,
+      price: Math.max(1, Number((basePrice * 1).toFixed(2))),
+      compareAtPrice: Number((basePrice * 1.15).toFixed(2)),
+      options: [
+        { name: 'Edition', value: 'Standard' },
+        { name: 'Color', value: 'Black' },
+      ],
+    },
+    {
+      sku: `${String(productDoc.slug).toUpperCase()}-PRM-SLV`,
+      name: `${cleanName(productDoc.name)} - Premium / Silver`,
+      price: Math.max(1, Number((basePrice * 1.18).toFixed(2))),
+      compareAtPrice: Number((basePrice * 1.35).toFixed(2)),
+      options: [
+        { name: 'Edition', value: 'Premium' },
+        { name: 'Color', value: 'Silver' },
+      ],
+    },
+    {
+      sku: `${String(productDoc.slug).toUpperCase()}-ULT-GRN`,
+      name: `${cleanName(productDoc.name)} - Ultimate / Green`,
+      price: Math.max(1, Number((basePrice * 1.35).toFixed(2))),
+      compareAtPrice: Number((basePrice * 1.55).toFixed(2)),
+      options: [
+        { name: 'Edition', value: 'Ultimate' },
+        { name: 'Color', value: 'Green' },
+      ],
+    },
+  ]
+  for (const row of rows) {
+    const body = {
+      product: productDoc.id,
+      name: row.name,
+      sku: row.sku,
+      price: row.price,
+      compareAtPrice: row.compareAtPrice,
+      options: row.options,
+      isActive: true,
+      ...(imageId ? { image: imageId } : {}),
+      ...(isMultivendor && tenantId ? { tenant: tenantId } : {}),
+    }
+    await ensureVariant(base, token, body)
+  }
+}
+
+async function ensurePage(base, token, page) {
+  const existing = await findBySlug(base, token, 'pages', page.slug)
+  const body = {
+    title: page.title,
+    slug: page.slug,
+    status: 'published',
+    layout: page.layout,
+    meta: page.meta,
+  }
+  if (existing?.id) {
+    const patch = await request(base, `/api/pages/${existing.id}`, { method: 'PATCH', token, body })
+    return patch.json?.doc ?? patch.json ?? existing
+  }
+  const cr = await request(base, '/api/pages', { method: 'POST', token, body })
+  return cr.json?.doc ?? cr.json ?? null
 }
 
 function productRowHasImage(doc) {
@@ -619,22 +1493,25 @@ async function seedMultivendorStack(base, token) {
 
   const categoryBySlug = new Map()
   for (const c of manifest.categories) {
+    const categoryName = cleanName(c.name)
+    const categorySlug = cleanSlug(c.slug)
     const categoryImageUrl = c.imageKey ? IMG[c.imageKey] : null
     const categoryImageId = categoryImageUrl
-      ? await uploadRemoteImage(base, token, categoryImageUrl, `category-${c.slug}.jpg`, c.name)
+      ? await uploadRemoteImage(base, token, categoryImageUrl, `category-${categorySlug}.jpg`, categoryName)
       : null
     const doc = await ensureCategory(base, token, {
-      name: c.name,
-      slug: c.slug,
+      name: categoryName,
+      slug: categorySlug,
       imageId: categoryImageId,
     })
     if (doc) categoryBySlug.set(c.slug, doc)
+    if (doc) categoryBySlug.set(categorySlug, doc)
   }
 
   for (const v of manifest.multivendor.vendors) {
     const tenant = await ensureTenant(base, token, {
-      name: v.tenantName,
-      slug: v.tenantSlug,
+      name: cleanName(v.tenantName),
+      slug: cleanSlug(v.tenantSlug),
     })
     if (!tenant?.id) continue
 
@@ -655,12 +1532,14 @@ async function seedMultivendorStack(base, token) {
 
     await ensureVendorProfile(base, token, tenant, {
       ...v.profile,
-      descriptionLexical: lexicalParagraph(v.profile.descriptionText),
+      displayName: cleanName(v.profile.displayName),
+      descriptionText: cleanName(v.profile.descriptionText),
+      descriptionLexical: lexicalParagraph(cleanName(v.profile.descriptionText)),
       logoId,
       bannerId,
       meta: {
-        title: `${v.profile.displayName} on BS Commerce`,
-        description: v.profile.descriptionText.slice(0, 155),
+        title: `${cleanName(v.profile.displayName)} on BS Commerce`,
+        description: cleanName(v.profile.descriptionText).slice(0, 155),
       },
     })
 
@@ -668,12 +1547,13 @@ async function seedMultivendorStack(base, token) {
     if (process.env.INVENTORY_ENABLED === 'false') continue
 
     for (const p of v.products) {
+      const normalizedSlug = cleanSlug(p.slug)
       const imageUrl = IMG[p.imageKey]
       if (!imageUrl) {
         console.warn('Unknown imageKey on product', p.slug, p.imageKey)
       }
       const imageId = imageUrl
-        ? await uploadRemoteImage(base, token, imageUrl, `${v.tenantSlug}-${p.imageFile}`, p.name)
+        ? await uploadRemoteImage(base, token, imageUrl, `${cleanSlug(v.tenantSlug)}-${p.imageFile}`, cleanName(p.name))
         : null
       const categoryIds = []
       for (const slug of p.categorySlugs || []) {
@@ -682,22 +1562,73 @@ async function seedMultivendorStack(base, token) {
       }
 
       const productBody = {
-        name: p.name,
-        slug: p.slug,
+        name: cleanName(p.name),
+        slug: normalizedSlug,
         basePrice: p.basePrice,
         currency: 'USD',
         status: 'published',
         tenant: tenant.id,
-        shortDescription: p.shortDescription,
+        shortDescription: cleanName(p.shortDescription),
+        description: buildProductDescription(
+          { ...p, fullDescription: cleanName(p.fullDescription), shortDescription: cleanName(p.shortDescription) },
+          `Sold by ${cleanName(v.profile.displayName)} with fast shipping and verified quality support.`,
+        ),
         featured: Boolean(p.featured),
         ...(categoryIds.length ? { categories: categoryIds } : {}),
         ...(imageId ? { images: [{ image: imageId }] } : {}),
       }
 
       const doc = await ensureProduct(base, token, productBody)
-      await ensureProductPrimaryImage(base, token, doc, imageId, p.slug)
+      await ensureProductPrimaryImage(base, token, doc, imageId, normalizedSlug)
       if (doc?.id && location?.id) {
         await ensureStockLevel(base, token, doc.id, location.id)
+        await seedVariantsForProduct(base, token, doc, imageId, true)
+      }
+    }
+
+    for (const p of v.products) {
+      const imageUrl = IMG[p.imageKey]
+      if (!imageUrl) continue
+      for (const series of BULK_SERIES) {
+        const bulkSlug = `${cleanSlug(p.slug)}-${series.key}`
+        const bulkName = `${cleanName(p.name)} ${series.label}`
+        const imageId = await uploadRemoteImage(
+          base,
+          token,
+          imageUrl,
+          `${cleanSlug(v.tenantSlug)}-${bulkSlug}.jpg`,
+          bulkName,
+        )
+        const categoryIds = []
+        for (const slug of p.categorySlugs || []) {
+          const cat = categoryBySlug.get(slug)
+          if (cat?.id) categoryIds.push(cat.id)
+        }
+        const created = await ensureProduct(base, token, {
+          name: bulkName,
+          slug: bulkSlug,
+          basePrice: Number((Number(p.basePrice || 0) * (series.key === 'plus' ? 1.12 : series.key === 'max' ? 1.3 : 1.05)).toFixed(2)),
+          currency: 'USD',
+          status: 'published',
+          tenant: tenant.id,
+          shortDescription: `${cleanName(p.shortDescription)} ${series.label} edition with expanded features.`,
+          description: buildProductDescription(
+            {
+              ...p,
+              fullDescription: `${bulkName} is tailored for power users, offering refined build quality and upgraded daily performance.`,
+              shortDescription: `${cleanName(p.shortDescription)} ${series.label} edition.`,
+            },
+            'Designed for high-conversion listing layouts with rich comparison depth.',
+          ),
+          featured: series.key !== 'pro',
+          ...(categoryIds.length ? { categories: categoryIds } : {}),
+          ...(imageId ? { images: [{ image: imageId }] } : {}),
+        })
+        await ensureProductPrimaryImage(base, token, created, imageId, bulkSlug)
+        if (created?.id && location?.id) {
+          await ensureStockLevel(base, token, created.id, location.id)
+          await seedVariantsForProduct(base, token, created, imageId, true)
+        }
       }
     }
   }
@@ -710,16 +1641,19 @@ async function seedSingleVendorStack(base, token) {
 
   const categoryBySlug = new Map()
   for (const c of manifest.categories) {
+    const categoryName = cleanName(c.name)
+    const categorySlug = cleanSlug(c.slug)
     const categoryImageUrl = c.imageKey ? IMG[c.imageKey] : null
     const categoryImageId = categoryImageUrl
-      ? await uploadRemoteImage(base, token, categoryImageUrl, `category-${c.slug}.jpg`, c.name)
+      ? await uploadRemoteImage(base, token, categoryImageUrl, `category-${categorySlug}.jpg`, categoryName)
       : null
     const doc = await ensureCategory(base, token, {
-      name: c.name,
-      slug: c.slug,
+      name: categoryName,
+      slug: categorySlug,
       imageId: categoryImageId,
     })
     if (doc) categoryBySlug.set(c.slug, doc)
+    if (doc) categoryBySlug.set(categorySlug, doc)
   }
 
   const location = await getOrCreateStockLocation(base, token, null, null, false)
@@ -733,26 +1667,222 @@ async function seedSingleVendorStack(base, token) {
     }
     const imageUrl = IMG[p.imageKey]
     const imageId = imageUrl
-      ? await uploadRemoteImage(base, token, imageUrl, filenamePrefix, p.name)
+      ? await uploadRemoteImage(base, token, imageUrl, filenamePrefix, cleanName(p.name))
       : null
+    const normalizedSlug = cleanSlug(p.slug)
     const created = await ensureProduct(base, token, {
-      name: p.name,
-      slug: p.slug,
+      name: cleanName(p.name),
+      slug: normalizedSlug,
       basePrice: p.basePrice,
       currency: 'USD',
       status: 'published',
-      shortDescription: p.shortDescription,
+      shortDescription: cleanName(p.shortDescription),
+      description: buildProductDescription(
+        { ...p, fullDescription: cleanName(p.fullDescription), shortDescription: cleanName(p.shortDescription) },
+        'Part of a rich single-vendor catalog designed for realistic browsing and checkout experience.',
+      ),
       featured: Boolean(p.featured),
       ...(categoryIds.length ? { categories: categoryIds } : {}),
       ...(imageId ? { images: [{ image: imageId }] } : {}),
     })
-    await ensureProductPrimaryImage(base, token, created, imageId, p.slug)
-    if (created?.id && location?.id) await ensureStockLevel(base, token, created.id, location.id)
+    await ensureProductPrimaryImage(base, token, created, imageId, normalizedSlug)
+    if (created?.id && location?.id) {
+      await ensureStockLevel(base, token, created.id, location.id)
+      await seedVariantsForProduct(base, token, created, imageId, false)
+    }
   }
 
   await seedSvProduct(sv.coreProduct, sv.coreProduct.imageFile)
   for (const p of sv.extraProducts) {
     await seedSvProduct(p, `sv-${p.imageFile}`)
+    const imageUrl = IMG[p.imageKey]
+    if (!imageUrl) continue
+    for (const series of BULK_SERIES) {
+      await seedSvProduct(
+        {
+          ...p,
+          name: `${cleanName(p.name)} ${series.label}`,
+          slug: `${cleanSlug(p.slug)}-${series.key}`,
+          basePrice: Number((Number(p.basePrice || 0) * (series.key === 'plus' ? 1.1 : series.key === 'max' ? 1.25 : 1.04)).toFixed(2)),
+          shortDescription: `${cleanName(p.shortDescription)} ${series.label} edition.`,
+          fullDescription: `${cleanName(p.name)} ${series.label} delivers upgraded materials, expanded compatibility, and higher-value packaging for daily shoppers.`,
+          featured: series.key === 'max',
+        },
+        `sv-${cleanSlug(p.slug)}-${series.key}.jpg`,
+      )
+    }
+  }
+  await seedPhase2(base, token, false)
+}
+
+async function seedPhase2(base, token, isMultivendor) {
+  console.log('\n--- Phase 2: globals, personas, addresses, coupons, orders, reviews ---')
+
+  await ensureGlobal(base, token, 'header', {
+    siteName: 'BS Commerce',
+    navLinks: [
+      { label: 'Home', url: '/en' },
+      { label: 'Products', url: '/en/products' },
+      { label: 'Categories', url: '/en/categories' },
+      ...(isMultivendor ? [{ label: 'Vendors', url: '/en/vendors' }] : []),
+    ],
+    announcementBar: {
+      enabled: true,
+      message: isMultivendor
+        ? 'Marketplace picks this week: free shipping over $80 on selected stores.'
+        : 'Free shipping over $60 this week and new arrivals every day.',
+      backgroundColor: '#0F172A',
+      textColor: '#FFFFFF',
+    },
+  })
+
+  await ensureGlobal(base, token, 'footer', {
+    copyrightText: '© 2026 BS Commerce. All rights reserved.',
+    columns: [
+      {
+        heading: 'Shop',
+        links: [
+          { label: 'All products', url: '/en/products' },
+          { label: 'Categories', url: '/en/categories' },
+        ],
+      },
+      {
+        heading: 'Account',
+        links: [
+          { label: 'Login', url: '/en/auth/login' },
+          { label: 'Register', url: '/en/auth/register' },
+        ],
+      },
+    ],
+    socialLinks: [
+      { platform: 'facebook', url: 'https://facebook.com/bscommerce' },
+      { platform: 'instagram', url: 'https://instagram.com/bscommerce' },
+      { platform: 'linkedin', url: 'https://linkedin.com/company/bscommerce' },
+    ],
+    bottomLinks: [
+      { label: 'Privacy', url: '/en/privacy' },
+      { label: 'Terms', url: '/en/terms' },
+    ],
+  })
+
+  for (const c of PHASE2.coupons) {
+    await ensureCoupon(base, token, c)
+  }
+
+  await ensurePage(base, token, {
+    slug: 'about',
+    title: 'About BS Commerce',
+    layout: [
+      {
+        blockType: 'hero',
+        heading: 'A modern commerce experience built around trust and speed',
+        subheading:
+          'From curated essentials to high-volume marketplace offers, BS Commerce helps shoppers discover quality products with transparent pricing.',
+        ctaLabel: 'Start shopping',
+        ctaUrl: '/en/products',
+      },
+      {
+        blockType: 'richText',
+        content: lexicalParagraph(
+          'BS Commerce combines fast fulfillment, verified reviews, and responsive support to create a premium shopping experience across categories.',
+        ),
+      },
+    ],
+    meta: { title: 'About BS Commerce', description: 'Learn how BS Commerce serves shoppers and vendors.' },
+  })
+
+  await ensurePage(base, token, {
+    slug: 'shipping-policy',
+    title: 'Shipping Policy',
+    layout: [
+      {
+        blockType: 'richText',
+        content: lexicalParagraph(
+          'Orders are processed daily. Standard shipping targets 3-7 business days and express shipping targets 1-3 business days for eligible regions.',
+        ),
+      },
+    ],
+    meta: { title: 'Shipping Policy', description: 'Delivery windows, shipping options, and dispatch details.' },
+  })
+
+  const productQuery = await request(base, '/api/products?where[status][equals]=published&sort=-featured&limit=24&depth=1', {
+    token,
+  })
+  const products = productQuery.json?.docs || []
+  if (!products.length) return
+
+  for (let i = 0; i < PHASE2.users.length; i++) {
+    const u = PHASE2.users[i]
+    const logistics = BANGLADESH_LOGISTICS_PROFILES[i % BANGLADESH_LOGISTICS_PROFILES.length]
+    const userDoc = await ensureCustomerUser(base, token, u)
+    if (!userDoc?.id) continue
+    const addressSeed = PHASE2.addresses[Math.min(i, PHASE2.addresses.length - 1)]
+    const addressDoc = await ensureAddress(base, token, userDoc.id, {
+      ...addressSeed,
+      city: logistics.district,
+      state: logistics.division,
+      postalCode: logistics.postalCode,
+      street2: `${logistics.area}, ${logistics.district}`,
+    })
+    if (!addressDoc) continue
+
+    const targetProduct = products[i % products.length]
+    const createdOrder = await createOrderAndItem(base, token, {
+      userId: userDoc.id,
+      product: targetProduct,
+      address: addressSeed,
+      stackKey: isMultivendor ? 'MV' : 'SV',
+      isMultivendor,
+    })
+    if (createdOrder?.order?.id) {
+      const existingTx = await request(
+        base,
+        `/api/transactions?where[order][equals]=${encodeURIComponent(createdOrder.order.id)}&limit=1`,
+        { token },
+      )
+      if (!existingTx?.json?.docs?.length) {
+        await request(base, '/api/transactions', {
+          method: 'POST',
+          token,
+          body: {
+            order: createdOrder.order.id,
+            type: 'charge',
+            provider: logistics.codEligible ? 'cash-on-delivery' : 'sslcommerz',
+            providerTransactionId: `TX-${createdOrder.order.orderNumber}`,
+            amount: Number(createdOrder.order.grandTotal || 0),
+            currency: 'USD',
+            status: 'succeeded',
+            metadata: { source: 'seed' },
+          },
+        })
+      }
+    }
+
+    const customerToken = await loginCustomer(base, u.email, u.password)
+    if (customerToken) {
+      await ensureProductReview(base, customerToken, {
+        productId: targetProduct.id,
+        rating: 4 + (i % 2),
+        title: i === 0 ? 'Great quality for daily use' : 'Solid value and quick setup',
+        comment:
+          i === 0
+            ? 'Using this item daily for a week now. Build quality feels good and delivery was smooth.'
+            : 'Easy to configure and matches product description. Happy with the purchase experience.',
+      })
+      if (isMultivendor && targetProduct?.tenant) {
+        await request(base, '/api/vendor-reviews', {
+          method: 'POST',
+          token: customerToken,
+          body: {
+            tenant: typeof targetProduct.tenant === 'object' ? targetProduct.tenant.id : targetProduct.tenant,
+            rating: 4 + (i % 2),
+            title: 'Reliable seller and smooth delivery',
+            comment: 'Order updates were accurate and the product matched expectations.',
+            status: 'approved',
+          },
+        })
+      }
+    }
   }
 }
 
@@ -761,10 +1891,16 @@ async function seedStack(label, cfg, multivendor) {
   const token = await ensureAdminToken(cfg.base, cfg.key)
   console.log('Admin session OK')
 
+  await cleanupShippingDuplicates(cfg.base, token)
+  await cleanupLegacyWarehouseData(cfg.base, token)
   await seedDemoShipping(cfg.base, token)
 
   if (multivendor) {
+    await consolidateLegacyTenantAliases(cfg.base, token)
+    await cleanupStaleMultivendorRecords(cfg.base, token)
     await seedMultivendorStack(cfg.base, token)
+    await seedCommissionAndVendorSettings(cfg.base, token)
+    await seedPhase2(cfg.base, token, true)
   } else {
     await seedSingleVendorStack(cfg.base, token)
   }
