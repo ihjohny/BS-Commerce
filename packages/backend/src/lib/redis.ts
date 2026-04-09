@@ -17,5 +17,7 @@ export const cachedCollections = {
   categories: true,
   pages: true,
   media: true,
-  products: true,
+  // Keep products uncached for now: paginated reads are query-sensitive
+  // and must always honor page/sort/filter params.
+  products: false,
 } as const

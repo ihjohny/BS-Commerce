@@ -1,43 +1,70 @@
 {
   "name": "client-demo-showcase",
-  "version": 2,
-  "description": "Canonical catalog copy, Unsplash image URLs, and vendor layout for BS Commerce client demos. Edit this file to change demo content; seed scripts load it automatically.",
-  "imageAttribution": "Product and hero images use Unsplash (https://unsplash.com/license) for demonstration only.",
+  "version": 5,
+  "description": "Canonical catalog copy, stable placeholder image URLs, and vendor layout for BS Commerce client demos. Edit this file to change demo content; seed scripts load it automatically.",
+  "imageAttribution": "Demo images are downloaded from Lorem Picsum (https://picsum.photos) during seeding and stored in your Payload media library. Picsum serves photos from Unsplash’s collection; see https://unsplash.com/license for Unsplash’s terms. Suitable for local/staging demos only—not a claim of public-domain status for every underlying photo.",
   "imageLibrary": {
-    "earbuds": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80",
-    "speaker": "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=1200&q=80",
-    "hub": "https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=1200&q=80",
-    "keyboard": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
-    "webcam": "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?auto=format&fit=crop&w=1200&q=80",
-    "vase": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80",
-    "linen": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=1200&q=80",
-    "deskLamp": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1200&q=80",
-    "bannerTech": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80",
-    "bannerHome": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1600&q=80",
-    "bannerOffice": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1600&q=80",
-    "logoAbstract": "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&w=400&q=80",
-    "logoLeaf": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=400&q=80",
-    "logoGrid": "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=400&q=80",
-    "phone": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
-    "watch": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80",
-    "laptop": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=80",
-    "headphonesOverEar": "https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=80",
-    "cableUsb": "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1200&q=80",
-    "powerBank": "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=1200&q=80",
-    "candle": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
-    "pillows": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=80",
-    "wallFrame": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1200&q=80",
-    "plantIndoor": "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=1200&q=80",
-    "mouse": "https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=1200&q=80",
-    "monitor": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=1200&q=80",
-    "deskMat": "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1200&q=80",
-    "tablet": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=1200&q=80"
+    "earbuds": "https://picsum.photos/seed/bscommerce-earbuds/1200/900",
+    "speaker": "https://picsum.photos/seed/bscommerce-speaker/1200/900",
+    "hub": "https://picsum.photos/seed/bscommerce-hub/1200/900",
+    "keyboard": "https://picsum.photos/seed/bscommerce-keyboard/1200/900",
+    "webcam": "https://picsum.photos/seed/bscommerce-webcam/1200/900",
+    "vase": "https://picsum.photos/seed/bscommerce-vase/1200/900",
+    "linen": "https://picsum.photos/seed/bscommerce-linen/1200/900",
+    "deskLamp": "https://picsum.photos/seed/bscommerce-desk-lamp/1200/900",
+    "bannerTech": "https://picsum.photos/seed/bscommerce-banner-tech/1600/480",
+    "bannerHome": "https://picsum.photos/seed/bscommerce-banner-home/1600/480",
+    "bannerOffice": "https://picsum.photos/seed/bscommerce-banner-office/1600/480",
+    "logoAbstract": "https://picsum.photos/seed/bscommerce-logo-abstract/400/400",
+    "logoLeaf": "https://picsum.photos/seed/bscommerce-logo-leaf/400/400",
+    "logoGrid": "https://picsum.photos/seed/bscommerce-logo-grid/400/400",
+    "phone": "https://picsum.photos/seed/bscommerce-phone/1200/900",
+    "watch": "https://picsum.photos/seed/bscommerce-watch/1200/900",
+    "laptop": "https://picsum.photos/seed/bscommerce-laptop/1200/900",
+    "headphonesOverEar": "https://picsum.photos/seed/bscommerce-headphones-over-ear/1200/900",
+    "cableUsb": "https://picsum.photos/seed/bscommerce-cable-usb/1200/900",
+    "powerBank": "https://picsum.photos/seed/bscommerce-power-bank/1200/900",
+    "candle": "https://picsum.photos/seed/bscommerce-candle/1200/900",
+    "pillows": "https://picsum.photos/seed/bscommerce-pillows/1200/900",
+    "wallFrame": "https://picsum.photos/seed/bscommerce-wall-frame/1200/900",
+    "plantIndoor": "https://picsum.photos/seed/bscommerce-plant-indoor/1200/900",
+    "mouse": "https://picsum.photos/seed/bscommerce-mouse/1200/900",
+    "monitor": "https://picsum.photos/seed/bscommerce-monitor/1200/900",
+    "deskMat": "https://picsum.photos/seed/bscommerce-desk-mat/1200/900",
+    "tablet": "https://picsum.photos/seed/bscommerce-tablet/1200/900"
   },
   "categories": [
-    { "name": "Demo Electronics", "slug": "demo-electronics" },
-    { "name": "Demo Home & Living", "slug": "demo-home-living" },
-    { "name": "Demo Office Gear", "slug": "demo-office-gear" }
+    { "name": "Demo Electronics", "slug": "demo-electronics", "imageKey": "bannerTech" },
+    { "name": "Demo Home & Living", "slug": "demo-home-living", "imageKey": "bannerHome" },
+    { "name": "Demo Office Gear", "slug": "demo-office-gear", "imageKey": "bannerOffice" }
   ],
+  "shipping": {
+    "zones": [
+      {
+        "name": "Demo - worldwide",
+        "countries": [],
+        "isActive": true
+      }
+    ],
+    "methods": [
+      {
+        "name": "Standard (5-7 business days)",
+        "zoneName": "Demo - worldwide",
+        "type": "flat",
+        "rate": 5.99,
+        "currency": "USD",
+        "isActive": true
+      },
+      {
+        "name": "Express (2-3 business days)",
+        "zoneName": "Demo - worldwide",
+        "type": "flat",
+        "rate": 14.99,
+        "currency": "USD",
+        "isActive": true
+      }
+    ]
+  },
   "multivendor": {
     "vendors": [
       {

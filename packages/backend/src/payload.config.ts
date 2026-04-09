@@ -44,6 +44,7 @@ import { openapiAllEndpoint } from './endpoints/openapi-all'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const redisPluginEnabled = process.env.REDIS_CACHE_ENABLED === 'true'
 
 export default buildConfig({
   // ─── Admin Panel ─────────────────────────────────────────────────────────────
@@ -164,11 +165,15 @@ export default buildConfig({
       docsUrl: '/docs-custom',
     }),
 
-    // Decision #16: Redis required for query caching + rate limiting
-    redisCache({
-      redis: redisConfig,
-      collections: cachedCollections,
-    }),
+    // Redis cache can be disabled in local dev to avoid stale paginated reads.
+    ...(redisPluginEnabled
+      ? [
+          redisCache({
+            redis: redisConfig,
+            collections: cachedCollections,
+          }),
+        ]
+      : []),
 
     // Phase 4: Multivendor Foundation (must run before ecommerce for tenant field on Users)
     multivendorPlugin({

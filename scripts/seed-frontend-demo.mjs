@@ -2,8 +2,10 @@
  * Idempotent demo seed for local frontend testing: categories, products, stock,
  * and (multivendor) tenants, vendor profiles, and sample media from remote URLs.
  *
- * Product and banner images are downloaded from Unsplash CDN URLs (Unsplash License)
+ * Product and banner images are downloaded from manifest URLs (see imageAttribution)
  * and uploaded to the local `media` collection so storefronts use same-origin assets.
+ *
+ * Creates demo shipping zones and shipping methods (checkout) from manifest.shipping.
  *
  * Requires an admin JWT. When the database already has users, Payload blocks
  * `first-register` — use an admin account (see docs in this repo).
@@ -40,6 +42,41 @@ function loadManifest() {
 }
 
 const manifest = loadManifest()
+
+const DEFAULT_DEMO_SHIPPING = {
+  zones: [{ name: 'Demo - worldwide', countries: [], isActive: true }],
+  methods: [
+    {
+      name: 'Standard (5-7 business days)',
+      zoneName: 'Demo - worldwide',
+      type: 'flat',
+      rate: 5.99,
+      currency: 'USD',
+      isActive: true,
+    },
+    {
+      name: 'Express (2-3 business days)',
+      zoneName: 'Demo - worldwide',
+      type: 'flat',
+      rate: 14.99,
+      currency: 'USD',
+      isActive: true,
+    },
+  ],
+}
+
+function getDemoShippingConfig() {
+  const d = manifest.shipping
+  if (d && Array.isArray(d.zones) && d.zones.length && Array.isArray(d.methods) && d.methods.length) {
+    return d
+  }
+  return DEFAULT_DEMO_SHIPPING
+}
+
+function normalizeZoneCountries(countries) {
+  if (!countries || !Array.isArray(countries) || countries.length === 0) return []
+  return countries.map((c) => (typeof c === 'string' ? { code: c } : c))
+}
 
 const SV = { base: 'http://localhost:3000', key: 'SV' }
 const MV = { base: 'http://localhost:3010', key: 'MV' }
@@ -231,16 +268,135 @@ async function uploadRemoteImage(base, token, url, filename, alt) {
   }
 }
 
-async function ensureCategory(base, token, { name, slug }) {
+async function findShippingZoneByName(base, token, name) {
+  const { status, json } = await request(
+    base,
+    `/api/shipping-zones?where[name][equals]=${encodeURIComponent(name)}&limit=1`,
+    { token },
+  )
+  if (status !== 200 || !json?.docs?.length) return null
+  return json.docs[0]
+}
+
+async function ensureShippingZone(base, token, zone) {
+  const existing = await findShippingZoneByName(base, token, zone.name)
+  if (existing) {
+    console.log('Shipping zone exists:', zone.name)
+    return existing
+  }
+  const body = {
+    name: zone.name,
+    countries: normalizeZoneCountries(zone.countries),
+    isActive: zone.isActive !== false,
+  }
+  const res = await request(base, '/api/shipping-zones', { method: 'POST', token, body })
+  if ([200, 201].includes(res.status)) {
+    const doc = res.json?.doc ?? res.json
+    console.log('Created shipping zone', zone.name)
+    return doc
+  }
+  console.warn('Shipping zone create:', zone.name, res.status, JSON.stringify(res.json).slice(0, 280))
+  return null
+}
+
+async function findShippingMethodByNameAndZone(base, token, name, zoneId) {
+  const { status, json } = await request(
+    base,
+    `/api/shipping-methods?where[name][equals]=${encodeURIComponent(name)}&limit=20`,
+    { token },
+  )
+  if (status !== 200 || !json?.docs?.length) return null
+  const z = String(zoneId)
+  return (
+    json.docs.find((d) => {
+      const ref = d.zone
+      const id = typeof ref === 'object' && ref?.id != null ? ref.id : ref
+      return id != null && String(id) === z
+    }) ?? null
+  )
+}
+
+async function ensureShippingMethod(base, token, method, zoneId) {
+  const existing = await findShippingMethodByNameAndZone(base, token, method.name, zoneId)
+  if (existing) {
+    console.log('Shipping method exists:', method.name)
+    return existing
+  }
+  const body = {
+    name: method.name,
+    zone: zoneId,
+    type: method.type || 'flat',
+    rate: method.rate,
+    currency: method.currency || 'USD',
+    isActive: method.isActive !== false,
+    ...(method.minOrderValue != null ? { minOrderValue: method.minOrderValue } : {}),
+    ...(method.maxOrderValue != null ? { maxOrderValue: method.maxOrderValue } : {}),
+  }
+  const res = await request(base, '/api/shipping-methods', { method: 'POST', token, body })
+  if ([200, 201].includes(res.status)) {
+    const doc = res.json?.doc ?? res.json
+    console.log('Created shipping method', method.name)
+    return doc
+  }
+  console.warn(
+    'Shipping method create:',
+    method.name,
+    res.status,
+    JSON.stringify(res.json).slice(0, 280),
+  )
+  return null
+}
+
+async function seedDemoShipping(base, token) {
+  const cfg = getDemoShippingConfig()
+  console.log('\n--- Shipping zones & methods ---')
+  const zoneByName = new Map()
+  for (const z of cfg.zones) {
+    const doc = await ensureShippingZone(base, token, z)
+    if (doc) zoneByName.set(z.name, doc)
+  }
+  for (const m of cfg.methods) {
+    const zoneDoc = zoneByName.get(m.zoneName)
+    if (!zoneDoc?.id) {
+      console.warn('Shipping method skipped (missing zone):', m.name, m.zoneName)
+      continue
+    }
+    await ensureShippingMethod(base, token, m, zoneDoc.id)
+  }
+}
+
+async function ensureCategory(base, token, { name, slug, imageId = null }) {
   const existing = await findBySlug(base, token, 'categories', slug)
   if (existing) {
+    if (imageId) {
+      const hasImage =
+        existing.image &&
+        ((typeof existing.image === 'object' && existing.image.id != null) ||
+          (typeof existing.image === 'string' && existing.image.length > 0))
+      if (!hasImage || process.env.SEED_REFRESH_CATEGORY_IMAGES === 'true') {
+        const patch = await request(base, `/api/categories/${existing.id}`, {
+          method: 'PATCH',
+          token,
+          body: { image: imageId },
+        })
+        if ([200, 201].includes(patch.status)) {
+          console.log('Updated category image:', slug)
+          return patch.json?.doc ?? patch.json
+        }
+        console.warn('Category image PATCH:', slug, patch.status, JSON.stringify(patch.json).slice(0, 220))
+      }
+    }
     console.log('Category exists:', slug)
     return existing
   }
   const cr = await request(base, '/api/categories', {
     method: 'POST',
     token,
-    body: { name, slug },
+    body: {
+      name,
+      slug,
+      ...(imageId ? { image: imageId } : {}),
+    },
   })
   if ([200, 201].includes(cr.status)) {
     const doc = cr.json?.doc ?? cr.json
@@ -391,6 +547,37 @@ async function ensureProduct(base, token, productBody) {
   return null
 }
 
+function productRowHasImage(doc) {
+  if (!doc?.images || !Array.isArray(doc.images) || doc.images.length === 0) return false
+  return doc.images.some((row) => {
+    const ref = row?.image
+    if (ref == null) return false
+    if (typeof ref === 'object') return ref.id != null
+    return String(ref).length > 0
+  })
+}
+
+async function ensureProductPrimaryImage(base, token, doc, imageId, slug) {
+  if (!doc?.id || !imageId) return
+  const refresh = process.env.SEED_REFRESH_PRODUCT_IMAGES === 'true'
+  if (productRowHasImage(doc) && !refresh) return
+  const patchRes = await request(base, `/api/products/${doc.id}`, {
+    method: 'PATCH',
+    token,
+    body: { images: [{ image: imageId }] },
+  })
+  if ([200, 201].includes(patchRes.status)) {
+    console.log(refresh ? 'Refreshed product image:' : 'Attached product image:', slug)
+  } else {
+    console.warn(
+      'Product image PATCH',
+      slug,
+      patchRes.status,
+      JSON.stringify(patchRes.json).slice(0, 200),
+    )
+  }
+}
+
 async function ensureStockLevel(base, token, productId, locationId) {
   if (!productId || !locationId) return
   const { status, json } = await request(
@@ -432,7 +619,15 @@ async function seedMultivendorStack(base, token) {
 
   const categoryBySlug = new Map()
   for (const c of manifest.categories) {
-    const doc = await ensureCategory(base, token, { name: c.name, slug: c.slug })
+    const categoryImageUrl = c.imageKey ? IMG[c.imageKey] : null
+    const categoryImageId = categoryImageUrl
+      ? await uploadRemoteImage(base, token, categoryImageUrl, `category-${c.slug}.jpg`, c.name)
+      : null
+    const doc = await ensureCategory(base, token, {
+      name: c.name,
+      slug: c.slug,
+      imageId: categoryImageId,
+    })
     if (doc) categoryBySlug.set(c.slug, doc)
   }
 
@@ -500,6 +695,7 @@ async function seedMultivendorStack(base, token) {
       }
 
       const doc = await ensureProduct(base, token, productBody)
+      await ensureProductPrimaryImage(base, token, doc, imageId, p.slug)
       if (doc?.id && location?.id) {
         await ensureStockLevel(base, token, doc.id, location.id)
       }
@@ -514,7 +710,15 @@ async function seedSingleVendorStack(base, token) {
 
   const categoryBySlug = new Map()
   for (const c of manifest.categories) {
-    const doc = await ensureCategory(base, token, { name: c.name, slug: c.slug })
+    const categoryImageUrl = c.imageKey ? IMG[c.imageKey] : null
+    const categoryImageId = categoryImageUrl
+      ? await uploadRemoteImage(base, token, categoryImageUrl, `category-${c.slug}.jpg`, c.name)
+      : null
+    const doc = await ensureCategory(base, token, {
+      name: c.name,
+      slug: c.slug,
+      imageId: categoryImageId,
+    })
     if (doc) categoryBySlug.set(c.slug, doc)
   }
 
@@ -542,6 +746,7 @@ async function seedSingleVendorStack(base, token) {
       ...(categoryIds.length ? { categories: categoryIds } : {}),
       ...(imageId ? { images: [{ image: imageId }] } : {}),
     })
+    await ensureProductPrimaryImage(base, token, created, imageId, p.slug)
     if (created?.id && location?.id) await ensureStockLevel(base, token, created.id, location.id)
   }
 
@@ -555,6 +760,8 @@ async function seedStack(label, cfg, multivendor) {
   console.log(`\n=== ${label} (${cfg.base}) ===`)
   const token = await ensureAdminToken(cfg.base, cfg.key)
   console.log('Admin session OK')
+
+  await seedDemoShipping(cfg.base, token)
 
   if (multivendor) {
     await seedMultivendorStack(cfg.base, token)
