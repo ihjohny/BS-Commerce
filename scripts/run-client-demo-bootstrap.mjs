@@ -1,6 +1,6 @@
 /**
  * One-shot client demo prep:
- *   1) Sync all user passwords (DEMO_UNIFIED_PASSWORD, default Asd@1234)
+ *   1) Sync all user passwords (DEMO_UNIFIED_PASSWORD — env or .env.demo-seed)
  *   2) Discover first admin email from the database
  *   3) Run frontend demo seed against MV (and SV if up) using that admin
  *
@@ -10,7 +10,7 @@
  *
  * Env:
  *   DATABASE_URI — optional if .env.multivendor path given or ../docker/.env.multivendor exists
- *   DEMO_UNIFIED_PASSWORD — password for every user (default Asd@1234)
+ *   DEMO_UNIFIED_PASSWORD — required unless set in .env.demo-seed (see .env.demo-seed.example)
  *   DEMO_ADMIN_EMAIL — skip discovery; use this email for seed login
  *   SEED_SKIP_REMOTE_IMAGES=true — faster seed without image downloads
  */
@@ -18,6 +18,10 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  mergeDemoSeedEnvFiles,
+  requireDemoUnifiedPassword,
+} from './lib/load-demo-unified-password.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
@@ -48,6 +52,8 @@ if (envFileArg && fs.existsSync(envFileArg)) {
   }
 }
 
+mergeDemoSeedEnvFiles(root)
+
 let databaseUri = process.env.DATABASE_URI
 if (databaseUri?.includes('host.docker.internal')) {
   databaseUri = databaseUri.replace('host.docker.internal', 'localhost')
@@ -59,7 +65,7 @@ if (!databaseUri) {
   process.exit(1)
 }
 
-const demoPassword = process.env.DEMO_UNIFIED_PASSWORD || 'Asd@1234'
+const demoPassword = requireDemoUnifiedPassword()
 
 console.log('\n=== Step 1: sync passwords for all users ===\n')
 const sync = spawnSync(process.execPath, [path.join(__dirname, 'sync-all-user-passwords.mjs')], {

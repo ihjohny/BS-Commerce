@@ -9,9 +9,25 @@ Single source of truth for **categories**, **multivendor vendors** (profiles + p
 - Each product lists `categorySlugs` that must match entries in `categories`.
 - `imageKey` must exist under `imageLibrary`.
 
+## Demo password (not in git)
+
+Scripts read **`DEMO_UNIFIED_PASSWORD`** from:
+
+1. Your shell environment (highest priority), or  
+2. **`.env.demo-seed`** / **`.env.demo-seed.local`** in the BS-Commerce repo root (gitignored).
+
+Copy the template once:
+
+```bash
+cp .env.demo-seed.example .env.demo-seed
+# edit .env.demo-seed and set DEMO_UNIFIED_PASSWORD=...
+```
+
+Do not commit `.env.demo-seed`. Loader paths are fixed in `scripts/lib/load-demo-unified-password.mjs` (repo root only).
+
 ## One-command client demo
 
-From the **BS-Commerce** repo root (Postgres reachable, MV API on 3010 recommended):
+From the **BS-Commerce** repo root (Postgres reachable, MV API on 3010 recommended), after `.env.demo-seed` exists **or** `DEMO_UNIFIED_PASSWORD` is exported:
 
 ```bash
 yarn demo:bootstrap
@@ -19,11 +35,11 @@ yarn demo:bootstrap
 
 This will:
 
-1. Set **every user’s password** to the same value (`DEMO_UNIFIED_PASSWORD`, default `Asd@1234`).
+1. Set **every user’s password** to `DEMO_UNIFIED_PASSWORD`.
 2. Pick the first admin email from the database (or set `DEMO_ADMIN_EMAIL`).
 3. Run `seed:frontend-demo` against single-vendor (3000) and multivendor (3010) APIs when they are up.
 
-Override the shared password:
+Override for a single run:
 
 ```bash
 DEMO_UNIFIED_PASSWORD='YourSecret' yarn demo:bootstrap

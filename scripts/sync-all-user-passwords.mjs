@@ -5,6 +5,7 @@
  * From BS-Commerce root:
  *   node scripts/sync-all-user-passwords.mjs
  *   DEMO_UNIFIED_PASSWORD='your-secret' node scripts/sync-all-user-passwords.mjs
+ *   — or put DEMO_UNIFIED_PASSWORD in .env.demo-seed (copy from .env.demo-seed.example)
  *
  * Optional first arg: path to a KEY=value env file (loads DATABASE_URI).
  * DATABASE_URI must point at the target Postgres (e.g. bs_commerce_mv).
@@ -13,6 +14,10 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
+import {
+  mergeDemoSeedEnvFiles,
+  requireDemoUnifiedPassword,
+} from './lib/load-demo-unified-password.mjs'
 
 function parseEnvFile(filePath) {
   const parsed = {}
@@ -52,6 +57,8 @@ if (envFileArg && fs.existsSync(envFileArg)) {
   }
 }
 
+mergeDemoSeedEnvFiles()
+
 let databaseUri = process.env.DATABASE_URI
 if (!databaseUri && fs.existsSync(path.resolve(process.cwd(), '../docker/.env.multivendor'))) {
   const mv = parseEnvFile(path.resolve(process.cwd(), '../docker/.env.multivendor'))
@@ -63,8 +70,7 @@ if (!databaseUri) {
   process.exit(1)
 }
 
-/** Default matches team client-demo convention; override with DEMO_UNIFIED_PASSWORD. */
-const password = process.env.DEMO_UNIFIED_PASSWORD || 'Asd@1234'
+const password = requireDemoUnifiedPassword()
 
 const idsRaw = psql(databaseUri, `SELECT id::text FROM users ORDER BY created_at ASC;`)
 const ids = idsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
@@ -87,4 +93,4 @@ for (const id of ids) {
   psqlExec(databaseUri, sql)
 }
 
-console.log('Done. All users now share the password from DEMO_UNIFIED_PASSWORD (see script header for default).')
+console.log('Done. All users now share DEMO_UNIFIED_PASSWORD (from env or .env.demo-seed).')

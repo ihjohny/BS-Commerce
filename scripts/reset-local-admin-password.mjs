@@ -9,7 +9,7 @@
  *
  * Optional env:
  *   RESET_ADMIN_EMAIL   — defaults to first admin with non-null email (from DB)
- *   RESET_ADMIN_PASSWORD — new password (else DEMO_UNIFIED_PASSWORD, else LocalDevSeed2026!)
+ *   RESET_ADMIN_PASSWORD — new password (else DEMO_UNIFIED_PASSWORD from env or .env.demo-seed)
  *
  * Optional first arg: path to .env file (KEY=value) to load DATABASE_URI
  */
@@ -17,6 +17,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
+import { mergeDemoSeedEnvFiles, getDemoUnifiedPasswordFromEnv } from './lib/load-demo-unified-password.mjs'
 
 function parseEnvFile(filePath) {
   const parsed = {}
@@ -56,6 +57,8 @@ if (envFileArg && fs.existsSync(envFileArg)) {
   }
 }
 
+mergeDemoSeedEnvFiles()
+
 let databaseUri = process.env.DATABASE_URI
 if (!databaseUri && fs.existsSync(path.resolve(process.cwd(), '../docker/.env.multivendor'))) {
   const mv = parseEnvFile(path.resolve(process.cwd(), '../docker/.env.multivendor'))
@@ -68,7 +71,14 @@ if (!databaseUri) {
 }
 
 const newPassword =
-  process.env.RESET_ADMIN_PASSWORD || process.env.DEMO_UNIFIED_PASSWORD || 'Asd@1234'
+  process.env.RESET_ADMIN_PASSWORD?.trim() || getDemoUnifiedPasswordFromEnv()
+if (!newPassword) {
+  console.error(
+    'Set RESET_ADMIN_PASSWORD, or DEMO_UNIFIED_PASSWORD (env or .env.demo-seed — see .env.demo-seed.example).',
+  )
+  process.exit(1)
+}
+
 let email = process.env.RESET_ADMIN_EMAIL?.trim()
 
 if (!email) {
