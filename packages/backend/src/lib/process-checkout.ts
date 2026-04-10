@@ -51,6 +51,8 @@ export interface ProcessCheckoutInput {
   simulatePayment?: boolean
   currency?: string
   idempotencyKey?: string
+  /** Explicit store override; falls back to cart.store if not provided. */
+  storeId?: string
 }
 
 export interface ProcessCheckoutResult {
@@ -165,6 +167,12 @@ export async function processCheckout(
     }
   }
 
+  // Resolve store (stock-location) for store-scoped allocation
+  const cartStore = (cart as { store?: { id: string } | string | null }).store
+  const storeLocationId = input.storeId
+    || (cartStore ? (typeof cartStore === 'object' ? cartStore?.id : cartStore) : null)
+    || null
+
   const items = cart.items as Array<{
     product: { id: string } | string
     variant?: { id: string; name?: string; sku?: string } | string
@@ -274,6 +282,7 @@ export async function processCheckout(
           variantId: d.variantId,
           quantity: d.quantity,
           tenantId: d.tenantId,
+          storeLocationId,
         },
         req,
       )
@@ -319,6 +328,7 @@ export async function processCheckout(
     if (userId) orderData.customer = userId
     if (guestEmail) orderData.guestEmail = guestEmail
     if (idempotencyKey) orderData.idempotencyKey = idempotencyKey
+    if (storeLocationId) orderData.store = storeLocationId
     if (splitByVendor) orderData.subOrders = []
 
     order = await payload.create({
@@ -362,10 +372,7 @@ export async function processCheckout(
         const vendorEarnings = Math.round((seg.subtotal - commissionAmount) * 100) / 100
 
         const subOrderNumber = `${orderNumber}-${String.fromCharCode(65 + i)}`
-        const subOrder = await payload.create({
-          collection: 'sub-orders',
-          overrideAccess: true,
-          data: {
+        const subOrderData: Record<string, unknown> = {
             parentOrder: orderId,
             parentOrderNumber: orderNumber,
             tenant: seg.tenantId,
@@ -378,7 +385,12 @@ export async function processCheckout(
             commissionAmount,
             commissionRate,
             vendorEarnings,
-          } as any,
+          }
+        if (storeLocationId) subOrderData.store = storeLocationId
+        const subOrder = await payload.create({
+          collection: 'sub-orders',
+          overrideAccess: true,
+          data: subOrderData as any,
           req: reqTx,
         })
         subOrderIds.push(subOrder.id as string)

@@ -3,16 +3,18 @@ import { isAdmin } from '../../../access/is-admin'
 import { slugField } from '../../../fields/slug'
 
 /**
- * Tenants = Vendors. Each vendor is a tenant.
- * Used for tenant-scoped data isolation (products, orders, media).
+ * Tenants — multi-purpose isolation entity.
+ * type = 'platform-store': an internal outlet/branch managed by the platform owner.
+ * type = 'vendor': an independent marketplace seller.
+ * Used for tenant-scoped data isolation (products, orders, media, stock).
  */
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'createdAt'],
+    defaultColumns: ['name', 'slug', 'type', 'createdAt'],
     group: 'Multivendor',
-    description: 'Vendors (tenants). Each vendor has a tenant record for data isolation.',
+    description: 'Platform stores and vendor tenants. Each tenant isolates products, orders, and inventory.',
   },
   access: {
     create: isAdmin,
@@ -33,6 +35,20 @@ export const Tenants: CollectionConfig = {
   fields: [
     { name: 'name', type: 'text', required: true },
     slugField('name'),
+    {
+      name: 'type',
+      type: 'select',
+      required: true,
+      defaultValue: 'vendor',
+      options: [
+        { label: 'Platform Store', value: 'platform-store' },
+        { label: 'Vendor', value: 'vendor' },
+      ],
+      admin: {
+        description:
+          'platform-store = internal outlet/branch. vendor = independent marketplace seller.',
+      },
+    },
   ],
   timestamps: true,
 }

@@ -124,6 +124,12 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       relationTo: 'transactions',
       admin: { description: 'Primary payment transaction.' },
     },
+    {
+      name: 'store',
+      type: 'relationship',
+      relationTo: 'stock-locations',
+      admin: { description: 'Store/outlet this order was placed from. Set at checkout from cart.store.' },
+    },
     { name: 'notes', type: 'textarea', admin: { description: 'Customer notes.' } },
     { name: 'placedAt', type: 'date', admin: { description: 'When order was placed.' } },
   ]

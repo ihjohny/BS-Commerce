@@ -240,6 +240,12 @@ export const SubOrders: CollectionConfig = {
       relationTo: 'users',
       admin: { description: 'Vendor user who processed shipment.' },
     },
+    {
+      name: 'store',
+      type: 'relationship',
+      relationTo: 'stock-locations',
+      admin: { description: 'Store/outlet fulfilling this sub-order. Set at checkout from cart.store.' },
+    },
   ],
   timestamps: true,
 }

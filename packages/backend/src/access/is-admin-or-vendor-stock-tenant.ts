@@ -18,12 +18,15 @@ function relationId(value: unknown): string | null {
 }
 
 /**
- * Read access for inventory rows scoped by stock-locations.tenant.
- * Admin: all. Vendor: locations (and derived stock-levels) where location.tenant equals user.tenant.
- * Platform warehouses (tenant null): admin only.
+ * Read access for stock-locations.
+ * Admin: all. Vendor: locations where location.tenant equals user.tenant.
+ * Guest/customer: only locations marked as public stores (isPublicStore=true).
+ * Platform warehouses (tenant null, not public): admin only.
  */
 export const stockLocationTenantRead: Access = ({ req }) => {
-  if (!req.user) return false
+  if (!req.user) {
+    return { isPublicStore: { equals: true } } as any
+  }
   if (req.user.role === 'admin') return true
   if (req.user.role === 'vendor' && req.user.tenant) {
     const tid = tenantIdFromUser(req.user)
@@ -33,6 +36,9 @@ export const stockLocationTenantRead: Access = ({ req }) => {
         equals: tid,
       },
     }
+  }
+  if (req.user.role === 'customer') {
+    return { isPublicStore: { equals: true } } as any
   }
   return false
 }
