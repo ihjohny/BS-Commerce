@@ -571,7 +571,27 @@ async function ensureGlobal(base, token, slug, body) {
   return patch.json
 }
 
-async function createOrderAndItem(base, token, { userId, product, address, stackKey, isMultivendor }) {
+/** Match checkout snapshot: single locale string from localized or plain name. */
+function displayProductName(product) {
+  const n = product?.name
+  if (typeof n === 'string') return n
+  if (n && typeof n === 'object') {
+    return n.en || n.bn || Object.values(n).find((v) => typeof v === 'string') || 'Product'
+  }
+  return 'Product'
+}
+
+function firstProductImageUrl(product) {
+  const img = product?.images?.[0]?.image
+  if (img && typeof img === 'object' && img.url) return img.url
+  return ''
+}
+
+async function createOrderAndItem(
+  base,
+  token,
+  { userId, product, address, stackKey, isMultivendor, buyer },
+) {
   if (!userId || !product?.id) return null
   const now = new Date()
   const logistics = BANGLADESH_LOGISTICS_PROFILES[Math.floor(Math.random() * BANGLADESH_LOGISTICS_PROFILES.length)]
@@ -580,6 +600,10 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
   const unitPrice = Number(product.basePrice || 0)
   const qty = 1
   const total = unitPrice * qty
+  const buyerName =
+    buyer && (buyer.firstName || buyer.lastName)
+      ? `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim()
+      : null
   const addressSnapshot = {
     firstName: address.firstName,
     lastName: address.lastName,
@@ -609,6 +633,12 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
       paymentStatus: 'paid',
       placedAt: now.toISOString(),
       notes: `Seeded order for account history and review eligibility. District=${logistics.district}; Area=${logistics.area}; SLA=${logistics.slaLabel}; PaymentMode=${logistics.codEligible ? 'cod' : 'prepaid'}.`,
+      buyerSnapshot: {
+        email: buyer?.email || null,
+        name: buyerName,
+        phone: address?.phone || null,
+        locale: buyer?.locale || 'en',
+      },
     },
   })
   const orderDoc = orderRes.json?.doc ?? orderRes.json
@@ -618,6 +648,8 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
   if (isMultivendor) {
     const tenantRaw = product?.tenant
     const tenantId = tenantRaw && typeof tenantRaw === 'object' ? tenantRaw.id : tenantRaw
+    const tenantNameSnapshot =
+      tenantRaw && typeof tenantRaw === 'object' && tenantRaw.name ? String(tenantRaw.name) : null
     if (tenantId) {
       const subOrderRes = await request(base, '/api/sub-orders', {
         method: 'POST',
@@ -625,6 +657,7 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
         body: {
           parentOrder: orderDoc.id,
           tenant: tenantId,
+          tenantNameSnapshot,
           subOrderNumber: `${orderNumber}-A`,
           status: 'delivered',
           subtotal: total,
@@ -648,15 +681,19 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
   const itemPayload = {
     order: orderDoc.id,
     product: product.id,
-    productName: product.name,
+    productName: displayProductName(product),
+    variantName: '',
     sku: product.sku || `SKU-${product.slug?.toUpperCase?.() || 'DEMO'}`,
     quantity: qty,
     unitPrice,
     totalPrice: total,
+    productImage: firstProductImageUrl(product),
   }
   if (subOrderId) {
     itemPayload.subOrder = subOrderId
     itemPayload.tenant = product?.tenant?.id || product?.tenant
+    const tn = product?.tenant && typeof product.tenant === 'object' && product.tenant.name
+    if (tn) itemPayload.vendorNameSnapshot = String(tn)
   }
   const itemRes = await request(base, '/api/order-items', { method: 'POST', token, body: itemPayload })
   const itemDoc = itemRes.json?.doc ?? itemRes.json
@@ -1249,6 +1286,92 @@ async function ensureVendorProfile(base, token, tenantDoc, profile) {
   return null
 }
 
+const DEMO_STORES = [
+  {
+    code: 'STORE-DHAKA-NORTH',
+    name: 'Dhaka North Outlet',
+    slug: 'dhaka-north',
+    isPublicStore: true,
+    isActive: true,
+    address: { street: '123 Gulshan Avenue', city: 'Dhaka', state: 'Dhaka Division', country: 'BD', postalCode: '1212' },
+    storeDetails: {
+      contactEmail: 'dhaka-north@bscommerce.demo',
+      contactPhone: '+880-2-1234-5678',
+      operatingHours: 'Sat-Thu 9am-9pm',
+      coverageArea: [{ value: 'Gulshan' }, { value: 'Banani' }, { value: 'Baridhara' }, { value: 'Uttara' }],
+    },
+  },
+  {
+    code: 'STORE-DHAKA-SOUTH',
+    name: 'Dhaka South Outlet',
+    slug: 'dhaka-south',
+    isPublicStore: true,
+    isActive: true,
+    address: { street: '45 Dhanmondi Road', city: 'Dhaka', state: 'Dhaka Division', country: 'BD', postalCode: '1205' },
+    storeDetails: {
+      contactEmail: 'dhaka-south@bscommerce.demo',
+      contactPhone: '+880-2-8765-4321',
+      operatingHours: 'Sat-Thu 10am-8pm',
+      coverageArea: [{ value: 'Dhanmondi' }, { value: 'Mirpur' }, { value: 'Mohammadpur' }, { value: 'Old Dhaka' }],
+    },
+  },
+  {
+    code: 'STORE-CHITTAGONG',
+    name: 'Chittagong Outlet',
+    slug: 'chittagong',
+    isPublicStore: true,
+    isActive: true,
+    address: { street: '78 CDA Avenue', city: 'Chittagong', state: 'Chittagong Division', country: 'BD', postalCode: '4000' },
+    storeDetails: {
+      contactEmail: 'ctg@bscommerce.demo',
+      contactPhone: '+880-31-654-321',
+      operatingHours: 'Sat-Thu 9am-8pm',
+      coverageArea: [{ value: 'Agrabad' }, { value: 'Nasirabad' }, { value: 'GEC Circle' }],
+    },
+  },
+]
+
+async function ensureDemoStoreLocation(base, token, storeDef, tenantId) {
+  const { status, json } = await request(
+    base,
+    `/api/stock-locations?where[code][equals]=${encodeURIComponent(storeDef.code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]) {
+    const existing = json.docs[0]
+    const patch = {
+      name: storeDef.name,
+      slug: storeDef.slug,
+      isPublicStore: storeDef.isPublicStore,
+      isActive: storeDef.isActive,
+      address: storeDef.address,
+      storeDetails: storeDef.storeDetails,
+    }
+    if (tenantId) patch.tenant = tenantId
+    await request(base, `/api/stock-locations/${existing.id}`, { method: 'PATCH', token, body: patch })
+    console.log('Updated store location', storeDef.code)
+    return existing
+  }
+  const body = { ...storeDef }
+  if (tenantId) body.tenant = tenantId
+  const lr = await request(base, '/api/stock-locations', { method: 'POST', token, body })
+  if ([200, 201].includes(lr.status)) {
+    console.log('Created store location', storeDef.code)
+    return lr.json?.doc ?? lr.json
+  }
+  console.warn('Store location create failed:', storeDef.code, lr.status)
+  return null
+}
+
+async function seedDemoStores(base, token, tenantId) {
+  const locations = []
+  for (const def of DEMO_STORES) {
+    const loc = await ensureDemoStoreLocation(base, token, def, tenantId)
+    if (loc) locations.push(loc)
+  }
+  return locations
+}
+
 async function getOrCreateStockLocation(base, token, tenantId, tenantSlug, multivendor) {
   if (!multivendor) {
     const code = 'WH-DEMO-SINGLE'
@@ -1508,12 +1631,21 @@ async function seedMultivendorStack(base, token) {
     if (doc) categoryBySlug.set(categorySlug, doc)
   }
 
+  let firstTenantIdForStores = null
+  let demoStoreLocations = []
+  let storeProductIndex = 0
+
   for (const v of manifest.multivendor.vendors) {
     const tenant = await ensureTenant(base, token, {
       name: cleanName(v.tenantName),
       slug: cleanSlug(v.tenantSlug),
     })
     if (!tenant?.id) continue
+
+    if (!firstTenantIdForStores) {
+      firstTenantIdForStores = tenant.id
+      demoStoreLocations = await seedDemoStores(base, token, tenant.id)
+    }
 
     const logoId = await uploadRemoteImage(
       base,
@@ -1544,6 +1676,7 @@ async function seedMultivendorStack(base, token) {
     })
 
     const location = await getOrCreateStockLocation(base, token, tenant.id, v.tenantSlug, true)
+    const isStoreOwner = tenant.id === firstTenantIdForStores
     if (process.env.INVENTORY_ENABLED === 'false') continue
 
     for (const p of v.products) {
@@ -1582,6 +1715,16 @@ async function seedMultivendorStack(base, token) {
       await ensureProductPrimaryImage(base, token, doc, imageId, normalizedSlug)
       if (doc?.id && location?.id) {
         await ensureStockLevel(base, token, doc.id, location.id)
+        if (isStoreOwner) {
+          for (let si = 0; si < demoStoreLocations.length; si++) {
+            const storeLoc = demoStoreLocations[si]
+            if (!storeLoc?.id) continue
+            const skip = (si === 1 && storeProductIndex % 3 === 0)
+              || (si === 2 && storeProductIndex % 4 === 0)
+            if (!skip) await ensureStockLevel(base, token, doc.id, storeLoc.id)
+          }
+          storeProductIndex++
+        }
         await seedVariantsForProduct(base, token, doc, imageId, true)
       }
     }
@@ -1627,6 +1770,16 @@ async function seedMultivendorStack(base, token) {
         await ensureProductPrimaryImage(base, token, created, imageId, bulkSlug)
         if (created?.id && location?.id) {
           await ensureStockLevel(base, token, created.id, location.id)
+          if (isStoreOwner) {
+            for (let si = 0; si < demoStoreLocations.length; si++) {
+              const storeLoc = demoStoreLocations[si]
+              if (!storeLoc?.id) continue
+              const skip = (si === 1 && storeProductIndex % 3 === 0)
+                || (si === 2 && storeProductIndex % 4 === 0)
+              if (!skip) await ensureStockLevel(base, token, created.id, storeLoc.id)
+            }
+            storeProductIndex++
+          }
           await seedVariantsForProduct(base, token, created, imageId, true)
         }
       }
@@ -1657,6 +1810,7 @@ async function seedSingleVendorStack(base, token) {
   }
 
   const location = await getOrCreateStockLocation(base, token, null, null, false)
+  const demoStoreLocations = await seedDemoStores(base, token, null)
   if (process.env.INVENTORY_ENABLED === 'false') return
 
   async function seedSvProduct(p, filenamePrefix) {
@@ -1688,6 +1842,9 @@ async function seedSingleVendorStack(base, token) {
     await ensureProductPrimaryImage(base, token, created, imageId, normalizedSlug)
     if (created?.id && location?.id) {
       await ensureStockLevel(base, token, created.id, location.id)
+      for (const storeLoc of demoStoreLocations) {
+        if (storeLoc?.id) await ensureStockLevel(base, token, created.id, storeLoc.id)
+      }
       await seedVariantsForProduct(base, token, created, imageId, false)
     }
   }
@@ -1833,6 +1990,7 @@ async function seedPhase2(base, token, isMultivendor) {
       address: addressSeed,
       stackKey: isMultivendor ? 'MV' : 'SV',
       isMultivendor,
+      buyer: u,
     })
     if (createdOrder?.order?.id) {
       const existingTx = await request(

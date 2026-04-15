@@ -54,7 +54,19 @@ export const authLoginEndpoint: Endpoint = {
         }
       }
 
-      return Response.json(result, { status: 200 })
+      const response = Response.json(result, { status: 200 })
+
+      // payload.login() does not set cookies on custom endpoint responses.
+      // Mirror Payload's built-in cookie: HttpOnly, SameSite=Lax, Path=/.
+      if (result.token && result.exp) {
+        const expires = new Date(result.exp * 1000).toUTCString()
+        response.headers.append(
+          'Set-Cookie',
+          `payload-token=${result.token}; Expires=${expires}; Path=/; HttpOnly=true; SameSite=Lax`,
+        )
+      }
+
+      return response
     } catch (err) {
       const status = (err as { status?: number })?.status ?? 401
       const message = err instanceof Error ? err.message : 'Authentication failed'

@@ -5,7 +5,7 @@ import { createOrderItemsConfig } from '../../../src/plugins/orders/collections/
 
 test('beforeChange uses NaN quantity when quantity is undefined but productName set', () => {
   const cfg = createOrderItemsConfig(false)
-  const hook = cfg.hooks?.beforeChange?.[2] as any
+  const hook = cfg.hooks?.beforeChange?.[3] as any
   const data = { productName: 'Widget', quantity: undefined } as any
   const out = hook({ data })
   assert.ok(String(out.itemLabel).includes('NaN'))
@@ -13,7 +13,7 @@ test('beforeChange uses NaN quantity when quantity is undefined but productName 
 
 test('beforeChange should set itemLabel from productName and quantity', () => {
   const cfg = createOrderItemsConfig(false)
-  const hook = cfg.hooks?.beforeChange?.[2] as any
+  const hook = cfg.hooks?.beforeChange?.[3] as any
   assert.ok(hook)
   const data = { productName: 'Widget', quantity: 3 } as any
   const out = hook({ data })
@@ -22,7 +22,7 @@ test('beforeChange should set itemLabel from productName and quantity', () => {
 
 test('beforeChange should not set itemLabel when productName is absent', () => {
   const cfg = createOrderItemsConfig(false)
-  const hook = cfg.hooks?.beforeChange?.[2] as any
+  const hook = cfg.hooks?.beforeChange?.[3] as any
   const data = { quantity: 2 } as any
   const out = hook({ data })
   assert.equal(out.itemLabel, undefined)
@@ -45,10 +45,12 @@ test('afterRead should not override existing itemLabel', () => {
   assert.equal(out.itemLabel, 'Custom label')
 })
 
-test('access read is admin-only when single-vendor', () => {
+test('access read: admin true, customer scoped to own orders, vendor denied when single-vendor', () => {
   const cfg = createOrderItemsConfig(false)
   const read = cfg.access?.read as any
   assert.equal(read({ req: { user: { role: 'admin' } } }), true)
+  const cust = read({ req: { user: { role: 'customer', id: 'u-1' } } })
+  assert.ok(cust?.order?.customer?.equals === 'u-1')
   assert.equal(read({ req: { user: { role: 'vendor' } } }), false)
 })
 
@@ -59,7 +61,14 @@ test('access read allows vendor owner filter when multivendor', () => {
   assert.ok(typeof r === 'object' && r.tenant?.equals === 't-1')
 })
 
-test('beforeChange[0]: vendor cannot change fields other than stockLevel', () => {
+test('access read: customer scoped to own orders when multivendor', () => {
+  const cfg = createOrderItemsConfig(true)
+  const read = cfg.access?.read as any
+  const cust = read({ req: { user: { role: 'customer', id: 'c-1' } } })
+  assert.ok(cust?.order?.customer?.equals === 'c-1')
+})
+
+test('beforeChange[0]: rejects snapshot field changes on update', () => {
   const cfg = createOrderItemsConfig(true)
   const hook = cfg.hooks?.beforeChange?.[0] as any
   assert.throws(
@@ -67,16 +76,16 @@ test('beforeChange[0]: vendor cannot change fields other than stockLevel', () =>
       hook({
         operation: 'update',
         data: { productName: 'Hacked' },
-        originalDoc: { id: 'oi-1' },
+        originalDoc: { id: 'oi-1', productName: 'Widget' },
         req: { user: { role: 'vendor' } },
       }),
-    /Vendors may only update fulfillment warehouse/,
+    /Order line snapshots cannot be changed/,
   )
 })
 
-test('beforeChange[0]: vendor may send stockLevel with updatedAt', () => {
+test('beforeChange[1]: vendor may send stockLevel with updatedAt', () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const hook = cfg.hooks?.beforeChange?.[1] as any
   const data = { stockLevel: 'sl-new', updatedAt: '2020-01-01T00:00:00.000Z' }
   const out = hook({
     operation: 'update',
@@ -87,9 +96,9 @@ test('beforeChange[0]: vendor may send stockLevel with updatedAt', () => {
   assert.equal(out, data)
 })
 
-test('beforeChange[0]: vendor may send only stockLevel', () => {
+test('beforeChange[1]: vendor may send only stockLevel', () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const hook = cfg.hooks?.beforeChange?.[1] as any
   const data = { stockLevel: 'sl-new' }
   const out = hook({
     operation: 'update',
@@ -100,9 +109,9 @@ test('beforeChange[0]: vendor may send only stockLevel', () => {
   assert.equal(out, data)
 })
 
-test('beforeChange[0]: vendor may send Payload-merged body (unchanged fields + stockLevel)', () => {
+test('beforeChange[1]: vendor may send Payload-merged body (unchanged fields + stockLevel)', () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const hook = cfg.hooks?.beforeChange?.[1] as any
   const data = {
     order: 'ord-1',
     product: 'prod-1',
@@ -131,9 +140,9 @@ test('beforeChange[0]: vendor may send Payload-merged body (unchanged fields + s
   assert.equal(out, data)
 })
 
-test('beforeChange[0]: vendor merged body treats relationship object id same as string id', () => {
+test('beforeChange[1]: vendor merged body treats relationship object id same as string id', () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const hook = cfg.hooks?.beforeChange?.[1] as any
   const data = {
     order: { id: 'ord-1' },
     product: 'prod-1',
@@ -162,9 +171,9 @@ test('beforeChange[0]: vendor merged body treats relationship object id same as 
   assert.equal(out, data)
 })
 
-test('beforeChange[0]: vendor merged body rejects different relationship id (non-null vs non-null)', () => {
+test('beforeChange[1]: vendor merged body rejects different relationship id (non-null vs non-null)', () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const hook = cfg.hooks?.beforeChange?.[1] as any
   assert.throws(
     () =>
       hook({
@@ -194,9 +203,9 @@ test('beforeChange[0]: vendor merged body rejects different relationship id (non
   )
 })
 
-test('beforeChange[0]: vendor merged body allows null vs absent optional field', () => {
+test('beforeChange[1]: vendor merged body allows null vs absent optional field', () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[0] as any
+  const hook = cfg.hooks?.beforeChange?.[1] as any
   const data = {
     order: 'ord-1',
     product: 'prod-1',
@@ -226,9 +235,9 @@ test('beforeChange[0]: vendor merged body allows null vs absent optional field',
   assert.equal(out, data)
 })
 
-test('beforeChange[1]: transfers reservation when stockLevel id changes', async () => {
+test('beforeChange[2]: transfers reservation when stockLevel id changes', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const updates: Array<{ id: string; data: { reservedQuantity: number } }> = []
   const payload = {
     findByID: async (args: { id: string }) =>
@@ -251,9 +260,9 @@ test('beforeChange[1]: transfers reservation when stockLevel id changes', async 
   assert.equal(updates.length, 2)
 })
 
-test('beforeChange[1]: returns early when not update operation', async () => {
+test('beforeChange[2]: returns early when not update operation', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const out = await hook({
     operation: 'create',
     data: { stockLevel: 'x' },
@@ -263,22 +272,22 @@ test('beforeChange[1]: returns early when not update operation', async () => {
   assert.equal(out?.stockLevel, 'x')
 })
 
-test('beforeChange[1]: returns when stockLevel omitted', async () => {
+test('beforeChange[2]: returns when stockLevel omitted', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const data = { productName: 'x' }
   const out = await hook({
     operation: 'update',
     data,
-    originalDoc: { stockLevel: 'a', quantity: 1 },
+    originalDoc: { stockLevel: 'a', quantity: 1, productName: 'x' },
     req: { payload: {} },
   })
   assert.equal(out, data)
 })
 
-test('beforeChange[1]: transfer uses quantity 1 when original quantity is zero', async () => {
+test('beforeChange[2]: transfer uses quantity 1 when original quantity is zero', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const updates: Array<{ quantity?: number }> = []
   const payload = {
     findByID: async (args: { id: string }) =>
@@ -299,9 +308,9 @@ test('beforeChange[1]: transfer uses quantity 1 when original quantity is zero',
   assert.equal(updates.length, 2)
 })
 
-test('beforeChange[1]: relationId stringifies object stockLevel without id field', async () => {
+test('beforeChange[2]: relationId stringifies object stockLevel without id field', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const updates: unknown[] = []
   const payload = {
     findByID: async (args: { id: string }) =>
@@ -322,9 +331,9 @@ test('beforeChange[1]: relationId stringifies object stockLevel without id field
   assert.equal(updates.length, 2)
 })
 
-test('beforeChange[1]: relationId accepts numeric stockLevel refs', async () => {
+test('beforeChange[2]: relationId accepts numeric stockLevel refs', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const updates: unknown[] = []
   const payload = {
     findByID: async (args: { id: string }) =>
@@ -345,9 +354,9 @@ test('beforeChange[1]: relationId accepts numeric stockLevel refs', async () => 
   assert.equal(updates.length, 2)
 })
 
-test('beforeChange[1]: uses relationId for object stockLevel refs', async () => {
+test('beforeChange[2]: uses relationId for object stockLevel refs', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   const updates: unknown[] = []
   const payload = {
     findByID: async (args: { id: string }) =>
@@ -368,9 +377,9 @@ test('beforeChange[1]: uses relationId for object stockLevel refs', async () => 
   assert.equal(updates.length, 2)
 })
 
-test('beforeChange[1]: no transfer when stockLevel unchanged', async () => {
+test('beforeChange[2]: no transfer when stockLevel unchanged', async () => {
   const cfg = createOrderItemsConfig(true)
-  const hook = cfg.hooks?.beforeChange?.[1] as any
+  const hook = cfg.hooks?.beforeChange?.[2] as any
   let updateCalls = 0
   const payload = {
     findByID: async () => ({ id: 'sl-1', reservedQuantity: 1, quantity: 10 }),

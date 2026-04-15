@@ -24,15 +24,22 @@ const subOrderStatusOptions = [
  */
 export const SubOrders: CollectionConfig = {
   slug: 'sub-orders',
-  admin: {
-    useAsTitle: 'subOrderNumber',
-    defaultColumns: ['subOrderNumber', 'parentOrderNumber', 'tenant', 'status', 'subtotal', 'vendorEarnings', 'commissionAmount'],
-    group: 'Orders',
-    description: 'Per-vendor order segments. Vendors fulfill their own sub-orders.',
-  },
+    admin: {
+      useAsTitle: 'subOrderNumber',
+      defaultColumns: ['subOrderNumber', 'parentOrderNumber', 'tenant', 'status', 'subtotal', 'vendorEarnings', 'commissionAmount'],
+      group: 'Orders',
+      description:
+        'Per-vendor order segments. Vendors fulfill their own sub-orders. Shipping method, tracking, dates, and store may be updated by admins or vendors during fulfillment; tenantNameSnapshot stays fixed.',
+    },
   hooks: {
     beforeChange: [
       ({ data, operation, originalDoc }) => {
+        if (operation === 'update' && originalDoc && data?.tenantNameSnapshot != null) {
+          const prev = (originalDoc as { tenantNameSnapshot?: string }).tenantNameSnapshot
+          if (prev != null && data.tenantNameSnapshot !== prev) {
+            throw new Error('tenantNameSnapshot is immutable after sub-order creation.')
+          }
+        }
         if (operation !== 'update' || data?.status == null) return data
         const from = (originalDoc as { status?: string } | undefined)?.status
         validateSubOrderStatusTransition(from, data.status as string)
@@ -151,6 +158,15 @@ export const SubOrders: CollectionConfig = {
     read: ({ req }) => {
       if (!req.user) return false
       if (req.user.role === 'admin') return true
+      if (req.user.role === 'customer') {
+        return {
+          parentOrder: {
+            customer: {
+              equals: req.user.id,
+            },
+          },
+        } as any
+      }
       if (req.user.role === 'vendor' && req.user.tenant) {
         const tenantId = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
         return { tenant: { equals: tenantId } }
@@ -185,6 +201,14 @@ export const SubOrders: CollectionConfig = {
       relationTo: 'tenants',
       required: true,
       admin: { description: 'Vendor fulfilling this segment.' },
+    },
+    {
+      name: 'tenantNameSnapshot',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        description: 'Vendor display name at checkout. Immutable after create.',
+      },
     },
     {
       name: 'subOrderNumber',
@@ -229,11 +253,23 @@ export const SubOrders: CollectionConfig = {
       defaultValue: 0,
       admin: { description: 'subtotal - commissionAmount.' },
     },
-    { name: 'shippingMethod', type: 'text' },
-    { name: 'trackingNumber', type: 'text' },
-    { name: 'trackingUrl', type: 'text' },
-    { name: 'shippedAt', type: 'date' },
-    { name: 'deliveredAt', type: 'date' },
+    {
+      name: 'shippingMethod',
+      type: 'text',
+      admin: { description: 'Carrier or method label. Editable during fulfillment.' },
+    },
+    {
+      name: 'trackingNumber',
+      type: 'text',
+      admin: { description: 'Tracking ID. Editable when the carrier assigns or corrects it.' },
+    },
+    {
+      name: 'trackingUrl',
+      type: 'text',
+      admin: { description: 'Customer-facing tracking link.' },
+    },
+    { name: 'shippedAt', type: 'date', admin: { description: 'When the segment shipped.' } },
+    { name: 'deliveredAt', type: 'date', admin: { description: 'When delivery was confirmed.' } },
     {
       name: 'fulfilledBy',
       type: 'relationship',
@@ -244,7 +280,10 @@ export const SubOrders: CollectionConfig = {
       name: 'store',
       type: 'relationship',
       relationTo: 'stock-locations',
-      admin: { description: 'Store/outlet fulfilling this sub-order. Set at checkout from cart.store.' },
+      admin: {
+        description:
+          'Fulfilling store/outlet (checkout default from cart). Admins or vendors may reassign if fulfillment is routed differently.',
+      },
     },
   ],
   timestamps: true,

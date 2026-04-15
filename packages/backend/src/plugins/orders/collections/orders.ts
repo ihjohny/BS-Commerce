@@ -40,6 +40,29 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       admin: { description: 'For guest checkout.' },
     },
     {
+      name: 'guestPhone',
+      type: 'text',
+      admin: { description: 'For guest checkout with phone identity.' },
+    },
+    {
+      name: 'buyerSnapshot',
+      type: 'group',
+      admin: {
+        description:
+          'Immutable buyer identity at checkout (support/fulfillment). No payment credentials. Do not edit after create.',
+      },
+      fields: [
+        { name: 'email', type: 'email', admin: { readOnly: true } },
+        { name: 'name', type: 'text', admin: { readOnly: true } },
+        { name: 'phone', type: 'text', admin: { readOnly: true } },
+        {
+          name: 'locale',
+          type: 'text',
+          admin: { readOnly: true, description: 'Locale used for product title snapshots at checkout.' },
+        },
+      ],
+    },
+    {
       name: 'idempotencyKey',
       type: 'text',
       index: true,
@@ -76,12 +99,20 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       name: 'shippingAddress',
       type: 'group',
       required: true,
+      admin: {
+        description:
+          'Ship-to address captured at checkout. Admins may update this for fulfillment corrections (unit number, contact phone, re-ship). Independent of buyerSnapshot.',
+      },
       fields: addressGroupFields,
     },
     {
       name: 'billingAddress',
       type: 'group',
       required: true,
+      admin: {
+        description:
+          'Billing address at checkout. Admins may update when billing details were entered incorrectly.',
+      },
       fields: addressGroupFields,
     },
     { name: 'subtotal', type: 'number', required: true, defaultValue: 0 },
@@ -128,7 +159,10 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       name: 'store',
       type: 'relationship',
       relationTo: 'stock-locations',
-      admin: { description: 'Store/outlet this order was placed from. Set at checkout from cart.store.' },
+      admin: {
+        description:
+          'Store/outlet for this order (checkout default: cart.store). Admins may reassign for routing, warehouse changes, or corrections.',
+      },
     },
     { name: 'notes', type: 'textarea', admin: { description: 'Customer notes.' } },
     { name: 'placedAt', type: 'date', admin: { description: 'When order was placed.' } },
@@ -208,6 +242,13 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       ],
       beforeChange: [
         ({ data, operation, originalDoc }) => {
+          if (operation === 'update' && originalDoc && data?.buyerSnapshot != null) {
+            const prev = (originalDoc as { buyerSnapshot?: Record<string, unknown> }).buyerSnapshot
+            const next = data.buyerSnapshot as Record<string, unknown>
+            if (prev && next && JSON.stringify(prev) !== JSON.stringify(next)) {
+              throw new Error('buyerSnapshot is immutable after order creation.')
+            }
+          }
           if (operation === 'update' && data?.status != null) {
             const from = (originalDoc as { status?: string } | undefined)?.status
             validateOrderStatusTransition(from, data.status as string)

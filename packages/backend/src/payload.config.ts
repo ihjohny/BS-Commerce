@@ -41,6 +41,7 @@ import { adminBrandingEndpoint } from './endpoints/admin-branding'
 import { customEndpointsOpenApiEndpoint } from './endpoints/custom-endpoints-openapi'
 import { docsIndexEndpoint } from './endpoints/docs-index'
 import { openapiAllEndpoint } from './endpoints/openapi-all'
+import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -139,6 +140,7 @@ export default buildConfig({
     customEndpointsOpenApiEndpoint,
     openapiAllEndpoint,
     docsIndexEndpoint,
+    storefrontStoreProductsEndpoint,
   ],
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────

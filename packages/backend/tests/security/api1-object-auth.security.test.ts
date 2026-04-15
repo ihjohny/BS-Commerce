@@ -50,9 +50,15 @@ test('should deny vendor order read when tenant has no related sub-orders (API1/
   assert.equal(result, false)
 })
 
-test('should deny sub-order read for non-vendor non-admin users (API1/BOLA)', () => {
+test('should scope customer sub-order read to parent order owner (API1/BOLA)', () => {
   const readAccess = SubOrders.access?.read
   assert.equal(typeof readAccess, 'function')
   const result = (readAccess as any)({ req: mockReq({ id: 'customer-1', role: 'customer' }) })
-  assert.equal(result, false)
+  assert.deepEqual(result, {
+    parentOrder: {
+      customer: {
+        equals: 'customer-1',
+      },
+    },
+  })
 })

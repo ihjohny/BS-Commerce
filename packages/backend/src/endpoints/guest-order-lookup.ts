@@ -3,14 +3,14 @@
  *
  * POST /api/guest/order-lookup
  *
- * Requires both `orderNumber` and `guestEmail`. Returns the matching guest
- * order (customer=null) or 404. Rate-limited to prevent brute-force email
- * enumeration.
+ * Requires `orderNumber` and at least one of `guestEmail` or `guestPhone`.
+ * Returns the matching guest order (customer=null) or 404.
+ * Rate-limited to prevent brute-force enumeration.
  *
  * Security:
- * - Both factors required — orderNumber alone is insufficient.
+ * - Two factors required — orderNumber + (email or phone).
  * - Only guest orders returned (customer IS NULL).
- * - Uniform 404 for wrong email and wrong orderNumber (no info leak).
+ * - Uniform 404 for wrong identifier and wrong orderNumber (no info leak).
  * - Rate limited: 10 requests per 15 minutes per IP.
  */
 import type { Endpoint } from 'payload'
@@ -56,13 +56,25 @@ export async function guestOrderLookupHandler(req: any, deps?: GuestOrderLookupD
   if (limitResponse) return limitResponse
 
   const data = (await (req as Request).json?.().catch(() => ({}))) || {}
-  const { orderNumber, guestEmail } = data
+  const { orderNumber, guestEmail, guestPhone } = data
 
   if (!orderNumber || typeof orderNumber !== 'string' || !orderNumber.trim()) {
     return Response.json({ error: 'orderNumber is required' }, { status: 400 })
   }
-  if (!guestEmail || typeof guestEmail !== 'string' || !guestEmail.trim()) {
-    return Response.json({ error: 'guestEmail is required' }, { status: 400 })
+
+  const hasEmail = typeof guestEmail === 'string' && guestEmail.trim().length > 0
+  const hasPhone = typeof guestPhone === 'string' && guestPhone.trim().length > 0
+
+  if (!hasEmail && !hasPhone) {
+    return Response.json({ error: 'guestEmail or guestPhone is required' }, { status: 400 })
+  }
+
+  const identifierConditions: Record<string, unknown>[] = []
+  if (hasEmail) {
+    identifierConditions.push({ guestEmail: { equals: guestEmail.trim().toLowerCase() } })
+  }
+  if (hasPhone) {
+    identifierConditions.push({ guestPhone: { equals: guestPhone.trim() } })
   }
 
   const result = await req.payload.find({
@@ -70,8 +82,10 @@ export async function guestOrderLookupHandler(req: any, deps?: GuestOrderLookupD
     where: {
       and: [
         { orderNumber: { equals: orderNumber.trim() } },
-        { guestEmail: { equals: guestEmail.trim().toLowerCase() } },
         { customer: { equals: null } },
+        ...(identifierConditions.length === 1
+          ? identifierConditions
+          : [{ or: identifierConditions }]),
       ],
     },
     limit: 1,

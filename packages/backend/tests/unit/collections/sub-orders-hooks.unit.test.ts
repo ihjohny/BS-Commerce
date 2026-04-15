@@ -568,6 +568,16 @@ test('read: admin sees all', () => {
   assert.equal(read({ req: { user: { role: 'admin' } } }), true)
 })
 
+test('read: customer scoped to parent order owner', () => {
+  const read = SubOrders.access?.read as (args: {
+    req: { user?: { role?: string; id?: string } }
+  }) => unknown
+  const r = read({ req: { user: { role: 'customer', id: 'u-1' } } }) as {
+    parentOrder?: { customer?: { equals?: string } }
+  }
+  assert.equal(r.parentOrder?.customer?.equals, 'u-1')
+})
+
 test('parent derivation second hook returns doc on create', async () => {
   const out = await parentDerivationAfterChangeHook({
     operation: 'create',
