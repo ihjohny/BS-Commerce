@@ -38,7 +38,9 @@
     "test:infra:down": "docker compose -f docker-compose.test.yml down -v",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importMap",
-    "payload": "payload"
+    "payload": "payload",
+    "db:migrate": "payload migrate",
+    "db:migrate:create": "payload migrate:create"
   },
   "dependencies": {
     "@bs-commerce/shared": "*",

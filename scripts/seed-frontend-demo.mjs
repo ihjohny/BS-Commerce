@@ -49,7 +49,88 @@ function envBool(name, fallback = false) {
   return ['1', 'true', 'yes', 'on'].includes(v)
 }
 
+/** Order/product currency: BDT when Bangladesh demo shipping is on, else DEFAULT_CURRENCY. */
+function seedDemoCurrency() {
+  if (envBool('SEED_BD_SHIPPING', true)) return 'BDT'
+  return process.env.DEFAULT_CURRENCY || 'USD'
+}
+
+/**
+ * When SEED_BD_SHIPPING is on, manifest base prices are treated as USD-like amounts and
+ * converted to round BDT (×110) for a realistic BD storefront demo.
+ */
+function seedProductAmount(usdLike) {
+  const n = Number(usdLike ?? 0)
+  if (!envBool('SEED_BD_SHIPPING', true)) return n
+  return Math.max(1, Math.round(n * 110))
+}
+
+/** Matches `buildDefaultShippingConfig` method names for seeded sub-orders / logistics copy. */
+function demoShippingMethodLabel(legacyUsdDemo, bdDemo) {
+  return envBool('SEED_BD_SHIPPING', true) ? bdDemo : legacyUsdDemo
+}
+
+/** Scale USD-oriented coupon amounts / thresholds to BDT (×110) when BD demo is on. */
+function adaptPhase2CouponsForBdDemo(coupons) {
+  if (!envBool('SEED_BD_SHIPPING', true)) return coupons
+  return coupons.map((c) => ({
+    ...c,
+    ...(c.type === 'fixed' && c.value != null
+      ? { value: Math.max(1, Math.round(Number(c.value) * 110)) }
+      : {}),
+    ...(c.minOrderValue != null
+      ? { minOrderValue: Math.max(1, Math.round(Number(c.minOrderValue) * 110)) }
+      : {}),
+  }))
+}
+
 function buildDefaultShippingConfig() {
+  /** Bangladesh-oriented flat rates in BDT (set SEED_BD_SHIPPING=false to use legacy USD amounts). */
+  if (envBool('SEED_BD_SHIPPING', true)) {
+    return {
+      zones: [{ name: 'Bangladesh Nationwide', countries: ['BD'], isActive: true }],
+      methods: [
+        {
+          name: 'Dhaka metro — next day (ঢাকা মেট্রো)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 60,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+        },
+        {
+          name: 'Outside Dhaka — standard (৩–৭ working days)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 120,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+        },
+        {
+          name: 'Nationwide express (২–৩ days)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 199,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+        },
+        {
+          name: 'Cash on delivery (COD)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 40,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+          maxOrderValue: 150000,
+        },
+      ],
+    }
+  }
+
   const currency = process.env.DEFAULT_CURRENCY || 'USD'
   return {
     zones: [{ name: 'Bangladesh Nationwide', countries: ['BD'], isActive: true }],
@@ -253,7 +334,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Dhanmondi',
     division: 'Dhaka',
     postalCode: '1209',
-    preferredShippingMethod: 'Dhaka Metro (Next Day)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Dhaka Metro (Next Day)',
+      'Dhaka metro — next day (ঢাকা মেট্রো)',
+    ),
     slaLabel: 'Next day',
     codEligible: true,
   },
@@ -262,7 +346,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'GEC Circle',
     division: 'Chattogram',
     postalCode: '4000',
-    preferredShippingMethod: 'Nationwide Express (1-2 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Express (1-2 days)',
+      'Nationwide express (২–৩ days)',
+    ),
     slaLabel: '1-2 business days',
     codEligible: true,
   },
@@ -271,7 +358,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Zindabazar',
     division: 'Sylhet',
     postalCode: '3100',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: true,
   },
@@ -280,7 +370,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Sonadanga',
     division: 'Khulna',
     postalCode: '9100',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: false,
   },
@@ -289,7 +382,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Shaheb Bazar',
     division: 'Rajshahi',
     postalCode: '6000',
-    preferredShippingMethod: 'Nationwide Express (1-2 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Express (1-2 days)',
+      'Nationwide express (২–৩ days)',
+    ),
     slaLabel: '1-2 business days',
     codEligible: true,
   },
@@ -298,7 +394,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Nathullabad',
     division: 'Barishal',
     postalCode: '8200',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: false,
   },
@@ -307,7 +406,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Jahaj Company More',
     division: 'Rangpur',
     postalCode: '5400',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: true,
   },
@@ -629,7 +731,7 @@ async function createOrderAndItem(
       taxTotal: 0,
       discountTotal: 0,
       grandTotal: total,
-      currency: 'USD',
+      currency: seedDemoCurrency(),
       paymentStatus: 'paid',
       placedAt: now.toISOString(),
       notes: `Seeded order for account history and review eligibility. District=${logistics.district}; Area=${logistics.area}; SLA=${logistics.slaLabel}; PaymentMode=${logistics.codEligible ? 'cod' : 'prepaid'}.`,
@@ -1286,50 +1388,345 @@ async function ensureVendorProfile(base, token, tenantDoc, profile) {
   return null
 }
 
+/**
+ * Demo public stores — addresses and coverage use Bangladesh divisions/thanas (BBS-style labels).
+ */
 const DEMO_STORES = [
   {
     code: 'STORE-DHAKA-NORTH',
-    name: 'Dhaka North Outlet',
+    name: 'Uttara Outlet — Dhaka',
+    sortPriority: 0,
     slug: 'dhaka-north',
     isPublicStore: true,
     isActive: true,
-    address: { street: '123 Gulshan Avenue', city: 'Dhaka', state: 'Dhaka Division', country: 'BD', postalCode: '1212' },
+    address: {
+      street: 'Plot 7, Sector 10, Uttara',
+      city: 'Dhaka',
+      state: 'Dhaka Division',
+      country: 'BD',
+      postalCode: '1230',
+    },
     storeDetails: {
-      contactEmail: 'dhaka-north@bscommerce.demo',
-      contactPhone: '+880-2-1234-5678',
-      operatingHours: 'Sat-Thu 9am-9pm',
-      coverageArea: [{ value: 'Gulshan' }, { value: 'Banani' }, { value: 'Baridhara' }, { value: 'Uttara' }],
+      contactEmail: 'uttara.dhaka@bscommerce.demo',
+      contactPhone: '+880 1712-000101',
+      operatingHours: 'Sat–Thu 10:00–21:00 (Fri 15:00–21:00)',
+      coverageArea: [
+        { value: 'Uttara' },
+        { value: 'Gulshan' },
+        { value: 'Banani' },
+        { value: 'Baridhara' },
+        { value: 'Airport' },
+      ],
     },
   },
   {
     code: 'STORE-DHAKA-SOUTH',
-    name: 'Dhaka South Outlet',
+    name: 'Dhanmondi Outlet — Dhaka',
+    sortPriority: 1,
     slug: 'dhaka-south',
     isPublicStore: true,
     isActive: true,
-    address: { street: '45 Dhanmondi Road', city: 'Dhaka', state: 'Dhaka Division', country: 'BD', postalCode: '1205' },
+    address: {
+      street: '45 Mirpur Road, Dhanmondi',
+      city: 'Dhaka',
+      state: 'Dhaka Division',
+      country: 'BD',
+      postalCode: '1205',
+    },
     storeDetails: {
-      contactEmail: 'dhaka-south@bscommerce.demo',
-      contactPhone: '+880-2-8765-4321',
-      operatingHours: 'Sat-Thu 10am-8pm',
-      coverageArea: [{ value: 'Dhanmondi' }, { value: 'Mirpur' }, { value: 'Mohammadpur' }, { value: 'Old Dhaka' }],
+      contactEmail: 'dhanmondi.dhaka@bscommerce.demo',
+      contactPhone: '+880 1712-000202',
+      operatingHours: 'Sat–Thu 10:00–20:00 (Fri 14:30–20:00)',
+      coverageArea: [
+        { value: 'Dhanmondi' },
+        { value: 'Mohammadpur' },
+        { value: 'Kalabagan' },
+        { value: 'Lalmatia' },
+        { value: 'Old Dhaka' },
+      ],
     },
   },
   {
     code: 'STORE-CHITTAGONG',
-    name: 'Chittagong Outlet',
+    name: 'Agrabad Outlet — Chattogram',
+    sortPriority: 2,
     slug: 'chittagong',
     isPublicStore: true,
     isActive: true,
-    address: { street: '78 CDA Avenue', city: 'Chittagong', state: 'Chittagong Division', country: 'BD', postalCode: '4000' },
+    address: {
+      street: 'Commercial Plot, Agrabad C/A',
+      city: 'Chattogram',
+      state: 'Chattogram Division',
+      country: 'BD',
+      postalCode: '4100',
+    },
     storeDetails: {
-      contactEmail: 'ctg@bscommerce.demo',
-      contactPhone: '+880-31-654-321',
-      operatingHours: 'Sat-Thu 9am-8pm',
-      coverageArea: [{ value: 'Agrabad' }, { value: 'Nasirabad' }, { value: 'GEC Circle' }],
+      contactEmail: 'agrabad.ctg@bscommerce.demo',
+      contactPhone: '+880 1812-000303',
+      operatingHours: 'Sat–Thu 9:30–20:30 (Fri 15:00–20:30)',
+      coverageArea: [{ value: 'Agrabad' }, { value: 'Halishahar' }, { value: 'Nasirabad' }, { value: 'GEC Circle' }],
     },
   },
 ]
+
+async function ensureGeoSubdivision(base, token, countryId, name, code, tier, extra = {}) {
+  const { status, json } = await request(
+    base,
+    `/api/geo-subdivisions?where[code][equals]=${encodeURIComponent(code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]) return json.docs[0]
+  const pr = await request(base, '/api/geo-subdivisions', {
+    method: 'POST',
+    token,
+    body: {
+      country: countryId,
+      name,
+      code,
+      defaultServiceTier: tier,
+      isActive: true,
+      ...extra,
+    },
+  })
+  if ([200, 201].includes(pr.status)) return pr.json?.doc ?? pr.json
+  console.warn('geo-subdivisions create failed', code, pr.status)
+  return null
+}
+
+async function ensureGeoLocality(base, token, subdivisionId, name, code, tier, extra = {}) {
+  const { status, json } = await request(
+    base,
+    `/api/geo-localities?where[and][0][subdivision][equals]=${encodeURIComponent(subdivisionId)}&where[and][1][code][equals]=${encodeURIComponent(code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]) return json.docs[0]
+  const pr = await request(base, '/api/geo-localities', {
+    method: 'POST',
+    token,
+    body: {
+      subdivision: subdivisionId,
+      name,
+      code,
+      serviceTier: tier,
+      isActive: true,
+      ...extra,
+    },
+  })
+  if ([200, 201].includes(pr.status)) return pr.json?.doc ?? pr.json
+  console.warn('geo-localities create failed', code, pr.status)
+  return null
+}
+
+async function ensureStockLocationServiceArea(base, token, stockLocId, subdivisionId, localityId) {
+  const { status, json } = await request(
+    base,
+    `/api/stock-location-service-areas?where[stockLocation][equals]=${encodeURIComponent(stockLocId)}&limit=80`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.length) {
+    const found = json.docs.find((d) => {
+      const sid = typeof d.subdivision === 'object' ? d.subdivision?.id : d.subdivision
+      const lid = typeof d.locality === 'object' ? d.locality?.id : d.locality
+      return (
+        String(sid) === String(subdivisionId) &&
+        String(lid || '') === String(localityId ?? '')
+      )
+    })
+    if (found) return found
+  }
+  const pr = await request(base, '/api/stock-location-service-areas', {
+    method: 'POST',
+    token,
+    body: {
+      stockLocation: stockLocId,
+      subdivision: subdivisionId,
+      ...(localityId != null && localityId !== ''
+        ? { locality: localityId }
+        : {}),
+      sortOrder: 0,
+    },
+  })
+  if ([200, 201].includes(pr.status)) return pr.json?.doc ?? pr.json
+  console.warn('stock-location-service-areas create failed', pr.status)
+  return null
+}
+
+/**
+ * Seeds geo-countries / geo-subdivisions / geo-localities for Bangladesh demo
+ * (district-level subdivisions + thana/upazila-style localities) and links demo outlets.
+ */
+async function seedGeographyServiceAreas(base, token, demoStoreLocations) {
+  if (!demoStoreLocations?.length) return
+
+  const probe = await request(base, '/api/geo-countries?limit=1', { token })
+  if (probe.status !== 200 || probe.json?.error) {
+    console.log('Geography collections unavailable (set GEOGRAPHY_ENABLED=true); skip geo seed')
+    return
+  }
+
+  let country = probe.json?.docs?.[0]
+  if (!country) {
+    const cr = await request(base, '/api/geo-countries', {
+      method: 'POST',
+      token,
+      body: { name: 'Bangladesh', isoCode: 'BD', isActive: true },
+    })
+    if (![200, 201].includes(cr.status)) {
+      console.warn('geo-countries create:', cr.status)
+      return
+    }
+    country = cr.json?.doc ?? cr.json
+  }
+  if (!country?.id) return
+
+  /** District-scale subdivisions (common e-commerce regions in BD). */
+  const subdivisionSpecs = [
+    { code: 'BD-DHK', name: 'Dhaka', tier: 'standard' },
+    { code: 'BD-CTG', name: 'Chattogram', tier: 'standard' },
+    { code: 'BD-SYL', name: 'Sylhet', tier: 'standard' },
+    { code: 'BD-RAJ', name: 'Rajshahi', tier: 'standard' },
+    { code: 'BD-KHU', name: 'Khulna', tier: 'standard' },
+    {
+      code: 'BD-CXB',
+      name: "Cox's Bazar",
+      tier: 'extended',
+      extendedFeeNote:
+        'Courier surcharge from Cox’s Bazar: typically ৳80–৳150 depending on weight (shown at checkout).',
+      extendedLeadTimeNote: 'Allow 1–2 extra days vs Dhaka metro for courier handoff.',
+    },
+    {
+      code: 'BD-BAR',
+      name: 'Barishal',
+      tier: 'standard',
+    },
+    // No stock-location coverage — for testing tier filter (hidden unless NEXT_PUBLIC_GEO_LOCATION_TIER_FILTER=all)
+    {
+      code: 'BD-UNS',
+      name: 'Rangpur (unserved demo)',
+      tier: 'unserved',
+    },
+  ]
+
+  const subdivisionByCode = new Map()
+  for (const s of subdivisionSpecs) {
+    const { code, name, tier, ...extra } = s
+    const doc = await ensureGeoSubdivision(base, token, country.id, name, code, tier, extra)
+    if (doc?.id) subdivisionByCode.set(code, doc)
+  }
+
+  const dhakaSub = subdivisionByCode.get('BD-DHK')
+  const ctgSub = subdivisionByCode.get('BD-CTG')
+  if (!dhakaSub?.id || !ctgSub?.id) return
+
+  /** Thana / core urban localities under each subdivision (IDs stable for service-area joins). */
+  const localityRows = [
+    // Dhaka district region
+    ['BD-DHK', 'DHK-UTT', 'Uttara', 'standard'],
+    ['BD-DHK', 'DHK-DHN', 'Dhanmondi', 'standard'],
+    ['BD-DHK', 'DHK-GLS', 'Gulshan', 'standard'],
+    ['BD-DHK', 'DHK-MRP', 'Mirpur', 'standard'],
+    ['BD-DHK', 'DHK-MOT', 'Motijheel', 'standard'],
+    // Chattogram
+    ['BD-CTG', 'CTG-AGR', 'Agrabad', 'standard'],
+    ['BD-CTG', 'CTG-HAL', 'Halishahar', 'standard'],
+    ['BD-CTG', 'CTG-PAN', 'Panchlaish', 'standard'],
+    // Sylhet
+    ['BD-SYL', 'SYL-ZIN', 'Zindabazar', 'standard'],
+    ['BD-SYL', 'SYL-AMB', 'Ambarkhana', 'standard'],
+    // Rajshahi
+    ['BD-RAJ', 'RAJ-BOA', 'Boalia', 'standard'],
+    // Khulna
+    ['BD-KHU', 'KHU-SON', 'Sonadanga', 'standard'],
+    // Cox's Bazar (extended tier example)
+    ['BD-CXB', 'CXB-SAD', "Cox's Bazar Sadar", 'extended'],
+    // Barishal
+    ['BD-BAR', 'BAR-SAD', 'Barishal Sadar', 'standard'],
+    // Unserved demo (no outlets) — verify dropdown hides red when filter is not "all"
+    ['BD-UNS', 'UNS-SAD', 'Rangpur Sadar (no outlets)', 'unserved'],
+  ]
+
+  const localityByCode = new Map()
+  for (const [subCode, locCode, locName, locTier] of localityRows) {
+    const sub = subdivisionByCode.get(subCode)
+    if (!sub?.id) continue
+    const extra = {}
+    if (locTier === 'extended') {
+      extra.extendedFeeNote = 'Remote coastal route: may include rural courier handoff.'
+      extra.extendedLeadTimeNote = 'Typical +1 business day vs Chattogram hub.'
+    }
+    const loc = await ensureGeoLocality(
+      base,
+      token,
+      sub.id,
+      locName,
+      locCode,
+      locTier,
+      extra,
+    )
+    if (loc?.id) localityByCode.set(locCode, loc)
+  }
+
+  const locUtt = localityByCode.get('DHK-UTT')
+  const locDhn = localityByCode.get('DHK-DHN')
+  const locAgr = localityByCode.get('CTG-AGR')
+  if (!locUtt?.id || !locDhn?.id || !locAgr?.id) return
+
+  const byCode = Object.fromEntries(
+    demoStoreLocations.filter(Boolean).map((l) => [l.code, l]),
+  )
+
+  const mappings = [
+    { code: 'STORE-DHAKA-NORTH', subdivision: dhakaSub, locality: locUtt },
+    { code: 'STORE-DHAKA-SOUTH', subdivision: dhakaSub, locality: locDhn },
+    { code: 'STORE-CHITTAGONG', subdivision: ctgSub, locality: locAgr },
+    // Whole-subdivision rows (no locality) so every seeded thana in Dhaka / Chattogram
+    // matches delivery-context when a specific locality is picked (e.g. Halishahar, Gulshan).
+    { code: 'STORE-DHAKA-NORTH', subdivision: dhakaSub, locality: null },
+    { code: 'STORE-DHAKA-SOUTH', subdivision: dhakaSub, locality: null },
+    { code: 'STORE-CHITTAGONG', subdivision: ctgSub, locality: null },
+  ]
+
+  // Fulfillment network: link each listed region to at least one public outlet so
+  // "All areas in region" (no locality) resolves stores — not only BD-DHK / BD-CTG.
+  const rajSub = subdivisionByCode.get('BD-RAJ')
+  const sylSub = subdivisionByCode.get('BD-SYL')
+  const khuSub = subdivisionByCode.get('BD-KHU')
+  const cxbSub = subdivisionByCode.get('BD-CXB')
+  const barSub = subdivisionByCode.get('BD-BAR')
+  const locRaj = localityByCode.get('RAJ-BOA')
+  const locKhu = localityByCode.get('KHU-SON')
+  const locCxb = localityByCode.get('CXB-SAD')
+  const locBar = localityByCode.get('BAR-SAD')
+  if (rajSub?.id && locRaj?.id) {
+    mappings.push({ code: 'STORE-DHAKA-SOUTH', subdivision: rajSub, locality: locRaj })
+  }
+  if (sylSub?.id) {
+    mappings.push({ code: 'STORE-CHITTAGONG', subdivision: sylSub, locality: null })
+  }
+  if (khuSub?.id && locKhu?.id) {
+    mappings.push({ code: 'STORE-DHAKA-NORTH', subdivision: khuSub, locality: locKhu })
+  }
+  if (cxbSub?.id && locCxb?.id) {
+    mappings.push({ code: 'STORE-CHITTAGONG', subdivision: cxbSub, locality: locCxb })
+  }
+  if (barSub?.id && locBar?.id) {
+    mappings.push({ code: 'STORE-DHAKA-NORTH', subdivision: barSub, locality: locBar })
+  }
+
+  for (const m of mappings) {
+    const stockLoc = byCode[m.code]
+    if (!stockLoc?.id) continue
+    const localityId = m.locality == null ? null : m.locality.id
+    await ensureStockLocationServiceArea(base, token, stockLoc.id, m.subdivision.id, localityId)
+  }
+  console.log(
+    'Geography (BD):',
+    subdivisionByCode.size,
+    'subdivisions,',
+    localityByCode.size,
+    'localities, demo service areas linked',
+  )
+}
 
 async function ensureDemoStoreLocation(base, token, storeDef, tenantId) {
   const { status, json } = await request(
@@ -1346,6 +1743,7 @@ async function ensureDemoStoreLocation(base, token, storeDef, tenantId) {
       isActive: storeDef.isActive,
       address: storeDef.address,
       storeDetails: storeDef.storeDetails,
+      ...(storeDef.sortPriority != null ? { sortPriority: storeDef.sortPriority } : {}),
     }
     if (tenantId) patch.tenant = tenantId
     await request(base, `/api/stock-locations/${existing.id}`, { method: 'PATCH', token, body: patch })
@@ -1645,6 +2043,7 @@ async function seedMultivendorStack(base, token) {
     if (!firstTenantIdForStores) {
       firstTenantIdForStores = tenant.id
       demoStoreLocations = await seedDemoStores(base, token, tenant.id)
+      await seedGeographyServiceAreas(base, token, demoStoreLocations)
     }
 
     const logoId = await uploadRemoteImage(
@@ -1697,8 +2096,8 @@ async function seedMultivendorStack(base, token) {
       const productBody = {
         name: cleanName(p.name),
         slug: normalizedSlug,
-        basePrice: p.basePrice,
-        currency: 'USD',
+        basePrice: seedProductAmount(p.basePrice),
+        currency: seedDemoCurrency(),
         status: 'published',
         tenant: tenant.id,
         shortDescription: cleanName(p.shortDescription),
@@ -1750,8 +2149,10 @@ async function seedMultivendorStack(base, token) {
         const created = await ensureProduct(base, token, {
           name: bulkName,
           slug: bulkSlug,
-          basePrice: Number((Number(p.basePrice || 0) * (series.key === 'plus' ? 1.12 : series.key === 'max' ? 1.3 : 1.05)).toFixed(2)),
-          currency: 'USD',
+          basePrice: seedProductAmount(
+            Number((Number(p.basePrice || 0) * (series.key === 'plus' ? 1.12 : series.key === 'max' ? 1.3 : 1.05)).toFixed(2)),
+          ),
+          currency: seedDemoCurrency(),
           status: 'published',
           tenant: tenant.id,
           shortDescription: `${cleanName(p.shortDescription)} ${series.label} edition with expanded features.`,
@@ -1811,6 +2212,7 @@ async function seedSingleVendorStack(base, token) {
 
   const location = await getOrCreateStockLocation(base, token, null, null, false)
   const demoStoreLocations = await seedDemoStores(base, token, null)
+  await seedGeographyServiceAreas(base, token, demoStoreLocations)
   if (process.env.INVENTORY_ENABLED === 'false') return
 
   async function seedSvProduct(p, filenamePrefix) {
@@ -1827,8 +2229,8 @@ async function seedSingleVendorStack(base, token) {
     const created = await ensureProduct(base, token, {
       name: cleanName(p.name),
       slug: normalizedSlug,
-      basePrice: p.basePrice,
-      currency: 'USD',
+      basePrice: seedProductAmount(p.basePrice),
+      currency: seedDemoCurrency(),
       status: 'published',
       shortDescription: cleanName(p.shortDescription),
       description: buildProductDescription(
@@ -1875,6 +2277,14 @@ async function seedSingleVendorStack(base, token) {
 async function seedPhase2(base, token, isMultivendor) {
   console.log('\n--- Phase 2: globals, personas, addresses, coupons, orders, reviews ---')
 
+  const bdDemo = envBool('SEED_BD_SHIPPING', true)
+  const announceMv = bdDemo
+    ? 'এই সপ্তাহের পিকস: নির্বাচিত স্টোরে ৳9,000+ অর্ডারে ফ্রি শিপিং।'
+    : 'Marketplace picks this week: free shipping over $80 on selected stores.'
+  const announceSv = bdDemo
+    ? 'চলছে অফার: ৳7,000+ অর্ডারে ফ্রি শিপিং — প্রতিদিন নতুন আসছে।'
+    : 'Free shipping over $60 this week and new arrivals every day.'
+
   await ensureGlobal(base, token, 'header', {
     siteName: 'BS Commerce',
     navLinks: [
@@ -1885,9 +2295,7 @@ async function seedPhase2(base, token, isMultivendor) {
     ],
     announcementBar: {
       enabled: true,
-      message: isMultivendor
-        ? 'Marketplace picks this week: free shipping over $80 on selected stores.'
-        : 'Free shipping over $60 this week and new arrivals every day.',
+      message: isMultivendor ? announceMv : announceSv,
       backgroundColor: '#0F172A',
       textColor: '#FFFFFF',
     },
@@ -1922,7 +2330,7 @@ async function seedPhase2(base, token, isMultivendor) {
     ],
   })
 
-  for (const c of PHASE2.coupons) {
+  for (const c of adaptPhase2CouponsForBdDemo(PHASE2.coupons)) {
     await ensureCoupon(base, token, c)
   }
 
@@ -1955,7 +2363,9 @@ async function seedPhase2(base, token, isMultivendor) {
       {
         blockType: 'richText',
         content: lexicalParagraph(
-          'Orders are processed daily. Standard shipping targets 3-7 business days and express shipping targets 1-3 business days for eligible regions.',
+          bdDemo
+            ? 'অর্ডার প্রতিদিন প্রসেস করা হয়। ঢাকা মেট্রোতে সাধারণত পরের কর্মদিবসে হাতে পৌঁছায়; ঢাকার বাইরে সাধারণ ৩–৭ কর্মদিবস, এক্সপ্রেস ২–৩ কর্মদিবস (এলাকা ও কুরিয়ার ভেদে)।'
+            : 'Orders are processed daily. Standard shipping targets 3-7 business days and express shipping targets 1-3 business days for eligible regions.',
         ),
       },
     ],
@@ -2008,7 +2418,7 @@ async function seedPhase2(base, token, isMultivendor) {
             provider: logistics.codEligible ? 'cash-on-delivery' : 'sslcommerz',
             providerTransactionId: `TX-${createdOrder.order.orderNumber}`,
             amount: Number(createdOrder.order.grandTotal || 0),
-            currency: 'USD',
+            currency: seedDemoCurrency(),
             status: 'succeeded',
             metadata: { source: 'seed' },
           },

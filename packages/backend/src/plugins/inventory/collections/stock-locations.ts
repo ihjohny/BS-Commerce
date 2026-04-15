@@ -40,6 +40,15 @@ export function createStockLocationsConfig(multivendorEnabled: boolean): Collect
       },
     },
     {
+      name: 'sortPriority',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description:
+          'Lower numbers appear first when listing public stores (e.g. service-area resolution). Default 0.',
+      },
+    },
+    {
       name: 'storeDetails',
       type: 'group',
       label: 'Store / Outlet Details',

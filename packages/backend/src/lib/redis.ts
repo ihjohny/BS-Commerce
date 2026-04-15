@@ -13,11 +13,9 @@ export const redisConfig = {
  * Collections to cache in Redis.
  * These are the most frequently read, least frequently updated collections.
  */
+/** Only list collections to cache; omit query-sensitive collections (e.g. products). */
 export const cachedCollections = {
   categories: true,
   pages: true,
   media: true,
-  // Keep products uncached for now: paginated reads are query-sensitive
-  // and must always honor page/sort/filter params.
-  products: false,
 } as const

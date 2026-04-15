@@ -42,6 +42,8 @@ import { customEndpointsOpenApiEndpoint } from './endpoints/custom-endpoints-ope
 import { docsIndexEndpoint } from './endpoints/docs-index'
 import { openapiAllEndpoint } from './endpoints/openapi-all'
 import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
+import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
+import { geographyPlugin } from './plugins/geography'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -97,6 +99,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI!,
     },
+    // Migrations: `yarn payload migrate:create` then `yarn payload migrate` in production (push is dev-only).
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   // Alternative: MongoDB (uses string ObjectIds; no idType option)
   // db: mongooseAdapter({ url: process.env.DATABASE_URI! }),
@@ -141,6 +145,7 @@ export default buildConfig({
     openapiAllEndpoint,
     docsIndexEndpoint,
     storefrontStoreProductsEndpoint,
+    storefrontGeographyEndpoint,
   ],
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────
@@ -198,6 +203,9 @@ export default buildConfig({
       multivendorEnabled: process.env.MULTIVENDOR_ENABLED === 'true',
       trackMovements: true,
       lowStockThreshold: Number(process.env.LOW_STOCK_THRESHOLD || '10'),
+    }),
+    geographyPlugin({
+      enabled: process.env.GEOGRAPHY_ENABLED === 'true',
     }),
     shippingPlugin({
       enabled: true,
