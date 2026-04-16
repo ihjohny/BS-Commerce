@@ -24,7 +24,7 @@
  * DEMO_MANIFEST_PATH — optional absolute path to a JSON manifest (defaults to
  * data/client-demo-showcase.manifest.json). Edit that file to change demo copy and image URLs.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -846,13 +846,40 @@ async function uploadRemoteImage(base, token, url, filename, alt) {
     return null
   }
   try {
-    const imgRes = await fetch(url)
-    if (!imgRes.ok) {
-      console.warn('Image download failed:', url.slice(0, 80), imgRes.status)
-      return null
+    let buf = null
+    let type = 'image/jpeg'
+
+    if (String(url).startsWith('local://')) {
+      const localName = String(url).replace(/^local:\/\//, '')
+      const localDir = process.env.DEMO_LOCAL_IMAGE_DIR
+      if (!localDir) {
+        console.warn('DEMO_LOCAL_IMAGE_DIR is required for local:// image source', localName)
+        return null
+      }
+      const localPath = join(localDir, localName)
+      if (!existsSync(localPath)) {
+        console.warn('Local image missing:', localPath)
+        return null
+      }
+      buf = Buffer.from(readFileSync(localPath))
+      const ext = (localName.split('.').pop() || '').toLowerCase()
+      const mimeByExt = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        webp: 'image/webp',
+      }
+      type = mimeByExt[ext] || 'image/jpeg'
+    } else {
+      const imgRes = await fetch(url)
+      if (!imgRes.ok) {
+        console.warn('Image download failed:', String(url).slice(0, 80), imgRes.status)
+        return null
+      }
+      buf = Buffer.from(await imgRes.arrayBuffer())
+      type = imgRes.headers.get('content-type') || 'image/jpeg'
     }
-    const buf = Buffer.from(await imgRes.arrayBuffer())
-    const type = imgRes.headers.get('content-type') || 'image/jpeg'
+
     const form = new FormData()
     form.append('file', new Blob([buf], { type }), filename)
     if (alt) form.append('alt', alt)
@@ -1579,32 +1606,16 @@ async function seedGeographyServiceAreas(base, token, demoStoreLocations) {
   }
   if (!country?.id) return
 
-  /** District-scale subdivisions (common e-commerce regions in BD). */
+  /** Bangladesh divisions with realistic nationwide baseline coverage for produce demo flows. */
   const subdivisionSpecs = [
-    { code: 'BD-DHK', name: 'Dhaka', tier: 'standard' },
+    { code: 'BD-DHA', name: 'Dhaka', tier: 'standard' },
     { code: 'BD-CTG', name: 'Chattogram', tier: 'standard' },
     { code: 'BD-SYL', name: 'Sylhet', tier: 'standard' },
     { code: 'BD-RAJ', name: 'Rajshahi', tier: 'standard' },
     { code: 'BD-KHU', name: 'Khulna', tier: 'standard' },
-    {
-      code: 'BD-CXB',
-      name: "Cox's Bazar",
-      tier: 'extended',
-      extendedFeeNote:
-        'Courier surcharge from Cox’s Bazar: typically ৳80–৳150 depending on weight (shown at checkout).',
-      extendedLeadTimeNote: 'Allow 1–2 extra days vs Dhaka metro for courier handoff.',
-    },
-    {
-      code: 'BD-BAR',
-      name: 'Barishal',
-      tier: 'standard',
-    },
-    // No stock-location coverage — for testing tier filter (hidden unless NEXT_PUBLIC_GEO_LOCATION_TIER_FILTER=all)
-    {
-      code: 'BD-UNS',
-      name: 'Rangpur (unserved demo)',
-      tier: 'unserved',
-    },
+    { code: 'BD-BAR', name: 'Barishal', tier: 'extended' },
+    { code: 'BD-RNG', name: 'Rangpur', tier: 'extended' },
+    { code: 'BD-MYM', name: 'Mymensingh', tier: 'standard' },
   ]
 
   const subdivisionByCode = new Map()
@@ -1614,35 +1625,48 @@ async function seedGeographyServiceAreas(base, token, demoStoreLocations) {
     if (doc?.id) subdivisionByCode.set(code, doc)
   }
 
-  const dhakaSub = subdivisionByCode.get('BD-DHK')
+  const dhakaSub = subdivisionByCode.get('BD-DHA')
   const ctgSub = subdivisionByCode.get('BD-CTG')
   if (!dhakaSub?.id || !ctgSub?.id) return
 
-  /** Thana / core urban localities under each subdivision (IDs stable for service-area joins). */
+  /** Major district/city localities by division for realistic address hierarchy. */
   const localityRows = [
-    // Dhaka district region
-    ['BD-DHK', 'DHK-UTT', 'Uttara', 'standard'],
-    ['BD-DHK', 'DHK-DHN', 'Dhanmondi', 'standard'],
-    ['BD-DHK', 'DHK-GLS', 'Gulshan', 'standard'],
-    ['BD-DHK', 'DHK-MRP', 'Mirpur', 'standard'],
-    ['BD-DHK', 'DHK-MOT', 'Motijheel', 'standard'],
+    // Dhaka division
+    ['BD-DHA', 'DHA-DHK', 'Dhaka Sadar', 'standard'],
+    ['BD-DHA', 'DHA-GAZ', 'Gazipur Sadar', 'standard'],
+    ['BD-DHA', 'DHA-NRG', 'Narayanganj Sadar', 'standard'],
+    ['BD-DHA', 'DHA-UTT', 'Uttara', 'standard'],
+    ['BD-DHA', 'DHA-DHN', 'Dhanmondi', 'standard'],
+    ['BD-DHA', 'DHA-GLS', 'Gulshan', 'standard'],
+    ['BD-DHA', 'DHA-MRP', 'Mirpur', 'standard'],
     // Chattogram
+    ['BD-CTG', 'CTG-CTS', 'Chattogram Sadar', 'standard'],
+    ['BD-CTG', 'CTG-CXB', "Cox's Bazar Sadar", 'extended'],
+    ['BD-CTG', 'CTG-COM', 'Cumilla Sadar', 'standard'],
     ['BD-CTG', 'CTG-AGR', 'Agrabad', 'standard'],
-    ['BD-CTG', 'CTG-HAL', 'Halishahar', 'standard'],
     ['BD-CTG', 'CTG-PAN', 'Panchlaish', 'standard'],
     // Sylhet
+    ['BD-SYL', 'SYL-SYS', 'Sylhet Sadar', 'standard'],
+    ['BD-SYL', 'SYL-MBV', 'Moulvibazar Sadar', 'standard'],
     ['BD-SYL', 'SYL-ZIN', 'Zindabazar', 'standard'],
-    ['BD-SYL', 'SYL-AMB', 'Ambarkhana', 'standard'],
     // Rajshahi
+    ['BD-RAJ', 'RAJ-RJS', 'Rajshahi Sadar', 'standard'],
+    ['BD-RAJ', 'RAJ-PAB', 'Pabna Sadar', 'standard'],
     ['BD-RAJ', 'RAJ-BOA', 'Boalia', 'standard'],
     // Khulna
+    ['BD-KHU', 'KHU-KHS', 'Khulna Sadar', 'standard'],
+    ['BD-KHU', 'KHU-JSR', 'Jashore Sadar', 'standard'],
     ['BD-KHU', 'KHU-SON', 'Sonadanga', 'standard'],
-    // Cox's Bazar (extended tier example)
-    ['BD-CXB', 'CXB-SAD', "Cox's Bazar Sadar", 'extended'],
-    // Barishal
-    ['BD-BAR', 'BAR-SAD', 'Barishal Sadar', 'standard'],
-    // Unserved demo (no outlets) — verify dropdown hides red when filter is not "all"
-    ['BD-UNS', 'UNS-SAD', 'Rangpur Sadar (no outlets)', 'unserved'],
+    // Barishal (extended)
+    ['BD-BAR', 'BAR-BRS', 'Barishal Sadar', 'extended'],
+    ['BD-BAR', 'BAR-BHL', 'Bhola Sadar', 'extended'],
+    ['BD-BAR', 'BAR-PTU', 'Patuakhali Sadar', 'standard'],
+    // Rangpur (extended)
+    ['BD-RNG', 'RNG-RPS', 'Rangpur Sadar', 'extended'],
+    ['BD-RNG', 'RNG-DNJ', 'Dinajpur Sadar', 'extended'],
+    // Mymensingh
+    ['BD-MYM', 'MYM-MYS', 'Mymensingh Sadar', 'standard'],
+    ['BD-MYM', 'MYM-JML', 'Jamalpur Sadar', 'standard'],
   ]
 
   const localityByCode = new Map()
@@ -1666,8 +1690,8 @@ async function seedGeographyServiceAreas(base, token, demoStoreLocations) {
     if (loc?.id) localityByCode.set(locCode, loc)
   }
 
-  const locUtt = localityByCode.get('DHK-UTT')
-  const locDhn = localityByCode.get('DHK-DHN')
+  const locUtt = localityByCode.get('DHA-UTT')
+  const locDhn = localityByCode.get('DHA-DHN')
   const locAgr = localityByCode.get('CTG-AGR')
   if (!locUtt?.id || !locDhn?.id || !locAgr?.id) return
 
@@ -1679,38 +1703,35 @@ async function seedGeographyServiceAreas(base, token, demoStoreLocations) {
     { code: 'STORE-DHAKA-NORTH', subdivision: dhakaSub, locality: locUtt },
     { code: 'STORE-DHAKA-SOUTH', subdivision: dhakaSub, locality: locDhn },
     { code: 'STORE-CHITTAGONG', subdivision: ctgSub, locality: locAgr },
-    // Whole-subdivision rows (no locality) so every seeded thana in Dhaka / Chattogram
-    // matches delivery-context when a specific locality is picked (e.g. Halishahar, Gulshan).
-    { code: 'STORE-DHAKA-NORTH', subdivision: dhakaSub, locality: null },
-    { code: 'STORE-DHAKA-SOUTH', subdivision: dhakaSub, locality: null },
-    { code: 'STORE-CHITTAGONG', subdivision: ctgSub, locality: null },
   ]
 
-  // Fulfillment network: link each listed region to at least one public outlet so
-  // "All areas in region" (no locality) resolves stores — not only BD-DHK / BD-CTG.
-  const rajSub = subdivisionByCode.get('BD-RAJ')
-  const sylSub = subdivisionByCode.get('BD-SYL')
-  const khuSub = subdivisionByCode.get('BD-KHU')
-  const cxbSub = subdivisionByCode.get('BD-CXB')
-  const barSub = subdivisionByCode.get('BD-BAR')
-  const locRaj = localityByCode.get('RAJ-BOA')
-  const locKhu = localityByCode.get('KHU-SON')
-  const locCxb = localityByCode.get('CXB-SAD')
-  const locBar = localityByCode.get('BAR-SAD')
-  if (rajSub?.id && locRaj?.id) {
-    mappings.push({ code: 'STORE-DHAKA-SOUTH', subdivision: rajSub, locality: locRaj })
+  const coverageByStore = {
+    'STORE-DHAKA-NORTH': ['BD-DHA', 'BD-MYM', 'BD-RNG'],
+    'STORE-DHAKA-SOUTH': ['BD-DHA', 'BD-RAJ', 'BD-KHU', 'BD-BAR'],
+    'STORE-CHITTAGONG': ['BD-CTG', 'BD-SYL'],
   }
-  if (sylSub?.id) {
-    mappings.push({ code: 'STORE-CHITTAGONG', subdivision: sylSub, locality: null })
+  for (const [storeCode, subCodes] of Object.entries(coverageByStore)) {
+    for (const subCode of subCodes) {
+      const sub = subdivisionByCode.get(subCode)
+      if (!sub?.id) continue
+      mappings.push({ code: storeCode, subdivision: sub, locality: null })
+    }
   }
-  if (khuSub?.id && locKhu?.id) {
-    mappings.push({ code: 'STORE-DHAKA-NORTH', subdivision: khuSub, locality: locKhu })
-  }
-  if (cxbSub?.id && locCxb?.id) {
-    mappings.push({ code: 'STORE-CHITTAGONG', subdivision: cxbSub, locality: locCxb })
-  }
-  if (barSub?.id && locBar?.id) {
-    mappings.push({ code: 'STORE-DHAKA-NORTH', subdivision: barSub, locality: locBar })
+
+  const focusedLocalityMap = [
+    ['STORE-DHAKA-NORTH', ['DHA-GAZ', 'DHA-MRP', 'RNG-RPS', 'MYM-MYS']],
+    ['STORE-DHAKA-SOUTH', ['RAJ-BOA', 'KHU-SON', 'BAR-BRS']],
+    ['STORE-CHITTAGONG', ['CTG-CXB', 'CTG-COM', 'SYL-ZIN']],
+  ]
+  for (const [storeCode, locCodes] of focusedLocalityMap) {
+    for (const locCode of locCodes) {
+      const loc = localityByCode.get(locCode)
+      if (!loc?.id) continue
+      const subId = typeof loc.subdivision === 'object' ? loc.subdivision?.id : loc.subdivision
+      const sub = Array.from(subdivisionByCode.values()).find((s) => String(s.id) === String(subId))
+      if (!sub?.id) continue
+      mappings.push({ code: storeCode, subdivision: sub, locality: loc })
+    }
   }
 
   for (const m of mappings) {
@@ -2474,11 +2495,26 @@ async function seedStack(label, cfg, multivendor) {
   }
 }
 
+const stackFilterRaw = String(process.env.SEED_STACKS || 'sv,mv')
+  .split(',')
+  .map((v) => v.trim().toLowerCase())
+  .filter(Boolean)
+const runSv = stackFilterRaw.includes('sv') || stackFilterRaw.includes('single') || stackFilterRaw.includes('single-vendor')
+const runMv =
+  stackFilterRaw.includes('mv') ||
+  stackFilterRaw.includes('multi') ||
+  stackFilterRaw.includes('multivendor')
+
+const targets = []
+if (runSv) targets.push({ label: 'Single-vendor', cfg: SV, multivendor: false })
+if (runMv) targets.push({ label: 'Multivendor', cfg: MV, multivendor: true })
+if (targets.length === 0) {
+  console.error('SEED_STACKS must include at least one of: sv,mv')
+  process.exit(1)
+}
+
 let anyOk = false
-for (const { label, cfg, multivendor } of [
-  { label: 'Single-vendor', cfg: SV, multivendor: false },
-  { label: 'Multivendor', cfg: MV, multivendor: true },
-]) {
+for (const { label, cfg, multivendor } of targets) {
   try {
     await seedStack(label, cfg, multivendor)
     anyOk = true

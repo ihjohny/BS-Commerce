@@ -10,6 +10,8 @@
     "dev:host:sv": "node scripts/run-backend-host.mjs ../docker/.env.singlevendor 3000",
     "dev:host:mv": "node scripts/run-backend-host.mjs ../docker/.env.multivendor 3010",
     "seed:frontend-demo": "node scripts/seed-frontend-demo.mjs",
+    "seed:frontend-demo:produce-bd": "node scripts/seed-client-demo-produce-bd.mjs",
+    "seed:frontend-demo:produce-bd:images": "node scripts/download-produce-demo-images.mjs",
     "reset:local-admin-password": "node scripts/reset-local-admin-password.mjs",
     "demo:sync-passwords": "node scripts/sync-all-user-passwords.mjs",
     "demo:bootstrap": "node scripts/run-client-demo-bootstrap.mjs",
