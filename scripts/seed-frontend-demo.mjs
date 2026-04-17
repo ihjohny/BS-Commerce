@@ -192,7 +192,7 @@ function normalizeZoneCountries(countries) {
 }
 
 const SV = { base: 'http://localhost:3000', key: 'SV' }
-const MV = { base: 'http://localhost:3010', key: 'MV' }
+const MV = { base: 'http://localhost:4000', key: 'MV' }
 
 const PHASE2 = {
   users: [
@@ -2526,7 +2526,7 @@ for (const { label, cfg, multivendor } of targets) {
 
 if (!anyOk) {
   console.error(
-    '\nNo API was seeded. Start backends (e.g. port 3000 single-vendor, 3010 multivendor) or check SEED_ADMIN_* credentials.',
+    '\nNo API was seeded. Start backends (e.g. port 3000 single-vendor, 4000 multivendor host) or check SEED_ADMIN_* credentials.',
   )
   process.exit(1)
 }

@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "yarn workspace @bs-commerce/backend dev",
     "dev:host:sv": "node scripts/run-backend-host.mjs ../docker/.env.singlevendor 3000",
-    "dev:host:mv": "node scripts/run-backend-host.mjs ../docker/.env.multivendor 3010",
+    "dev:host:mv": "node scripts/run-backend-host.mjs ../docker/.env.multivendor 4000",
     "seed:frontend-demo": "node scripts/seed-frontend-demo.mjs",
     "seed:frontend-demo:produce-bd": "node scripts/seed-client-demo-produce-bd.mjs",
     "seed:frontend-demo:produce-bd:images": "node scripts/download-produce-demo-images.mjs",

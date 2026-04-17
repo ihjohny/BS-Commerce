@@ -36,7 +36,7 @@ Do not commit `.env.demo-seed`. Loader paths are fixed in `scripts/lib/load-demo
 
 ## One-command client demo
 
-From the **BS-Commerce** repo root (Postgres reachable, MV API on 3010 recommended), after `.env.demo-seed` exists **or** `DEMO_UNIFIED_PASSWORD` is exported:
+From the **BS-Commerce** repo root (Postgres reachable, MV API on 4000 for `yarn dev:host:mv`), after `.env.demo-seed` exists **or** `DEMO_UNIFIED_PASSWORD` is exported:
 
 ```bash
 yarn demo:bootstrap
@@ -46,7 +46,7 @@ This will:
 
 1. Set **every user’s password** to `DEMO_UNIFIED_PASSWORD`.
 2. Pick the first admin email from the database (or set `DEMO_ADMIN_EMAIL`).
-3. Run `seed:frontend-demo` against single-vendor (3000) and multivendor (3010) APIs when they are up.
+3. Run `seed:frontend-demo` against single-vendor (3000) and multivendor (4000) APIs when they are up.
 
 Override for a single run:
 
