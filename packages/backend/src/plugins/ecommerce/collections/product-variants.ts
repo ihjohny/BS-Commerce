@@ -15,6 +15,24 @@ export function createProductVariantsConfig(multivendorEnabled = false): Collect
     { name: 'price', type: 'number', required: true, min: 0 },
     { name: 'compareAtPrice', type: 'number', min: 0 },
     {
+      name: 'saleDisplayMode',
+      type: 'select',
+      required: true,
+      defaultValue: 'inherit',
+      options: [
+        { label: 'Inherit from product', value: 'inherit' },
+        { label: 'None (hide compare-at & badges)', value: 'none' },
+        { label: 'Strikethrough compare-at only', value: 'strike_through' },
+        { label: 'Badge: % off', value: 'badge_percent' },
+        { label: 'Badge: amount saved', value: 'badge_amount' },
+        { label: 'Strikethrough + badge', value: 'strike_and_badge' },
+      ],
+      admin: {
+        description:
+          'Leave empty to use the product’s sale display mode. Set to override for this SKU only.',
+      },
+    },
+    {
       name: 'options',
       type: 'array',
       fields: [
