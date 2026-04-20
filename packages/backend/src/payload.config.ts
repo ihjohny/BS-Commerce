@@ -49,7 +49,12 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const redisPluginEnabled = process.env.REDIS_CACHE_ENABLED === 'true'
 
+/** Same origin as `NEXT_PUBLIC_APP_URL` — Payload `serverURL` for emails, links, and admin views that must not use `window` during SSR (e.g. document "API" tab). */
+const serverURL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export default buildConfig({
+  serverURL,
+
   // ─── Admin Panel ─────────────────────────────────────────────────────────────
   admin: {
     user: Users.slug,

@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../access/is-admin'
+import { RESERVED_STOREFRONT_ROUTE_SEGMENTS } from '../../lib/cms-reserved-route-segments'
 import { slugField } from '../../fields/slug'
+import { pageLayoutBlocks } from './blocks'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',
@@ -56,54 +58,7 @@ export const Pages: CollectionConfig = {
       name: 'layout',
       type: 'blocks',
       localized: true,
-      blocks: [
-        {
-          slug: 'richText',
-          labels: {
-            singular: 'Rich Text Block',
-            plural: 'Rich Text Blocks',
-          },
-          fields: [
-            {
-              name: 'content',
-              type: 'richText',
-            },
-          ],
-        },
-        {
-          slug: 'hero',
-          labels: {
-            singular: 'Hero Block',
-            plural: 'Hero Blocks',
-          },
-          fields: [
-            {
-              name: 'heading',
-              type: 'text',
-              localized: true,
-            },
-            {
-              name: 'subheading',
-              type: 'textarea',
-              localized: true,
-            },
-            {
-              name: 'backgroundImage',
-              type: 'upload',
-              relationTo: 'media',
-            },
-            {
-              name: 'ctaLabel',
-              type: 'text',
-              localized: true,
-            },
-            {
-              name: 'ctaUrl',
-              type: 'text',
-            },
-          ],
-        },
-      ],
+      blocks: pageLayoutBlocks,
     },
     // SEO
     {
@@ -140,6 +95,20 @@ export const Pages: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        const raw = data?.slug
+        if (typeof raw === 'string' && raw.trim()) {
+          const slug = raw.trim().toLowerCase()
+          if (RESERVED_STOREFRONT_ROUTE_SEGMENTS.has(slug)) {
+            throw new Error(
+              `Slug "${raw.trim()}" is reserved for a storefront route. Use a different path (e.g. "about-us" instead of a conflicting single segment).`,
+            )
+          }
+        }
+        return data
+      },
+    ],
     beforeChange: [
       ({ data }) => {
         if (data.status === 'published' && !data.publishedAt) {

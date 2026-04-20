@@ -1,6 +1,36 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionBeforeValidateHook, CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
 import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
+
+/** Existing rows may have NULL before schema sync; default matches Payload `defaultValue`. */
+const ensureVariantSaleDisplayMode: CollectionBeforeValidateHook = ({ data }) => {
+  if (!data || typeof data !== 'object') {
+    return data
+  }
+  const d = data as Record<string, unknown>
+  if (d.saleDisplayMode == null || d.saleDisplayMode === '') {
+    d.saleDisplayMode = 'inherit'
+  }
+  return data
+}
+
+const inheritTenantFromProductOnVariant: CollectionBeforeValidateHook = async ({ data, req }) => {
+  if (!data) return data
+  if (!data.tenant && data.product) {
+    const productId =
+      typeof data.product === 'object' ? (data.product as { id?: string }).id : data.product
+    if (productId && req.payload) {
+      const p = await req.payload.findByID({ collection: 'products', id: productId, depth: 0 })
+      if (p?.tenant)
+        data.tenant = typeof p.tenant === 'object' ? (p.tenant as { id: string }).id : p.tenant
+    }
+  }
+  if (req.user?.role === 'vendor' && req.user.tenant && !data.tenant) {
+    const tenantId = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
+    data.tenant = tenantId
+  }
+  return data
+}
 
 export function createProductVariantsConfig(multivendorEnabled = false): CollectionConfig {
   const fields: CollectionConfig['fields'] = [
@@ -17,7 +47,7 @@ export function createProductVariantsConfig(multivendorEnabled = false): Collect
     {
       name: 'saleDisplayMode',
       type: 'select',
-      required: true,
+      required: false,
       defaultValue: 'inherit',
       options: [
         { label: 'Inherit from product', value: 'inherit' },
@@ -79,27 +109,12 @@ export function createProductVariantsConfig(multivendorEnabled = false): Collect
       update: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
       delete: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
     },
-    hooks: multivendorEnabled
-      ? {
-          beforeValidate: [
-            async ({ data, req }) => {
-              if (!data) return data
-              if (!data.tenant && data.product) {
-                const productId = typeof data.product === 'object' ? (data.product as { id?: string }).id : data.product
-                if (productId && req.payload) {
-                  const p = await req.payload.findByID({ collection: 'products', id: productId, depth: 0 })
-                  if (p?.tenant) data.tenant = typeof p.tenant === 'object' ? (p.tenant as { id: string }).id : p.tenant
-                }
-              }
-              if (req.user?.role === 'vendor' && req.user.tenant && !data.tenant) {
-                const tenantId = typeof req.user.tenant === 'object' ? req.user.tenant.id : req.user.tenant
-                data.tenant = tenantId
-              }
-              return data
-            },
-          ],
-        }
-      : undefined,
+    hooks: {
+      beforeValidate: [
+        ensureVariantSaleDisplayMode,
+        ...(multivendorEnabled ? [inheritTenantFromProductOnVariant] : []),
+      ],
+    },
     fields,
     timestamps: true,
   }

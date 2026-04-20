@@ -11,7 +11,7 @@ import { Categories } from '../../../src/collections/categories.ts'
 // @ts-ignore resolved via tests/_helpers
 import { Media } from '../../../src/collections/media.ts'
 // @ts-ignore resolved via tests/_helpers
-import { Pages } from '../../../src/collections/pages.ts'
+import { Pages } from '../../../src/collections/pages/index.ts'
 
 test('Header global has expected slug', () => {
   assert.equal(Header.slug, 'header')
