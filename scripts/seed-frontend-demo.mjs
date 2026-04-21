@@ -2309,10 +2309,38 @@ async function seedPhase2(base, token, isMultivendor) {
   await ensureGlobal(base, token, 'header', {
     siteName: 'BS Commerce',
     navLinks: [
-      { label: 'Home', url: '/en' },
-      { label: 'Products', url: '/en/products' },
-      { label: 'Categories', url: '/en/categories' },
-      ...(isMultivendor ? [{ label: 'Vendors', url: '/en/vendors' }] : []),
+      {
+        enabled: true,
+        label: 'Home',
+        url: '/en',
+        showInDesktopNav: true,
+        showInMobileDrawer: true,
+      },
+      {
+        enabled: true,
+        label: 'Products',
+        url: '/en/products',
+        showInDesktopNav: true,
+        showInMobileDrawer: true,
+      },
+      {
+        enabled: true,
+        label: 'Categories',
+        url: '/en/categories',
+        showInDesktopNav: true,
+        showInMobileDrawer: true,
+      },
+      ...(isMultivendor
+        ? [
+            {
+              enabled: true,
+              label: 'Vendors',
+              url: '/en/vendors',
+              showInDesktopNav: true,
+              showInMobileDrawer: true,
+            },
+          ]
+        : []),
     ],
     announcementBar: {
       enabled: true,

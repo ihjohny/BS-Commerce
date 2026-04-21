@@ -21,6 +21,20 @@ test('Footer global has expected slug', () => {
   assert.equal(Footer.slug, 'footer')
 })
 
+test('Footer column links include visibility select', () => {
+  const byName = (name: string) => (f: unknown) => (f as { name?: string }).name === name
+  const columnsField = Footer.fields?.find(byName('columns')) as
+    | { type?: string; fields?: unknown[] }
+    | undefined
+  assert.equal(columnsField?.type, 'array')
+  const linksField = columnsField?.fields?.find(byName('links')) as
+    | { type?: string; fields?: unknown[] }
+    | undefined
+  assert.equal(linksField?.type, 'array')
+  const visField = linksField?.fields?.find(byName('visibility')) as { type?: string } | undefined
+  assert.equal(visField?.type, 'select')
+})
+
 test('PlatformSettings access.read requires a user', () => {
   const read = PlatformSettings.access?.read as (args: { req: { user?: unknown } }) => boolean
   assert.equal(read({ req: { user: undefined } }), false)

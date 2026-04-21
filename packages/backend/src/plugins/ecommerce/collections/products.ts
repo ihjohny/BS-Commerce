@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
 import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 import { slugField } from '../../../fields/slug'
-import { getCurrencyOptions } from '../../../lib/currencies'
+import { getCurrencyOptions, getDefaultCurrency } from '../../../lib/currencies'
 
 export function createProductsConfig(multivendorEnabled = false): CollectionConfig {
   const fields: CollectionConfig['fields'] = [
@@ -79,7 +79,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       name: 'currency',
       type: 'select',
       required: true,
-      defaultValue: 'USD',
+      defaultValue: getDefaultCurrency(),
       options: getCurrencyOptions(),
     },
     { name: 'taxable', type: 'checkbox', defaultValue: true },

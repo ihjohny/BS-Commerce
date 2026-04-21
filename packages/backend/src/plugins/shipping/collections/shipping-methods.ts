@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
-import { getCurrencyOptions } from '../../../lib/currencies'
+import { getCurrencyOptions, getDefaultCurrency } from '../../../lib/currencies'
 
 export const ShippingMethods: CollectionConfig = {
   slug: 'shipping-methods',
@@ -38,7 +38,7 @@ export const ShippingMethods: CollectionConfig = {
       name: 'currency',
       type: 'select',
       required: true,
-      defaultValue: 'USD',
+      defaultValue: getDefaultCurrency(),
       options: getCurrencyOptions(),
     },
     { name: 'minOrderValue', type: 'number', min: 0 },

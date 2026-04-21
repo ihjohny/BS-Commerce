@@ -242,12 +242,10 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       ],
       beforeChange: [
         ({ data, operation, originalDoc }) => {
-          if (operation === 'update' && originalDoc && data?.buyerSnapshot != null) {
-            const prev = (originalDoc as { buyerSnapshot?: Record<string, unknown> }).buyerSnapshot
-            const next = data.buyerSnapshot as Record<string, unknown>
-            if (prev && next && JSON.stringify(prev) !== JSON.stringify(next)) {
-              throw new Error('buyerSnapshot is immutable after order creation.')
-            }
+          // Admin saves send the full document; buyerSnapshot can differ by key order, undefined vs
+          // missing, or Payload normalization — not an intentional edit. Never merge it on update.
+          if (operation === 'update' && data && 'buyerSnapshot' in data) {
+            delete data.buyerSnapshot
           }
           if (operation === 'update' && data?.status != null) {
             const from = (originalDoc as { status?: string } | undefined)?.status
