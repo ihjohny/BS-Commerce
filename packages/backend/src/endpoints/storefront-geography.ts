@@ -209,12 +209,24 @@ export const storefrontGeographyEndpoint: Endpoint = {
         }
 
         return Response.json({
-          docs: docs.map((d) => ({
-            id: d.id,
-            name: (d as { name?: string }).name,
-            code: (d as { code?: string }).code ?? null,
-            defaultServiceTier: (d as { defaultServiceTier?: string }).defaultServiceTier,
-          })),
+          docs: docs.map((d) => {
+            const row = d as {
+              name?: string
+              code?: string
+              defaultServiceTier?: string
+              geocodeMatchAliases?: Array<{ alias?: string }>
+            }
+            const geocodeMatchAliases = (row.geocodeMatchAliases ?? [])
+              .map((x) => (typeof x?.alias === 'string' ? x.alias.trim() : ''))
+              .filter((s) => s.length > 0)
+            return {
+              id: d.id,
+              name: row.name,
+              code: row.code ?? null,
+              defaultServiceTier: row.defaultServiceTier,
+              geocodeMatchAliases: geocodeMatchAliases.length > 0 ? geocodeMatchAliases : undefined,
+            }
+          }),
         })
       }
 
@@ -249,12 +261,24 @@ export const storefrontGeographyEndpoint: Endpoint = {
         }
 
         return Response.json({
-          docs: docs.map((d) => ({
-            id: d.id,
-            name: (d as { name?: string }).name,
-            code: (d as { code?: string }).code ?? null,
-            serviceTier: (d as { serviceTier?: string }).serviceTier,
-          })),
+          docs: docs.map((d) => {
+            const row = d as {
+              name?: string
+              code?: string
+              serviceTier?: string
+              geocodeMatchAliases?: Array<{ alias?: string }>
+            }
+            const geocodeMatchAliases = (row.geocodeMatchAliases ?? [])
+              .map((x) => (typeof x?.alias === 'string' ? x.alias.trim() : ''))
+              .filter((s) => s.length > 0)
+            return {
+              id: d.id,
+              name: row.name,
+              code: row.code ?? null,
+              serviceTier: row.serviceTier,
+              geocodeMatchAliases: geocodeMatchAliases.length > 0 ? geocodeMatchAliases : undefined,
+            }
+          }),
         })
       }
 

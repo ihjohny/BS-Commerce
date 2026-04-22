@@ -45,6 +45,22 @@ export const GeoSubdivisions: CollectionConfig = {
     },
     { name: 'name', type: 'text', required: true, localized: true },
     {
+      name: 'geocodeMatchAliases',
+      type: 'array',
+      label: 'Geocoding match names',
+      admin: {
+        description:
+          'Alternate names used only to match reverse geocoding (e.g. Nominatim/OSM) when they differ from the display name (e.g. Chittagong vs Chattogram). One entry per variant. Not localized.',
+      },
+      fields: [
+        {
+          name: 'alias',
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
+    {
       name: 'code',
       type: 'text',
       admin: { description: 'Stable code for imports (e.g. ISO subdivision, national statistics code).' },

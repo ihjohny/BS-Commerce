@@ -30,6 +30,22 @@ export const GeoLocalities: CollectionConfig = {
     },
     { name: 'name', type: 'text', required: true, localized: true },
     {
+      name: 'geocodeMatchAliases',
+      type: 'array',
+      label: 'Geocoding match names',
+      admin: {
+        description:
+          'Alternate names used only to match reverse geocoding (e.g. Nominatim/OSM) when they differ from the display name. Add one row per variant. Not localized — use the same language you configure for the geocoder (e.g. English). The title field above is still what shoppers see in the UI.',
+      },
+      fields: [
+        {
+          name: 'alias',
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
+    {
       name: 'code',
       type: 'text',
       admin: { description: 'Optional internal or national statistics code.' },
