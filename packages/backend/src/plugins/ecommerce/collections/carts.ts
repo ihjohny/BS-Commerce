@@ -144,6 +144,50 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
           }
         }
 
+        // ── Single-store cart enforcement ──────────────────────────────────────
+        const singleStoreEnabled = process.env.SINGLE_STORE_CART_ENABLED === 'true'
+        const inventoryEnabled = process.env.INVENTORY_ENABLED !== 'false'
+        const storeId = typeof data.store === 'object' ? (data.store as { id: string })?.id : data.store
+
+        if (singleStoreEnabled && inventoryEnabled && storeId) {
+          for (const item of data.items) {
+            const pId = typeof item.product === 'object' ? item.product?.id : item.product
+            const vId = item.variant ? (typeof item.variant === 'object' ? item.variant?.id : item.variant) : null
+            if (!pId) continue
+
+            const stockWhere: Record<string, unknown> = {
+              and: [
+                { 'location': { equals: storeId } },
+                { product: { equals: pId } },
+              ],
+            }
+            if (vId) {
+              (stockWhere.and as Array<Record<string, unknown>>).push({ variant: { equals: vId } })
+            }
+
+            const { docs: stockRows } = await req.payload.find({
+              collection: 'stock-levels',
+              where: stockWhere as any,
+              limit: 1,
+              depth: 0,
+              overrideAccess: true,
+            })
+
+            if (stockRows.length === 0) {
+              const productName = typeof item.product === 'object' ? (item.product as { name?: string }).name || pId : pId
+              throw new APIError(`Product "${productName}" is not available at the selected store`, 400)
+            }
+
+            const sl = stockRows[0] as { quantity?: number; reservedQuantity?: number }
+            const available = (Number(sl.quantity) || 0) - (Number(sl.reservedQuantity) || 0)
+            const qty = Number(item.quantity) || 1
+            if (available < qty) {
+              const productName = typeof item.product === 'object' ? (item.product as { name?: string }).name || pId : pId
+              throw new APIError(`Insufficient stock for "${productName}" at the selected store (available: ${available})`, 400)
+            }
+          }
+        }
+
         const subtotal = data.items.reduce(
           (sum: number, i: { quantity?: number; unitPrice?: number }) =>
             sum + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
@@ -233,6 +277,14 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
       type: 'number',
       defaultValue: 0,
       admin: { readOnly: true, description: 'subtotal - discountTotal (shipping/tax excluded in cart).' },
+    },
+    {
+      name: 'store',
+      type: 'relationship',
+      relationTo: 'stock-locations',
+      admin: {
+        description: 'Selected store/outlet for this shopping session. Set by storefront when customer picks a store.',
+      },
     },
     {
       name: 'expiresAt',

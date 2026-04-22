@@ -24,7 +24,7 @@
  * DEMO_MANIFEST_PATH — optional absolute path to a JSON manifest (defaults to
  * data/client-demo-showcase.manifest.json). Edit that file to change demo copy and image URLs.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -49,7 +49,88 @@ function envBool(name, fallback = false) {
   return ['1', 'true', 'yes', 'on'].includes(v)
 }
 
+/** Order/product currency: BDT when Bangladesh demo shipping is on, else DEFAULT_CURRENCY. */
+function seedDemoCurrency() {
+  if (envBool('SEED_BD_SHIPPING', true)) return 'BDT'
+  return process.env.DEFAULT_CURRENCY || 'USD'
+}
+
+/**
+ * When SEED_BD_SHIPPING is on, manifest base prices are treated as USD-like amounts and
+ * converted to round BDT (×110) for a realistic BD storefront demo.
+ */
+function seedProductAmount(usdLike) {
+  const n = Number(usdLike ?? 0)
+  if (!envBool('SEED_BD_SHIPPING', true)) return n
+  return Math.max(1, Math.round(n * 110))
+}
+
+/** Matches `buildDefaultShippingConfig` method names for seeded sub-orders / logistics copy. */
+function demoShippingMethodLabel(legacyUsdDemo, bdDemo) {
+  return envBool('SEED_BD_SHIPPING', true) ? bdDemo : legacyUsdDemo
+}
+
+/** Scale USD-oriented coupon amounts / thresholds to BDT (×110) when BD demo is on. */
+function adaptPhase2CouponsForBdDemo(coupons) {
+  if (!envBool('SEED_BD_SHIPPING', true)) return coupons
+  return coupons.map((c) => ({
+    ...c,
+    ...(c.type === 'fixed' && c.value != null
+      ? { value: Math.max(1, Math.round(Number(c.value) * 110)) }
+      : {}),
+    ...(c.minOrderValue != null
+      ? { minOrderValue: Math.max(1, Math.round(Number(c.minOrderValue) * 110)) }
+      : {}),
+  }))
+}
+
 function buildDefaultShippingConfig() {
+  /** Bangladesh-oriented flat rates in BDT (set SEED_BD_SHIPPING=false to use legacy USD amounts). */
+  if (envBool('SEED_BD_SHIPPING', true)) {
+    return {
+      zones: [{ name: 'Bangladesh Nationwide', countries: ['BD'], isActive: true }],
+      methods: [
+        {
+          name: 'Dhaka metro — next day (ঢাকা মেট্রো)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 60,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+        },
+        {
+          name: 'Outside Dhaka — standard (৩–৭ working days)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 120,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+        },
+        {
+          name: 'Nationwide express (২–৩ days)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 199,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+        },
+        {
+          name: 'Cash on delivery (COD)',
+          zoneName: 'Bangladesh Nationwide',
+          type: 'flat',
+          rate: 40,
+          currency: 'BDT',
+          isActive: true,
+          minOrderValue: 0,
+          maxOrderValue: 150000,
+        },
+      ],
+    }
+  }
+
   const currency = process.env.DEFAULT_CURRENCY || 'USD'
   return {
     zones: [{ name: 'Bangladesh Nationwide', countries: ['BD'], isActive: true }],
@@ -111,7 +192,7 @@ function normalizeZoneCountries(countries) {
 }
 
 const SV = { base: 'http://localhost:3000', key: 'SV' }
-const MV = { base: 'http://localhost:3010', key: 'MV' }
+const MV = { base: 'http://localhost:4000', key: 'MV' }
 
 const PHASE2 = {
   users: [
@@ -253,7 +334,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Dhanmondi',
     division: 'Dhaka',
     postalCode: '1209',
-    preferredShippingMethod: 'Dhaka Metro (Next Day)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Dhaka Metro (Next Day)',
+      'Dhaka metro — next day (ঢাকা মেট্রো)',
+    ),
     slaLabel: 'Next day',
     codEligible: true,
   },
@@ -262,7 +346,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'GEC Circle',
     division: 'Chattogram',
     postalCode: '4000',
-    preferredShippingMethod: 'Nationwide Express (1-2 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Express (1-2 days)',
+      'Nationwide express (২–৩ days)',
+    ),
     slaLabel: '1-2 business days',
     codEligible: true,
   },
@@ -271,7 +358,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Zindabazar',
     division: 'Sylhet',
     postalCode: '3100',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: true,
   },
@@ -280,7 +370,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Sonadanga',
     division: 'Khulna',
     postalCode: '9100',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: false,
   },
@@ -289,7 +382,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Shaheb Bazar',
     division: 'Rajshahi',
     postalCode: '6000',
-    preferredShippingMethod: 'Nationwide Express (1-2 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Express (1-2 days)',
+      'Nationwide express (২–৩ days)',
+    ),
     slaLabel: '1-2 business days',
     codEligible: true,
   },
@@ -298,7 +394,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Nathullabad',
     division: 'Barishal',
     postalCode: '8200',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: false,
   },
@@ -307,7 +406,10 @@ const BANGLADESH_LOGISTICS_PROFILES = [
     area: 'Jahaj Company More',
     division: 'Rangpur',
     postalCode: '5400',
-    preferredShippingMethod: 'Nationwide Standard (3-5 days)',
+    preferredShippingMethod: demoShippingMethodLabel(
+      'Nationwide Standard (3-5 days)',
+      'Outside Dhaka — standard (৩–৭ working days)',
+    ),
     slaLabel: '3-5 business days',
     codEligible: true,
   },
@@ -571,7 +673,27 @@ async function ensureGlobal(base, token, slug, body) {
   return patch.json
 }
 
-async function createOrderAndItem(base, token, { userId, product, address, stackKey, isMultivendor }) {
+/** Match checkout snapshot: single locale string from localized or plain name. */
+function displayProductName(product) {
+  const n = product?.name
+  if (typeof n === 'string') return n
+  if (n && typeof n === 'object') {
+    return n.en || n.bn || Object.values(n).find((v) => typeof v === 'string') || 'Product'
+  }
+  return 'Product'
+}
+
+function firstProductImageUrl(product) {
+  const img = product?.images?.[0]?.image
+  if (img && typeof img === 'object' && img.url) return img.url
+  return ''
+}
+
+async function createOrderAndItem(
+  base,
+  token,
+  { userId, product, address, stackKey, isMultivendor, buyer },
+) {
   if (!userId || !product?.id) return null
   const now = new Date()
   const logistics = BANGLADESH_LOGISTICS_PROFILES[Math.floor(Math.random() * BANGLADESH_LOGISTICS_PROFILES.length)]
@@ -580,6 +702,10 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
   const unitPrice = Number(product.basePrice || 0)
   const qty = 1
   const total = unitPrice * qty
+  const buyerName =
+    buyer && (buyer.firstName || buyer.lastName)
+      ? `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim()
+      : null
   const addressSnapshot = {
     firstName: address.firstName,
     lastName: address.lastName,
@@ -605,10 +731,16 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
       taxTotal: 0,
       discountTotal: 0,
       grandTotal: total,
-      currency: 'USD',
+      currency: seedDemoCurrency(),
       paymentStatus: 'paid',
       placedAt: now.toISOString(),
       notes: `Seeded order for account history and review eligibility. District=${logistics.district}; Area=${logistics.area}; SLA=${logistics.slaLabel}; PaymentMode=${logistics.codEligible ? 'cod' : 'prepaid'}.`,
+      buyerSnapshot: {
+        email: buyer?.email || null,
+        name: buyerName,
+        phone: address?.phone || null,
+        locale: buyer?.locale || 'en',
+      },
     },
   })
   const orderDoc = orderRes.json?.doc ?? orderRes.json
@@ -618,6 +750,8 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
   if (isMultivendor) {
     const tenantRaw = product?.tenant
     const tenantId = tenantRaw && typeof tenantRaw === 'object' ? tenantRaw.id : tenantRaw
+    const tenantNameSnapshot =
+      tenantRaw && typeof tenantRaw === 'object' && tenantRaw.name ? String(tenantRaw.name) : null
     if (tenantId) {
       const subOrderRes = await request(base, '/api/sub-orders', {
         method: 'POST',
@@ -625,6 +759,7 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
         body: {
           parentOrder: orderDoc.id,
           tenant: tenantId,
+          tenantNameSnapshot,
           subOrderNumber: `${orderNumber}-A`,
           status: 'delivered',
           subtotal: total,
@@ -648,15 +783,19 @@ async function createOrderAndItem(base, token, { userId, product, address, stack
   const itemPayload = {
     order: orderDoc.id,
     product: product.id,
-    productName: product.name,
+    productName: displayProductName(product),
+    variantName: '',
     sku: product.sku || `SKU-${product.slug?.toUpperCase?.() || 'DEMO'}`,
     quantity: qty,
     unitPrice,
     totalPrice: total,
+    productImage: firstProductImageUrl(product),
   }
   if (subOrderId) {
     itemPayload.subOrder = subOrderId
     itemPayload.tenant = product?.tenant?.id || product?.tenant
+    const tn = product?.tenant && typeof product.tenant === 'object' && product.tenant.name
+    if (tn) itemPayload.vendorNameSnapshot = String(tn)
   }
   const itemRes = await request(base, '/api/order-items', { method: 'POST', token, body: itemPayload })
   const itemDoc = itemRes.json?.doc ?? itemRes.json
@@ -707,13 +846,40 @@ async function uploadRemoteImage(base, token, url, filename, alt) {
     return null
   }
   try {
-    const imgRes = await fetch(url)
-    if (!imgRes.ok) {
-      console.warn('Image download failed:', url.slice(0, 80), imgRes.status)
-      return null
+    let buf = null
+    let type = 'image/jpeg'
+
+    if (String(url).startsWith('local://')) {
+      const localName = String(url).replace(/^local:\/\//, '')
+      const localDir = process.env.DEMO_LOCAL_IMAGE_DIR
+      if (!localDir) {
+        console.warn('DEMO_LOCAL_IMAGE_DIR is required for local:// image source', localName)
+        return null
+      }
+      const localPath = join(localDir, localName)
+      if (!existsSync(localPath)) {
+        console.warn('Local image missing:', localPath)
+        return null
+      }
+      buf = Buffer.from(readFileSync(localPath))
+      const ext = (localName.split('.').pop() || '').toLowerCase()
+      const mimeByExt = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        webp: 'image/webp',
+      }
+      type = mimeByExt[ext] || 'image/jpeg'
+    } else {
+      const imgRes = await fetch(url)
+      if (!imgRes.ok) {
+        console.warn('Image download failed:', String(url).slice(0, 80), imgRes.status)
+        return null
+      }
+      buf = Buffer.from(await imgRes.arrayBuffer())
+      type = imgRes.headers.get('content-type') || 'image/jpeg'
     }
-    const buf = Buffer.from(await imgRes.arrayBuffer())
-    const type = imgRes.headers.get('content-type') || 'image/jpeg'
+
     const form = new FormData()
     form.append('file', new Blob([buf], { type }), filename)
     if (alt) form.append('alt', alt)
@@ -1249,6 +1415,382 @@ async function ensureVendorProfile(base, token, tenantDoc, profile) {
   return null
 }
 
+/**
+ * Demo public stores — addresses and coverage use Bangladesh divisions/thanas (BBS-style labels).
+ */
+const DEMO_STORES = [
+  {
+    code: 'STORE-DHAKA-NORTH',
+    name: 'Uttara Outlet — Dhaka',
+    sortPriority: 0,
+    slug: 'dhaka-north',
+    isPublicStore: true,
+    isActive: true,
+    address: {
+      street: 'Plot 7, Sector 10, Uttara',
+      city: 'Dhaka',
+      state: 'Dhaka Division',
+      country: 'BD',
+      postalCode: '1230',
+    },
+    storeDetails: {
+      contactEmail: 'uttara.dhaka@bscommerce.demo',
+      contactPhone: '+880 1712-000101',
+      operatingHours: 'Sat–Thu 10:00–21:00 (Fri 15:00–21:00)',
+      coverageArea: [
+        { value: 'Uttara' },
+        { value: 'Gulshan' },
+        { value: 'Banani' },
+        { value: 'Baridhara' },
+        { value: 'Airport' },
+      ],
+    },
+  },
+  {
+    code: 'STORE-DHAKA-SOUTH',
+    name: 'Dhanmondi Outlet — Dhaka',
+    sortPriority: 1,
+    slug: 'dhaka-south',
+    isPublicStore: true,
+    isActive: true,
+    address: {
+      street: '45 Mirpur Road, Dhanmondi',
+      city: 'Dhaka',
+      state: 'Dhaka Division',
+      country: 'BD',
+      postalCode: '1205',
+    },
+    storeDetails: {
+      contactEmail: 'dhanmondi.dhaka@bscommerce.demo',
+      contactPhone: '+880 1712-000202',
+      operatingHours: 'Sat–Thu 10:00–20:00 (Fri 14:30–20:00)',
+      coverageArea: [
+        { value: 'Dhanmondi' },
+        { value: 'Mohammadpur' },
+        { value: 'Kalabagan' },
+        { value: 'Lalmatia' },
+        { value: 'Old Dhaka' },
+      ],
+    },
+  },
+  {
+    code: 'STORE-CHITTAGONG',
+    name: 'Agrabad Outlet — Chattogram',
+    sortPriority: 2,
+    slug: 'chittagong',
+    isPublicStore: true,
+    isActive: true,
+    address: {
+      street: 'Commercial Plot, Agrabad C/A',
+      city: 'Chattogram',
+      state: 'Chattogram Division',
+      country: 'BD',
+      postalCode: '4100',
+    },
+    storeDetails: {
+      contactEmail: 'agrabad.ctg@bscommerce.demo',
+      contactPhone: '+880 1812-000303',
+      operatingHours: 'Sat–Thu 9:30–20:30 (Fri 15:00–20:30)',
+      coverageArea: [{ value: 'Agrabad' }, { value: 'Halishahar' }, { value: 'Nasirabad' }, { value: 'GEC Circle' }],
+    },
+  },
+]
+
+async function ensureGeoSubdivision(base, token, countryId, name, code, tier, extra = {}) {
+  const { status, json } = await request(
+    base,
+    `/api/geo-subdivisions?where[code][equals]=${encodeURIComponent(code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]) return json.docs[0]
+  const pr = await request(base, '/api/geo-subdivisions', {
+    method: 'POST',
+    token,
+    body: {
+      country: countryId,
+      name,
+      code,
+      defaultServiceTier: tier,
+      isActive: true,
+      ...extra,
+    },
+  })
+  if ([200, 201].includes(pr.status)) return pr.json?.doc ?? pr.json
+  console.warn('geo-subdivisions create failed', code, pr.status)
+  return null
+}
+
+async function ensureGeoLocality(base, token, subdivisionId, name, code, tier, extra = {}) {
+  const { status, json } = await request(
+    base,
+    `/api/geo-localities?where[and][0][subdivision][equals]=${encodeURIComponent(subdivisionId)}&where[and][1][code][equals]=${encodeURIComponent(code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]) return json.docs[0]
+  const pr = await request(base, '/api/geo-localities', {
+    method: 'POST',
+    token,
+    body: {
+      subdivision: subdivisionId,
+      name,
+      code,
+      serviceTier: tier,
+      isActive: true,
+      ...extra,
+    },
+  })
+  if ([200, 201].includes(pr.status)) return pr.json?.doc ?? pr.json
+  console.warn('geo-localities create failed', code, pr.status)
+  return null
+}
+
+async function ensureStockLocationServiceArea(base, token, stockLocId, subdivisionId, localityId) {
+  const { status, json } = await request(
+    base,
+    `/api/stock-location-service-areas?where[stockLocation][equals]=${encodeURIComponent(stockLocId)}&limit=80`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.length) {
+    const found = json.docs.find((d) => {
+      const sid = typeof d.subdivision === 'object' ? d.subdivision?.id : d.subdivision
+      const lid = typeof d.locality === 'object' ? d.locality?.id : d.locality
+      return (
+        String(sid) === String(subdivisionId) &&
+        String(lid || '') === String(localityId ?? '')
+      )
+    })
+    if (found) return found
+  }
+  const pr = await request(base, '/api/stock-location-service-areas', {
+    method: 'POST',
+    token,
+    body: {
+      stockLocation: stockLocId,
+      subdivision: subdivisionId,
+      ...(localityId != null && localityId !== ''
+        ? { locality: localityId }
+        : {}),
+      sortOrder: 0,
+    },
+  })
+  if ([200, 201].includes(pr.status)) return pr.json?.doc ?? pr.json
+  console.warn('stock-location-service-areas create failed', pr.status)
+  return null
+}
+
+/**
+ * Seeds geo-countries / geo-subdivisions / geo-localities for Bangladesh demo
+ * (district-level subdivisions + thana/upazila-style localities) and links demo outlets.
+ */
+async function seedGeographyServiceAreas(base, token, demoStoreLocations) {
+  if (!demoStoreLocations?.length) return
+
+  const probe = await request(base, '/api/geo-countries?limit=1', { token })
+  if (probe.status !== 200 || probe.json?.error) {
+    console.log('Geography collections unavailable (set GEOGRAPHY_ENABLED=true); skip geo seed')
+    return
+  }
+
+  let country = probe.json?.docs?.[0]
+  if (!country) {
+    const cr = await request(base, '/api/geo-countries', {
+      method: 'POST',
+      token,
+      body: { name: 'Bangladesh', isoCode: 'BD', isActive: true },
+    })
+    if (![200, 201].includes(cr.status)) {
+      console.warn('geo-countries create:', cr.status)
+      return
+    }
+    country = cr.json?.doc ?? cr.json
+  }
+  if (!country?.id) return
+
+  /** Bangladesh divisions with realistic nationwide baseline coverage for produce demo flows. */
+  const subdivisionSpecs = [
+    { code: 'BD-DHA', name: 'Dhaka', tier: 'standard' },
+    { code: 'BD-CTG', name: 'Chattogram', tier: 'standard' },
+    { code: 'BD-SYL', name: 'Sylhet', tier: 'standard' },
+    { code: 'BD-RAJ', name: 'Rajshahi', tier: 'standard' },
+    { code: 'BD-KHU', name: 'Khulna', tier: 'standard' },
+    { code: 'BD-BAR', name: 'Barishal', tier: 'extended' },
+    { code: 'BD-RNG', name: 'Rangpur', tier: 'extended' },
+    { code: 'BD-MYM', name: 'Mymensingh', tier: 'standard' },
+  ]
+
+  const subdivisionByCode = new Map()
+  for (const s of subdivisionSpecs) {
+    const { code, name, tier, ...extra } = s
+    const doc = await ensureGeoSubdivision(base, token, country.id, name, code, tier, extra)
+    if (doc?.id) subdivisionByCode.set(code, doc)
+  }
+
+  const dhakaSub = subdivisionByCode.get('BD-DHA')
+  const ctgSub = subdivisionByCode.get('BD-CTG')
+  if (!dhakaSub?.id || !ctgSub?.id) return
+
+  /** Major district/city localities by division for realistic address hierarchy. */
+  const localityRows = [
+    // Dhaka division
+    ['BD-DHA', 'DHA-DHK', 'Dhaka Sadar', 'standard'],
+    ['BD-DHA', 'DHA-GAZ', 'Gazipur Sadar', 'standard'],
+    ['BD-DHA', 'DHA-NRG', 'Narayanganj Sadar', 'standard'],
+    ['BD-DHA', 'DHA-UTT', 'Uttara', 'standard'],
+    ['BD-DHA', 'DHA-DHN', 'Dhanmondi', 'standard'],
+    ['BD-DHA', 'DHA-GLS', 'Gulshan', 'standard'],
+    ['BD-DHA', 'DHA-MRP', 'Mirpur', 'standard'],
+    // Chattogram
+    ['BD-CTG', 'CTG-CTS', 'Chattogram Sadar', 'standard'],
+    ['BD-CTG', 'CTG-CXB', "Cox's Bazar Sadar", 'extended'],
+    ['BD-CTG', 'CTG-COM', 'Cumilla Sadar', 'standard'],
+    ['BD-CTG', 'CTG-AGR', 'Agrabad', 'standard'],
+    ['BD-CTG', 'CTG-PAN', 'Panchlaish', 'standard'],
+    // Sylhet
+    ['BD-SYL', 'SYL-SYS', 'Sylhet Sadar', 'standard'],
+    ['BD-SYL', 'SYL-MBV', 'Moulvibazar Sadar', 'standard'],
+    ['BD-SYL', 'SYL-ZIN', 'Zindabazar', 'standard'],
+    // Rajshahi
+    ['BD-RAJ', 'RAJ-RJS', 'Rajshahi Sadar', 'standard'],
+    ['BD-RAJ', 'RAJ-PAB', 'Pabna Sadar', 'standard'],
+    ['BD-RAJ', 'RAJ-BOA', 'Boalia', 'standard'],
+    // Khulna
+    ['BD-KHU', 'KHU-KHS', 'Khulna Sadar', 'standard'],
+    ['BD-KHU', 'KHU-JSR', 'Jashore Sadar', 'standard'],
+    ['BD-KHU', 'KHU-SON', 'Sonadanga', 'standard'],
+    // Barishal (extended)
+    ['BD-BAR', 'BAR-BRS', 'Barishal Sadar', 'extended'],
+    ['BD-BAR', 'BAR-BHL', 'Bhola Sadar', 'extended'],
+    ['BD-BAR', 'BAR-PTU', 'Patuakhali Sadar', 'standard'],
+    // Rangpur (extended)
+    ['BD-RNG', 'RNG-RPS', 'Rangpur Sadar', 'extended'],
+    ['BD-RNG', 'RNG-DNJ', 'Dinajpur Sadar', 'extended'],
+    // Mymensingh
+    ['BD-MYM', 'MYM-MYS', 'Mymensingh Sadar', 'standard'],
+    ['BD-MYM', 'MYM-JML', 'Jamalpur Sadar', 'standard'],
+  ]
+
+  const localityByCode = new Map()
+  for (const [subCode, locCode, locName, locTier] of localityRows) {
+    const sub = subdivisionByCode.get(subCode)
+    if (!sub?.id) continue
+    const extra = {}
+    if (locTier === 'extended') {
+      extra.extendedFeeNote = 'Remote coastal route: may include rural courier handoff.'
+      extra.extendedLeadTimeNote = 'Typical +1 business day vs Chattogram hub.'
+    }
+    const loc = await ensureGeoLocality(
+      base,
+      token,
+      sub.id,
+      locName,
+      locCode,
+      locTier,
+      extra,
+    )
+    if (loc?.id) localityByCode.set(locCode, loc)
+  }
+
+  const locUtt = localityByCode.get('DHA-UTT')
+  const locDhn = localityByCode.get('DHA-DHN')
+  const locAgr = localityByCode.get('CTG-AGR')
+  if (!locUtt?.id || !locDhn?.id || !locAgr?.id) return
+
+  const byCode = Object.fromEntries(
+    demoStoreLocations.filter(Boolean).map((l) => [l.code, l]),
+  )
+
+  const mappings = [
+    { code: 'STORE-DHAKA-NORTH', subdivision: dhakaSub, locality: locUtt },
+    { code: 'STORE-DHAKA-SOUTH', subdivision: dhakaSub, locality: locDhn },
+    { code: 'STORE-CHITTAGONG', subdivision: ctgSub, locality: locAgr },
+  ]
+
+  const coverageByStore = {
+    'STORE-DHAKA-NORTH': ['BD-DHA', 'BD-MYM', 'BD-RNG'],
+    'STORE-DHAKA-SOUTH': ['BD-DHA', 'BD-RAJ', 'BD-KHU', 'BD-BAR'],
+    'STORE-CHITTAGONG': ['BD-CTG', 'BD-SYL'],
+  }
+  for (const [storeCode, subCodes] of Object.entries(coverageByStore)) {
+    for (const subCode of subCodes) {
+      const sub = subdivisionByCode.get(subCode)
+      if (!sub?.id) continue
+      mappings.push({ code: storeCode, subdivision: sub, locality: null })
+    }
+  }
+
+  const focusedLocalityMap = [
+    ['STORE-DHAKA-NORTH', ['DHA-GAZ', 'DHA-MRP', 'RNG-RPS', 'MYM-MYS']],
+    ['STORE-DHAKA-SOUTH', ['RAJ-BOA', 'KHU-SON', 'BAR-BRS']],
+    ['STORE-CHITTAGONG', ['CTG-CXB', 'CTG-COM', 'SYL-ZIN']],
+  ]
+  for (const [storeCode, locCodes] of focusedLocalityMap) {
+    for (const locCode of locCodes) {
+      const loc = localityByCode.get(locCode)
+      if (!loc?.id) continue
+      const subId = typeof loc.subdivision === 'object' ? loc.subdivision?.id : loc.subdivision
+      const sub = Array.from(subdivisionByCode.values()).find((s) => String(s.id) === String(subId))
+      if (!sub?.id) continue
+      mappings.push({ code: storeCode, subdivision: sub, locality: loc })
+    }
+  }
+
+  for (const m of mappings) {
+    const stockLoc = byCode[m.code]
+    if (!stockLoc?.id) continue
+    const localityId = m.locality == null ? null : m.locality.id
+    await ensureStockLocationServiceArea(base, token, stockLoc.id, m.subdivision.id, localityId)
+  }
+  console.log(
+    'Geography (BD):',
+    subdivisionByCode.size,
+    'subdivisions,',
+    localityByCode.size,
+    'localities, demo service areas linked',
+  )
+}
+
+async function ensureDemoStoreLocation(base, token, storeDef, tenantId) {
+  const { status, json } = await request(
+    base,
+    `/api/stock-locations?where[code][equals]=${encodeURIComponent(storeDef.code)}&limit=1`,
+    { token },
+  )
+  if (status === 200 && json?.docs?.[0]) {
+    const existing = json.docs[0]
+    const patch = {
+      name: storeDef.name,
+      slug: storeDef.slug,
+      isPublicStore: storeDef.isPublicStore,
+      isActive: storeDef.isActive,
+      address: storeDef.address,
+      storeDetails: storeDef.storeDetails,
+      ...(storeDef.sortPriority != null ? { sortPriority: storeDef.sortPriority } : {}),
+    }
+    if (tenantId) patch.tenant = tenantId
+    await request(base, `/api/stock-locations/${existing.id}`, { method: 'PATCH', token, body: patch })
+    console.log('Updated store location', storeDef.code)
+    return existing
+  }
+  const body = { ...storeDef }
+  if (tenantId) body.tenant = tenantId
+  const lr = await request(base, '/api/stock-locations', { method: 'POST', token, body })
+  if ([200, 201].includes(lr.status)) {
+    console.log('Created store location', storeDef.code)
+    return lr.json?.doc ?? lr.json
+  }
+  console.warn('Store location create failed:', storeDef.code, lr.status)
+  return null
+}
+
+async function seedDemoStores(base, token, tenantId) {
+  const locations = []
+  for (const def of DEMO_STORES) {
+    const loc = await ensureDemoStoreLocation(base, token, def, tenantId)
+    if (loc) locations.push(loc)
+  }
+  return locations
+}
+
 async function getOrCreateStockLocation(base, token, tenantId, tenantSlug, multivendor) {
   if (!multivendor) {
     const code = 'WH-DEMO-SINGLE'
@@ -1508,12 +2050,22 @@ async function seedMultivendorStack(base, token) {
     if (doc) categoryBySlug.set(categorySlug, doc)
   }
 
+  let firstTenantIdForStores = null
+  let demoStoreLocations = []
+  let storeProductIndex = 0
+
   for (const v of manifest.multivendor.vendors) {
     const tenant = await ensureTenant(base, token, {
       name: cleanName(v.tenantName),
       slug: cleanSlug(v.tenantSlug),
     })
     if (!tenant?.id) continue
+
+    if (!firstTenantIdForStores) {
+      firstTenantIdForStores = tenant.id
+      demoStoreLocations = await seedDemoStores(base, token, tenant.id)
+      await seedGeographyServiceAreas(base, token, demoStoreLocations)
+    }
 
     const logoId = await uploadRemoteImage(
       base,
@@ -1544,6 +2096,7 @@ async function seedMultivendorStack(base, token) {
     })
 
     const location = await getOrCreateStockLocation(base, token, tenant.id, v.tenantSlug, true)
+    const isStoreOwner = tenant.id === firstTenantIdForStores
     if (process.env.INVENTORY_ENABLED === 'false') continue
 
     for (const p of v.products) {
@@ -1564,8 +2117,8 @@ async function seedMultivendorStack(base, token) {
       const productBody = {
         name: cleanName(p.name),
         slug: normalizedSlug,
-        basePrice: p.basePrice,
-        currency: 'USD',
+        basePrice: seedProductAmount(p.basePrice),
+        currency: seedDemoCurrency(),
         status: 'published',
         tenant: tenant.id,
         shortDescription: cleanName(p.shortDescription),
@@ -1582,6 +2135,16 @@ async function seedMultivendorStack(base, token) {
       await ensureProductPrimaryImage(base, token, doc, imageId, normalizedSlug)
       if (doc?.id && location?.id) {
         await ensureStockLevel(base, token, doc.id, location.id)
+        if (isStoreOwner) {
+          for (let si = 0; si < demoStoreLocations.length; si++) {
+            const storeLoc = demoStoreLocations[si]
+            if (!storeLoc?.id) continue
+            const skip = (si === 1 && storeProductIndex % 3 === 0)
+              || (si === 2 && storeProductIndex % 4 === 0)
+            if (!skip) await ensureStockLevel(base, token, doc.id, storeLoc.id)
+          }
+          storeProductIndex++
+        }
         await seedVariantsForProduct(base, token, doc, imageId, true)
       }
     }
@@ -1607,8 +2170,10 @@ async function seedMultivendorStack(base, token) {
         const created = await ensureProduct(base, token, {
           name: bulkName,
           slug: bulkSlug,
-          basePrice: Number((Number(p.basePrice || 0) * (series.key === 'plus' ? 1.12 : series.key === 'max' ? 1.3 : 1.05)).toFixed(2)),
-          currency: 'USD',
+          basePrice: seedProductAmount(
+            Number((Number(p.basePrice || 0) * (series.key === 'plus' ? 1.12 : series.key === 'max' ? 1.3 : 1.05)).toFixed(2)),
+          ),
+          currency: seedDemoCurrency(),
           status: 'published',
           tenant: tenant.id,
           shortDescription: `${cleanName(p.shortDescription)} ${series.label} edition with expanded features.`,
@@ -1627,6 +2192,16 @@ async function seedMultivendorStack(base, token) {
         await ensureProductPrimaryImage(base, token, created, imageId, bulkSlug)
         if (created?.id && location?.id) {
           await ensureStockLevel(base, token, created.id, location.id)
+          if (isStoreOwner) {
+            for (let si = 0; si < demoStoreLocations.length; si++) {
+              const storeLoc = demoStoreLocations[si]
+              if (!storeLoc?.id) continue
+              const skip = (si === 1 && storeProductIndex % 3 === 0)
+                || (si === 2 && storeProductIndex % 4 === 0)
+              if (!skip) await ensureStockLevel(base, token, created.id, storeLoc.id)
+            }
+            storeProductIndex++
+          }
           await seedVariantsForProduct(base, token, created, imageId, true)
         }
       }
@@ -1657,6 +2232,8 @@ async function seedSingleVendorStack(base, token) {
   }
 
   const location = await getOrCreateStockLocation(base, token, null, null, false)
+  const demoStoreLocations = await seedDemoStores(base, token, null)
+  await seedGeographyServiceAreas(base, token, demoStoreLocations)
   if (process.env.INVENTORY_ENABLED === 'false') return
 
   async function seedSvProduct(p, filenamePrefix) {
@@ -1673,8 +2250,8 @@ async function seedSingleVendorStack(base, token) {
     const created = await ensureProduct(base, token, {
       name: cleanName(p.name),
       slug: normalizedSlug,
-      basePrice: p.basePrice,
-      currency: 'USD',
+      basePrice: seedProductAmount(p.basePrice),
+      currency: seedDemoCurrency(),
       status: 'published',
       shortDescription: cleanName(p.shortDescription),
       description: buildProductDescription(
@@ -1688,6 +2265,9 @@ async function seedSingleVendorStack(base, token) {
     await ensureProductPrimaryImage(base, token, created, imageId, normalizedSlug)
     if (created?.id && location?.id) {
       await ensureStockLevel(base, token, created.id, location.id)
+      for (const storeLoc of demoStoreLocations) {
+        if (storeLoc?.id) await ensureStockLevel(base, token, created.id, storeLoc.id)
+      }
       await seedVariantsForProduct(base, token, created, imageId, false)
     }
   }
@@ -1718,19 +2298,53 @@ async function seedSingleVendorStack(base, token) {
 async function seedPhase2(base, token, isMultivendor) {
   console.log('\n--- Phase 2: globals, personas, addresses, coupons, orders, reviews ---')
 
+  const bdDemo = envBool('SEED_BD_SHIPPING', true)
+  const announceMv = bdDemo
+    ? 'এই সপ্তাহের পিকস: নির্বাচিত স্টোরে ৳9,000+ অর্ডারে ফ্রি শিপিং।'
+    : 'Marketplace picks this week: free shipping over $80 on selected stores.'
+  const announceSv = bdDemo
+    ? 'চলছে অফার: ৳7,000+ অর্ডারে ফ্রি শিপিং — প্রতিদিন নতুন আসছে।'
+    : 'Free shipping over $60 this week and new arrivals every day.'
+
   await ensureGlobal(base, token, 'header', {
     siteName: 'BS Commerce',
     navLinks: [
-      { label: 'Home', url: '/en' },
-      { label: 'Products', url: '/en/products' },
-      { label: 'Categories', url: '/en/categories' },
-      ...(isMultivendor ? [{ label: 'Vendors', url: '/en/vendors' }] : []),
+      {
+        enabled: true,
+        label: 'Home',
+        url: '/en',
+        showInDesktopNav: true,
+        showInMobileDrawer: true,
+      },
+      {
+        enabled: true,
+        label: 'Products',
+        url: '/en/products',
+        showInDesktopNav: true,
+        showInMobileDrawer: true,
+      },
+      {
+        enabled: true,
+        label: 'Categories',
+        url: '/en/categories',
+        showInDesktopNav: true,
+        showInMobileDrawer: true,
+      },
+      ...(isMultivendor
+        ? [
+            {
+              enabled: true,
+              label: 'Vendors',
+              url: '/en/vendors',
+              showInDesktopNav: true,
+              showInMobileDrawer: true,
+            },
+          ]
+        : []),
     ],
     announcementBar: {
       enabled: true,
-      message: isMultivendor
-        ? 'Marketplace picks this week: free shipping over $80 on selected stores.'
-        : 'Free shipping over $60 this week and new arrivals every day.',
+      message: isMultivendor ? announceMv : announceSv,
       backgroundColor: '#0F172A',
       textColor: '#FFFFFF',
     },
@@ -1765,7 +2379,7 @@ async function seedPhase2(base, token, isMultivendor) {
     ],
   })
 
-  for (const c of PHASE2.coupons) {
+  for (const c of adaptPhase2CouponsForBdDemo(PHASE2.coupons)) {
     await ensureCoupon(base, token, c)
   }
 
@@ -1798,7 +2412,9 @@ async function seedPhase2(base, token, isMultivendor) {
       {
         blockType: 'richText',
         content: lexicalParagraph(
-          'Orders are processed daily. Standard shipping targets 3-7 business days and express shipping targets 1-3 business days for eligible regions.',
+          bdDemo
+            ? 'অর্ডার প্রতিদিন প্রসেস করা হয়। ঢাকা মেট্রোতে সাধারণত পরের কর্মদিবসে হাতে পৌঁছায়; ঢাকার বাইরে সাধারণ ৩–৭ কর্মদিবস, এক্সপ্রেস ২–৩ কর্মদিবস (এলাকা ও কুরিয়ার ভেদে)।'
+            : 'Orders are processed daily. Standard shipping targets 3-7 business days and express shipping targets 1-3 business days for eligible regions.',
         ),
       },
     ],
@@ -1833,6 +2449,7 @@ async function seedPhase2(base, token, isMultivendor) {
       address: addressSeed,
       stackKey: isMultivendor ? 'MV' : 'SV',
       isMultivendor,
+      buyer: u,
     })
     if (createdOrder?.order?.id) {
       const existingTx = await request(
@@ -1850,7 +2467,7 @@ async function seedPhase2(base, token, isMultivendor) {
             provider: logistics.codEligible ? 'cash-on-delivery' : 'sslcommerz',
             providerTransactionId: `TX-${createdOrder.order.orderNumber}`,
             amount: Number(createdOrder.order.grandTotal || 0),
-            currency: 'USD',
+            currency: seedDemoCurrency(),
             status: 'succeeded',
             metadata: { source: 'seed' },
           },
@@ -1906,11 +2523,26 @@ async function seedStack(label, cfg, multivendor) {
   }
 }
 
+const stackFilterRaw = String(process.env.SEED_STACKS || 'sv,mv')
+  .split(',')
+  .map((v) => v.trim().toLowerCase())
+  .filter(Boolean)
+const runSv = stackFilterRaw.includes('sv') || stackFilterRaw.includes('single') || stackFilterRaw.includes('single-vendor')
+const runMv =
+  stackFilterRaw.includes('mv') ||
+  stackFilterRaw.includes('multi') ||
+  stackFilterRaw.includes('multivendor')
+
+const targets = []
+if (runSv) targets.push({ label: 'Single-vendor', cfg: SV, multivendor: false })
+if (runMv) targets.push({ label: 'Multivendor', cfg: MV, multivendor: true })
+if (targets.length === 0) {
+  console.error('SEED_STACKS must include at least one of: sv,mv')
+  process.exit(1)
+}
+
 let anyOk = false
-for (const { label, cfg, multivendor } of [
-  { label: 'Single-vendor', cfg: SV, multivendor: false },
-  { label: 'Multivendor', cfg: MV, multivendor: true },
-]) {
+for (const { label, cfg, multivendor } of targets) {
   try {
     await seedStack(label, cfg, multivendor)
     anyOk = true
@@ -1922,7 +2554,7 @@ for (const { label, cfg, multivendor } of [
 
 if (!anyOk) {
   console.error(
-    '\nNo API was seeded. Start backends (e.g. port 3000 single-vendor, 3010 multivendor) or check SEED_ADMIN_* credentials.',
+    '\nNo API was seeded. Start backends (e.g. port 3000 single-vendor, 4000 multivendor host) or check SEED_ADMIN_* credentials.',
   )
   process.exit(1)
 }

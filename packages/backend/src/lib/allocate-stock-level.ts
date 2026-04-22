@@ -10,6 +10,8 @@ export type AllocateStockLevelArgs = {
   quantity: number
   /** Product owner tenant; null = platform-owned product */
   tenantId: string | null
+  /** When set, only allocate from this specific stock-location (store-scoped checkout). */
+  storeLocationId?: string | null
 }
 
 export type AllocateStockLevelResult = { stockLevelId: string } | { error: string }
@@ -60,7 +62,7 @@ export async function allocateStockLevelForLine(
   args: AllocateStockLevelArgs,
   _req?: PayloadRequest
 ): Promise<AllocateStockLevelResult> {
-  const { productId, variantId, quantity, tenantId } = args
+  const { productId, variantId, quantity, tenantId, storeLocationId } = args
   if (quantity < 1) {
     return { error: 'Invalid quantity for stock allocation' }
   }
@@ -80,7 +82,12 @@ export async function allocateStockLevelForLine(
   const candidates = (docs as Array<Record<string, unknown>>)
     .filter((sl) => {
       const loc = sl.location
-      return rowMatchesTenantFilter(loc, tenantId, multivendor)
+      if (!rowMatchesTenantFilter(loc, tenantId, multivendor)) return false
+      if (storeLocationId) {
+        const locId = loc && typeof loc === 'object' ? (loc as { id?: string }).id : String(loc)
+        if (locId !== storeLocationId) return false
+      }
+      return true
     })
     .sort((a, b) => String(a.id).localeCompare(String(b.id)))
 

@@ -33,6 +33,16 @@ test('should return env value for default currency', async () => {
   assert.equal(getDefaultCurrency(), 'BDT')
 })
 
+test('when DEFAULT_CURRENCY is not in SUPPORTED_CURRENCIES, uses first supported code', async () => {
+  process.env.SUPPORTED_CURRENCIES = 'BDT'
+  delete process.env.DEFAULT_CURRENCY
+  const url = new URL('../../../src/lib/currencies.ts', import.meta.url)
+  url.searchParams.set('v', String(Date.now()))
+  // @ts-ignore fresh module
+  const { getDefaultCurrency } = await import(url.href)
+  assert.equal(getDefaultCurrency(), 'BDT')
+})
+
 test('should return currency options as array of label/value objects', async () => {
   // @ts-ignore
   const { getCurrencyOptions } = await import('../../../src/lib/currencies.ts')

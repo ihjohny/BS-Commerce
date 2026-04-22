@@ -9,9 +9,9 @@ import {
   stockLevelTenantRead,
 } from '../../../src/access/is-admin-or-vendor-stock-tenant.ts'
 
-test('stockLocationTenantRead: unauthenticated', () => {
+test('stockLocationTenantRead: unauthenticated returns public store filter', () => {
   const r = stockLocationTenantRead({ req: {} } as never)
-  assert.equal(r, false)
+  assert.deepEqual(r, { isPublicStore: { equals: true } })
 })
 
 test('stockLocationTenantRead: admin', () => {
@@ -45,9 +45,9 @@ test('stockLocationTenantRead: vendor tenant object without id denied', () => {
   assert.equal(r, false)
 })
 
-test('stockLocationTenantRead: customer', () => {
+test('stockLocationTenantRead: customer returns public store filter', () => {
   const r = stockLocationTenantRead({ req: { user: { role: 'customer' } } } as never)
-  assert.equal(r, false)
+  assert.deepEqual(r, { isPublicStore: { equals: true } })
 })
 
 test('stockLevelTenantRead: vendor tenant filter uses nested location.tenant', () => {

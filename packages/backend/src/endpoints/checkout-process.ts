@@ -44,7 +44,7 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   if (limitResponse) return limitResponse
 
   const data = (await (req as Request).json?.().catch(() => ({}))) || {}
-  const { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment = false, idempotencyKey } = data
+  const { cartId, shippingAddress, billingAddress, guestEmail, guestPhone, simulatePayment = false, idempotencyKey } = data
 
   if (!cartId || !shippingAddress || !billingAddress) {
     return Response.json(
@@ -68,14 +68,46 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   }
 
   const userId = req.user?.id ?? undefined
-  if (!userId && !guestEmail) {
-    return Response.json({ error: 'Guest checkout requires guestEmail in body' }, { status: 400 })
+  if (!userId && !guestEmail && !guestPhone) {
+    return Response.json({ error: 'Guest checkout requires guestEmail or guestPhone in body' }, { status: 400 })
   }
 
   if (!userId && guestEmail) {
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (typeof guestEmail !== 'string' || !emailRe.test(guestEmail.trim())) {
       return Response.json({ error: 'guestEmail must be a valid email address' }, { status: 400 })
+    }
+  }
+
+  if (!userId && guestPhone) {
+    if (typeof guestPhone !== 'string' || guestPhone.trim().length < 5) {
+      return Response.json({ error: 'guestPhone must be a valid phone number' }, { status: 400 })
+    }
+  }
+
+  // Security: block guest checkout if email/phone belongs to an existing registered user
+  if (!userId) {
+    const orConditions: Record<string, unknown>[] = []
+    if (guestEmail) {
+      orConditions.push({ email: { equals: guestEmail.trim().toLowerCase() } })
+    }
+    if (guestPhone) {
+      orConditions.push({ phone: { equals: guestPhone.trim() } })
+    }
+    if (orConditions.length > 0) {
+      const existing = await req.payload.find({
+        collection: 'users',
+        where: orConditions.length === 1 ? orConditions[0] : { or: orConditions },
+        limit: 1,
+        depth: 0,
+        overrideAccess: true,
+      })
+      if (existing.totalDocs > 0) {
+        return Response.json(
+          { error: 'This email or phone number is already associated with an account. Please log in to continue checkout, or use a different email/phone.' },
+          { status: 409 },
+        )
+      }
     }
   }
 
@@ -86,7 +118,7 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   try {
     const result = await pc(
       req.payload,
-      { cartId, shippingAddress, billingAddress, guestEmail, simulatePayment: safeSimulatePayment, idempotencyKey },
+      { cartId, shippingAddress, billingAddress, guestEmail, guestPhone, simulatePayment: safeSimulatePayment, idempotencyKey },
       userId,
       req,
     )

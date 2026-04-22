@@ -1,8 +1,17 @@
-import type { CollectionConfig } from 'payload'
+import type { Access, CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
 import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 import { orderItemRelationId } from '../../../lib/order-item-relation-id'
 import { transferStockReservation } from '../../../lib/transfer-stock-reservation'
+
+/** Compare snapshot scalars; allow float tolerance for numbers. */
+function snapshotScalarEqual(incoming: unknown, previous: unknown): boolean {
+  if (incoming === previous) return true
+  if (typeof incoming === 'number' && typeof previous === 'number') {
+    return Math.abs(incoming - previous) < 1e-9
+  }
+  return false
+}
 
 /** True when PATCH value is the same as the stored document (Payload often merges full doc into `data`). */
 function vendorPatchValueUnchanged(incoming: unknown, previous: unknown): boolean {
@@ -13,6 +22,32 @@ function vendorPatchValueUnchanged(incoming: unknown, previous: unknown): boolea
   /* Both nullish: relation id is only null when val == null, so values are absent-equivalent. */
   if (inc == null && prev == null) return true
   return false
+}
+
+/**
+ * Line items must be readable by the owning customer so order detail APIs can populate `items`
+ * (snapshot fields). Admins/vendors keep existing rules.
+ */
+function orderItemsReadAccess(splitByVendor: boolean): Access {
+  return (args) => {
+    const user = args.req.user
+    if (!user) return false
+    if (user.role === 'admin') return true
+    if (user.role === 'customer') {
+      /* Where: line items for orders belonging to this customer (storefront order detail). */
+      return {
+        order: {
+          customer: {
+            equals: user.id,
+          },
+        },
+      } as any
+    }
+    if (splitByVendor) {
+      return isAdminOrVendorOwner(args)
+    }
+    return false
+  }
 }
 
 export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig {
@@ -95,6 +130,15 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
       type: 'text',
       admin: { description: 'Snapshot URL at time of purchase.' },
     },
+    ...(splitByVendor
+      ? [
+          {
+            name: 'vendorNameSnapshot',
+            type: 'text' as const,
+            admin: { description: 'Vendor display name at checkout (immutable).' },
+          },
+        ]
+      : []),
   ]
 
   return {
@@ -105,12 +149,12 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
         ? ['order', 'subOrder', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice']
         : ['order', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice'],
       group: 'Orders',
-      description: 'Line items for an order. Created at checkout from cart.',
+      description:
+        'Line items for an order. Created at checkout from cart. Commercial snapshots (title, SKU, price, qty) are immutable after create; admins may still change stock level for fulfillment routing. Shipping address, store, and totals live on the parent order / sub-order.',
     },
     access: {
       create: isAdmin,
-      // Vendors need read so relationship titles (itemLabel) resolve in admin when viewing sub-orders
-      read: splitByVendor ? isAdminOrVendorOwner : isAdmin,
+      read: orderItemsReadAccess(splitByVendor),
       update: splitByVendor ? isAdminOrVendorOwner : isAdmin,
       delete: isAdmin,
     },
@@ -118,6 +162,34 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
     timestamps: true,
     hooks: {
       beforeChange: [
+        ({ data, operation, originalDoc }) => {
+          if (operation !== 'update' || !data || !originalDoc) return data
+          const snapFields: string[] = [
+            'productName',
+            'variantName',
+            'sku',
+            'unitPrice',
+            'totalPrice',
+            'productImage',
+            'quantity',
+            'itemLabel',
+          ]
+          if (splitByVendor) snapFields.push('vendorNameSnapshot')
+          const orig = originalDoc as Record<string, unknown>
+          const patch = data as Record<string, unknown>
+          for (const key of snapFields) {
+            if (!(key in patch)) continue
+            if (snapshotScalarEqual(patch[key], orig[key])) continue
+            throw new Error(`Order line snapshots cannot be changed after creation (${key}).`)
+          }
+          const relKeys = ['order', 'subOrder', 'tenant', 'product', 'variant'] as const
+          for (const key of relKeys) {
+            if (!(key in patch)) continue
+            if (vendorPatchValueUnchanged(patch[key], orig[key])) continue
+            throw new Error(`Cannot change ${key} after order item creation.`)
+          }
+          return data
+        },
         ({ data, originalDoc, req, operation }) => {
           if (operation === 'update' && req.user?.role === 'vendor' && data && originalDoc) {
             const orig = originalDoc as Record<string, unknown>

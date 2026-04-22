@@ -21,17 +21,17 @@ test('read: vendor scoped to tenant string id', () => {
   assert.equal(r.id?.equals, 't-str')
 })
 
-test('read: vendor without tenant denied', () => {
+test('read: vendor without tenant sees all (storefront public tenant list)', () => {
   const read = Tenants.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
-  assert.equal(read({ req: { user: { role: 'vendor' } } }), false)
+  assert.equal(read({ req: { user: { role: 'vendor' } } }), true)
 })
 
-test('read: non-admin non-vendor denied', () => {
+test('read: customer sees all (storefront needs tenant metadata)', () => {
   const read = Tenants.access?.read as (args: { req: { user?: { role?: string } } }) => unknown
-  assert.equal(read({ req: { user: { role: 'customer' } } }), false)
+  assert.equal(read({ req: { user: { role: 'customer' } } }), true)
 })
 
-test('read: unauthenticated denied', () => {
+test('read: unauthenticated sees all (public store / vendor pages)', () => {
   const read = Tenants.access?.read as (args: { req: { user?: unknown } }) => unknown
-  assert.equal(read({ req: {} }), false)
+  assert.equal(read({ req: {} }), true)
 })

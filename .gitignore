@@ -17,6 +17,7 @@ out/
 .env.local
 .env.*.local
 .env.demo-seed
+.local-seed-images/
 
 # Payload CMS
 **/payload-types.ts

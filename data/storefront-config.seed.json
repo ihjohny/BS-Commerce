@@ -1,0 +1,78 @@
+{
+  "globals": {
+    "header": {
+      "siteName": "BS Commerce",
+      "navLinks": [
+        {
+          "enabled": true,
+          "label": "Home",
+          "url": "/en",
+          "showInDesktopNav": true,
+          "showInMobileDrawer": true
+        },
+        {
+          "enabled": true,
+          "label": "Products",
+          "url": "/en/products",
+          "showInDesktopNav": true,
+          "showInMobileDrawer": true
+        },
+        {
+          "enabled": true,
+          "label": "Categories",
+          "url": "/en/categories",
+          "showInDesktopNav": true,
+          "showInMobileDrawer": true
+        }
+      ],
+      "announcementBar": {
+        "enabled": false,
+        "message": "",
+        "backgroundColor": "#0F172A",
+        "textColor": "#FFFFFF"
+      }
+    },
+    "footer": {
+      "copyrightText": "© 2026 BS Commerce. All rights reserved.",
+      "columns": [
+        {
+          "heading": "Shop",
+          "links": [
+            { "label": "Products", "url": "/en/products" },
+            { "label": "Categories", "url": "/en/categories" }
+          ]
+        },
+        {
+          "heading": "Account",
+          "links": [
+            { "label": "Login", "url": "/en/auth/login", "visibility": "guest" },
+            { "label": "Register", "url": "/en/auth/register", "visibility": "guest" },
+            { "label": "Dashboard", "url": "/en/account", "visibility": "authenticated" }
+          ]
+        }
+      ],
+      "socialLinks": [],
+      "bottomLinks": []
+    }
+  },
+  "pages": [
+    {
+      "slug": "home-hero-banners",
+      "title": "Home hero banners",
+      "status": "published",
+      "layout": [
+        {
+          "blockType": "hero",
+          "heading": "Welcome",
+          "subheading": "Edit this page in the admin to configure home hero slides.",
+          "ctaLabel": "Browse products",
+          "ctaUrl": "/en/products"
+        }
+      ],
+      "meta": {
+        "title": "Home hero banners",
+        "description": "CMS-driven slides for the storefront home hero."
+      }
+    }
+  ]
+}

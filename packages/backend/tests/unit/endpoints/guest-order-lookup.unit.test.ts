@@ -73,7 +73,7 @@ test('should return 400 when guestEmail is only whitespace', async () => {
   const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
   assert.equal(res.status, 400)
   const json = await res.json()
-  assert.equal(json.error, 'guestEmail is required')
+  assert.equal(json.error, 'guestEmail or guestPhone is required')
 })
 
 test('should return 400 when orderNumber is missing', async () => {
@@ -93,7 +93,7 @@ test('should return 400 when guestEmail is missing', async () => {
   const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
   assert.equal(res.status, 400)
   const json = await res.json()
-  assert.equal(json.error, 'guestEmail is required')
+  assert.equal(json.error, 'guestEmail or guestPhone is required')
 })
 
 test('should return 404 when no matching guest order is found', async () => {
@@ -126,8 +126,8 @@ test('should query using normalized email and trimmed order number', async () =>
   const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
   assert.equal(res.status, 200)
   assert.equal(seenWhere.and[0].orderNumber.equals, 'ORD-123')
-  assert.equal(seenWhere.and[1].guestEmail.equals, 'guest@example.com')
-  assert.equal(seenWhere.and[2].customer.equals, null)
+  assert.equal(seenWhere.and[1].customer.equals, null)
+  assert.equal(seenWhere.and[2].guestEmail.equals, 'guest@example.com')
 })
 
 test('should return 200 with order payload when match exists', async () => {

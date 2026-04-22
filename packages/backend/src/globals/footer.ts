@@ -42,6 +42,20 @@ export const Footer: GlobalConfig = {
               type: 'text',
               required: true,
             },
+            {
+              name: 'visibility',
+              type: 'select',
+              defaultValue: 'public',
+              options: [
+                { label: 'Everyone', value: 'public' },
+                { label: 'Guests only (signed out)', value: 'guest' },
+                { label: 'Signed-in only', value: 'authenticated' },
+              ],
+              admin: {
+                description:
+                  'Storefront footer: who should see this link. Default is everyone.',
+              },
+            },
           ],
         },
       ],

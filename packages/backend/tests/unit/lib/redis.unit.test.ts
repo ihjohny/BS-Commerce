@@ -9,6 +9,8 @@ test('redisConfig exposes a URL string', () => {
 })
 
 test('cachedCollections flags expected collections', () => {
-  assert.equal(cachedCollections.products, true)
   assert.equal(cachedCollections.categories, true)
+  assert.equal(cachedCollections.pages, true)
+  assert.equal(cachedCollections.media, true)
+  assert.ok(!('products' in cachedCollections))
 })

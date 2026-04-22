@@ -11,7 +11,7 @@ import { Categories } from '../../../src/collections/categories.ts'
 // @ts-ignore resolved via tests/_helpers
 import { Media } from '../../../src/collections/media.ts'
 // @ts-ignore resolved via tests/_helpers
-import { Pages } from '../../../src/collections/pages.ts'
+import { Pages } from '../../../src/collections/pages/index.ts'
 
 test('Header global has expected slug', () => {
   assert.equal(Header.slug, 'header')
@@ -19,6 +19,20 @@ test('Header global has expected slug', () => {
 
 test('Footer global has expected slug', () => {
   assert.equal(Footer.slug, 'footer')
+})
+
+test('Footer column links include visibility select', () => {
+  const byName = (name: string) => (f: unknown) => (f as { name?: string }).name === name
+  const columnsField = Footer.fields?.find(byName('columns')) as
+    | { type?: string; fields?: unknown[] }
+    | undefined
+  assert.equal(columnsField?.type, 'array')
+  const linksField = columnsField?.fields?.find(byName('links')) as
+    | { type?: string; fields?: unknown[] }
+    | undefined
+  assert.equal(linksField?.type, 'array')
+  const visField = linksField?.fields?.find(byName('visibility')) as { type?: string } | undefined
+  assert.equal(visField?.type, 'select')
 })
 
 test('PlatformSettings access.read requires a user', () => {

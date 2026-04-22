@@ -1,0 +1,126 @@
+{
+  "name": "client-demo-produce-bd",
+  "version": 1,
+  "description": "Bangladesh-focused produce demo catalog with a single tenant and multi-location fulfillment.",
+  "imageAttribution": "Use local image pack under BS-Commerce/.local-seed-images/produce-bd (gitignored). URLs remain as optional fallback by downloader step.",
+  "imageLibrary": {
+    "bannerFresh": "local://bannerFresh.jpg",
+    "bannerFruit": "local://bannerFruit.jpg",
+    "bannerVeg": "local://bannerVeg.jpg",
+    "logoLeaf": "local://logoLeaf.jpg",
+    "logoMarket": "local://logoMarket.jpg",
+    "potato": "local://potato.jpg",
+    "onion": "local://onion.jpg",
+    "tomato": "local://tomato.jpg",
+    "cucumber": "local://cucumber.jpg",
+    "cauliflower": "local://cauliflower.jpg",
+    "eggplant": "local://eggplant.jpg",
+    "spinach": "local://spinach.jpg",
+    "greenChili": "local://greenChili.jpg",
+    "pumpkin": "local://pumpkin.jpg",
+    "beans": "local://beans.jpg",
+    "banana": "local://banana.jpg",
+    "mango": "local://mango.jpg",
+    "guava": "local://guava.jpg",
+    "papaya": "local://papaya.jpg",
+    "apple": "local://apple.jpg",
+    "orange": "local://orange.jpg",
+    "lemon": "local://lemon.jpg",
+    "dragonFruit": "local://dragonFruit.jpg",
+    "coriander": "local://coriander.jpg",
+    "mint": "local://mint.jpg",
+    "ginger": "local://ginger.jpg"
+  },
+  "categories": [
+    { "name": "Fresh Vegetables", "slug": "fresh-vegetables", "imageKey": "bannerVeg" },
+    { "name": "Fresh Fruits", "slug": "fresh-fruits", "imageKey": "bannerFruit" },
+    { "name": "Leafy Greens & Herbs", "slug": "leafy-greens-herbs", "imageKey": "bannerFresh" },
+    { "name": "Root Vegetables", "slug": "root-vegetables", "imageKey": "bannerFresh" }
+  ],
+  "shipping": {
+    "zones": [
+      { "name": "Bangladesh Nationwide", "countries": ["BD"], "isActive": true }
+    ],
+    "methods": [
+      {
+        "name": "Dhaka Metro Fresh Delivery",
+        "zoneName": "Bangladesh Nationwide",
+        "type": "flat",
+        "rate": 60,
+        "currency": "BDT",
+        "isActive": true
+      },
+      {
+        "name": "Nationwide Chilled Courier",
+        "zoneName": "Bangladesh Nationwide",
+        "type": "flat",
+        "rate": 120,
+        "currency": "BDT",
+        "isActive": true
+      }
+    ]
+  },
+  "multivendor": {
+    "vendors": [
+      {
+        "tenantName": "Shobuj Agro Foods",
+        "tenantSlug": "shobuj-agro-foods",
+        "profile": {
+          "displayName": "Shobuj Agro Foods",
+          "contactEmail": "hello@shobujagro.example",
+          "website": "https://example.com/shobuj",
+          "socialLinks": [
+            { "platform": "Facebook", "url": "https://facebook.com/shobujagro" }
+          ],
+          "rating": 4.9,
+          "totalSales": 840,
+          "descriptionText": "Single-tenant Bangladesh produce demo seller. Fresh vegetables and fruits with multi-location fulfillment.",
+          "logoKey": "logoLeaf",
+          "bannerKey": "bannerFresh"
+        },
+        "products": [
+          { "name": "Fresh Potato (1 kg)", "slug": "fresh-potato-1kg", "basePrice": 0.45, "shortDescription": "Local farm potato, sorted for regular cooking use.", "imageKey": "potato", "imageFile": "produce-potato.jpg", "categorySlugs": ["fresh-vegetables", "root-vegetables"], "featured": true },
+          { "name": "Premium Onion (1 kg)", "slug": "premium-onion-1kg", "basePrice": 0.55, "shortDescription": "Daily kitchen onion with reliable storage life.", "imageKey": "onion", "imageFile": "produce-onion.jpg", "categorySlugs": ["fresh-vegetables", "root-vegetables"] },
+          { "name": "Red Tomato (1 kg)", "slug": "red-tomato-1kg", "basePrice": 0.5, "shortDescription": "Juicy tomato ideal for curry, salad, and sauce.", "imageKey": "tomato", "imageFile": "produce-tomato.jpg", "categorySlugs": ["fresh-vegetables"] },
+          { "name": "Cucumber (1 kg)", "slug": "cucumber-1kg", "basePrice": 0.48, "shortDescription": "Crisp cucumber selected for salad and raita.", "imageKey": "cucumber", "imageFile": "produce-cucumber.jpg", "categorySlugs": ["fresh-vegetables"] },
+          { "name": "Cauliflower (each)", "slug": "cauliflower-each", "basePrice": 0.42, "shortDescription": "Medium-size cauliflower with compact florets.", "imageKey": "cauliflower", "imageFile": "produce-cauliflower.jpg", "categorySlugs": ["fresh-vegetables"] },
+          { "name": "Brinjal / Eggplant (1 kg)", "slug": "eggplant-1kg", "basePrice": 0.46, "shortDescription": "Tender brinjal for bhorta, fry, and curry.", "imageKey": "eggplant", "imageFile": "produce-eggplant.jpg", "categorySlugs": ["fresh-vegetables"] },
+          { "name": "Green Spinach (bundle)", "slug": "green-spinach-bundle", "basePrice": 0.28, "shortDescription": "Fresh palong shak bundled same day from source.", "imageKey": "spinach", "imageFile": "produce-spinach.jpg", "categorySlugs": ["leafy-greens-herbs"], "featured": true },
+          { "name": "Green Chili (250g)", "slug": "green-chili-250g", "basePrice": 0.18, "shortDescription": "Aromatic green chili for daily cooking.", "imageKey": "greenChili", "imageFile": "produce-green-chili.jpg", "categorySlugs": ["leafy-greens-herbs"] },
+          { "name": "Sweet Pumpkin (1 kg)", "slug": "sweet-pumpkin-1kg", "basePrice": 0.4, "shortDescription": "Naturally sweet pumpkin pieces for mixed curry.", "imageKey": "pumpkin", "imageFile": "produce-pumpkin.jpg", "categorySlugs": ["fresh-vegetables"] },
+          { "name": "Yardlong Beans (500g)", "slug": "yardlong-beans-500g", "basePrice": 0.24, "shortDescription": "Tender beans for quick stir-fry and bhaji.", "imageKey": "beans", "imageFile": "produce-beans.jpg", "categorySlugs": ["fresh-vegetables"] },
+          { "name": "Banana (12 pcs)", "slug": "banana-12pcs", "basePrice": 0.65, "shortDescription": "Ripe banana bunch for family daily use.", "imageKey": "banana", "imageFile": "produce-banana.jpg", "categorySlugs": ["fresh-fruits"], "featured": true },
+          { "name": "Seasonal Mango (1 kg)", "slug": "seasonal-mango-1kg", "basePrice": 1.25, "shortDescription": "Seasonal sweet mango from Rajshahi/Chapainawabganj belt.", "imageKey": "mango", "imageFile": "produce-mango.jpg", "categorySlugs": ["fresh-fruits"] },
+          { "name": "Guava (1 kg)", "slug": "guava-1kg", "basePrice": 0.72, "shortDescription": "Crunchy guava, ideal for snacks and juice.", "imageKey": "guava", "imageFile": "produce-guava.jpg", "categorySlugs": ["fresh-fruits"] },
+          { "name": "Papaya (each)", "slug": "papaya-each", "basePrice": 0.74, "shortDescription": "Medium papaya selected for ripening consistency.", "imageKey": "papaya", "imageFile": "produce-papaya.jpg", "categorySlugs": ["fresh-fruits"] },
+          { "name": "Imported Apple (1 kg)", "slug": "imported-apple-1kg", "basePrice": 1.8, "shortDescription": "Crisp red apple, packed in breathable wraps.", "imageKey": "apple", "imageFile": "produce-apple.jpg", "categorySlugs": ["fresh-fruits"] },
+          { "name": "Orange (1 kg)", "slug": "orange-1kg", "basePrice": 1.1, "shortDescription": "Juicy orange rich in flavor for table and juice.", "imageKey": "orange", "imageFile": "produce-orange.jpg", "categorySlugs": ["fresh-fruits"] },
+          { "name": "Lemon (500g)", "slug": "lemon-500g", "basePrice": 0.35, "shortDescription": "Fresh lemon for salads, drinks, and fish prep.", "imageKey": "lemon", "imageFile": "produce-lemon.jpg", "categorySlugs": ["fresh-fruits", "leafy-greens-herbs"] },
+          { "name": "Dragon Fruit (2 pcs)", "slug": "dragon-fruit-2pcs", "basePrice": 1.45, "shortDescription": "Premium dragon fruit with careful protective packing.", "imageKey": "dragonFruit", "imageFile": "produce-dragon-fruit.jpg", "categorySlugs": ["fresh-fruits"] },
+          { "name": "Coriander Leaves (bundle)", "slug": "coriander-leaves-bundle", "basePrice": 0.2, "shortDescription": "Fresh dhonia pata for garnish and chutney.", "imageKey": "coriander", "imageFile": "produce-coriander.jpg", "categorySlugs": ["leafy-greens-herbs"] },
+          { "name": "Mint Leaves (bundle)", "slug": "mint-leaves-bundle", "basePrice": 0.22, "shortDescription": "Fragrant mint for drinks, salads, and chutney.", "imageKey": "mint", "imageFile": "produce-mint.jpg", "categorySlugs": ["leafy-greens-herbs"] },
+          { "name": "Fresh Ginger (500g)", "slug": "fresh-ginger-500g", "basePrice": 0.52, "shortDescription": "Fiber-rich ginger root for spice and tea use.", "imageKey": "ginger", "imageFile": "produce-ginger.jpg", "categorySlugs": ["root-vegetables", "leafy-greens-herbs"] }
+        ]
+      }
+    ]
+  },
+  "singleVendor": {
+    "coreProduct": {
+      "name": "Fresh Potato (1 kg)",
+      "slug": "sv-fresh-potato-1kg",
+      "basePrice": 0.45,
+      "shortDescription": "Local farm potato, sorted for regular cooking use.",
+      "fullDescription": "Core single-vendor produce item for checkout smoke tests.",
+      "imageKey": "potato",
+      "imageFile": "sv-produce-potato.jpg",
+      "categorySlugs": ["fresh-vegetables", "root-vegetables"],
+      "featured": true
+    },
+    "extraProducts": [
+      { "name": "Red Tomato (1 kg)", "slug": "sv-red-tomato-1kg", "basePrice": 0.5, "shortDescription": "Juicy tomato ideal for curry, salad, and sauce.", "imageKey": "tomato", "imageFile": "sv-produce-tomato.jpg", "categorySlugs": ["fresh-vegetables"] },
+      { "name": "Banana (12 pcs)", "slug": "sv-banana-12pcs", "basePrice": 0.65, "shortDescription": "Ripe banana bunch for family daily use.", "imageKey": "banana", "imageFile": "sv-produce-banana.jpg", "categorySlugs": ["fresh-fruits"] },
+      { "name": "Green Spinach (bundle)", "slug": "sv-green-spinach-bundle", "basePrice": 0.28, "shortDescription": "Fresh palong shak bundled same day from source.", "imageKey": "spinach", "imageFile": "sv-produce-spinach.jpg", "categorySlugs": ["leafy-greens-herbs"] },
+      { "name": "Imported Apple (1 kg)", "slug": "sv-imported-apple-1kg", "basePrice": 1.8, "shortDescription": "Crisp red apple, packed in breathable wraps.", "imageKey": "apple", "imageFile": "sv-produce-apple.jpg", "categorySlugs": ["fresh-fruits"] }
+    ]
+  }
+}

@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../../../access/is-admin'
 import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 import { slugField } from '../../../fields/slug'
-import { getCurrencyOptions } from '../../../lib/currencies'
+import { getCurrencyOptions, getDefaultCurrency } from '../../../lib/currencies'
 
 export function createProductsConfig(multivendorEnabled = false): CollectionConfig {
   const fields: CollectionConfig['fields'] = [
@@ -57,12 +57,29 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
     },
     { name: 'basePrice', type: 'number', required: true, min: 0 },
     { name: 'compareAtPrice', type: 'number', min: 0 },
+    {
+      name: 'saleDisplayMode',
+      type: 'select',
+      required: true,
+      defaultValue: 'strike_through',
+      options: [
+        { label: 'None (hide compare-at & badges)', value: 'none' },
+        { label: 'Strikethrough compare-at only', value: 'strike_through' },
+        { label: 'Badge: % off', value: 'badge_percent' },
+        { label: 'Badge: amount saved', value: 'badge_amount' },
+        { label: 'Strikethrough + badge', value: 'strike_and_badge' },
+      ],
+      admin: {
+        description:
+          'How to show savings when compare-at price is higher than selling price. Variants can override.',
+      },
+    },
     { name: 'costPrice', type: 'number', min: 0 },
     {
       name: 'currency',
       type: 'select',
       required: true,
-      defaultValue: 'USD',
+      defaultValue: getDefaultCurrency(),
       options: getCurrencyOptions(),
     },
     { name: 'taxable', type: 'checkbox', defaultValue: true },

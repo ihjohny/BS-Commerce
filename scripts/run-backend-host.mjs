@@ -1,3 +1,9 @@
+/**
+ * Runs the MV backend on the host (not Docker). Default port **4000** matches
+ * `docker-compose` `backend-mv` host mapping and `multivendor-storefront` defaults.
+ * If `listen` fails with EACCES, check: netsh interface ipv4 show excludedportrange protocol=tcp
+ * and pass a free port as the second CLI argument.
+ */
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
@@ -53,9 +59,14 @@ if (!fs.existsSync(envFilePath)) {
 
 const fileEnv = parseEnvFile(envFilePath)
 const mergedEnv = normalizeHostOverrides({ ...process.env, ...fileEnv })
+// Align public app URL with the dev server port (same as Docker `4000:3000` when using compose).
+mergedEnv.NEXT_PUBLIC_APP_URL = `http://localhost:${portArg}`
 const yarnCmd = 'yarn'
 
 console.log(`Starting backend on port ${portArg} using env: ${envFilePath}`)
+console.log(
+  `Tip: multivendor-storefront should use NEXT_PUBLIC_API_URL=http://localhost:${portArg}/api (and BACKEND_URL=http://localhost:${portArg}) for this backend.`,
+)
 
 const child = spawn(
   yarnCmd,

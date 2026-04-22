@@ -41,12 +41,20 @@ import { adminBrandingEndpoint } from './endpoints/admin-branding'
 import { customEndpointsOpenApiEndpoint } from './endpoints/custom-endpoints-openapi'
 import { docsIndexEndpoint } from './endpoints/docs-index'
 import { openapiAllEndpoint } from './endpoints/openapi-all'
+import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
+import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
+import { geographyPlugin } from './plugins/geography'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const redisPluginEnabled = process.env.REDIS_CACHE_ENABLED === 'true'
 
+/** Same origin as `NEXT_PUBLIC_APP_URL` — Payload `serverURL` for emails, links, and admin views that must not use `window` during SSR (e.g. document "API" tab). */
+const serverURL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export default buildConfig({
+  serverURL,
+
   // ─── Admin Panel ─────────────────────────────────────────────────────────────
   admin: {
     user: Users.slug,
@@ -96,6 +104,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI!,
     },
+    // Migrations: `yarn payload migrate:create` then `yarn payload migrate` in production (push is dev-only).
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   // Alternative: MongoDB (uses string ObjectIds; no idType option)
   // db: mongooseAdapter({ url: process.env.DATABASE_URI! }),
@@ -139,6 +149,8 @@ export default buildConfig({
     customEndpointsOpenApiEndpoint,
     openapiAllEndpoint,
     docsIndexEndpoint,
+    storefrontStoreProductsEndpoint,
+    storefrontGeographyEndpoint,
   ],
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────
@@ -196,6 +208,9 @@ export default buildConfig({
       multivendorEnabled: process.env.MULTIVENDOR_ENABLED === 'true',
       trackMovements: true,
       lowStockThreshold: Number(process.env.LOW_STOCK_THRESHOLD || '10'),
+    }),
+    geographyPlugin({
+      enabled: process.env.GEOGRAPHY_ENABLED === 'true',
     }),
     shippingPlugin({
       enabled: true,

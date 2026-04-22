@@ -15,6 +15,8 @@ export interface CartItemForSplit {
   productImage: string
   /** Vendor (tenant) ID. Null = platform-owned product. */
   tenantId: string | null
+  /** Display name of vendor at checkout (immutable snapshot on line items). */
+  tenantName?: string
   /** Set during checkout — chosen stock-levels row (Phase 12). */
   stockLevelId?: string
 }

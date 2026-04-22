@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 // @ts-ignore
-import { Pages } from '../../../src/collections/pages.ts'
+import { Pages } from '../../../src/collections/pages/index.ts'
 
 test('admin preview returns null when slug missing', () => {
   const preview = Pages.admin?.preview as ((doc: unknown) => string | null) | undefined
@@ -59,4 +59,24 @@ test('beforeChange returns same object when status is not publish transition', (
   const hook = Pages.hooks?.beforeChange?.[0] as (args: { data: Record<string, unknown> }) => unknown
   const data = { status: 'draft', title: 'T' }
   assert.equal(hook({ data }), data)
+})
+
+test('beforeValidate rejects reserved storefront slugs', () => {
+  const hook = Pages.hooks?.beforeValidate?.[0] as (args: {
+    data: Record<string, unknown>
+  }) => unknown
+  assert.ok(hook)
+  assert.throws(
+    () => hook({ data: { slug: 'cart' } }),
+    /reserved/,
+  )
+})
+
+test('beforeValidate allows non-reserved slugs', () => {
+  const hook = Pages.hooks?.beforeValidate?.[0] as (args: {
+    data: Record<string, unknown>
+  }) => unknown
+  assert.ok(hook)
+  const out = hook({ data: { slug: 'about-us' } }) as Record<string, unknown>
+  assert.equal(out.slug, 'about-us')
 })

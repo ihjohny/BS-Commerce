@@ -93,6 +93,54 @@ export function createStockLevelsConfig(): CollectionConfig {
       { name: 'reservedQuantity', type: 'number', defaultValue: 0, min: 0 },
     ],
     hooks: {
+      beforeValidate: [
+        async ({ data, originalDoc, req, operation }) => {
+          if (process.env.MULTIVENDOR_ENABLED !== 'true') return data
+          if (!data) return data
+          const merged = { ...(originalDoc || {}), ...data } as Record<string, unknown>
+          const productRef = merged.product
+          const locationRef = merged.location
+          if (!productRef || !locationRef) return data
+
+          const productId = relationId(productRef)
+          const locationId = relationId(locationRef)
+          if (!productId || !locationId) return data
+
+          try {
+            const [product, location] = await Promise.all([
+              req.payload.findByID({
+                collection: 'products',
+                id: productId,
+                depth: 0,
+                overrideAccess: true,
+                req,
+              }),
+              req.payload.findByID({
+                collection: 'stock-locations',
+                id: locationId,
+                depth: 0,
+                overrideAccess: true,
+                req,
+              }),
+            ])
+
+            const prodTenant = relationId((product as Record<string, unknown>)?.tenant)
+            const locTenant = relationId((location as Record<string, unknown>)?.tenant)
+
+            if (prodTenant && locTenant && prodTenant !== locTenant) {
+              const err = new Error(
+                `Cross-vendor stock forbidden: product tenant (${prodTenant}) does not match location tenant (${locTenant}).`,
+              )
+              ;(err as any).status = 400
+              throw err
+            }
+          } catch (e: any) {
+            if (e?.status === 400) throw e
+          }
+
+          return data
+        },
+      ],
       beforeChange: [
         async ({ data, originalDoc, req }) => {
           if (!data) return data

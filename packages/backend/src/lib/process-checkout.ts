@@ -15,6 +15,11 @@ import { getCommissionRateForTenant, calculateCommission } from './commission'
 import { validateCouponForSubtotal } from '../plugins/discounts/lib/coupon'
 import { allocateStockLevelForLine } from './allocate-stock-level'
 import { buildReserveQuantitiesByStockLevel } from './build-reserve-quantities-by-stock-level'
+import {
+  parsePreferredLocale,
+  resolveLocalizedText,
+  snapshotProductImageUrl,
+} from './order-checkout-snapshots'
 
 /** Creates req with transactionID when adapter supports transactions. */
 function reqWithTransaction(req: PayloadRequest | undefined, transactionID: string | number | null): PayloadRequest {
@@ -48,13 +53,35 @@ export interface ProcessCheckoutInput {
     phone?: string
   }
   guestEmail?: string
+  guestPhone?: string
   simulatePayment?: boolean
   currency?: string
   idempotencyKey?: string
+  /** Explicit store override; falls back to cart.store if not provided. */
+  storeId?: string
+}
+
+export interface OrderItemSummary {
+  productName: string
+  variantName?: string
+  sku: string
+  quantity: number
+  unitPrice: number
+  totalPrice: number
 }
 
 export interface ProcessCheckoutResult {
-  order: { id: string; orderNumber: string }
+  order: {
+    id: string
+    orderNumber: string
+    items?: OrderItemSummary[]
+    grandTotal?: number
+    subtotal?: number
+    currency?: string
+    guestEmail?: string
+    guestPhone?: string
+    shippingAddress?: ProcessCheckoutInput['shippingAddress']
+  }
   transaction?: { id: string }
   error?: string
   statusCode?: number
@@ -66,10 +93,13 @@ export async function processCheckout(
   userId?: string | number,
   req?: PayloadRequest
 ): Promise<ProcessCheckoutResult> {
-  const splitByVendor = process.env.MULTIVENDOR_ENABLED === 'true'
+  const splitByVendor =
+    process.env.MULTIVENDOR_ENABLED === 'true' &&
+    process.env.SINGLE_STORE_CART_ENABLED !== 'true'
   const { cartId, shippingAddress, billingAddress, simulatePayment = false, idempotencyKey } = input
-  // Normalize guestEmail once: trim + lowercase so stored value always matches lookup queries
+  // Normalize guest identifiers once
   const guestEmail = input.guestEmail ? input.guestEmail.trim().toLowerCase() : undefined
+  const guestPhone = input.guestPhone ? input.guestPhone.trim() : undefined
   const isAdminUser = (req?.user as { role?: string } | undefined)?.role === 'admin'
 
   if (!userId && !guestEmail) {
@@ -144,6 +174,10 @@ export async function processCheckout(
     if (err instanceof NotFound) {
       return { order: { id: '', orderNumber: '' }, error: 'Cart not found', statusCode: 404 }
     }
+    const e = err as { status?: number; name?: string }
+    if (e?.status === 404 || e?.name === 'NotFound') {
+      return { order: { id: '', orderNumber: '' }, error: 'Cart not found', statusCode: 404 }
+    }
     throw err
   }
 
@@ -165,6 +199,12 @@ export async function processCheckout(
     }
   }
 
+  // Resolve store (stock-location) for store-scoped allocation
+  const cartStore = (cart as { store?: { id: string } | string | null }).store
+  const storeLocationId = input.storeId
+    || (cartStore ? (typeof cartStore === 'object' ? cartStore?.id : cartStore) : null)
+    || null
+
   const items = cart.items as Array<{
     product: { id: string } | string
     variant?: { id: string; name?: string; sku?: string } | string
@@ -177,6 +217,27 @@ export async function processCheckout(
   }
 
   const currency = input.currency || getDefaultCurrency()
+  const checkoutLocale = parsePreferredLocale(req)
+
+  const tenantNameCache = new Map<string, string>()
+  async function resolveTenantName(tenantId: string): Promise<string> {
+    const hit = tenantNameCache.get(tenantId)
+    if (hit) return hit
+    try {
+      const t = await payload.findByID({
+        collection: 'tenants',
+        id: tenantId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      const name = (t as { name?: string } | null)?.name?.trim() || 'Vendor'
+      tenantNameCache.set(tenantId, name)
+      return name
+    } catch {
+      tenantNameCache.set(tenantId, 'Vendor')
+      return 'Vendor'
+    }
+  }
 
   // Build order item data with tenantId (for multivendor)
   const orderItemData: CartItemForSplit[] = []
@@ -188,14 +249,20 @@ export async function processCheckout(
     const product = await payload.findByID({
       collection: 'products',
       id: productId as string,
-      depth: 1,
+      depth: 2,
     })
 
     if (!product) {
       return { order: { id: '', orderNumber: '' }, error: `Product ${productId} not found` }
     }
 
-    const productAny = product as { tenant?: { id: string } | string | null; name?: string; sku?: string; basePrice?: number }
+    const productAny = product as {
+      tenant?: { id: string } | string | null
+      name?: unknown
+      sku?: string
+      basePrice?: number
+      images?: Array<{ image?: unknown }>
+    }
     const tenantId = productAny.tenant
       ? typeof productAny.tenant === 'object'
         ? productAny.tenant?.id ?? null
@@ -225,17 +292,49 @@ export async function processCheckout(
     const quantity = Number(item.quantity) || 1
     const totalPrice = Math.round(quantity * unitPrice * 100) / 100
 
+    const productNameSnapshot = resolveLocalizedText(productAny.name, checkoutLocale) || 'Product'
+
+    let productImage = snapshotProductImageUrl(productAny as Record<string, unknown>)
+    if (!productImage && productAny.images?.[0]?.image) {
+      const imgRef = productAny.images[0].image
+      const mid =
+        typeof imgRef === 'object' && imgRef !== null && 'id' in imgRef
+          ? String((imgRef as { id: string }).id)
+          : typeof imgRef === 'string'
+            ? imgRef
+            : null
+      if (mid) {
+        try {
+          const m = await payload.findByID({
+            collection: 'media',
+            id: mid,
+            depth: 0,
+            overrideAccess: true,
+          })
+          productImage = (m as { url?: string })?.url || ''
+        } catch {
+          productImage = ''
+        }
+      }
+    }
+
+    let tenantName: string | undefined
+    if (tenantId) {
+      tenantName = await resolveTenantName(tenantId)
+    }
+
     orderItemData.push({
       productId: productId as string,
       variantId: variantId as string | null,
-      productName: productAny.name || 'Product',
+      productName: productNameSnapshot,
       variantName,
       sku,
       quantity,
       unitPrice,
       totalPrice,
-      productImage: '',
+      productImage,
       tenantId,
+      tenantName,
     })
   }
 
@@ -274,6 +373,7 @@ export async function processCheckout(
           variantId: d.variantId,
           quantity: d.quantity,
           tenantId: d.tenantId,
+          storeLocationId,
         },
         req,
       )
@@ -289,6 +389,24 @@ export async function processCheckout(
   }
 
   const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+
+  let buyerEmail = ''
+  let buyerName = ''
+  let buyerPhone = ''
+  if (userId) {
+    const u = await payload.findByID({
+      collection: 'users',
+      id: userId as string,
+      depth: 0,
+      overrideAccess: true,
+    })
+    buyerEmail = String((u as { email?: string })?.email || '')
+    buyerName = String((u as { name?: string })?.name || '').trim()
+    buyerPhone = String((u as { phone?: string })?.phone || '').trim()
+  } else {
+    buyerEmail = guestEmail || ''
+    buyerPhone = guestPhone || ''
+  }
 
   const transactionID = await payload.db.beginTransaction()
   const reqTx = reqWithTransaction(req, transactionID)
@@ -315,10 +433,18 @@ export async function processCheckout(
       paymentStatus: 'unpaid',
       notes: '',
       placedAt: new Date().toISOString(),
+      buyerSnapshot: {
+        email: buyerEmail || null,
+        name: buyerName || null,
+        phone: buyerPhone || null,
+        locale: checkoutLocale,
+      },
     }
     if (userId) orderData.customer = userId
     if (guestEmail) orderData.guestEmail = guestEmail
+    if (guestPhone) orderData.guestPhone = guestPhone
     if (idempotencyKey) orderData.idempotencyKey = idempotencyKey
+    if (storeLocationId) orderData.store = storeLocationId
     if (splitByVendor) orderData.subOrders = []
 
     order = await payload.create({
@@ -362,13 +488,11 @@ export async function processCheckout(
         const vendorEarnings = Math.round((seg.subtotal - commissionAmount) * 100) / 100
 
         const subOrderNumber = `${orderNumber}-${String.fromCharCode(65 + i)}`
-        const subOrder = await payload.create({
-          collection: 'sub-orders',
-          overrideAccess: true,
-          data: {
+        const subOrderData: Record<string, unknown> = {
             parentOrder: orderId,
             parentOrderNumber: orderNumber,
             tenant: seg.tenantId,
+            tenantNameSnapshot: seg.items[0]?.tenantName?.trim() || null,
             subOrderNumber,
             status: 'pending',
             items: [],
@@ -378,7 +502,12 @@ export async function processCheckout(
             commissionAmount,
             commissionRate,
             vendorEarnings,
-          } as any,
+          }
+        if (storeLocationId) subOrderData.store = storeLocationId
+        const subOrder = await payload.create({
+          collection: 'sub-orders',
+          overrideAccess: true,
+          data: subOrderData as any,
           req: reqTx,
         })
         subOrderIds.push(subOrder.id as string)
@@ -397,6 +526,7 @@ export async function processCheckout(
             totalPrice: d.totalPrice,
             productImage: d.productImage,
           }
+          if (d.tenantName) itemData.vendorNameSnapshot = d.tenantName
           if (d.variantId != null) itemData.variant = d.variantId
           if (inventoryEnabled && d.stockLevelId) itemData.stockLevel = d.stockLevelId
 
@@ -586,14 +716,37 @@ export async function processCheckout(
   }
   if (recipientEmail) {
     const { sendOrderConfirmationEmail } = await import('../plugins/notifications/lib/send-email')
-    const gTotal = orderItemData.reduce((s, i) => s + i.totalPrice, 0)
-    sendOrderConfirmationEmail(orderNumber, recipientEmail, gTotal, currency).catch((e) =>
+    sendOrderConfirmationEmail(orderNumber, recipientEmail, grandTotal, currency).catch((e) =>
       console.error('[processCheckout] Failed to send order email:', e)
     )
   }
 
+  if (guestPhone) {
+    const { sendOrderConfirmationSms } = await import('../plugins/notifications/lib/send-sms')
+    sendOrderConfirmationSms(orderNumber, guestPhone, grandTotal, currency).catch((e) =>
+      console.error('[processCheckout] Failed to send order SMS:', e)
+    )
+  }
+
   return {
-    order: { id: order.id as string, orderNumber },
+    order: {
+      id: order.id as string,
+      orderNumber,
+      items: orderItemData.map((d) => ({
+        productName: d.productName,
+        variantName: d.variantName || undefined,
+        sku: d.sku,
+        quantity: d.quantity,
+        unitPrice: d.unitPrice,
+        totalPrice: d.totalPrice,
+      })),
+      grandTotal,
+      subtotal: subtotalCalc,
+      currency,
+      guestEmail,
+      guestPhone,
+      shippingAddress,
+    },
     transaction: paymentTransactionId ? { id: paymentTransactionId } : undefined,
   }
 }
