@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:unit": "node --test --experimental-strip-types --import ./tests/_helpers/register-ts-resolve.mjs \"tests/unit/**/*.unit.test.ts\" \"tests/security/**/*.security.test.ts\"",
-    "test:unit:cov": "c8 node --test --experimental-strip-types --import ./tests/_helpers/register-ts-resolve.mjs \"tests/unit/**/*.unit.test.ts\" \"tests/security/**/*.security.test.ts\"",
+    "test:unit": "node --test --experimental-strip-types --import ./scripts/node-resolve/register-ts-resolve.mjs \"tests/unit/**/*.unit.test.ts\" \"tests/security/**/*.security.test.ts\"",
+    "test:unit:cov": "c8 node --test --experimental-strip-types --import ./scripts/node-resolve/register-ts-resolve.mjs \"tests/unit/**/*.unit.test.ts\" \"tests/security/**/*.security.test.ts\"",
     "test:cov": "yarn test:unit:cov",
     "test:cov:check": "c8 check-coverage",
     "test:e2e": "node tests/run-e2e.mjs",
@@ -36,11 +36,12 @@
     "test:all-profiles:safe:parallel:observe": "node tests/run-all-profiles-safe-parallel-observe.mjs --max-parallel=2 --slot-start=4",
     "test:infra:up": "docker compose -f docker-compose.test.yml up -d",
     "test:infra:down": "docker compose -f docker-compose.test.yml down -v",
-    "generate:types": "payload generate:types",
-    "generate:importmap": "payload generate:importMap",
-    "payload": "payload",
-    "db:migrate": "payload migrate",
-    "db:migrate:create": "payload migrate:create"
+    "generate:types": "node --import ./scripts/node-resolve/register-ts-resolve.mjs ../../node_modules/payload/bin.js --disable-transpile generate:types",
+    "generate:importmap": "node --import ./scripts/node-resolve/register-ts-resolve.mjs ../../node_modules/payload/bin.js --disable-transpile generate:importMap",
+    "generate:db-schema": "node --import ./scripts/node-resolve/register-ts-resolve.mjs ../../node_modules/payload/bin.js --disable-transpile generate:db-schema",
+    "payload": "node --import ./scripts/node-resolve/register-ts-resolve.mjs ../../node_modules/payload/bin.js --disable-transpile",
+    "db:migrate": "node --import ./scripts/node-resolve/register-ts-resolve.mjs ../../node_modules/payload/bin.js --disable-transpile migrate",
+    "db:migrate:create": "node --import ./scripts/node-resolve/register-ts-resolve.mjs ../../node_modules/payload/bin.js --disable-transpile migrate:create"
   },
   "dependencies": {
     "@bs-commerce/shared": "*",

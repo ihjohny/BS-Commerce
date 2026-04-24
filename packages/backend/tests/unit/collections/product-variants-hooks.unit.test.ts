@@ -3,21 +3,23 @@ import assert from 'node:assert/strict'
 // @ts-ignore
 import { createProductVariantsConfig } from '../../../src/plugins/ecommerce/collections/product-variants.ts'
 
-function getBeforeValidateHook(mv: boolean) {
-  const cfg = createProductVariantsConfig(mv)
-  const hook = cfg.hooks?.beforeValidate?.[0]
-  assert.ok(hook, 'beforeValidate hook exists when multivendor is enabled')
+/** Multivendor tenant inheritance is the second beforeValidate hook (after ensureVariantSaleDisplayMode). */
+function getInheritTenantBeforeValidateHook() {
+  const cfg = createProductVariantsConfig(true)
+  const hooks = cfg.hooks?.beforeValidate
+  assert.ok(hooks && hooks.length >= 2, 'sale display + inherit-tenant beforeValidate hooks when multivendor')
+  const hook = hooks[1]
   return hook as (args: { data: any; req: any }) => Promise<any>
 }
 
 test('beforeValidate should return early when data is null', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const out = await hook({ data: null, req: { user: { role: 'admin' }, payload: {} } })
   assert.equal(out, null)
 })
 
 test('should resolve product id from object product reference when copying tenant', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const data = { product: { id: 'obj-prod' }, name: 'V', sku: 'SKU-O', price: 3 } as any
   const req = {
     payload: {
@@ -35,7 +37,7 @@ test('should resolve product id from object product reference when copying tenan
 })
 
 test('should copy tenant from product when multivendor and tenant missing on variant', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const data = { product: 'prod-99', name: 'V', sku: 'SKU-1', price: 10 } as any
   const req = {
     payload: {
@@ -53,7 +55,7 @@ test('should copy tenant from product when multivendor and tenant missing on var
 })
 
 test('should set tenant from vendor user when product has no tenant', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const data = { product: 'prod-1', name: 'V', sku: 'SKU-2', price: 5 } as any
   const req = {
     payload: {
@@ -66,7 +68,7 @@ test('should set tenant from vendor user when product has no tenant', async () =
 })
 
 test('should set tenant from vendor user when tenant id is a plain string', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const data = { product: 'prod-1', name: 'V', sku: 'SKU-TN', price: 2 } as any
   const req = {
     payload: {
@@ -78,9 +80,10 @@ test('should set tenant from vendor user when tenant id is a plain string', asyn
   assert.equal(out.tenant, 'tenant-plain')
 })
 
-test('should not inject hooks when multivendor is disabled', () => {
+test('should not inject multivendor tenant hook when multivendor is disabled', () => {
   const cfg = createProductVariantsConfig(false)
-  assert.equal(cfg.hooks, undefined)
+  const list = cfg.hooks?.beforeValidate
+  assert.equal(list?.length, 1, 'only global hooks (e.g. sale display), no inherit-tenant')
 })
 
 test('read: logged-in customer sees active variants only when multivendor off', () => {
@@ -114,7 +117,7 @@ test('read: vendor scoped to tenant when multivendor on', () => {
 })
 
 test('should copy tenant string from product when multivendor', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const data = { product: 'p-1', name: 'V', sku: 'SKU-T', price: 1 } as any
   const req = {
     payload: {
@@ -127,7 +130,7 @@ test('should copy tenant string from product when multivendor', async () => {
 })
 
 test('should not set tenant when product has no tenant and user is admin', async () => {
-  const hook = getBeforeValidateHook(true)
+  const hook = getInheritTenantBeforeValidateHook()
   const data = { product: 'p-1', name: 'V', sku: 'SKU-N', price: 1 } as any
   const req = {
     payload: { findByID: async () => ({ id: 'p-1', tenant: null }) },

@@ -105,7 +105,10 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI!,
     },
     // Migrations: `yarn payload migrate:create` then `yarn payload migrate` in production (push is dev-only).
-    migrationDir: path.resolve(dirname, 'migrations'),
+    push: false,
+    // migrationDir: path.resolve(dirname, 'migrations'),
+    // prodMigrations: migrations,
+    blocksAsJSON: true,
   }),
   // Alternative: MongoDB (uses string ObjectIds; no idType option)
   // db: mongooseAdapter({ url: process.env.DATABASE_URI! }),

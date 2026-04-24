@@ -142,7 +142,7 @@ Use this when **`MULTIVENDOR_ENABLED=true`** and **`INVENTORY_ENABLED=true`** (w
 cd packages/backend
 yarn test:unit
 # Focused:
-node --test --experimental-strip-types --import ./tests/_helpers/register-ts-resolve.mjs \
+node --test --experimental-strip-types --import ./scripts/node-resolve/register-ts-resolve.mjs \
   tests/unit/lib/allocate-stock-level.unit.test.ts \
   tests/unit/checkout/process-checkout.unit.test.ts \
   tests/security/inventory/allocate-stock-multivendor.security.test.ts

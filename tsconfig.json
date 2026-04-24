@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "rootDir": "packages/backend/src"
+  },
+  "include": ["packages/backend/src/**/*", "packages/shared/src/**/*"]
+}

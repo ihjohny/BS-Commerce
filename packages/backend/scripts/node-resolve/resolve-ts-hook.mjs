@@ -6,9 +6,9 @@ const sharedSrc = path.resolve(__dirname, '../../../shared/src/index.ts')
 const sharedSrcUrl = new URL(`file://${sharedSrc.replace(/\\/g, '/')}`).href
 
 /**
- * Node.js resolve hook that:
- * 1. Redirects @bs-commerce/shared to its TypeScript source (avoids needing a build step)
- * 2. Appends .ts or /index.ts to imports that fail to resolve
+ * Node.js ESM resolve hook (used for unit tests, Payload CLI, etc.):
+ * 1. Resolves @bs-commerce/shared to the TS source
+ * 2. For relative imports, appends .ts or /index.ts when the plain Node resolver fails
  */
 export async function resolve(specifier, context, nextResolve) {
   if (specifier === '@bs-commerce/shared') {
@@ -28,7 +28,6 @@ export async function resolve(specifier, context, nextResolve) {
       try {
         return await nextResolve(specifier + '.ts', context)
       } catch {
-        // Directory import — try /index.ts
         return nextResolve(specifier + '/index.ts', context)
       }
     }

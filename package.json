@@ -19,6 +19,7 @@
     "demo:sync-passwords": "node scripts/sync-all-user-passwords.mjs",
     "demo:bootstrap": "node scripts/run-client-demo-bootstrap.mjs",
     "build": "yarn workspaces run build",
+    "start": "yarn workspaces run start",
     "lint": "yarn workspaces run lint",
     "typecheck": "yarn workspaces run typecheck"
   },
