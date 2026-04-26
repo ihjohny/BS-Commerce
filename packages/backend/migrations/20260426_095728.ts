@@ -954,6 +954,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"id" varchar PRIMARY KEY NOT NULL,
   	"label" varchar NOT NULL,
   	"url" varchar NOT NULL,
+  	"enabled" boolean DEFAULT true,
   	"visibility" "enum_footer_columns_links_visibility" DEFAULT 'public'
   );
   

@@ -11546,6 +11546,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
         "visibility": {
           "name": "visibility",
           "type": "enum_footer_columns_links_visibility",
@@ -12758,6 +12765,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "2c25c614-6059-448e-8680-5f616fee67c5",
+  "id": "9d5bcea7-8c32-4f27-8ef7-876ca44834aa",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

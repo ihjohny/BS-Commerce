@@ -1,0 +1,179 @@
+{
+  "platformCurrency": {
+    "defaultCurrency": "BDT",
+    "supportedCurrencies": ["BDT", "USD"],
+    "usdToBdtRate": 110
+  },
+  "announcement": {
+    "en": { "enabled": true, "message": "Dhaka delivery from Gulshan 1 & Mirpur 10 hubs — BDT only.", "backgroundColor": "#0F4D3A", "textColor": "#FFFFFF" },
+    "bn": { "enabled": true, "message": "ঢাকা সরবরাহ: গুলশান ১ ও মিরপুর ১০ হাব — শুধু BDT।", "backgroundColor": "#0F4D3A", "textColor": "#FFFFFF" }
+  },
+  "headerByLocale": {
+    "en": {
+      "siteName": "Farm Greens",
+      "navLinks": [
+        { "enabled": true, "label": "Home", "url": "/en", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": true, "label": "Products", "url": "/en/products", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": true, "label": "Categories", "url": "/en/categories", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": false, "label": "Vendors", "url": "/en/vendors", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": true, "label": "Track order", "url": "/en/track-order", "showInDesktopNav": false, "showInMobileDrawer": true }
+      ]
+    },
+    "bn": {
+      "siteName": "ফার্ম গ্রিন",
+      "navLinks": [
+        { "enabled": true, "label": "হোম", "url": "/bn", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": true, "label": "পণ্য", "url": "/bn/products", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": true, "label": "ক্যাটাগরি", "url": "/bn/categories", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": false, "label": "বিক্রেতা", "url": "/bn/vendors", "showInDesktopNav": true, "showInMobileDrawer": true },
+        { "enabled": true, "label": "অর্ডার ট্র্যাক", "url": "/bn/track-order", "showInDesktopNav": false, "showInMobileDrawer": true }
+      ]
+    }
+  },
+  "footerByLocale": {
+    "en": {
+      "copyrightText": "© 2026 Farm Greens. Fresh produce for Bangladesh.",
+      "columns": [
+        {
+          "heading": "Shop",
+          "links": [
+            { "label": "All products", "url": "/en/products", "visibility": "public" },
+            { "label": "Categories", "url": "/en/categories", "visibility": "public" },
+            { "label": "Vendors", "url": "/en/vendors", "visibility": "public", "enabled": false }
+          ]
+        },
+        {
+          "heading": "Service",
+          "links": [
+            { "label": "Track your order", "url": "/en/track-order", "visibility": "public" },
+            { "label": "About Farm Greens", "url": "/en/about-farm-greens", "visibility": "public" },
+            { "label": "Dhaka delivery", "url": "/en/dhaka-delivery", "visibility": "public" }
+          ]
+        },
+        {
+          "heading": "Account",
+          "links": [
+            { "label": "Login", "url": "/en/auth/login", "visibility": "guest" },
+            { "label": "Register", "url": "/en/auth/register", "visibility": "guest" },
+            { "label": "Dashboard", "url": "/en/account", "visibility": "authenticated" }
+          ]
+        }
+      ],
+      "bottomLinks": [
+        { "label": "About", "url": "/en/about-farm-greens" },
+        { "label": "Delivery in Dhaka", "url": "/en/dhaka-delivery" }
+      ]
+    },
+    "bn": {
+      "copyrightText": "© ২০২৬ ফার্ম গ্রিন। বাংলাদেশের তাজা সবজি ও ফল।",
+      "columns": [
+        {
+          "heading": "কেনাকাটা",
+          "links": [
+            { "label": "সব পণ্য", "url": "/bn/products", "visibility": "public" },
+            { "label": "ক্যাটাগরি", "url": "/bn/categories", "visibility": "public" },
+            { "label": "বিক্রেতা", "url": "/bn/vendors", "visibility": "public", "enabled": false }
+          ]
+        },
+        {
+          "heading": "সেবা",
+          "links": [
+            { "label": "অর্ডার ট্র্যাক", "url": "/bn/track-order", "visibility": "public" },
+            { "label": "ফার্ম গ্রিন সম্পর্কে", "url": "/bn/about-farm-greens", "visibility": "public" },
+            { "label": "ঢাকা সরবরাহ", "url": "/bn/dhaka-delivery", "visibility": "public" }
+          ]
+        },
+        {
+          "heading": "অ্যাকাউন্ট",
+          "links": [
+            { "label": "লগইন", "url": "/bn/auth/login", "visibility": "guest" },
+            { "label": "রেজিস্টার", "url": "/bn/auth/register", "visibility": "guest" },
+            { "label": "ড্যাশবোর্ড", "url": "/bn/account", "visibility": "authenticated" }
+          ]
+        }
+      ],
+      "bottomLinks": [
+        { "label": "সম্পর্কে", "url": "/bn/about-farm-greens" },
+        { "label": "ঢাকা ডেলিভারি", "url": "/bn/dhaka-delivery" }
+      ]
+    }
+  },
+  "heroCopyByLocale": {
+    "en": {
+      "title": "Home hero banners",
+      "slides": [
+        {
+          "heading": "Tropical & seasonal fruit",
+          "subheading": "1 kg net lines, BDT pricing — from Farm Greens’ Dhaka hubs.",
+          "ctaLabel": "Browse fruit",
+          "ctaUrl": "/en/categories/fresh-fruits"
+        },
+        {
+          "heading": "Fresh vegetables daily",
+          "subheading": "Greens, gourds, and staples for Bengali home cooking.",
+          "ctaLabel": "Shop vegetables",
+          "ctaUrl": "/en/categories/fresh-vegetables"
+        },
+        {
+          "heading": "Herbs, tea & more",
+          "subheading": "Aromatics and specialty lines — chill early, use fast.",
+          "ctaLabel": "See specialty",
+          "ctaUrl": "/en/categories/herbs-and-aromatics"
+        }
+      ],
+      "meta": {
+        "title": "Home hero banners | Farm Greens",
+        "description": "Carousel slides for the Farm Greens home page."
+      }
+    },
+    "bn": {
+      "title": "হোম হিরো ব্যানার",
+      "slides": [
+        {
+          "heading": "মৌসুমি তাজা ফল",
+          "subheading": "১ কেজি নেট লাইন, BDT — ঢাকা হাব থেকে।",
+          "ctaLabel": "ফল দেখুন",
+          "ctaUrl": "/bn/categories/fresh-fruits"
+        },
+        {
+          "heading": "তাজা সবজি",
+          "subheading": "বাড়ির রান্নার জন্য শাক, লাউ ও নিত্যদিনের সবজি।",
+          "ctaLabel": "সবজি কেনাকাটা",
+          "ctaUrl": "/bn/categories/fresh-vegetables"
+        },
+        {
+          "heading": "ঔষধি, চা ও বিশেষ",
+          "subheading": "সুগন্ধি ও বিশেষ লাইন — দ্রুত ব্যবহার।",
+          "ctaLabel": "বিশেষ বিভাগ",
+          "ctaUrl": "/bn/categories/herbs-and-aromatics"
+        }
+      ],
+      "meta": {
+        "title": "হোম হিরো | ফার্ম গ্রিন",
+        "description": "ফার্ম গ্রিন হোম পেজের ক্যারousel।"
+      }
+    }
+  },
+  "staticPages": {
+    "about-farm-greens": {
+      "en": {
+        "title": "About Farm Greens",
+        "body": "## Our promise\n\nFarm Greens is a **Bangladesh-first** fresh produce line with **BDT** pricing, **net kg** where noted, and two **Dhaka** staging points (Gulshan 1, Mirpur 10) in our catalogue story. Edit this page in the admin to match your live operations.\n\n## For merchants\n\nUse **Products**, **Categories**, and **Vendors** from the header — all are CMS-driven. Replace this copy with your own brand voice."
+      },
+      "bn": {
+        "title": "ফার্ম গ্রিন সম্পর্কে",
+        "body": "## আমাদের প্রতিশ্রুতি\n\nফার্ম গ্রিন **বাংলাদেশ-কেন্দ্রিক** তাজা সরবরাহ, **BDT** মূল্য ও **নেট কেজি** তথ্য। ক্যাটালগে **ঢাকার** দুই হাব (গুলশান ১, মিরপুর ১০)। অ্যাডমিনে এ পৃষ্ঠা সম্পাদনা করুন।\n\n## বিক্রেতাদের জন্য\n\nহেডারের **পণ্য**, **ক্যাটাগরি**, **বিক্রেতা** লিংক CMS থেকে — নিজের ব্রান্ড স্বরে কপি বসান।"
+      }
+    },
+    "dhaka-delivery": {
+      "en": {
+        "title": "Delivery in Dhaka",
+        "body": "## Green vs gray areas\n\nYour storefront pairs **locality** with **shipping method**: standard vs extended rates where our manifest uses **service tiers**.\n\n## Hubs\n\n**Gulshan 1** and **Mirpur 10** are the public story for dispatch. Actual courier rules are yours — this page is for buyer-facing copy only."
+      },
+      "bn": {
+        "title": "ঢাকায় সরবরাহ",
+        "body": "## সবুজ বনাম ধূসর\n\n**এলাকা** ও **শিপিং মেথড** মিলিয়ে স্টোরফ্রন্ট — ম্যানিফেস্টের **সার্ভিস স্তর** অনুসারে।\n\n## হাব\n\n**গুলশান ১** ও **মিরপুর ১০** ডিসপ্যাচ কাহিনি; ক্যুরিয়ার নিয়ম আপনার — এটি ক্রেতার কপি।"
+      }
+    }
+  }
+}

@@ -117,12 +117,18 @@ function throwIfBad(label, status, json) {
  * Globals are singletons: PATCH usually succeeds on a fresh DB; POST is a fallback
  * if your Payload version expects create-first.
  */
-export async function ensureGlobal(base, token, slug, body) {
-  let res = await request(base, `/api/globals/${slug}`, { method: 'PATCH', token, body })
+/**
+ * @param {object} [options]
+ * @param {string} [options.locale] — e.g. `en` or `bn` for localized global fields
+ */
+export async function ensureGlobal(base, token, slug, body, options = {}) {
+  const { locale } = options
+  const q = locale != null && String(locale).trim() !== '' ? `?locale=${encodeURIComponent(String(locale))}` : ''
+  let res = await request(base, `/api/globals/${slug}${q}`, { method: 'PATCH', token, body })
   if ([200, 201, 204].includes(res.status)) return res.json
-  res = await request(base, `/api/globals/${slug}`, { method: 'POST', token, body })
+  res = await request(base, `/api/globals/${slug}${q}`, { method: 'POST', token, body })
   if ([200, 201, 204].includes(res.status)) return res.json
-  throwIfBad(`globals/${slug}`, res.status, res.json)
+  throwIfBad(`globals/${slug}${q}`, res.status, res.json)
 }
 
 /**

@@ -43,6 +43,15 @@ export const Footer: GlobalConfig = {
               required: true,
             },
             {
+              name: 'enabled',
+              type: 'checkbox',
+              defaultValue: true,
+              admin: {
+                description:
+                  'Uncheck to hide this link on the storefront without deleting it (same idea as header primary nav).',
+              },
+            },
+            {
               name: 'visibility',
               type: 'select',
               defaultValue: 'public',
