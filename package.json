@@ -23,7 +23,11 @@
     "build": "yarn workspaces run build",
     "start": "yarn workspaces run start",
     "lint": "yarn workspaces run lint",
-    "typecheck": "yarn workspaces run typecheck"
+    "typecheck": "yarn workspaces run typecheck",
+    "pm2:start": "pm2 start pm2/ecosystem.config.cjs",
+    "pm2:stop": "pm2 delete bs-api",
+    "pm2:logs": "pm2 logs bs-api",
+    "pm2:flush": "pm2 flush"
   },
   "devDependencies": {
     "typescript": "^5.7.3"
