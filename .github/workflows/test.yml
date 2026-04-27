@@ -109,6 +109,11 @@ jobs:
         run: yarn install --frozen-lockfile
         working-directory: .
 
+      # Fresh service DBs have no tables; push:false means schema comes from migrations only.
+      - name: Run database migrations
+        run: yarn db:migrate
+        working-directory: packages/backend
+
       - name: Start backend server (dev mode)
         run: |
           yarn dev &

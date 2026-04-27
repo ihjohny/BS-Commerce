@@ -1,10 +1,11 @@
 import type { CollectionConfig } from 'payload'
 import { isAdmin } from '../access/is-admin'
+import { getMediaStaticDir } from '../lib/media-upload-dir'
 
 export const Media: CollectionConfig = {
   slug: 'media',
   upload: {
-    staticDir: 'media',
+    staticDir: getMediaStaticDir(),
     imageSizes: [
       {
         name: 'thumbnail',

@@ -1,0 +1,1250 @@
+{
+  "name": "farm-greens",
+  "version": 1,
+  "description": "Curated Bangladesh (BDT-only) — Farm Greens (farmgreens) — two Dhaka pick-up / fulfillment points (Gulshan-1, Mirpur-10), real produce images. Shipping: green zone (standard rate) vs gray zone (extended rate / farther from hub). Locality names and geocodeMatchAliases follow common Nominatim/OSM spellings (e.g. Mahakhali, Mirpur 12, Mirpur DOHS) so reverse-geocoding can match. Optional catalog: assets/product_images/products.catalog.json. No tenant/vendors — single platform.",
+  "currency": "BDT",
+  "branding": {
+    "projectSlug": "farmgreens",
+    "themeNote": "Storefront green palette — align hero/copy with this manifest in CMS globals separately if needed.",
+    "displayName": "Farm Greens"
+  },
+  "imageAttribution": "Seeder loads files from imageBaseDir (relative to BS-Commerce) or from env FARM_GREENS_IMAGE_DIR if set (absolute path — use when product_images is outside the repo). imageFiles are filenames only; same names must exist in that folder. Do not rename files on disk. Category covers: categoryImageBaseDir and category imageFile (same pattern).",
+  "imageBaseDir": "../assets/product_images",
+  "categoryImageBaseDir": "../assets/product_category_images",
+  "productCatalogFile": "../assets/product_images/products.catalog.json",
+  "categories": [
+    {
+      "slug": "fresh-vegetables",
+      "name": {
+        "en": "Fresh vegetables",
+        "bn": "তাজা সবজি"
+      },
+      "shortLabel": {
+        "en": "Greens, gourds, peppers",
+        "bn": "সবজি"
+      },
+      "imageFile": "category-fresh-vegetables.jpg",
+      "description": {
+        "en": "Leafy greens, gourds, roots, and seasonal vegetables picked for color, firmness, and clean cuts—ideal for everyday Bengali cooking and lighter plates.\n\nWe rotate with harvest windows in Bangladesh and keep profiles honest: you will see how each item is sold (by net kg or by typical bunch) in the line description.",
+        "bn": "পাতা, লাউ, শাক ও মৌসুমি সবজি—রান্না ও স্যালাডে ব্যবহারের জন্য তাজা নির্বাচন।\n\nসরবরাহ ঋতুভিত্তিক; পণ্যের ধরন ও প্যাক ধরন বিবরণে স্পষ্ট।"
+      },
+      "meta": {
+        "title": {
+          "en": "Fresh vegetables | Farm Greens",
+          "bn": "তাজা সবজি | ফার্ম গ্রিন"
+        },
+        "description": {
+          "en": "Hand-selected vegetables for Dhaka: crisp greens, gourds, and staples for curry, bharta, and salad.",
+          "bn": "ঢাকা সরবরাহের জন্য বাছাই করা তাজা সবজি—রান্না ও স্যালাডে উপযুক্ত।"
+        }
+      }
+    },
+    {
+      "slug": "fresh-fruits",
+      "name": {
+        "en": "Fresh fruit",
+        "bn": "তাজা ফল"
+      },
+      "shortLabel": {
+        "en": "Seasonal fruit",
+        "bn": "ফল"
+      },
+      "imageFile": "category-fresh-fruits.jpg",
+      "description": {
+        "en": "Tropical and seasonal fruit chosen for natural aroma, balanced ripeness, and eating quality—less guesswork for juices, office snacks, and weekend desserts.\n\nRipeness is climate-sensitive; if you need firmer or softer fruit, note it at checkout when your storefront supports line notes.",
+        "bn": "আঁশ ও গন্ধ—জুস, নাস্তা ও মিষ্টি তৈরিতে তাজা মৌসুমি ফল।\n\nপাকের ধরন আবহাওয়া ভিত্তিক; দরকার হলে অর্ডার নোটে উল্লেখ করুন।"
+      },
+      "meta": {
+        "title": {
+          "en": "Fresh fruit | Farm Greens",
+          "bn": "তাজা ফল | ফার্ম গ্রিন"
+        },
+        "description": {
+          "en": "Seasonal fruit for Bangladesh homes: snacking, juices, and desserts with clear origin-friendly sourcing.",
+          "bn": "বাড়িতে খাওয়া, জুস ও মিষ্টির জন্য মৌসুমি ফল।"
+        }
+      }
+    },
+    {
+      "slug": "herbs-and-aromatics",
+      "name": {
+        "en": "Herbs, tea & specialty",
+        "bn": "ঔষধি, চা ও বিশেষ"
+      },
+      "shortLabel": {
+        "en": "Herbs, plants, superfoods",
+        "bn": "ঔষধি"
+      },
+      "imageFile": "category-herbs-and-aromatics.jpg",
+      "description": {
+        "en": "Aromatics, tea-style leaves, and small-batch “specialty” greens for broths, chutneys, and wellness-style drinks. Many items are delicate—use soon after delivery and store as noted on the pack.\n\nThis aisle also carries harder-to-source lines that benefit from short cold storage windows.",
+        "bn": "সুগন্ধি পাতা, চা-ধরনের পাতা, ও সুপারফুড—ঝোল, চাটনি ও পানীয়তে।\n\nসংরক্ষণ সংবেদনশীল; দ্রুত ব্যবহারের পরামর্শ।"
+      },
+      "meta": {
+        "title": {
+          "en": "Herbs, tea & specialty | Farm Greens",
+          "bn": "ঔষধি ও বিশেষ | ফার্ম গ্রিন"
+        },
+        "description": {
+          "en": "Herbs, lemongrass, tea, and superfoods for South Asian and fusion recipes—curated for aroma and fresh-cut quality.",
+          "bn": "ঝোল, চা ও স্বাস্থ্যসচেতন পানীয়—সুগন্ধ ও তাজা কাটের মান।"
+        }
+      }
+    }
+  ],
+  "shipping": {
+    "zones": [
+      {
+        "name": "Bangladesh — Farm Greens",
+        "countries": [
+          "BD"
+        ],
+        "isActive": true
+      }
+    ],
+    "methods": [
+      {
+        "name": "Cash on delivery (COD) — green zone",
+        "zoneName": "Bangladesh — Farm Greens",
+        "type": "flat",
+        "rate": 0,
+        "currency": "BDT",
+        "isActive": true,
+        "minOrderValue": 0
+      },
+      {
+        "name": "Cash on delivery (COD) — gray zone",
+        "zoneName": "Bangladesh — Farm Greens",
+        "type": "flat",
+        "rate": 0,
+        "currency": "BDT",
+        "isActive": true,
+        "minOrderValue": 0
+      },
+      {
+        "name": "Pathao (Dhaka) — same-day / next-day — green zone (standard)",
+        "zoneName": "Bangladesh — Farm Greens",
+        "type": "flat",
+        "rate": 60,
+        "currency": "BDT",
+        "isActive": true,
+        "minOrderValue": 0
+      },
+      {
+        "name": "Pathao (Dhaka) — same-day / next-day — gray zone (extended)",
+        "zoneName": "Bangladesh — Farm Greens",
+        "type": "flat",
+        "rate": 120,
+        "currency": "BDT",
+        "isActive": true,
+        "minOrderValue": 0
+      }
+    ],
+    "zoneTierNote": "Green = localities with serviceTier standard. Gray = extended (farther) — use matching shipping method. Checkout should pair locality.serviceTier with method name."
+  },
+  "warehouses": [
+    {
+      "code": "WH-FG-MAIN",
+      "name": "Farm Greens — central warehouse (Dhaka)",
+      "isActive": true
+    }
+  ],
+  "stores": [
+    {
+      "code": "FG-STORE-GLS1",
+      "name": "Farm Greens — Gulshan 1 (pick-up & dispatch)",
+      "sortPriority": 0,
+      "slug": "farm-greens-gulshan-1",
+      "isPublicStore": true,
+      "isActive": true,
+      "address": {
+        "street": "Road 90, House 7A, Gulshan 1",
+        "city": "Dhaka",
+        "state": "Dhaka Division",
+        "country": "BD",
+        "postalCode": "1212"
+      },
+      "storeDetails": {
+        "contactEmail": "gulshan1@example.com",
+        "contactPhone": "+880 1711-000201",
+        "operatingHours": "Sat–Thu 9:00–20:00; Fri 14:00–20:00",
+        "coverageArea": [
+          {
+            "value": "Gulshan 1"
+          },
+          {
+            "value": "Gulshan 2"
+          },
+          {
+            "value": "Banani"
+          },
+          {
+            "value": "Baridhara"
+          },
+          {
+            "value": "Niketan"
+          },
+          {
+            "value": "Mahakhali"
+          },
+          {
+            "value": "Uttara (gray / extended — higher delivery fee from this hub)"
+          }
+        ],
+        "notes": "Green: core North Dhaka (Gulshan, Banani, Baridhara, Niketan, Mahakhali). Gray: e.g. Uttara — use extended-tier locality + gray shipping. Names align with OSM / Nominatim where possible; geocodeMatchAliases on each locality for reverse-geo match."
+      },
+      "geo": {
+        "linkLocalityCodes": [
+          "DHA-GLS",
+          "DHA-GLS1",
+          "DHA-GLS2",
+          "DHA-BAN",
+          "DHA-BRD",
+          "DHA-NKT",
+          "DHA-MHK",
+          "DHA-UTT"
+        ],
+        "linkSubdivisions": [
+          "BD-DHA"
+        ]
+      }
+    },
+    {
+      "code": "FG-STORE-MIR10",
+      "name": "Farm Greens — Mirpur 10 (pick-up & dispatch)",
+      "sortPriority": 1,
+      "slug": "farm-greens-mirpur-10",
+      "isPublicStore": true,
+      "isActive": true,
+      "address": {
+        "street": "Mirpur 10, Main Road",
+        "city": "Dhaka",
+        "state": "Dhaka Division",
+        "country": "BD",
+        "postalCode": "1216"
+      },
+      "storeDetails": {
+        "contactEmail": "mirpur10@example.com",
+        "contactPhone": "+880 1711-000202",
+        "operatingHours": "Sat–Thu 9:00–20:00; Fri 14:00–20:00",
+        "coverageArea": [
+          {
+            "value": "Mirpur 6"
+          },
+          {
+            "value": "Mirpur 10"
+          },
+          {
+            "value": "Mirpur 11"
+          },
+          {
+            "value": "Mirpur 12 (Mirpur Baro / বারো)"
+          },
+          {
+            "value": "Kazipara"
+          },
+          {
+            "value": "Pallabi"
+          },
+          {
+            "value": "Mirpur DOHS"
+          },
+          {
+            "value": "Shewrapara (gray / extended from Mirpur 10 — higher fee)"
+          }
+        ],
+        "notes": "Green: main Mirpur belt including Pallabi, Mirpur 12, Mirpur DOHS, Kazipara, Mirpur 6–12. Gray: e.g. Shewrapara / Agargaon edge — use extended serviceTier + gray Pathao method. Spelling matches common OSM sublocality names (Mirpur, Pallabi, DOHS) for address API matching."
+      },
+      "geo": {
+        "linkLocalityCodes": [
+          "DHA-MRP",
+          "DHA-MRP6",
+          "DHA-MRP10",
+          "DHA-MRP11",
+          "DHA-MRP12",
+          "DHA-KAZ",
+          "DHA-PLB",
+          "DHA-MRPDHS",
+          "DHA-SWR",
+          "DHA-AGR"
+        ],
+        "linkSubdivisions": [
+          "BD-DHA"
+        ]
+      }
+    }
+  ],
+  "products": [
+    {
+      "slug": "fg-acai-berries",
+      "name": {
+        "en": "Acai Berries (1 kg)",
+        "bn": "Acai Berries (১ কেজি)"
+      },
+      "basePriceBdt": 86,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "acai-berries-1.jpg",
+        "acai-berries-2.jpg",
+        "acai-berries-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-aloe-vera-plant",
+      "name": {
+        "en": "Aloe Vera Plant (1 kg)",
+        "bn": "Aloe Vera Plant (১ কেজি)"
+      },
+      "basePriceBdt": 297,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "herbs-and-aromatics"
+      ],
+      "imageFiles": [
+        "aloe-vera-plant-1.jpg",
+        "aloe-vera-plant-2.jpg",
+        "aloe-vera-plant-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-bananas",
+      "name": {
+        "en": "Bananas (1 kg)",
+        "bn": "Bananas (১ কেজি)"
+      },
+      "basePriceBdt": 139,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "bananas-1.jpg",
+        "bananas-2.jpg",
+        "bananas-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-broccoli-vegetable",
+      "name": {
+        "en": "Broccoli Vegetable (1 kg)",
+        "bn": "Broccoli Vegetable (১ কেজি)"
+      },
+      "basePriceBdt": 422,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "broccoli-vegetable-1.jpg",
+        "broccoli-vegetable-2.jpg",
+        "broccoli-vegetable-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-capsicum",
+      "name": {
+        "en": "Capsicum (1 kg)",
+        "bn": "Capsicum (১ কেজি)"
+      },
+      "basePriceBdt": 72,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "capsicum-1.jpg",
+        "capsicum-2.jpg",
+        "capsicum-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-carrot",
+      "name": {
+        "en": "Carrot (1 kg)",
+        "bn": "Carrot (১ কেজি)"
+      },
+      "basePriceBdt": 112,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "carrot-1.jpg",
+        "carrot-2.jpg",
+        "carrot-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-cucumber",
+      "name": {
+        "en": "Cucumber (1 kg)",
+        "bn": "Cucumber (১ কেজি)"
+      },
+      "basePriceBdt": 99,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "cucumber-1.jpg",
+        "cucumber-2.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-dragon-fruit",
+      "name": {
+        "en": "Dragon Fruit (1 kg)",
+        "bn": "Dragon Fruit (১ কেজি)"
+      },
+      "basePriceBdt": 351,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "dragon-fruit-1.jpg",
+        "dragon-fruit-2.jpg",
+        "dragon-fruit-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-green-apple-fruit",
+      "name": {
+        "en": "Green Apple Fruit (1 kg)",
+        "bn": "Green Apple Fruit (১ কেজি)"
+      },
+      "basePriceBdt": 192,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "green-apple-fruit-1.jpg",
+        "green-apple-fruit-2.jpg",
+        "green-apple-fruit-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-green-chillies",
+      "name": {
+        "en": "Green Chillies (1 kg)",
+        "bn": "Green Chillies (১ কেজি)"
+      },
+      "basePriceBdt": 322,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "green-chillies-1.jpg",
+        "green-chillies-2.jpg",
+        "green-chillies-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-green-lime",
+      "name": {
+        "en": "Green Lime (1 kg)",
+        "bn": "Green Lime (১ কেজি)"
+      },
+      "basePriceBdt": 68,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "green-lime-1.jpg",
+        "green-lime-2.jpg",
+        "green-lime-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-green-samphire",
+      "name": {
+        "en": "Green Samphire (1 kg)",
+        "bn": "Green Samphire (১ কেজি)"
+      },
+      "basePriceBdt": 272,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "green-samphire-1.jpg",
+        "green-samphire-2.jpg",
+        "green-samphire-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-green-wheatgrass",
+      "name": {
+        "en": "Green Wheatgrass (1 kg)",
+        "bn": "Green Wheatgrass (১ কেজি)"
+      },
+      "basePriceBdt": 406,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "herbs-and-aromatics"
+      ],
+      "imageFiles": [
+        "green-wheatgrass-1.jpg",
+        "green-wheatgrass-2.jpg",
+        "green-wheatgrass-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-kiwi-fruit",
+      "name": {
+        "en": "Kiwi Fruit (1 kg)",
+        "bn": "Kiwi Fruit (১ কেজি)"
+      },
+      "basePriceBdt": 404,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "kiwi-fruit-1.jpg",
+        "kiwi-fruit-2.jpg",
+        "kiwi-fruit-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-lemon-grass",
+      "name": {
+        "en": "Lemon Grass (1 kg)",
+        "bn": "Lemon Grass (১ কেজি)"
+      },
+      "basePriceBdt": 405,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "herbs-and-aromatics"
+      ],
+      "imageFiles": [
+        "lemon-grass-1.jpg",
+        "lemon-grass-2.jpg",
+        "lemon-grass-3.jpg",
+        "lemon-grass-4.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-loquat-fruits",
+      "name": {
+        "en": "Loquat Fruits (1 kg)",
+        "bn": "Loquat Fruits (১ কেজি)"
+      },
+      "basePriceBdt": 259,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "loquat-fruits-1.jpg",
+        "loquat-fruits-2.jpg",
+        "loquat-fruits-3.jpg",
+        "loquat-fruits-4.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-organic-corn-cob-maize",
+      "name": {
+        "en": "Organic Corn Cob Maize (1 kg)",
+        "bn": "Organic Corn Cob Maize (১ কেজি)"
+      },
+      "basePriceBdt": 355,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "organic-corn-cob-maize-1.jpg",
+        "organic-corn-cob-maize-2.jpg",
+        "organic-corn-cob-maize-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-pepper",
+      "name": {
+        "en": "Pepper (1 kg)",
+        "bn": "Pepper (১ কেজি)"
+      },
+      "basePriceBdt": 83,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "pepper-1.jpg",
+        "pepper-2.jpg",
+        "pepper-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-pile-of-cherries",
+      "name": {
+        "en": "Pile Of Cherries (1 kg)",
+        "bn": "Pile Of Cherries (১ কেজি)"
+      },
+      "basePriceBdt": 111,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "pile-of-cherries-1.jpg",
+        "pile-of-cherries-2.jpg",
+        "pile-of-cherries-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-pineapple",
+      "name": {
+        "en": "Pineapple (1 kg)",
+        "bn": "Pineapple (১ কেজি)"
+      },
+      "basePriceBdt": 355,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "pineapple-1.jpg",
+        "pineapple-2.jpg",
+        "pineapple-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-raw-eggplant",
+      "name": {
+        "en": "Raw Eggplant (1 kg)",
+        "bn": "Raw Eggplant (১ কেজি)"
+      },
+      "basePriceBdt": 388,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "raw-eggplant-1.jpg",
+        "raw-eggplant-2.jpg",
+        "raw-eggplant-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-red-berry-strawberry",
+      "name": {
+        "en": "Red Berry Strawberry (1 kg)",
+        "bn": "Red Berry Strawberry (১ কেজি)"
+      },
+      "basePriceBdt": 351,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "red-berry-strawberry-1.jpg",
+        "red-berry-strawberry-2.jpg",
+        "red-berry-strawberry-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-species",
+      "name": {
+        "en": "Species (1 kg)",
+        "bn": "Species (১ কেজি)"
+      },
+      "basePriceBdt": 205,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "herbs-and-aromatics"
+      ],
+      "imageFiles": [
+        "species-1.jpg",
+        "species-2.jpg",
+        "species-3.jpg",
+        "species-4.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-spirulina-seaweed-healthy-food",
+      "name": {
+        "en": "Spirulina Seaweed Healthy Food (1 kg)",
+        "bn": "Spirulina Seaweed Healthy Food (১ কেজি)"
+      },
+      "basePriceBdt": 398,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "herbs-and-aromatics"
+      ],
+      "imageFiles": [
+        "spirulina-seaweed-healthy-food-1.jpg",
+        "spirulina-seaweed-healthy-food-2.jpg",
+        "spirulina-seaweed-healthy-food-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-sweet-pepper",
+      "name": {
+        "en": "Sweet Pepper (1 kg)",
+        "bn": "Sweet Pepper (১ কেজি)"
+      },
+      "basePriceBdt": 312,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-vegetables"
+      ],
+      "imageFiles": [
+        "sweet-pepper-1.jpg",
+        "sweet-pepper-2.jpg",
+        "sweet-pepper-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-tea-leaves",
+      "name": {
+        "en": "Tea Leaves (1 kg)",
+        "bn": "Tea Leaves (১ কেজি)"
+      },
+      "basePriceBdt": 282,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "herbs-and-aromatics"
+      ],
+      "imageFiles": [
+        "tea-leaves-1.jpg",
+        "tea-leaves-2.jpg",
+        "tea-leaves-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-watermelon",
+      "name": {
+        "en": "Watermelon (1 kg)",
+        "bn": "Watermelon (১ কেজি)"
+      },
+      "basePriceBdt": 277,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "watermelon-1.jpg",
+        "watermelon-2.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-yellow-apple-fruit",
+      "name": {
+        "en": "Yellow Apple Fruit (1 kg)",
+        "bn": "Yellow Apple Fruit (১ কেজি)"
+      },
+      "basePriceBdt": 157,
+      "status": "published",
+      "featured": false,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "yellow-apple-fruit-1.jpg",
+        "yellow-apple-fruit-2.jpg",
+        "yellow-apple-fruit-3.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    },
+    {
+      "slug": "fg-yellow-cherries",
+      "name": {
+        "en": "Yellow Cherries (1 kg)",
+        "bn": "Yellow Cherries (১ কেজি)"
+      },
+      "basePriceBdt": 289,
+      "status": "published",
+      "featured": true,
+      "categorySlugs": [
+        "fresh-fruits"
+      ],
+      "imageFiles": [
+        "yellow-cherries-1.jpg",
+        "yellow-cherries-2.jpg",
+        "yellow-cherries-3.jpg",
+        "yellow-cherries-4.jpg"
+      ],
+      "stockQuantityPerLocation": 50000
+    }
+  ],
+  "geo": {
+    "enabledWhenEnv": "GEOGRAPHY_ENABLED=true",
+    "country": {
+      "name": "Bangladesh",
+      "isoCode": "BD"
+    },
+    "subdivisions": [
+      {
+        "code": "BD-DHA",
+        "name": "Dhaka",
+        "defaultServiceTier": "standard"
+      }
+    ],
+    "localities": [
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-GLS",
+        "name": {
+          "en": "Gulshan",
+          "bn": "গুলশান"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Gulshan"
+          },
+          {
+            "alias": "Gulshan Model Town"
+          },
+          {
+            "alias": "Gulshan Thana"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-GLS1",
+        "name": {
+          "en": "Gulshan 1",
+          "bn": "গুলশান ১"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Gulshan 1"
+          },
+          {
+            "alias": "Gulshan-1"
+          },
+          {
+            "alias": "Gulshan Circle 1"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-GLS2",
+        "name": {
+          "en": "Gulshan 2",
+          "bn": "গুলশান ২"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Gulshan 2"
+          },
+          {
+            "alias": "Gulshan-2"
+          },
+          {
+            "alias": "Gulshan Circle 2"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-BAN",
+        "name": {
+          "en": "Banani",
+          "bn": "বনানী"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Banani"
+          },
+          {
+            "alias": "Banani DOHS"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-BRD",
+        "name": {
+          "en": "Baridhara",
+          "bn": "বারিধারা"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Baridhara"
+          },
+          {
+            "alias": "Baridhara DOHS"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-NKT",
+        "name": {
+          "en": "Niketan",
+          "bn": "নিকেতন"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Niketan"
+          },
+          {
+            "alias": "Niketan Society"
+          },
+          {
+            "alias": "Niketan Bazar"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MHK",
+        "name": {
+          "en": "Mahakhali",
+          "bn": "মহাখালী"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mahakhali"
+          },
+          {
+            "alias": "Mahakali"
+          },
+          {
+            "alias": "Mohakhali"
+          },
+          {
+            "alias": "Gulshan Mahakhali"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-UTT",
+        "name": {
+          "en": "Uttara",
+          "bn": "উত্তরা"
+        },
+        "serviceTier": "extended",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Uttara"
+          },
+          {
+            "alias": "Uttara Model Town"
+          },
+          {
+            "alias": "Uttara Sector 1"
+          },
+          {
+            "alias": "Uttara Sector 7"
+          },
+          {
+            "alias": "Uttara Sector 14"
+          }
+        ],
+        "extendedFeeNote": "North Dhaka; farther from Gulshan hub — gray zone Pathao / COD tier.",
+        "extendedLeadTimeNote": "Same-day or next-day windows may be extended vs green-zone postcodes near Gulshan."
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MRP",
+        "name": {
+          "en": "Mirpur",
+          "bn": "মিরপুর"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mirpur"
+          },
+          {
+            "alias": "Mirpur TSO"
+          },
+          {
+            "alias": "মিরপুর"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MRP6",
+        "name": {
+          "en": "Mirpur 6",
+          "bn": "মিরপুর ৬"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mirpur 6"
+          },
+          {
+            "alias": "Mirpur-6"
+          },
+          {
+            "alias": "Mirpur Section 6"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MRP10",
+        "name": {
+          "en": "Mirpur 10",
+          "bn": "মিরপুর ১০"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mirpur 10"
+          },
+          {
+            "alias": "Mirpur-10"
+          },
+          {
+            "alias": "Mirpur Section 10"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MRP11",
+        "name": {
+          "en": "Mirpur 11",
+          "bn": "মিরপুর ১১"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mirpur 11"
+          },
+          {
+            "alias": "Mirpur-11"
+          },
+          {
+            "alias": "Pallabi side Mirpur 11"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MRP12",
+        "name": {
+          "en": "Mirpur 12",
+          "bn": "মিরপুর ১২"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mirpur 12"
+          },
+          {
+            "alias": "Mirpur Baro"
+          },
+          {
+            "alias": "Mirpur-12"
+          },
+          {
+            "alias": "Baro"
+          },
+          {
+            "alias": "Eastern Housing"
+          },
+          {
+            "alias": "Section 12 Mirpur"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-KAZ",
+        "name": {
+          "en": "Kazipara",
+          "bn": "কাজিপাড়া"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Kazipara"
+          },
+          {
+            "alias": "Kajipara"
+          },
+          {
+            "alias": "Kazi Para"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-PLB",
+        "name": {
+          "en": "Pallabi",
+          "bn": "পল্লবী"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Pallabi"
+          },
+          {
+            "alias": "Pallabi Thana"
+          },
+          {
+            "alias": "Mirpur Pallabi"
+          },
+          {
+            "alias": "Mazar Road"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-MRPDHS",
+        "name": {
+          "en": "Mirpur DOHS",
+          "bn": "মিরপুর ডি.ও.এইচ.এস"
+        },
+        "serviceTier": "standard",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Mirpur DOHS"
+          },
+          {
+            "alias": "DOHS Mirpur"
+          },
+          {
+            "alias": "D.O.H.S. Mirpur"
+          },
+          {
+            "alias": "DOHS"
+          },
+          {
+            "alias": "Mirpur Defence Officers Housing"
+          },
+          {
+            "alias": "Senpara Mirpur DOHS"
+          }
+        ]
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-SWR",
+        "name": {
+          "en": "Shewrapara",
+          "bn": "শেয়ারাআরা"
+        },
+        "serviceTier": "extended",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Shewrapara"
+          },
+          {
+            "alias": "Shewra Para"
+          },
+          {
+            "alias": "Mazar Road Shewrapara"
+          }
+        ],
+        "extendedFeeNote": "Edge of Mirpur coverage from Mirpur 10; gray zone courier add-on vs core Mirpur belt.",
+        "extendedLeadTimeNote": "Allow longer slot vs Mirpur 10 / Pallabi green postcodes."
+      },
+      {
+        "subdivisionCode": "BD-DHA",
+        "code": "DHA-AGR",
+        "name": {
+          "en": "Agargaon",
+          "bn": "আগারগাঁও"
+        },
+        "serviceTier": "extended",
+        "geocodeMatchAliases": [
+          {
+            "alias": "Agargaon"
+          },
+          {
+            "alias": "Agargaon TSO"
+          },
+          {
+            "alias": "আগারগাঁও"
+          }
+        ],
+        "extendedFeeNote": "West Dhaka; extended from Mirpur 10 for routing — gray zone rate.",
+        "extendedLeadTimeNote": "Heavier traffic to Agargaon may shift delivery window."
+      }
+    ]
+  },
+  "accounts": {
+    "admin": {
+      "email": "admin@example.com",
+      "password": "Asd@1234",
+      "note": "Seeder uses SEED_DATA_PASSWORD (default Asd@1234) for all users unless SEED_ADMIN_PASSWORD is set for the admin. Optional: SEED_ADMIN_EMAIL."
+    },
+    "customer": {
+      "email": "customer@example.com",
+      "password": "Asd@1234",
+      "note": "Seeder uses SEED_DATA_PASSWORD (default Asd@1234) unless SEED_CUSTOMER_PASSWORD is set. Created when SEED_FARM_GREENS_CUSTOMER=true."
+    }
+  }
+}
