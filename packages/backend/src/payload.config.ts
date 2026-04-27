@@ -33,6 +33,7 @@ import { Footer } from './globals/footer'
 import { PlatformSettings } from './globals/platform-settings'
 
 import { redisConfig, cachedCollections } from './lib/redis'
+import { getPayloadServerUrl, getPayloadTrustedOrigins } from './lib/payload-server-url'
 import { authLoginEndpoint } from './endpoints/auth-login'
 import { guestOrderLookupEndpoint } from './endpoints/guest-order-lookup'
 import { checkoutProcessEndpoint } from './endpoints/checkout-process'
@@ -49,8 +50,8 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const redisPluginEnabled = process.env.REDIS_CACHE_ENABLED === 'true'
 
-/** Same origin as `NEXT_PUBLIC_APP_URL` — Payload `serverURL` for emails, links, and admin views that must not use `window` during SSR (e.g. document "API" tab). */
-const serverURL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+/** Same as `getPayloadServerUrl()` — emails, links, and admin; must match the live public URL (see `payload-server-url.ts`). */
+const serverURL = getPayloadServerUrl()
 
 export default buildConfig({
   serverURL,
@@ -319,21 +320,12 @@ export default buildConfig({
 
   // ─── CORS ────────────────────────────────────────────────────────────────────
   // Auth cookie is only accepted when request Origin is in this list (see payload auth extractJWT).
-  // Include multivendor storefront when it is on a different public URL from single-vendor.
-  cors: [
-    process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
-    process.env.NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL,
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ]
-    .filter((x) => x && x !== 'null')
-    .map((o) => o!.replace(/\/$/, '')) as string[],
+  // Include the API + admin host (`getPayloadServerUrl()`) and storefronts; set `SERVER_PUBLIC_URL`
+  // on the server if the build-time `NEXT_PUBLIC_APP_URL` does not match production.
+  cors: getPayloadTrustedOrigins(),
 
   // ─── CSRF ────────────────────────────────────────────────────────────────────
-  csrf: [
-    process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
-    process.env.NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL,
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ]
-    .filter((x) => x && x !== 'null')
-    .map((o) => o!.replace(/\/$/, '')) as string[],
+  // Mutations from the admin UI fail with a CSRF / auth error if the browser Origin
+  // is not listed — often caused by a baked wrong `NEXT_PUBLIC_APP_URL` (see `payload-server-url.ts`).
+  csrf: getPayloadTrustedOrigins(),
 })

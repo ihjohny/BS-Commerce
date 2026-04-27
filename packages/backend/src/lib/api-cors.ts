@@ -1,3 +1,5 @@
+import { getPayloadServerUrl, getPayloadTrustedOrigins } from './payload-server-url'
+
 /**
  * CORS for `/api/*` must run in Node route handlers, not only Edge `middleware`.
  * Edge middleware inlines `NEXT_PUBLIC_*` at build time and can return OPTIONS without
@@ -5,7 +7,7 @@
  *
  * On the server, set (comma-separated, no spaces required):
  *   CORS_ALLOWED_ORIGINS=https://your-store.com,https://your-api.com
- * Falls back to NEXT_PUBLIC_STOREFRONT_URL, NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL, NEXT_PUBLIC_APP_URL.
+ * Falls back to the same trust list as Payload (`getPayloadTrustedOrigins()` + `CORS` extras).
  */
 function normalizeOrigin(o: string) {
   return o.replace(/\/$/, '')
@@ -16,24 +18,18 @@ export function getApiCorsAllowedOrigins(): string[] {
   if (list?.trim()) {
     return [
       ...new Set(
-        list
-          .split(',')
-          .map((s) => normalizeOrigin(s.trim()))
-          .filter(Boolean),
+        [
+          ...list
+            .split(',')
+            .map((s) => normalizeOrigin(s.trim()))
+            .filter(Boolean),
+          // Ensure API + admin host can be allowed when env list is storefronts-only
+          getPayloadServerUrl(),
+        ].filter(Boolean),
       ),
     ]
   }
-  return [
-    ...new Set(
-      [
-        process.env.NEXT_PUBLIC_STOREFRONT_URL,
-        process.env.NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL,
-        process.env.NEXT_PUBLIC_APP_URL,
-      ]
-        .filter((x): x is string => Boolean(x) && x !== 'null')
-        .map(normalizeOrigin),
-    ),
-  ]
+  return [...new Set(getPayloadTrustedOrigins().map(normalizeOrigin))]
 }
 
 /** CORS-safelisted + app headers. Browser preflight may list more — we must merge. */
