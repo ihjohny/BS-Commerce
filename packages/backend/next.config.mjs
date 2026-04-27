@@ -2,6 +2,7 @@ import { withPayload } from '@payloadcms/next/withPayload'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   serverExternalPackages: ['ioredis', 'payloadcms-redis-plugin'],
   // When running E2E in parallel, multiple Next dev servers must not share the same build cache.
   // `run-e2e-safe.mjs` sets `NEXT_DIST_DIR` per slot.
