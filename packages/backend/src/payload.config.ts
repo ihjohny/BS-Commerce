@@ -319,14 +319,21 @@ export default buildConfig({
 
   // ─── CORS ────────────────────────────────────────────────────────────────────
   // Auth cookie is only accepted when request Origin is in this list (see payload auth extractJWT).
+  // Include multivendor storefront when it is on a different public URL from single-vendor.
   cors: [
     process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
+    process.env.NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL,
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ].filter(Boolean),
+  ]
+    .filter((x) => x && x !== 'null')
+    .map((o) => o!.replace(/\/$/, '')) as string[],
 
   // ─── CSRF ────────────────────────────────────────────────────────────────────
   csrf: [
     process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
+    process.env.NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL,
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ].filter(Boolean),
+  ]
+    .filter((x) => x && x !== 'null')
+    .map((o) => o!.replace(/\/$/, '')) as string[],
 })

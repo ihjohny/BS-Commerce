@@ -11,32 +11,10 @@ const nextConfig = {
   typescript: {
     tsconfigPath: process.env.E2E_TSCONFIG_PATH || 'tsconfig.json',
   },
-  // Allow cross-origin requests from the storefront
+  // CORS for /api is handled in `src/middleware.ts` (multi-origin, runtime env on server).
+  // A single `Access-Control-Allow-Origin` here breaks SV + MV on different public URLs.
   async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value:
-              'Content-Type, Authorization, X-Guest-Id, Accept-Language',
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'true',
-          },
-        ],
-      },
-    ]
+    return []
   },
 }
 
