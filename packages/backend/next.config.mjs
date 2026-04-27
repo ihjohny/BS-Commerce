@@ -10,8 +10,8 @@ const nextConfig = {
   typescript: {
     tsconfigPath: process.env.E2E_TSCONFIG_PATH || 'tsconfig.json',
   },
-  // CORS for /api is handled in `src/middleware.ts` (multi-origin, runtime env on server).
-  // A single `Access-Control-Allow-Origin` here breaks SV + MV on different public URLs.
+  // CORS for /api: see `src/lib/api-cors.ts` on the catch-all API route (runtime env, multi-origin).
+  // A single `Access-Control-Allow-Origin` in headers() here would break multiple storefronts.
   async headers() {
     return []
   },
