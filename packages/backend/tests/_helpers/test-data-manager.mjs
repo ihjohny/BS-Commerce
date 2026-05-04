@@ -270,11 +270,16 @@ export class TestDataManager {
       basePrice: 100,
       currency: 'USD',
       status: 'published',
+      /** Matches schema default; explicit avoids REST paths missing Payload defaults. */
+      saleDisplayMode: 'strike_through',
       ...overrides,
     }
 
+    /** Localized collections require `locale` on REST create/update (see scripts/seed-farm-greens.mjs). */
+    const productsCreatePath = '/products?locale=en'
+
     let productBody = { ...data }
-    let res = await this.#request('/products', { method: 'POST', body: productBody })
+    let res = await this.#request(productsCreatePath, { method: 'POST', body: productBody })
     if (![200, 201].includes(res.status)) {
       // Multivendor mode can require tenant on product create.
       const tenantRequired =
@@ -283,7 +288,7 @@ export class TestDataManager {
       if (tenantRequired && !data.tenant) {
         const tenant = await this.createTenant()
         productBody = { ...productBody, tenant: tenant.id }
-        res = await this.#request('/products', { method: 'POST', body: productBody })
+        res = await this.#request(productsCreatePath, { method: 'POST', body: productBody })
       }
     }
     if (![200, 201].includes(res.status) && res.status === 400 && res.text.toLowerCase().includes('slug')) {
@@ -293,13 +298,21 @@ export class TestDataManager {
         name: retryName,
         slug: retryName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
       }
-      res = await this.#request('/products', { method: 'POST', body: retryBody })
+      res = await this.#request(productsCreatePath, { method: 'POST', body: retryBody })
+      productBody = retryBody
     }
     if (![200, 201].includes(res.status)) {
       throw new Error(`createProduct failed (${res.status}): ${res.text.slice(0, 300)}`)
     }
     const doc = res.json?.doc || res.json
-    this.#track('products', doc?.id)
+    const productId = doc?.id
+    if (productId && typeof productBody.name === 'string') {
+      await this.#request(`/products/${encodeURIComponent(productId)}?locale=bn`, {
+        method: 'PATCH',
+        body: { name: productBody.name },
+      })
+    }
+    this.#track('products', productId)
     await this.#ensureStockForProductIfNeeded(doc)
     return doc
   }
