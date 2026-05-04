@@ -54,6 +54,7 @@
     "@payloadcms/translations": "^3.77.0",
     "graphql": "^16.10.0",
     "ioredis": "^5.9.3",
+    "libphonenumber-js": "^1.12.24",
     "monaco-editor": "^0.55.1",
     "next": "15.4.11",
     "payload": "^3.77.0",

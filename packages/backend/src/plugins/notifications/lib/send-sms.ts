@@ -30,3 +30,22 @@ export async function sendOrderConfirmationSms(
   const body = `Your order ${orderNumber} has been placed. Total: ${currency} ${grandTotal}. Track your order using this order number.`
   return sendSms({ to: phone, body })
 }
+
+/** Guest checkout without email: payment gateway reported failure — order not confirmed. */
+export async function sendGuestPaymentNotConfirmedSms(
+  orderNumber: string,
+  phone: string,
+  gatewayStatus: string,
+): Promise<boolean> {
+  if (process.env.BS_TEST_PAYMENT_FAILURE_SMS_REJECT === 'true') {
+    return Promise.reject(new Error('simulated payment failure sms reject'))
+  }
+  const st = (gatewayStatus.trim() || 'FAILED').slice(0, 32)
+  const body = [
+    `Payment not completed for ${orderNumber}.`,
+    `Gateway: ${st}.`,
+    `Order not confirmed — try checkout again.`,
+    `Keep this order # for support.`,
+  ].join(' ')
+  return sendSms({ to: phone.trim(), body })
+}

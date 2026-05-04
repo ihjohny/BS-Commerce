@@ -110,7 +110,8 @@
         "rate": 0,
         "currency": "BDT",
         "isActive": true,
-        "minOrderValue": 0
+        "minOrderValue": 0,
+        "collectPaymentOnDelivery": true
       },
       {
         "name": "Cash on delivery (COD) — gray zone",
@@ -119,7 +120,8 @@
         "rate": 0,
         "currency": "BDT",
         "isActive": true,
-        "minOrderValue": 0
+        "minOrderValue": 0,
+        "collectPaymentOnDelivery": true
       },
       {
         "name": "Pathao (Dhaka) — same-day / next-day — green zone (standard)",

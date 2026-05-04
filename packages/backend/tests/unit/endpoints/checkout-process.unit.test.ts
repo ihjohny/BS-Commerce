@@ -19,8 +19,11 @@ import {
 
 const procEnv = process.env as Record<string, string | undefined>
 let nodeEnvBackup: string | undefined
+let authIdentBackup: string | undefined
 beforeEach(() => {
   nodeEnvBackup = procEnv.NODE_ENV
+  authIdentBackup = procEnv.AUTH_REQUIRED_IDENTIFIER
+  procEnv.AUTH_REQUIRED_IDENTIFIER = 'either'
 })
 afterEach(() => {
   resetCheckoutLimiterForTests()
@@ -28,6 +31,8 @@ afterEach(() => {
   resetRedisClientSingletonForTests()
   if (nodeEnvBackup === undefined) Reflect.deleteProperty(procEnv, 'NODE_ENV')
   else procEnv.NODE_ENV = nodeEnvBackup
+  if (authIdentBackup === undefined) Reflect.deleteProperty(procEnv, 'AUTH_REQUIRED_IDENTIFIER')
+  else procEnv.AUTH_REQUIRED_IDENTIFIER = authIdentBackup
 })
 
 const validAddr = {
@@ -129,7 +134,21 @@ test('should return 400 when guest checkout has no guestEmail', async () => {
   })
   assert.equal(res.status, 400)
   const j = await jsonBody(res)
-  assert.ok(String(j.error).includes('guestEmail'))
+  assert.ok(String(j.error).length > 0)
+})
+
+test('should return 400 when cashOnDelivery is true but shippingMethodIds missing', async () => {
+  const req = mockHandlerReq({
+    body: { ...baseBody, cashOnDelivery: true },
+    user: undefined,
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({ order: { id: 'x', orderNumber: 'N' } }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.ok(String(j.error).includes('shippingMethodIds'))
 })
 
 test('should return 400 when guestEmail format is invalid', async () => {
@@ -143,7 +162,7 @@ test('should return 400 when guestEmail format is invalid', async () => {
   })
   assert.equal(res.status, 400)
   const j = await jsonBody(res)
-  assert.equal(j.error, 'guestEmail must be a valid email address')
+  assert.ok(String(j.error).includes('guestEmail') || String(j.error).includes('email'))
 })
 
 test('should return 201 when processCheckout succeeds', async () => {

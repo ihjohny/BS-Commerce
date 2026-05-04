@@ -74,6 +74,31 @@ test('sendOrderConfirmationEmail rejects when BS_TEST_ORDER_EMAIL_REJECT is set'
   }
 })
 
+test('sendGuestPaymentNotConfirmedEmail should return true', async () => {
+  // @ts-ignore
+  const { sendGuestPaymentNotConfirmedEmail } = await import(
+    '../../../src/plugins/notifications/lib/send-email.ts'
+  )
+  const result = await sendGuestPaymentNotConfirmedEmail('ORD-G1', 'guest@test.com', 'FAILED')
+  assert.equal(result, true)
+})
+
+test('sendGuestPaymentNotConfirmedEmail rejects when BS_TEST_PAYMENT_FAILURE_EMAIL_REJECT is set', async () => {
+  process.env.BS_TEST_PAYMENT_FAILURE_EMAIL_REJECT = 'true'
+  try {
+    // @ts-ignore
+    const { sendGuestPaymentNotConfirmedEmail } = await import(
+      '../../../src/plugins/notifications/lib/send-email.ts'
+    )
+    await assert.rejects(
+      () => sendGuestPaymentNotConfirmedEmail('ORD-G2', 'g@test.com', 'CANCELLED'),
+      /simulated payment failure email reject/,
+    )
+  } finally {
+    delete process.env.BS_TEST_PAYMENT_FAILURE_EMAIL_REJECT
+  }
+})
+
 test('sendEmail should extend preview for verification links', async () => {
   // @ts-ignore
   const { sendEmail } = await import('../../../src/plugins/notifications/lib/send-email.ts')

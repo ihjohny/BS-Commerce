@@ -11,6 +11,7 @@ test('customEndpointsOpenApiEndpoint returns supplemental OpenAPI JSON', async (
   const body = (await res.json()) as { openapi: string; paths: Record<string, unknown> }
   assert.equal(body.openapi, '3.0.3')
   assert.ok(body.paths['/api/checkout/process'])
+  assert.ok(body.paths['/api/payments/sslcommerz/ipn'])
   assert.ok(body.paths['/api/guest/order-lookup'])
   assert.ok(body.paths['/api/auth/login'])
 })

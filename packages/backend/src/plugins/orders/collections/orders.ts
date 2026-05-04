@@ -150,6 +150,22 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       ],
     },
     {
+      name: 'checkoutPaymentChannel',
+      type: 'select',
+      required: true,
+      defaultValue: 'online',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description:
+          'Recorded at checkout: online gateway vs cash on delivery. Do not change (audit / fulfillment).',
+      },
+      options: [
+        { label: 'Online (gateway)', value: 'online' },
+        { label: 'Cash on delivery', value: 'cash_on_delivery' },
+      ],
+    },
+    {
       name: 'transaction',
       type: 'relationship',
       relationTo: 'transactions',
@@ -186,7 +202,16 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
     slug: 'orders',
     admin: {
       useAsTitle: 'orderNumber',
-      defaultColumns: ['orderNumber', 'customer', 'status', 'grandTotal', 'currency', 'placedAt'],
+      defaultColumns: [
+        'orderNumber',
+        'customer',
+        'checkoutPaymentChannel',
+        'status',
+        'paymentStatus',
+        'grandTotal',
+        'currency',
+        'placedAt',
+      ],
       group: 'Orders',
       description:
         'Customer orders. Use status=Cancelled to cancel (releases inventory). Orders are never deleted (audit/tax).',
@@ -246,6 +271,14 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
           // missing, or Payload normalization — not an intentional edit. Never merge it on update.
           if (operation === 'update' && data && 'buyerSnapshot' in data) {
             delete data.buyerSnapshot
+          }
+          if (
+            operation === 'update' &&
+            data &&
+            (originalDoc as { checkoutPaymentChannel?: string })?.checkoutPaymentChannel != null
+          ) {
+            data.checkoutPaymentChannel = (originalDoc as { checkoutPaymentChannel: string })
+              .checkoutPaymentChannel
           }
           if (operation === 'update' && data?.status != null) {
             const from = (originalDoc as { status?: string } | undefined)?.status

@@ -7,6 +7,8 @@
  * - phone  = phone required, email optional
  * - either = at least one of email or phone required (default)
  */
+import { LOOSE_EMAIL_FORMAT_RE } from './validation/email-format'
+
 export type AuthRequiredIdentifier = 'email' | 'phone' | 'either'
 
 export function getAuthRequiredIdentifier(): AuthRequiredIdentifier {
@@ -14,9 +16,6 @@ export function getAuthRequiredIdentifier(): AuthRequiredIdentifier {
   if (v === 'email' || v === 'phone' || v === 'either') return v
   return 'either'
 }
-
-/** Basic email pattern; phone often starts with + or digits. */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateAuthIdentifier(
   identifier: AuthRequiredIdentifier,
@@ -26,8 +25,8 @@ export function validateAuthIdentifier(
   let email = (data.email ?? '').toString().trim()
   let phone = (data.phone ?? '').toString().trim()
   const username = (data.username ?? '').toString().trim()
-  if (!email && username && EMAIL_REGEX.test(username)) email = username
-  if (!phone && username && !EMAIL_REGEX.test(username) && username.length > 0) phone = username
+  if (!email && username && LOOSE_EMAIL_FORMAT_RE.test(username)) email = username
+  if (!phone && username && !LOOSE_EMAIL_FORMAT_RE.test(username) && username.length > 0) phone = username
 
   if (identifier === 'email' && !email) {
     throw new Error('Email is required.')
@@ -53,7 +52,7 @@ export function toLoginIdentifier(
   let e = (email ?? '').toString().trim().toLowerCase()
   let p = (phone ?? '').toString().trim()
   const u = (username ?? '').toString().trim()
-  if (!e && u && EMAIL_REGEX.test(u)) e = u.toLowerCase()
-  if (!p && u && !EMAIL_REGEX.test(u)) p = u
+  if (!e && u && LOOSE_EMAIL_FORMAT_RE.test(u)) e = u.toLowerCase()
+  if (!p && u && !LOOSE_EMAIL_FORMAT_RE.test(u)) p = u
   return p || e
 }

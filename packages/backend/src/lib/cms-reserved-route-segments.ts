@@ -13,6 +13,8 @@ export const RESERVED_STOREFRONT_ROUTE_SEGMENTS = new Set(
     'order',
     'products',
     'track-order',
+    'contact',
+    'about',
     // multivendor storefront
     'store',
     'vendors',

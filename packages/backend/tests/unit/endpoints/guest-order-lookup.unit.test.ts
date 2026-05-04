@@ -145,6 +145,36 @@ test('should return 200 with order payload when match exists', async () => {
   assert.equal(json.order.orderNumber, 'ORD-1')
 })
 
+test('should build guestPhone OR variants for lookup when DEFAULT_PHONE_REGION matches', async () => {
+  const prev = process.env.DEFAULT_PHONE_REGION
+  process.env.DEFAULT_PHONE_REGION = 'BD'
+  let seenWhere: unknown = null
+  try {
+    const req = mockHandlerReq({
+      body: { orderNumber: 'ORD-P', guestPhone: '01712345678' },
+      payloadOverrides: {
+        find: async (args: Record<string, unknown>) => {
+          seenWhere = args.where
+          return { docs: [{ id: 'o', orderNumber: 'ORD-P', customer: null }] }
+        },
+      },
+    })
+    const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
+    assert.equal(res.status, 200)
+    const w = seenWhere as {
+      and: Array<{ or?: Array<{ guestPhone: { equals: string } }>; guestPhone?: { equals: string } }>
+    }
+    const phoneClause = w.and[2]
+    assert.ok(phoneClause.or)
+    const equalsValues = phoneClause.or!.map((x) => x.guestPhone.equals).sort()
+    assert.ok(equalsValues.includes('+8801712345678'))
+    assert.ok(equalsValues.includes('01712345678'))
+  } finally {
+    if (prev === undefined) delete process.env.DEFAULT_PHONE_REGION
+    else process.env.DEFAULT_PHONE_REGION = prev
+  }
+})
+
 test('should treat failed json() as empty body and return 400', async () => {
   const req = {
     json: async () => {

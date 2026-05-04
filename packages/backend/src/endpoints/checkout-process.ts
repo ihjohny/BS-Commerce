@@ -8,6 +8,9 @@ import type { RateLimiterRedis } from 'rate-limiter-flexible'
 import { processCheckout } from '../lib/process-checkout'
 import { createRateLimiter, enforceRateLimit, getClientIp, CHECKOUT_RATE_LIMIT } from '../lib/rate-limiter'
 import { isValidUUID } from '../lib/utils'
+import { getAuthRequiredIdentifier } from '../lib/auth-config'
+import { guestCheckoutIdentifiersError } from '../lib/guest-checkout-identifiers'
+import { collectGuestPhoneLookupVariants } from '../lib/validation/phone-format'
 
 /** Lazy so importing this module in unit tests does not open Redis (ioredis keeps the process alive). */
 let checkoutLimiter: RateLimiterRedis | undefined
@@ -44,7 +47,17 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   if (limitResponse) return limitResponse
 
   const data = (await (req as Request).json?.().catch(() => ({}))) || {}
-  const { cartId, shippingAddress, billingAddress, guestEmail, guestPhone, simulatePayment = false, idempotencyKey } = data
+  const {
+    cartId,
+    shippingAddress,
+    billingAddress,
+    guestEmail,
+    guestPhone,
+    simulatePayment = false,
+    idempotencyKey,
+    shippingMethodIds,
+    cashOnDelivery,
+  } = data
 
   if (!cartId || !shippingAddress || !billingAddress) {
     return Response.json(
@@ -68,23 +81,34 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   }
 
   const userId = req.user?.id ?? undefined
-  if (!userId && !guestEmail && !guestPhone) {
-    return Response.json({ error: 'Guest checkout requires guestEmail or guestPhone in body' }, { status: 400 })
-  }
 
-  if (!userId && guestEmail) {
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (typeof guestEmail !== 'string' || !emailRe.test(guestEmail.trim())) {
-      return Response.json({ error: 'guestEmail must be a valid email address' }, { status: 400 })
+  if (!userId) {
+    const identErr = guestCheckoutIdentifiersError(
+      getAuthRequiredIdentifier(),
+      guestEmail,
+      guestPhone,
+      shippingAddress.country,
+    )
+    if (identErr) {
+      return Response.json({ error: identErr }, { status: 400 })
     }
   }
 
-  if (!userId && guestPhone) {
-    if (typeof guestPhone !== 'string' || guestPhone.trim().length < 5) {
-      return Response.json({ error: 'guestPhone must be a valid phone number' }, { status: 400 })
+  if (cashOnDelivery === true) {
+    if (!Array.isArray(shippingMethodIds) || shippingMethodIds.length === 0) {
+      return Response.json(
+        { error: 'cashOnDelivery requires shippingMethodIds as a non-empty array of method ids' },
+        { status: 400 },
+      )
+    }
+    if (!shippingMethodIds.every((id: unknown) => typeof id === 'string' && id.trim().length > 0)) {
+      return Response.json({ error: 'Each shippingMethodId must be a non-empty string' }, { status: 400 })
     }
   }
 
+  if (shippingMethodIds !== undefined && !Array.isArray(shippingMethodIds)) {
+    return Response.json({ error: 'shippingMethodIds must be an array when provided' }, { status: 400 })
+  }
   // Security: block guest checkout if email/phone belongs to an existing registered user
   if (!userId) {
     const orConditions: Record<string, unknown>[] = []
@@ -92,7 +116,14 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
       orConditions.push({ email: { equals: guestEmail.trim().toLowerCase() } })
     }
     if (guestPhone) {
-      orConditions.push({ phone: { equals: guestPhone.trim() } })
+      const phoneVariants = collectGuestPhoneLookupVariants(guestPhone)
+      if (phoneVariants.length === 1) {
+        orConditions.push({ phone: { equals: phoneVariants[0] } })
+      } else {
+        orConditions.push({
+          or: phoneVariants.map((v) => ({ phone: { equals: v } })),
+        })
+      }
     }
     if (orConditions.length > 0) {
       const existing = await req.payload.find({
@@ -118,7 +149,17 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   try {
     const result = await pc(
       req.payload,
-      { cartId, shippingAddress, billingAddress, guestEmail, guestPhone, simulatePayment: safeSimulatePayment, idempotencyKey },
+      {
+        cartId,
+        shippingAddress,
+        billingAddress,
+        guestEmail,
+        guestPhone,
+        simulatePayment: safeSimulatePayment,
+        idempotencyKey,
+        shippingMethodIds,
+        cashOnDelivery: cashOnDelivery === true,
+      },
       userId,
       req,
     )

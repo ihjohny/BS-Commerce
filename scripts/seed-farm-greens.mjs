@@ -844,7 +844,19 @@ async function findMethod(token, name, zoneId) {
 
 async function ensureShippingMethod(token, m, zoneId) {
   const existing = await findMethod(token, m.name, zoneId)
-  if (existing) return existing
+  if (existing) {
+    if (m.collectPaymentOnDelivery === true && !existing.collectPaymentOnDelivery) {
+      const pr = await request(`/api/shipping-methods/${existing.id}`, {
+        method: 'PATCH',
+        token,
+        body: { collectPaymentOnDelivery: true },
+      })
+      if (![200, 201].includes(pr.status)) {
+        console.warn('farm-greens shipping COD patch:', m.name, pr.status)
+      }
+    }
+    return existing
+  }
   const { status, json } = await request('/api/shipping-methods', {
     method: 'POST',
     token,
@@ -857,6 +869,7 @@ async function ensureShippingMethod(token, m, zoneId) {
       isActive: m.isActive !== false,
       ...(m.minOrderValue != null ? { minOrderValue: m.minOrderValue } : {}),
       ...(m.maxOrderValue != null ? { maxOrderValue: m.maxOrderValue } : {}),
+      ...(m.collectPaymentOnDelivery === true ? { collectPaymentOnDelivery: true } : {}),
     },
   })
   if ([200, 201].includes(status)) return json?.doc ?? json

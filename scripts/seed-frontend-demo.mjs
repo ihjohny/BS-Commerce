@@ -126,6 +126,7 @@ function buildDefaultShippingConfig() {
           isActive: true,
           minOrderValue: 0,
           maxOrderValue: 150000,
+          collectPaymentOnDelivery: true,
         },
       ],
     }
@@ -171,6 +172,7 @@ function buildDefaultShippingConfig() {
         isActive: true,
         minOrderValue: 0,
         maxOrderValue: 250,
+        collectPaymentOnDelivery: true,
       },
     ],
   }
@@ -961,6 +963,21 @@ async function ensureShippingMethod(base, token, method, zoneId) {
   const normalizedMethodName = cleanName(method.name)
   const existing = await findShippingMethodByNameAndZone(base, token, normalizedMethodName, zoneId)
   if (existing) {
+    if (method.collectPaymentOnDelivery === true && !existing.collectPaymentOnDelivery) {
+      const patch = await request(base, `/api/shipping-methods/${existing.id}`, {
+        method: 'PATCH',
+        token,
+        body: { collectPaymentOnDelivery: true },
+      })
+      if (![200, 201].includes(patch.status)) {
+        console.warn(
+          'Shipping method collect-on-delivery PATCH:',
+          normalizedMethodName,
+          patch.status,
+          JSON.stringify(patch.json).slice(0, 200),
+        )
+      }
+    }
     console.log('Shipping method exists:', normalizedMethodName)
     return existing
   }
@@ -973,6 +990,7 @@ async function ensureShippingMethod(base, token, method, zoneId) {
     isActive: method.isActive !== false,
     ...(method.minOrderValue != null ? { minOrderValue: method.minOrderValue } : {}),
     ...(method.maxOrderValue != null ? { maxOrderValue: method.maxOrderValue } : {}),
+    ...(method.collectPaymentOnDelivery === true ? { collectPaymentOnDelivery: true } : {}),
   }
   const res = await request(base, '/api/shipping-methods', { method: 'POST', token, body })
   if ([200, 201].includes(res.status)) {

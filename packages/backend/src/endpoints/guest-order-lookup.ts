@@ -4,6 +4,7 @@
  * POST /api/guest/order-lookup
  *
  * Requires `orderNumber` and at least one of `guestEmail` or `guestPhone`.
+ * Guest phone matching expands equivalent national/E.164 forms (`DEFAULT_PHONE_REGION` applies when parsing nationals).
  * Returns the matching guest order (customer=null) or 404.
  * Rate-limited to prevent brute-force enumeration.
  *
@@ -21,6 +22,7 @@ import {
   getClientIp,
   GUEST_LOOKUP_RATE_LIMIT,
 } from '../lib/rate-limiter'
+import { collectGuestPhoneLookupVariants } from '../lib/validation/phone-format'
 
 /** Lazy so importing payload config in tests does not open Redis until a request runs. */
 let guestLookupLimiter: RateLimiterRedis | undefined
@@ -74,7 +76,14 @@ export async function guestOrderLookupHandler(req: any, deps?: GuestOrderLookupD
     identifierConditions.push({ guestEmail: { equals: guestEmail.trim().toLowerCase() } })
   }
   if (hasPhone) {
-    identifierConditions.push({ guestPhone: { equals: guestPhone.trim() } })
+    const variants = collectGuestPhoneLookupVariants(guestPhone)
+    if (variants.length === 1) {
+      identifierConditions.push({ guestPhone: { equals: variants[0] } })
+    } else {
+      identifierConditions.push({
+        or: variants.map((v) => ({ guestPhone: { equals: v } })),
+      })
+    }
   }
 
   const result = await req.payload.find({

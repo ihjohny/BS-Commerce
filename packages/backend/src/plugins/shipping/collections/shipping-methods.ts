@@ -6,7 +6,7 @@ export const ShippingMethods: CollectionConfig = {
   slug: 'shipping-methods',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'zone', 'type', 'rate', 'currency'],
+    defaultColumns: ['name', 'zone', 'collectPaymentOnDelivery', 'type', 'rate', 'currency'],
     group: 'Shipping',
   },
   access: {
@@ -43,6 +43,16 @@ export const ShippingMethods: CollectionConfig = {
     },
     { name: 'minOrderValue', type: 'number', min: 0 },
     { name: 'maxOrderValue', type: 'number', min: 0 },
+    {
+      name: 'collectPaymentOnDelivery',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Collect payment on delivery (COD)',
+      admin: {
+        description:
+          'When enabled, this method means the customer pays on delivery (cash or agreed offline). Checkout uses this flag — not the method name — to allow COD flow and to record it on the order. Online gateway payment applies when this is off.',
+      },
+    },
     { name: 'isActive', type: 'checkbox', defaultValue: true },
   ],
   timestamps: true,

@@ -97,11 +97,69 @@ export const customEndpointsOpenApi = {
     '/api/checkout/process': {
       post: {
         summary: 'Process checkout payload into an order',
+        description:
+          'Guest identifiers follow AUTH_REQUIRED_IDENTIFIER (guestEmail / guestPhone). cashOnDelivery with shippingMethodIds skips hosted payment when every method has collect-on-delivery enabled; order keeps checkoutPaymentChannel=cash_on_delivery and paymentStatus unpaid.',
         responses: {
-          200: { description: 'Checkout processed.' },
+          201: {
+            description:
+              'Order created; JSON includes order.checkoutPaymentChannel (online|cash_on_delivery), paymentStatus snapshot, optional transaction id, optional paymentRedirectUrl for hosted gateway.',
+          },
           400: { description: 'Invalid payload.' },
           401: { description: 'Unauthorized when required.' },
           409: { description: 'Inventory or business-rule conflict.' },
+          501: { description: 'Payment provider not implemented.' },
+          503: { description: 'Hosted payment not configured.' },
+        },
+      },
+    },
+    '/api/payments/sslcommerz/ipn': {
+      post: {
+        summary: 'SSL Commerz IPN webhook',
+        description:
+          'SSL Commerz POSTs form-urlencoded transaction fields. Server validates `val_id` with SSL, then marks the matching transaction succeeded and the order paid when validation succeeds.',
+        responses: {
+          200: { description: 'Acknowledged (always 200 for SSL compatibility).' },
+        },
+      },
+    },
+    '/api/payments/sslcommerz/sync-paid': {
+      get: {
+        summary: 'SSL Commerz success-page reconciliation',
+        description:
+          'Browser-callable alternative when IPN cannot reach the backend (e.g. localhost). Requires `val_id` from the gateway redirect query; optionally `tran_id`. Idempotent.',
+        parameters: [
+          { name: 'val_id', in: 'query', required: true, schema: { type: 'string' } },
+          { name: 'tran_id', in: 'query', required: false, schema: { type: 'string' } },
+        ],
+        responses: {
+          200: { description: 'Reconciliation attempted (check admin order if errors logged).' },
+          400: { description: 'Missing val_id.' },
+          500: { description: 'Server error.' },
+        },
+      },
+    },
+    '/api/storefront/store-products': {
+      get: {
+        summary: 'Storefront catalog — products with optional stock-location filter',
+        description:
+          'When `store` is set (stock location id), only products with available stock at that location are returned. Otherwise published products match filters as usual.',
+        parameters: [
+          { name: 'store', in: 'query', required: false, schema: { type: 'string' } },
+          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 12, maximum: 100 } },
+          { name: 'sort', in: 'query', required: false, schema: { type: 'string', default: '-createdAt' } },
+          { name: 'locale', in: 'query', required: false, schema: { type: 'string' } },
+          { name: 'depth', in: 'query', required: false, schema: { type: 'integer', default: 1, maximum: 3 } },
+          { name: 'category', in: 'query', required: false, schema: { type: 'string' } },
+          { name: 'search', in: 'query', required: false, schema: { type: 'string' } },
+          { name: 'featured', in: 'query', required: false, schema: { type: 'string', enum: ['true'] } },
+          { name: 'tenant', in: 'query', required: false, schema: { type: 'string' } },
+          { name: 'minPrice', in: 'query', required: false, schema: { type: 'number' } },
+          { name: 'maxPrice', in: 'query', required: false, schema: { type: 'number' } },
+        ],
+        responses: {
+          200: { description: 'Paginated products (same shape as Payload products find).' },
+          500: { description: 'Server error.' },
         },
       },
     },
