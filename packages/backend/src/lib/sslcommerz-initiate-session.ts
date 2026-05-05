@@ -168,6 +168,15 @@ export async function initiateSslCommerzHostedSession(
         : typeof json.message === 'string'
           ? json.message
           : `SSL Commerz session failed (${res.status})`
+    console.warn(
+      '[sslcommerz-session] Session API rejected (no secrets logged):',
+      JSON.stringify({
+        httpStatus: res.status,
+        sslStatus: status || null,
+        failedreason: typeof json.failedreason === 'string' ? json.failedreason : null,
+        message: typeof json.message === 'string' ? json.message : null,
+      }),
+    )
     throw new Error(failed)
   }
 

@@ -20,7 +20,7 @@ import {
   resolveLocalizedText,
   snapshotProductImageUrl,
 } from './order-checkout-snapshots'
-import { getPayloadServerUrl } from './payload-server-url'
+import { getSslCommerzIpnPublicBaseUrl } from './payload-server-url'
 import {
   initiateSslCommerzHostedSession,
   sslCommerzHostedCheckoutEnabled,
@@ -733,7 +733,7 @@ export async function processCheckout(
       const successUrl = `${storefrontBase}/${localeSeg}/checkout/success?${q}`
       const failUrl = `${storefrontBase}/${localeSeg}/checkout/failed?${q}`
       const cancelUrl = `${storefrontBase}/${localeSeg}/checkout/cancel?${q}`
-      const ipnUrl = `${getPayloadServerUrl()}/api/payments/sslcommerz/ipn`
+      const ipnUrl = `${getSslCommerzIpnPublicBaseUrl()}/api/payments/sslcommerz/ipn`
 
       const tranId = `${orderNumber}-${Date.now().toString(36)}`
       const pendingTx = await payload.create({

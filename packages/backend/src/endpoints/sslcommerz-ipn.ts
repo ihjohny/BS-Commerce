@@ -23,6 +23,19 @@ export const sslcommerzIpnEndpoint: Endpoint = {
   handler: async (req) => {
     try {
       const bodyText = await readIpnBody(req)
+      try {
+        const p = new URLSearchParams(bodyText)
+        console.log(
+          '[sslcommerz-ipn] inbound',
+          JSON.stringify({
+            tran_id: p.get('tran_id') || undefined,
+            status: p.get('status') || undefined,
+            has_val_id: Boolean(p.get('val_id')?.trim()),
+          }),
+        )
+      } catch {
+        console.log('[sslcommerz-ipn] inbound (body parse skipped)')
+      }
       await processSslCommerzIpnNotification(req.payload, bodyText)
     } catch (e) {
       console.error('[sslcommerz-ipn]', e)
