@@ -37,6 +37,8 @@ import { getPayloadServerUrl, getPayloadTrustedOrigins } from './lib/payload-ser
 import { authLoginEndpoint } from './endpoints/auth-login'
 import { guestOrderLookupEndpoint } from './endpoints/guest-order-lookup'
 import { checkoutProcessEndpoint } from './endpoints/checkout-process'
+import { sslcommerzIpnEndpoint } from './endpoints/sslcommerz-ipn'
+import { sslcommerzSyncPaidEndpoint } from './endpoints/sslcommerz-sync-paid'
 import { dashboardStatsEndpoint } from './endpoints/dashboard-stats'
 import { adminBrandingEndpoint } from './endpoints/admin-branding'
 import { customEndpointsOpenApiEndpoint } from './endpoints/custom-endpoints-openapi'
@@ -45,6 +47,7 @@ import { openapiAllEndpoint } from './endpoints/openapi-all'
 import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
 import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
 import { geographyPlugin } from './plugins/geography'
+import { migrations } from '../migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -105,10 +108,10 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI!,
     },
-    // Migrations: `yarn payload migrate:create` then `yarn payload migrate` in production (push is dev-only).
+    // Migrations: `yarn db:migrate:create` then `yarn db:migrate` (push is dev-only).
     push: false,
-    // migrationDir: path.resolve(dirname, 'migrations'),
-    // prodMigrations: migrations,
+    migrationDir: path.resolve(dirname, '../migrations'),
+    prodMigrations: migrations,
     blocksAsJSON: true,
   }),
   // Alternative: MongoDB (uses string ObjectIds; no idType option)
@@ -148,6 +151,8 @@ export default buildConfig({
     authLoginEndpoint,
     guestOrderLookupEndpoint,
     checkoutProcessEndpoint,
+    sslcommerzIpnEndpoint,
+    sslcommerzSyncPaidEndpoint,
     dashboardStatsEndpoint,
     adminBrandingEndpoint,
     customEndpointsOpenApiEndpoint,

@@ -20,6 +20,23 @@ import {
   resolveLocalizedText,
   snapshotProductImageUrl,
 } from './order-checkout-snapshots'
+import { getSslCommerzIpnPublicBaseUrl } from './payload-server-url'
+import {
+  initiateSslCommerzHostedSession,
+  sslCommerzHostedCheckoutEnabled,
+} from './sslcommerz-initiate-session'
+import { getAuthRequiredIdentifier } from './auth-config'
+import { guestCheckoutIdentifiersError } from './guest-checkout-identifiers'
+import { validateCashOnDeliveryShippingMethods } from './shipping/cash-on-delivery'
+import {
+  normalizeCheckoutPhoneToE164,
+  normalizeOptionalCheckoutPhone,
+} from './validation/phone-format'
+
+function sanitizeOrderNotesFromCart(raw: unknown): string {
+  if (typeof raw !== 'string') return ''
+  return raw.replace(/\0/g, '').trim().slice(0, 2000)
+}
 
 /** Creates req with transactionID when adapter supports transactions. */
 function reqWithTransaction(req: PayloadRequest | undefined, transactionID: string | number | null): PayloadRequest {
@@ -59,6 +76,12 @@ export interface ProcessCheckoutInput {
   idempotencyKey?: string
   /** Explicit store override; falls back to cart.store if not provided. */
   storeId?: string
+  shippingMethodIds?: string[]
+  /**
+   * When true with validated COD-only shipping methods, skips hosted/simulated payment;
+   * order stays unpaid until cash on delivery is collected (ops).
+   */
+  cashOnDelivery?: boolean
 }
 
 export interface OrderItemSummary {
@@ -81,8 +104,14 @@ export interface ProcessCheckoutResult {
     guestEmail?: string
     guestPhone?: string
     shippingAddress?: ProcessCheckoutInput['shippingAddress']
+    /** Persisted on the order; echoed for storefront success UX. */
+    checkoutPaymentChannel?: 'online' | 'cash_on_delivery'
+    /** Snapshot immediately after checkout create (SSL path may stay unpaid until gateway confirms). */
+    paymentStatus?: 'unpaid' | 'paid' | 'partially-refunded' | 'refunded'
   }
   transaction?: { id: string }
+  /** Present when the shopper must complete payment on the gateway (SSL Commerz hosted page). */
+  paymentRedirectUrl?: string
   error?: string
   statusCode?: number
 }
@@ -96,14 +125,73 @@ export async function processCheckout(
   const splitByVendor =
     process.env.MULTIVENDOR_ENABLED === 'true' &&
     process.env.SINGLE_STORE_CART_ENABLED !== 'true'
-  const { cartId, shippingAddress, billingAddress, simulatePayment = false, idempotencyKey } = input
+  const {
+    cartId,
+    shippingAddress,
+    billingAddress,
+    simulatePayment = false,
+    idempotencyKey,
+    shippingMethodIds,
+    cashOnDelivery = false,
+  } = input
   // Normalize guest identifiers once
   const guestEmail = input.guestEmail ? input.guestEmail.trim().toLowerCase() : undefined
-  const guestPhone = input.guestPhone ? input.guestPhone.trim() : undefined
+  let guestPhone = input.guestPhone ? input.guestPhone.trim() : undefined
   const isAdminUser = (req?.user as { role?: string } | undefined)?.role === 'admin'
 
-  if (!userId && !guestEmail) {
-    return { order: { id: '', orderNumber: '' }, error: 'Guest checkout requires guestEmail', statusCode: 400 }
+  if (!userId) {
+    const guestErr = guestCheckoutIdentifiersError(
+      getAuthRequiredIdentifier(),
+      input.guestEmail,
+      input.guestPhone,
+      shippingAddress.country,
+    )
+    if (guestErr) {
+      return { order: { id: '', orderNumber: '' }, error: guestErr, statusCode: 400 }
+    }
+  }
+
+  const persistShippingAddress: ProcessCheckoutInput['shippingAddress'] = {
+    ...shippingAddress,
+    phone: normalizeOptionalCheckoutPhone(shippingAddress.phone, shippingAddress.country),
+  }
+  const persistBillingAddress: ProcessCheckoutInput['billingAddress'] = {
+    ...billingAddress,
+    phone: normalizeOptionalCheckoutPhone(billingAddress.phone, billingAddress.country),
+  }
+
+  if (guestPhone) {
+    guestPhone =
+      normalizeCheckoutPhoneToE164(guestPhone, shippingAddress.country) ?? guestPhone
+  }
+
+  let codCheckout = false
+  if (cashOnDelivery === true) {
+    const ids = Array.isArray(shippingMethodIds) ? shippingMethodIds : []
+    const codErr = await validateCashOnDeliveryShippingMethods(payload, ids)
+    if (codErr) {
+      return { order: { id: '', orderNumber: '' }, error: codErr, statusCode: 400 }
+    }
+    codCheckout = true
+  }
+
+  if (!simulatePayment && !codCheckout) {
+    const provider = (process.env.PAYMENT_PROVIDER || '').trim().toLowerCase()
+    if (provider === 'stripe') {
+      return {
+        order: { id: '', orderNumber: '' },
+        error: 'Stripe checkout is not implemented.',
+        statusCode: 501,
+      }
+    }
+    if (provider === 'sslcommerz' && !sslCommerzHostedCheckoutEnabled()) {
+      return {
+        order: { id: '', orderNumber: '' },
+        error:
+          'SSL Commerz hosted checkout is not enabled. Set SSLCOMMERZ_SESSION_ENABLED=true with SSLCOMMERZ_STORE_ID and SSLCOMMERZ_STORE_PASSWORD.',
+        statusCode: 503,
+      }
+    }
   }
 
   // ── Idempotency: return existing order if key was already used ──────────
@@ -413,6 +501,7 @@ export async function processCheckout(
 
   let order: { id: string | number; orderNumber?: string; status?: string }
   let paymentTransactionId: string | undefined
+  let paymentRedirectUrl: string | undefined
 
   try {
     const subtotal = orderItemData.reduce((s, i) => s + i.totalPrice, 0)
@@ -420,8 +509,8 @@ export async function processCheckout(
       orderNumber,
       status: 'pending',
       items: [],
-      shippingAddress,
-      billingAddress,
+      shippingAddress: persistShippingAddress,
+      billingAddress: persistBillingAddress,
       subtotal,
       shippingTotal,
       taxTotal,
@@ -431,7 +520,8 @@ export async function processCheckout(
       grandTotal,
       currency,
       paymentStatus: 'unpaid',
-      notes: '',
+      checkoutPaymentChannel: codCheckout ? 'cash_on_delivery' : 'online',
+      notes: sanitizeOrderNotesFromCart((cart as { customerNote?: unknown }).customerNote),
       placedAt: new Date().toISOString(),
       buyerSnapshot: {
         email: buyerEmail || null,
@@ -625,6 +715,91 @@ export async function processCheckout(
       orderUpdateData.transaction = transaction.id
       orderUpdateData.paymentStatus = 'paid'
       orderUpdateData.status = 'processing'
+    } else if (codCheckout) {
+      // Unpaid: settlement on delivery (manual ops / ledger).
+      orderUpdateData.paymentStatus = 'unpaid'
+      orderUpdateData.status = 'pending'
+    } else if (sslCommerzHostedCheckoutEnabled()) {
+      const storefrontBase = (
+        process.env.NEXT_PUBLIC_STOREFRONT_URL ||
+        process.env.STOREFRONT_PUBLIC_URL ||
+        ''
+      ).replace(/\/$/, '')
+      if (!storefrontBase) {
+        throw new Error('NEXT_PUBLIC_STOREFRONT_URL is required for SSL Commerz checkout redirects')
+      }
+      const localeSeg = checkoutLocale === 'bn' ? 'bn' : 'en'
+      const q = `orderNumber=${encodeURIComponent(orderNumber)}`
+      const successUrl = `${storefrontBase}/${localeSeg}/checkout/success?${q}`
+      const failUrl = `${storefrontBase}/${localeSeg}/checkout/failed?${q}`
+      const cancelUrl = `${storefrontBase}/${localeSeg}/checkout/cancel?${q}`
+      const ipnUrl = `${getSslCommerzIpnPublicBaseUrl()}/api/payments/sslcommerz/ipn`
+
+      const tranId = `${orderNumber}-${Date.now().toString(36)}`
+      const pendingTx = await payload.create({
+        collection: 'transactions',
+        overrideAccess: true,
+        data: {
+          order: order.id,
+          type: 'charge',
+          provider: 'sslcommerz',
+          providerTransactionId: tranId,
+          amount: grandTotal,
+          currency,
+          status: 'pending',
+          metadata: { initiatedAt: new Date().toISOString() },
+        },
+        req: reqTx,
+      })
+      paymentTransactionId = pendingTx.id as string
+      orderUpdateData.transaction = pendingTx.id
+
+      const sandbox = process.env.SSLCOMMERZ_SANDBOX !== 'false'
+      const customerEmail = buyerEmail || guestEmail || `${guestPhone || 'guest'}@checkout.invalid`
+      const customerPhone =
+        persistShippingAddress.phone?.trim() || buyerPhone || guestPhone || ''
+      const customerName =
+        `${persistShippingAddress.firstName} ${persistShippingAddress.lastName}`.trim() ||
+        buyerName ||
+        'Customer'
+
+      const session = await initiateSslCommerzHostedSession({
+        storeId: process.env.SSLCOMMERZ_STORE_ID!.trim(),
+        storePassword: process.env.SSLCOMMERZ_STORE_PASSWORD!.trim(),
+        sandbox,
+        tranId,
+        totalAmount: grandTotal,
+        currency,
+        successUrl,
+        failUrl,
+        cancelUrl,
+        ipnUrl,
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerAddress: persistShippingAddress.street1,
+        customerCity: persistShippingAddress.city,
+        customerCountry: persistShippingAddress.country,
+        customerState: persistShippingAddress.state,
+        customerPostcode: persistShippingAddress.postalCode,
+        shipAdd2: persistShippingAddress.street2,
+        numOfItems: Math.max(1, orderItemData.length),
+      })
+
+      paymentRedirectUrl = session.gatewayPageUrl
+
+      await payload.update({
+        collection: 'transactions',
+        id: pendingTx.id,
+        overrideAccess: true,
+        data: {
+          metadata: {
+            sessionKey: session.sessionKey,
+            tranId,
+          },
+        },
+        req: reqTx,
+      })
     }
 
     await payload.update({
@@ -714,19 +889,21 @@ export async function processCheckout(
     const user = await payload.findByID({ collection: 'users', id: userId, depth: 0 })
     recipientEmail = (user as { email?: string })?.email
   }
-  if (recipientEmail) {
+  if ((simulatePayment || codCheckout) && recipientEmail) {
     const { sendOrderConfirmationEmail } = await import('../plugins/notifications/lib/send-email')
     sendOrderConfirmationEmail(orderNumber, recipientEmail, grandTotal, currency).catch((e) =>
       console.error('[processCheckout] Failed to send order email:', e)
     )
   }
 
-  if (guestPhone) {
+  if ((simulatePayment || codCheckout) && guestPhone) {
     const { sendOrderConfirmationSms } = await import('../plugins/notifications/lib/send-sms')
     sendOrderConfirmationSms(orderNumber, guestPhone, grandTotal, currency).catch((e) =>
       console.error('[processCheckout] Failed to send order SMS:', e)
     )
   }
+
+  const paymentStatusAfterCreate: 'unpaid' | 'paid' = simulatePayment ? 'paid' : 'unpaid'
 
   return {
     order: {
@@ -745,8 +922,11 @@ export async function processCheckout(
       currency,
       guestEmail,
       guestPhone,
-      shippingAddress,
+      shippingAddress: persistShippingAddress,
+      checkoutPaymentChannel: codCheckout ? 'cash_on_delivery' : 'online',
+      paymentStatus: paymentStatusAfterCreate,
     },
     transaction: paymentTransactionId ? { id: paymentTransactionId } : undefined,
+    paymentRedirectUrl,
   }
 }

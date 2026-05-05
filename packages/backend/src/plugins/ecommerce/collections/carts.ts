@@ -75,6 +75,11 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
       async ({ data, req, operation }) => {
         if (!data) return data
 
+        if (typeof data.customerNote === 'string') {
+          const trimmed = data.customerNote.replace(/\0/g, '').trim().slice(0, 2000)
+          data.customerNote = trimmed.length > 0 ? trimmed : null
+        }
+
         // ── Guest cart: assign guestId from header, never from body ────────
         if (!req.user) {
           if (operation === 'create') {
@@ -290,6 +295,15 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
       name: 'expiresAt',
       type: 'date',
       admin: { description: 'Guest carts expire. Auto-set to 7 days on guest create.' },
+    },
+    {
+      name: 'customerNote',
+      type: 'textarea',
+      maxLength: 2000,
+      admin: {
+        description:
+          'Optional message for the seller / fulfillment team. Copied to the order at checkout.',
+      },
     },
   ],
   timestamps: true,

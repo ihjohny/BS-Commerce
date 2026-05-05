@@ -5,7 +5,7 @@
  */
 import type { Endpoint } from 'payload'
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import { LOOSE_EMAIL_FORMAT_RE } from '@/lib/validation/email-format'
 
 export const authLoginEndpoint: Endpoint = {
   path: '/auth/login',
@@ -22,7 +22,7 @@ export const authLoginEndpoint: Endpoint = {
     }
 
     const trimmed = identifier.trim().toLowerCase()
-    const isEmail = EMAIL_REGEX.test(trimmed)
+    const isEmail = LOOSE_EMAIL_FORMAT_RE.test(trimmed)
 
     const payload = req.payload
     const loginData = isEmail

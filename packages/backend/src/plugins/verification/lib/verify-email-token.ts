@@ -1,6 +1,6 @@
 import type { PayloadRequest } from 'payload'
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import { LOOSE_EMAIL_FORMAT_RE } from '@/lib/validation/email-format'
 
 export const INVALID_LINK_ERROR = 'Invalid or expired verification link.'
 
@@ -53,7 +53,7 @@ export async function consumeEmailVerificationToken({
     .trim()
     .toLowerCase()
 
-  if (EMAIL_REGEX.test(identifier)) {
+  if (LOOSE_EMAIL_FORMAT_RE.test(identifier)) {
     const { docs: users } = await payload.find({
       collection: 'users',
       where: { email: { equals: identifier } },

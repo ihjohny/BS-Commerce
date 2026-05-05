@@ -5,12 +5,12 @@
  * Rate limit: 60s cooldown per identifier.
  */
 import type { Endpoint } from 'payload'
+import { LOOSE_EMAIL_FORMAT_RE } from '@/lib/validation/email-format'
 import { sendVerificationLink } from '../adapters/email-link'
 import { sendVerificationOTP } from '../adapters/email-otp'
 import { getPhoneAdapter } from '../adapters/get-phone-adapter'
 import { generateVerificationToken, generateOTP } from '../lib/generate-code'
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const COOLDOWN_MS = 60 * 1000 // 60 seconds
 const DEFAULT_EMAIL_TOKEN_EXPIRY_MINUTES = 30
 const DEFAULT_OTP_EXPIRY_SECONDS = 300
@@ -75,7 +75,7 @@ export async function sendVerificationHandler(req: any, deps?: SendVerificationD
 
     const trimmed = String(identifier).trim()
     if (idType === 'email') {
-      if (!EMAIL_REGEX.test(trimmed)) {
+      if (!LOOSE_EMAIL_FORMAT_RE.test(trimmed)) {
         return Response.json({ error: 'Invalid email address.' }, { status: 400 })
       }
     }

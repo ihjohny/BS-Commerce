@@ -21,6 +21,22 @@ export function getPayloadServerUrl(): string {
 }
 
 /**
+ * Absolute origin used in SSL Commerz Session API `ipn_url` only.
+ *
+ * Prefer `SERVER_PUBLIC_URL` / `getPayloadServerUrl()` on the API host. Set this override when IPN must
+ * advertise a canonical URL that differs from the app’s detected public URL (e.g. CDN / edge hostname).
+ *
+ * Must be `https://api.example.com` with no trailing slash (normalized here).
+ *
+ * Dashboard IPN (“My Store → IPN”) must match exactly: `{this}/api/payments/sslcommerz/ipn`.
+ */
+export function getSslCommerzIpnPublicBaseUrl(): string {
+  const override = process.env.SSLCOMMERZ_IPN_PUBLIC_URL?.trim()
+  if (override) return normalizeBase(override)
+  return getPayloadServerUrl()
+}
+
+/**
  * Origins allowed for Payload `cors` + `csrf` (admin + storefronts).
  * Must include the exact URL users see in the address bar (scheme + host, no path).
  */

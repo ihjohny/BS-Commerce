@@ -10,11 +10,21 @@ const envKeys = [
   'REQUIRE_VERIFIED_FOR_CHECKOUT',
   'DEFAULT_COMMISSION_RATE',
   'BS_TEST_ORDER_EMAIL_REJECT',
+  'PAYMENT_PROVIDER',
+  'SSLCOMMERZ_STORE_ID',
+  'SSLCOMMERZ_STORE_PASSWORD',
+  'SSLCOMMERZ_SESSION_ENABLED',
+  'SSLCOMMERZ_SANDBOX',
+  'NEXT_PUBLIC_STOREFRONT_URL',
+  'AUTH_REQUIRED_IDENTIFIER',
+  'DEFAULT_PHONE_REGION',
+  'PHONE_VALIDATION_REGEX',
 ]
 beforeEach(() => {
   envBackups = {}
   for (const k of envKeys) envBackups[k] = process.env[k]
   process.env.INVENTORY_ENABLED = 'false'
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'either'
 })
 afterEach(() => { for (const k of envKeys) { if (envBackups[k] === undefined) delete process.env[k]; else process.env[k] = envBackups[k] } })
 
@@ -45,6 +55,9 @@ function buildPayload(overrides: Record<string, Function> = {}) {
       if (args.collection === 'users') return { id: args.id, email: 'u@test.com', emailVerified: true }
       if (args.collection === 'stock-levels') {
         return { id: args.id, reservedQuantity: 0, quantity: 999 }
+      }
+      if (args.collection === 'shipping-methods') {
+        return { id: args.id, name: 'Standard fulfilment', isActive: true, collectPaymentOnDelivery: true }
       }
       return { id: args.id }
     },
@@ -91,11 +104,27 @@ function guestReq() {
   } as any
 }
 
-test('should return error when no userId and no guestEmail', async () => {
+test('should return error when guest has neither email nor qualifying phone', async () => {
   const payload = buildPayload()
   const result = await processCheckout(payload, { ...baseInput }, undefined, guestReq())
   assert.equal(result.statusCode, 400)
-  assert.ok(result.error?.includes('guestEmail'))
+  assert.ok(
+    result.error?.includes('guestEmail') ||
+      result.error?.includes('guestPhone') ||
+      result.error?.includes('email') ||
+      result.error?.includes('phone'),
+  )
+})
+
+test('should return error when guest phone is too short', async () => {
+  const payload = buildPayload()
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, guestPhone: '1234' },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.statusCode, 400)
 })
 
 test('should process guest checkout successfully', async () => {
@@ -109,6 +138,138 @@ test('should process guest checkout successfully', async () => {
   assert.ok(result.order.id)
   assert.ok(result.order.orderNumber)
   assert.equal(result.error, undefined)
+  const orderCreate = payload._calls.create.find((c: any) => c.collection === 'orders')
+  assert.ok(orderCreate)
+  assert.equal(orderCreate.data.checkoutPaymentChannel, 'online')
+  assert.equal(result.order.checkoutPaymentChannel, 'online')
+  assert.equal(result.order.paymentStatus, 'unpaid')
+})
+
+test('should process guest checkout with phone only when phone is valid for shipping country', async () => {
+  const payload = buildPayload()
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, guestPhone: ' +12025551234 ' },
+    undefined,
+    guestReq(),
+  )
+  assert.ok(result.order.id)
+  assert.ok(result.order.orderNumber)
+  assert.equal(result.error, undefined)
+})
+
+test('should persist guestPhone and buyerSnapshot phone as E.164 for national BD input', async () => {
+  const payload = buildPayload()
+  const bdShipping = { firstName: 'A', lastName: 'B', street1: '1 St', city: 'Dhaka', country: 'BD' }
+  const result = await processCheckout(
+    payload,
+    {
+      ...baseInput,
+      shippingAddress: bdShipping,
+      billingAddress: bdShipping,
+      guestPhone: '01712345678',
+    },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.error, undefined)
+  assert.equal(result.order.guestPhone, '+8801712345678')
+  const orderCreate = payload._calls.create.find((c: any) => c.collection === 'orders')
+  assert.ok(orderCreate)
+  assert.equal(orderCreate.data.guestPhone, '+8801712345678')
+  assert.equal(orderCreate.data.buyerSnapshot.phone, '+8801712345678')
+})
+
+test('should process COD checkout without payment redirect when cashOnDelivery validates', async () => {
+  process.env.PAYMENT_PROVIDER = 'sslcommerz'
+  process.env.SSLCOMMERZ_SESSION_ENABLED = 'false'
+  const payload = buildPayload()
+  const result = await processCheckout(
+    payload,
+    {
+      ...baseInput,
+      guestEmail: 'cod@guest.com',
+      shippingMethodIds: ['sm-cod-1'],
+      cashOnDelivery: true,
+    },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.error, undefined)
+  assert.ok(result.order.orderNumber)
+  assert.ok(!result.paymentRedirectUrl)
+  const orderCreate = payload._calls.create.find((c: any) => c.collection === 'orders')
+  assert.ok(orderCreate)
+  assert.equal(orderCreate.data.checkoutPaymentChannel, 'cash_on_delivery')
+  assert.equal(result.order.checkoutPaymentChannel, 'cash_on_delivery')
+  assert.equal(result.order.paymentStatus, 'unpaid')
+})
+
+test('should reject cashOnDelivery when shipping method does not collect on delivery', async () => {
+  const payload = buildPayload()
+  const origFind = payload.findByID
+  payload.findByID = async (args: any) => {
+    if (args.collection === 'shipping-methods') {
+      payload._calls.findByID.push(args)
+      return { id: args.id, name: 'Standard Courier', isActive: true, collectPaymentOnDelivery: false }
+    }
+    return origFind(args)
+  }
+  const result = await processCheckout(
+    payload,
+    {
+      ...baseInput,
+      guestEmail: 'cod@guest.com',
+      shippingMethodIds: ['sm-x'],
+      cashOnDelivery: true,
+    },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.statusCode, 400)
+  assert.ok(String(result.error).includes('cashOnDelivery'))
+})
+
+test('should reject phone-only guest when AUTH_REQUIRED_IDENTIFIER is email', async () => {
+  process.env.AUTH_REQUIRED_IDENTIFIER = 'email'
+  const payload = buildPayload()
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, guestPhone: '+880171112233' },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.statusCode, 400)
+})
+
+test('should copy cart customerNote onto order notes', async () => {
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          user: null,
+          customerNote: 'Leave at reception.',
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') {
+        return { id: args.id, name: 'Test', basePrice: 50, tenant: null }
+      }
+      if (args.collection === 'users') return { id: args.id, email: 'u@test.com', emailVerified: true }
+      return { id: args.id }
+    },
+  })
+  await processCheckout(
+    payload,
+    { ...baseInput, guestEmail: 'guest@test.com' },
+    undefined,
+    guestReq(),
+  )
+  const orderCreate = payload._calls.create.find((c: any) => c.collection === 'orders')
+  assert.ok(orderCreate)
+  assert.equal(orderCreate.data.notes, 'Leave at reception.')
 })
 
 test('should return 404 when cart not found', async () => {
@@ -1334,7 +1495,12 @@ test('should log when order confirmation email promise rejects', async () => {
   }
   try {
     const payload = buildPayload()
-    await processCheckout(payload, { ...baseInput, guestEmail: 'notify@test.com' }, undefined, guestReq())
+    await processCheckout(
+      payload,
+      { ...baseInput, guestEmail: 'notify@test.com', simulatePayment: true },
+      undefined,
+      guestReq(),
+    )
     // sendOrderConfirmationEmail is fire-and-forget; flush microtasks so .catch(console.error) runs
     await new Promise<void>((resolve) => setImmediate(resolve))
   } finally {
@@ -1342,4 +1508,41 @@ test('should log when order confirmation email promise rejects', async () => {
     delete process.env.BS_TEST_ORDER_EMAIL_REJECT
   }
   assert.ok(errors.some((e) => e.includes('Failed to send order email')))
+})
+
+test('should return 501 when PAYMENT_PROVIDER is stripe and simulatePayment is false', async () => {
+  process.env.PAYMENT_PROVIDER = 'stripe'
+  try {
+    const payload = buildPayload()
+    const result = await processCheckout(
+      payload,
+      { ...baseInput, guestEmail: 'stripe@test.com', simulatePayment: false },
+      undefined,
+      guestReq(),
+    )
+    assert.equal(result.statusCode, 501)
+    assert.ok(result.error?.includes('Stripe'))
+  } finally {
+    delete process.env.PAYMENT_PROVIDER
+  }
+})
+
+test('should return 503 when PAYMENT_PROVIDER is sslcommerz but hosted session is not enabled', async () => {
+  process.env.PAYMENT_PROVIDER = 'sslcommerz'
+  delete process.env.SSLCOMMERZ_SESSION_ENABLED
+  delete process.env.SSLCOMMERZ_STORE_ID
+  delete process.env.SSLCOMMERZ_STORE_PASSWORD
+  try {
+    const payload = buildPayload()
+    const result = await processCheckout(
+      payload,
+      { ...baseInput, guestEmail: 'ssl@test.com', simulatePayment: false },
+      undefined,
+      guestReq(),
+    )
+    assert.equal(result.statusCode, 503)
+    assert.ok(result.error?.includes('SSL Commerz'))
+  } finally {
+    delete process.env.PAYMENT_PROVIDER
+  }
 })

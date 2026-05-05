@@ -4,9 +4,8 @@
  * On success, sets user.emailVerified = true for the user with that email.
  */
 import type { Endpoint } from 'payload'
+import { LOOSE_EMAIL_FORMAT_RE } from '@/lib/validation/email-format'
 import { consumeEmailVerificationToken } from '../lib/verify-email-token'
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const verifyEmailPostEndpoint: Endpoint = {
   path: '/auth/verify-email',
@@ -28,7 +27,7 @@ export const verifyEmailPostEndpoint: Endpoint = {
     // OTP strategy: code + email
     if (code && email && typeof code === 'string' && typeof email === 'string') {
       const emailTrimmed = email.trim().toLowerCase()
-      if (!EMAIL_REGEX.test(emailTrimmed)) {
+      if (!LOOSE_EMAIL_FORMAT_RE.test(emailTrimmed)) {
         return Response.json({ error: 'Invalid email address.' }, { status: 400 })
       }
       const codeTrimmed = code.trim()
