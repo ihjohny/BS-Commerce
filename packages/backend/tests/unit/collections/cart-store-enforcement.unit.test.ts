@@ -183,6 +183,54 @@ test('should reject when stock is insufficient at selected store', async () => {
   process.env.MULTIVENDOR_ENABLED = prevMv
 })
 
+test('should pass when line has variant but inventory row is product-level only at selected store', async () => {
+  const prev = process.env.SINGLE_STORE_CART_ENABLED
+  const prevInv = process.env.INVENTORY_ENABLED
+  const prevMv = process.env.MULTIVENDOR_ENABLED
+  process.env.SINGLE_STORE_CART_ENABLED = 'true'
+  process.env.INVENTORY_ENABLED = 'true'
+  process.env.MULTIVENDOR_ENABLED = 'false'
+
+  const config = createCartsConfig(false)
+  const hook = getBeforeChangeHook(config)
+
+  const data = {
+    items: [{ product: 'p1', variant: 'var-1', quantity: 1 }],
+    store: 'store-ok',
+  }
+
+  const req = {
+    user: { id: 'user-1', role: 'customer' },
+    headers: { get: () => null },
+    payload: {
+      findByID: async (args: { collection: string }) => {
+        if (args.collection === 'products') return { id: 'p1', basePrice: 10, name: 'Widget' }
+        if (args.collection === 'product-variants') return { id: 'var-1', price: 10, product: 'p1' }
+        return {}
+      },
+      find: async (args: { where?: { and?: Array<Record<string, unknown>> } }) => {
+        const and = args.where?.and ?? []
+        const variantClause = and.find((c) => 'variant' in c) as { variant?: { equals?: string | null } } | undefined
+        const variantEquals = variantClause?.variant?.equals
+        if (variantEquals === 'var-1') {
+          return { docs: [] }
+        }
+        if (variantEquals === null) {
+          return { docs: [{ quantity: 100, reservedQuantity: 0 }] }
+        }
+        return { docs: [] }
+      },
+    },
+  }
+
+  const result = await hook({ data, req, operation: 'update' })
+  assert.ok(result, 'hook should fall back to product-level stock when variant-specific row is missing')
+
+  process.env.SINGLE_STORE_CART_ENABLED = prev
+  process.env.INVENTORY_ENABLED = prevInv
+  process.env.MULTIVENDOR_ENABLED = prevMv
+})
+
 test('should pass when product has sufficient stock at selected store', async () => {
   const prev = process.env.SINGLE_STORE_CART_ENABLED
   const prevInv = process.env.INVENTORY_ENABLED

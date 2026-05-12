@@ -45,6 +45,7 @@ import { customEndpointsOpenApiEndpoint } from './endpoints/custom-endpoints-ope
 import { docsIndexEndpoint } from './endpoints/docs-index'
 import { openapiAllEndpoint } from './endpoints/openapi-all'
 import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
+import { storefrontVariantAvailabilityEndpoint } from './endpoints/storefront-variant-availability'
 import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
 import { geographyPlugin } from './plugins/geography'
 import { migrations } from '../migrations'
@@ -159,6 +160,7 @@ export default buildConfig({
     openapiAllEndpoint,
     docsIndexEndpoint,
     storefrontStoreProductsEndpoint,
+    storefrontVariantAvailabilityEndpoint,
     storefrontGeographyEndpoint,
   ],
 

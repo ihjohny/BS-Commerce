@@ -104,6 +104,14 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
       admin: { description: 'Snapshot at time of purchase.' },
     },
     {
+      name: 'productSlug',
+      type: 'text',
+      admin: {
+        description:
+          'Product URL slug at checkout (immutable). Used for PDP links when the live product slug changes.',
+      },
+    },
+    {
       name: 'itemLabel',
       type: 'text',
       admin: {
@@ -150,7 +158,7 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
         : ['order', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice'],
       group: 'Orders',
       description:
-        'Line items for an order. Created at checkout from cart. Commercial snapshots (title, SKU, price, qty) are immutable after create; admins may still change stock level for fulfillment routing. Shipping address, store, and totals live on the parent order / sub-order.',
+        'Line items for an order. Created at checkout from cart. Commercial snapshots (title, product slug at checkout, SKU, price, qty) are immutable after create; admins may still change stock level for fulfillment routing. Shipping address, store, and totals live on the parent order / sub-order.',
     },
     access: {
       create: isAdmin,
@@ -166,6 +174,7 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
           if (operation !== 'update' || !data || !originalDoc) return data
           const snapFields: string[] = [
             'productName',
+            'productSlug',
             'variantName',
             'sku',
             'unitPrice',

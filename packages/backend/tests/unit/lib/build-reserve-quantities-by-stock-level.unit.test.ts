@@ -5,6 +5,7 @@ import { buildReserveQuantitiesByStockLevel } from '../../../src/lib/build-reser
 
 const base = {
   productId: 'p',
+  productSlug: '',
   variantId: null as string | null,
   productName: 'P',
   variantName: '',

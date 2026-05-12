@@ -68,6 +68,21 @@ test('access read: customer scoped to own orders when multivendor', () => {
   assert.ok(cust?.order?.customer?.equals === 'c-1')
 })
 
+test('beforeChange[0]: rejects productSlug changes on update', () => {
+  const cfg = createOrderItemsConfig(false)
+  const hook = cfg.hooks?.beforeChange?.[0] as any
+  assert.throws(
+    () =>
+      hook({
+        operation: 'update',
+        data: { productSlug: 'hijacked' },
+        originalDoc: { id: 'oi-1', productSlug: 'widget', productName: 'Widget' },
+        req: { user: { role: 'admin' } },
+      }),
+    /Order line snapshots cannot be changed/,
+  )
+})
+
 test('beforeChange[0]: rejects snapshot field changes on update', () => {
   const cfg = createOrderItemsConfig(true)
   const hook = cfg.hooks?.beforeChange?.[0] as any
