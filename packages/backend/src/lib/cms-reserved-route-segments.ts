@@ -15,6 +15,7 @@ export const RESERVED_STOREFRONT_ROUTE_SEGMENTS = new Set(
     'track-order',
     'contact',
     'about',
+    'compare',
     // multivendor storefront
     'store',
     'vendors',
