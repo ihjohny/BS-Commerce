@@ -43,12 +43,17 @@ function couponRow(overrides: Record<string, unknown> = {}) {
 }
 
 let mvBackup: string | undefined
+let invCartValidateBackup: string | undefined
 beforeEach(() => {
   mvBackup = process.env.MULTIVENDOR_ENABLED
+  invCartValidateBackup = process.env.INVENTORY_VALIDATE_CART_LINES
+  process.env.INVENTORY_VALIDATE_CART_LINES = 'false'
 })
 afterEach(() => {
   if (mvBackup === undefined) delete process.env.MULTIVENDOR_ENABLED
   else process.env.MULTIVENDOR_ENABLED = mvBackup
+  if (invCartValidateBackup === undefined) delete process.env.INVENTORY_VALIDATE_CART_LINES
+  else process.env.INVENTORY_VALIDATE_CART_LINES = invCartValidateBackup
 })
 
 test('beforeChange should return when data is falsy', async () => {

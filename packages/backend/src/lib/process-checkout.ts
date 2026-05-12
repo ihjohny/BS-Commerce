@@ -382,6 +382,9 @@ export async function processCheckout(
 
     const productNameSnapshot = resolveLocalizedText(productAny.name, checkoutLocale) || 'Product'
 
+    const slugRaw = (product as { slug?: unknown }).slug
+    const productSlugSnapshot = typeof slugRaw === 'string' ? slugRaw.trim() : ''
+
     let productImage = snapshotProductImageUrl(productAny as Record<string, unknown>)
     if (!productImage && productAny.images?.[0]?.image) {
       const imgRef = productAny.images[0].image
@@ -413,6 +416,7 @@ export async function processCheckout(
 
     orderItemData.push({
       productId: productId as string,
+      productSlug: productSlugSnapshot,
       variantId: variantId as string | null,
       productName: productNameSnapshot,
       variantName,
@@ -608,6 +612,7 @@ export async function processCheckout(
             subOrder: subOrder.id,
             tenant: seg.tenantId,
             product: d.productId,
+            productSlug: d.productSlug,
             productName: d.productName,
             variantName: d.variantName,
             sku: d.sku,
@@ -645,6 +650,7 @@ export async function processCheckout(
         const itemData: Record<string, unknown> = {
           order: orderId,
           product: d.productId,
+          productSlug: d.productSlug,
           productName: d.productName,
           variantName: d.variantName,
           sku: d.sku,
@@ -670,6 +676,7 @@ export async function processCheckout(
         const itemData: Record<string, unknown> = {
           order: orderId,
           product: d.productId,
+          productSlug: d.productSlug,
           productName: d.productName,
           variantName: d.variantName,
           sku: d.sku,

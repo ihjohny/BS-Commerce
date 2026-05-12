@@ -5,6 +5,8 @@
 
 export interface CartItemForSplit {
   productId: string
+  /** Product `slug` at checkout — persisted on order-items for stable PDP links. */
+  productSlug: string
   variantId: string | null
   productName: string
   variantName: string

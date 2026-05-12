@@ -3,9 +3,18 @@ import assert from 'node:assert/strict'
 // @ts-ignore
 import { DefaultOrderSplitter, getPlatformItems } from '../../../src/plugins/orders/strategies/order-splitter.ts'
 
-function item(overrides: Partial<{ productId: string; tenantId: string | null; totalPrice: number; quantity: number }> = {}) {
+function item(
+  overrides: Partial<{
+    productId: string
+    productSlug: string
+    tenantId: string | null
+    totalPrice: number
+    quantity: number
+  }> = {},
+) {
   return {
     productId: overrides.productId ?? 'p1',
+    productSlug: overrides.productSlug ?? '',
     variantId: null,
     productName: 'Product',
     variantName: '',

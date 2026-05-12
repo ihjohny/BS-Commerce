@@ -30,7 +30,7 @@ afterEach(() => { for (const k of envKeys) { if (envBackups[k] === undefined) de
 
 function buildPayload(overrides: Record<string, Function> = {}) {
   const calls: Record<string, any[]> = { find: [], findByID: [], create: [], update: [], delete: [] }
-  const defaultProduct = { id: 'prod-1', name: 'Test', basePrice: 50, tenant: null }
+  const defaultProduct = { id: 'prod-1', name: 'Test', slug: 'test-product', basePrice: 50, tenant: null }
 
   return {
     find: async (args: any) => {
@@ -103,6 +103,20 @@ function guestReq() {
     context: {},
   } as any
 }
+
+test('should persist productSlug snapshot on order-items when product has slug', async () => {
+  const payload = buildPayload()
+  const result = await processCheckout(
+    payload,
+    { ...baseInput, guestEmail: 'slug@test.com' },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.error, undefined)
+  const itemCreates = payload._calls.create.filter((c: any) => c.collection === 'order-items')
+  assert.equal(itemCreates.length, 1)
+  assert.equal(itemCreates[0].data.productSlug, 'test-product')
+})
 
 test('should return error when guest has neither email nor qualifying phone', async () => {
   const payload = buildPayload()

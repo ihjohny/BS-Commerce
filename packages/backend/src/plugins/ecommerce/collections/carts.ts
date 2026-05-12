@@ -1,4 +1,10 @@
 import { APIError, type CollectionConfig, type Where } from 'payload'
+import { allocateStockLevelForLine } from '../../../lib/allocate-stock-level'
+import {
+  shouldValidateCartWarehouseAllocation,
+  isInventoryEnabled,
+  isSingleStoreCartEnabled,
+} from '../../../lib/inventory-policy'
 import { validateCouponForSubtotal } from '../../discounts/lib/coupon'
 import { isValidUUID } from '../../../lib/utils'
 
@@ -109,6 +115,14 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
 
         if (!data.items || !Array.isArray(data.items)) return data
 
+        const validateWarehouseOnCart = shouldValidateCartWarehouseAllocation()
+        const warehouseStockLines: Array<{
+          productId: string
+          variantId: string | null
+          tenantId: string | null
+          quantity: number
+        }> = []
+
         // Derive unitPrice and vendor from product/variant — never trust client (OWASP: price manipulation)
         for (const item of data.items) {
           const variantId = typeof item.variant === 'object' ? item.variant?.id : item.variant
@@ -147,43 +161,91 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
               item.vendor = typeof tenant === 'object' ? tenant?.id : tenant
             }
           }
+
+          if (validateWarehouseOnCart) {
+            const multivendor = process.env.MULTIVENDOR_ENABLED === 'true'
+            const tenantRaw = (product as { tenant?: { id: string } | string | null }).tenant
+            let tenantId: string | null = null
+            if (multivendor && tenantRaw != null) {
+              tenantId = typeof tenantRaw === 'object' ? tenantRaw?.id ?? null : String(tenantRaw)
+            }
+            warehouseStockLines.push({
+              productId: String(productId),
+              variantId: variantId ? String(variantId) : null,
+              tenantId,
+              quantity: Number(item.quantity) || 1,
+            })
+          }
         }
 
-        // ── Single-store cart enforcement ──────────────────────────────────────
-        const singleStoreEnabled = process.env.SINGLE_STORE_CART_ENABLED === 'true'
-        const inventoryEnabled = process.env.INVENTORY_ENABLED !== 'false'
+        const inventoryEnabled = isInventoryEnabled()
+        const singleStoreEnabled = isSingleStoreCartEnabled()
         const storeId = typeof data.store === 'object' ? (data.store as { id: string })?.id : data.store
 
-        if (singleStoreEnabled && inventoryEnabled && storeId) {
+        if (validateWarehouseOnCart) {
+          const storeLocationId = storeId ?? undefined
+          for (const line of warehouseStockLines) {
+            const alloc = await allocateStockLevelForLine(
+              req.payload,
+              {
+                productId: line.productId,
+                variantId: line.variantId,
+                quantity: line.quantity,
+                tenantId: line.tenantId,
+                storeLocationId: storeLocationId ?? null,
+              },
+              req,
+            )
+            if ('error' in alloc) {
+              throw new APIError(alloc.error, 400)
+            }
+          }
+        }
+
+        // ── Single-store cart enforcement (legacy path when warehouse cart validation is off) ──
+        if (!validateWarehouseOnCart && singleStoreEnabled && inventoryEnabled && storeId) {
           for (const item of data.items) {
             const pId = typeof item.product === 'object' ? item.product?.id : item.product
             const vId = item.variant ? (typeof item.variant === 'object' ? item.variant?.id : item.variant) : null
             if (!pId) continue
 
-            const stockWhere: Record<string, unknown> = {
-              and: [
-                { 'location': { equals: storeId } },
-                { product: { equals: pId } },
-              ],
+            const baseAnd: Array<Record<string, unknown>> = [
+              { location: { equals: storeId } },
+              { product: { equals: pId } },
+            ]
+
+            const fetchStockDoc = async (extra: Record<string, unknown> | null) => {
+              const and = extra ? [...baseAnd, extra] : [...baseAnd]
+              const { docs } = await req.payload.find({
+                collection: 'stock-levels',
+                where: { and } as Where,
+                limit: 1,
+                depth: 0,
+                overrideAccess: true,
+              })
+              return docs[0] as { quantity?: number; reservedQuantity?: number } | undefined
             }
+
+            /** Prefer variant-specific rows; fall back to product-level stock (variant unset/null per inventory docs). */
+            let stockRow: { quantity?: number; reservedQuantity?: number } | undefined
             if (vId) {
-              (stockWhere.and as Array<Record<string, unknown>>).push({ variant: { equals: vId } })
+              stockRow = await fetchStockDoc({ variant: { equals: vId } })
+              if (!stockRow) {
+                stockRow = await fetchStockDoc({ variant: { equals: null } })
+              }
+            } else {
+              stockRow = await fetchStockDoc({ variant: { equals: null } })
+              if (!stockRow) {
+                stockRow = await fetchStockDoc(null)
+              }
             }
 
-            const { docs: stockRows } = await req.payload.find({
-              collection: 'stock-levels',
-              where: stockWhere as any,
-              limit: 1,
-              depth: 0,
-              overrideAccess: true,
-            })
-
-            if (stockRows.length === 0) {
+            if (!stockRow) {
               const productName = typeof item.product === 'object' ? (item.product as { name?: string }).name || pId : pId
               throw new APIError(`Product "${productName}" is not available at the selected store`, 400)
             }
 
-            const sl = stockRows[0] as { quantity?: number; reservedQuantity?: number }
+            const sl = stockRow
             const available = (Number(sl.quantity) || 0) - (Number(sl.reservedQuantity) || 0)
             const qty = Number(item.quantity) || 1
             if (available < qty) {
