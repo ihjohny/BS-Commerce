@@ -50,10 +50,19 @@ See `packages/backend/.env.example` for the full list.
 | `PAYLOAD_SECRET` | Auth token secret |
 | `MULTIVENDOR_ENABLED` | `true` = marketplace, `false` = single-vendor |
 | `GUEST_CHECKOUT_ENABLED` | Enables guest cart + guest checkout flow |
+| `SKU_AUTOFILL_POLICY` | Product SKU generation policy: `always`, `on-publish` (default), `never` |
 | `CHECKOUT_RATE_LIMIT_POINTS` | Max checkout requests per rate-limit window |
 | `CHECKOUT_RATE_LIMIT_DURATION_SECONDS` | Checkout rate-limit window in seconds |
 | `GUEST_LOOKUP_RATE_LIMIT_POINTS` | Max guest order-lookup requests per window |
 | `GUEST_LOOKUP_RATE_LIMIT_DURATION_SECONDS` | Guest lookup rate-limit window in seconds |
+
+### SKU policy behavior
+
+- `always`: generate SKU whenever missing.
+- `on-publish` (recommended default): keep SKU optional in draft, generate only when publishing.
+- `never`: keep SKU optional and never auto-generate.
+
+Data integrity note: the backend keeps SKU optional (`NULL` allowed), and enforces uniqueness only for non-null values via a partial unique index.
 
 ## Modes
 

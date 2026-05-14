@@ -7,7 +7,10 @@ import { createProductVariantsConfig } from '../../../src/plugins/ecommerce/coll
 function getInheritTenantBeforeValidateHook() {
   const cfg = createProductVariantsConfig(true)
   const hooks = cfg.hooks?.beforeValidate
-  assert.ok(hooks && hooks.length >= 3, 'sale display + sku + inherit-tenant beforeValidate hooks when multivendor')
+  assert.ok(
+    hooks && hooks.length >= 4,
+    'sale display + sku + inherit-tenant + bundle-guard beforeValidate hooks when multivendor',
+  )
   const hook = hooks[2]
   return hook as (args: { data: any; req: any }) => Promise<any>
 }
@@ -15,7 +18,7 @@ function getInheritTenantBeforeValidateHook() {
 function getSkuAutofillBeforeValidateHook() {
   const cfg = createProductVariantsConfig(false)
   const hooks = cfg.hooks?.beforeValidate
-  assert.ok(hooks && hooks.length >= 2, 'sale display + sku beforeValidate hooks')
+  assert.ok(hooks && hooks.length >= 3, 'sale display + sku + bundle-guard beforeValidate hooks')
   const hook = hooks[1]
   return hook as (args: { data: any; req: any; originalDoc?: any }) => Promise<any>
 }
@@ -91,7 +94,7 @@ test('should set tenant from vendor user when tenant id is a plain string', asyn
 test('should not inject multivendor tenant hook when multivendor is disabled', () => {
   const cfg = createProductVariantsConfig(false)
   const list = cfg.hooks?.beforeValidate
-  assert.equal(list?.length, 2, 'sale display + sku autofill; no inherit-tenant')
+  assert.equal(list?.length, 3, 'sale display + sku autofill + bundle guard; no inherit-tenant')
 })
 
 test('should generate SKU when missing and product has slug', async () => {
@@ -197,4 +200,25 @@ test('should not set tenant when product has no tenant and user is admin', async
   }
   const out = await hook({ data, req })
   assert.equal(out.tenant, undefined)
+})
+
+test('bundle guard rejects variants for bundle products', async () => {
+  const cfg = createProductVariantsConfig(false)
+  const hooks = cfg.hooks?.beforeValidate
+  assert.ok(hooks && hooks.length >= 3)
+  const bundleGuard = hooks[2] as (args: { data: any; req: any }) => Promise<any>
+
+  await assert.rejects(
+    () =>
+      bundleGuard({
+        data: { product: 'bundle-product', name: 'V', sku: 'SKU-1', price: 9 },
+        req: {
+          payload: {
+            findByID: async ({ id }: { id: string }) =>
+              id === 'bundle-product' ? { id, productType: 'bundle' } : null,
+          },
+        },
+      }),
+    /not allowed for bundle products/i,
+  )
 })
