@@ -72,6 +72,28 @@ test('beforeValidate rejects reserved storefront slugs', () => {
   )
 })
 
+test('beforeValidate rejects compare slug reserved for storefront compare route', () => {
+  const hook = Pages.hooks?.beforeValidate?.[0] as (args: {
+    data: Record<string, unknown>
+  }) => unknown
+  assert.ok(hook)
+  assert.throws(
+    () => hook({ data: { slug: 'compare' } }),
+    /reserved/,
+  )
+})
+
+test('beforeValidate rejects bundles slug reserved for storefront bundles route', () => {
+  const hook = Pages.hooks?.beforeValidate?.[0] as (args: {
+    data: Record<string, unknown>
+  }) => unknown
+  assert.ok(hook)
+  assert.throws(
+    () => hook({ data: { slug: 'bundles' } }),
+    /reserved/,
+  )
+})
+
 test('beforeValidate allows non-reserved slugs', () => {
   const hook = Pages.hooks?.beforeValidate?.[0] as (args: {
     data: Record<string, unknown>

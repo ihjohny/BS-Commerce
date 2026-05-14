@@ -30,6 +30,7 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
     const search = qs.get('search') ?? undefined
     const featured = qs.get('featured') ?? undefined
     const tenant = qs.get('tenant') ?? undefined
+    const productType = qs.get('productType') ?? undefined
     const minPrice = qs.get('minPrice') ?? undefined
     const maxPrice = qs.get('maxPrice') ?? undefined
 
@@ -92,6 +93,9 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
       }
       if (tenant) {
         andClauses.push({ tenant: { equals: tenant } })
+      }
+      if (productType) {
+        andClauses.push({ productType: { equals: productType } })
       }
       if (minPrice) {
         andClauses.push({ basePrice: { greater_than_equal: Number(minPrice) } })

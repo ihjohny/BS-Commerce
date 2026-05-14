@@ -122,6 +122,27 @@ const ensureVariantSaleDisplayMode: CollectionBeforeValidateHook = ({ data }) =>
   return data
 }
 
+const preventVariantsForBundleProducts: CollectionBeforeValidateHook = async ({ data, req }) => {
+  if (!data?.product || !req.payload) {
+    return data
+  }
+  const productId =
+    typeof data.product === 'object' ? (data.product as { id?: string }).id : data.product
+  if (!productId) {
+    return data
+  }
+  const product = (await req.payload.findByID({
+    collection: 'products',
+    id: productId,
+    depth: 0,
+    overrideAccess: true,
+  })) as { productType?: string } | null
+  if (product?.productType === 'bundle') {
+    throw new Error('Product variants are not allowed for bundle products.')
+  }
+  return data
+}
+
 const inheritTenantFromProductOnVariant: CollectionBeforeValidateHook = async ({ data, req }) => {
   if (!data) return data
   if (!data.tenant && data.product) {
@@ -222,6 +243,7 @@ export function createProductVariantsConfig(multivendorEnabled = false): Collect
         ensureVariantSaleDisplayMode,
         ensureVariantSkuAutofill,
         ...(multivendorEnabled ? [inheritTenantFromProductOnVariant] : []),
+        preventVariantsForBundleProducts,
       ],
     },
     fields,
