@@ -51,6 +51,8 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
     cartId,
     shippingAddress,
     billingAddress,
+    storeId,
+    serviceArea,
     guestEmail,
     guestPhone,
     simulatePayment = false,
@@ -153,6 +155,17 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
         cartId,
         shippingAddress,
         billingAddress,
+        storeId: typeof storeId === 'string' && storeId.trim() ? storeId.trim() : undefined,
+        serviceArea: serviceArea && typeof serviceArea === 'object'
+          ? {
+              countryId:
+                typeof serviceArea.countryId === 'string' ? serviceArea.countryId : undefined,
+              subdivisionId:
+                typeof serviceArea.subdivisionId === 'string' ? serviceArea.subdivisionId : undefined,
+              localityId:
+                typeof serviceArea.localityId === 'string' ? serviceArea.localityId : undefined,
+            }
+          : undefined,
         guestEmail,
         guestPhone,
         simulatePayment: safeSimulatePayment,
@@ -165,7 +178,10 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
     )
     if (result.error) {
       const status = result.statusCode ?? 400
-      return Response.json({ error: result.error }, { status })
+      return Response.json(
+        { error: result.error, errorCode: result.errorCode },
+        { status },
+      )
     }
     return Response.json(result, { status: 201 })
   } catch (err) {

@@ -51,6 +51,7 @@ See `packages/backend/.env.example` for the full list.
 | `MULTIVENDOR_ENABLED` | `true` = marketplace, `false` = single-vendor |
 | `GUEST_CHECKOUT_ENABLED` | Enables guest cart + guest checkout flow |
 | `SKU_AUTOFILL_POLICY` | Product SKU generation policy: `always`, `on-publish` (default), `never` |
+| `ADDRESS_STORE_VALIDATION_MODE` | Checkout address/store alignment policy: `off`, `warn` (default), `enforce` |
 | `CHECKOUT_RATE_LIMIT_POINTS` | Max checkout requests per rate-limit window |
 | `CHECKOUT_RATE_LIMIT_DURATION_SECONDS` | Checkout rate-limit window in seconds |
 | `GUEST_LOOKUP_RATE_LIMIT_POINTS` | Max guest order-lookup requests per window |

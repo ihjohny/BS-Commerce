@@ -3,6 +3,72 @@ import assert from 'node:assert/strict'
 // @ts-ignore
 import { Addresses } from '../../../src/plugins/ecommerce/collections/addresses.ts'
 
+test('beforeValidate should normalize and uppercase address fields', () => {
+  const hook = Addresses.hooks?.beforeValidate?.[0] as any
+  assert.ok(hook)
+  const out = hook({
+    data: {
+      label: ' home ',
+      firstName: ' John ',
+      lastName: ' Doe ',
+      street1: ' 123 Main St ',
+      city: ' Dhaka ',
+      country: ' bd ',
+      state: ' Dhaka ',
+      postalCode: ' 1207 ',
+      phone: ' +880 1712345678 ',
+    },
+    originalDoc: undefined,
+  })
+  assert.equal(out.label, 'home')
+  assert.equal(out.firstName, 'John')
+  assert.equal(out.lastName, 'Doe')
+  assert.equal(out.street1, '123 Main St')
+  assert.equal(out.city, 'Dhaka')
+  assert.equal(out.country, 'BD')
+  assert.equal(out.state, 'Dhaka')
+  assert.equal(out.postalCode, '1207')
+  assert.equal(out.phone, '+880 1712345678')
+})
+
+test('beforeValidate should reject invalid country code', () => {
+  const hook = Addresses.hooks?.beforeValidate?.[0] as any
+  assert.throws(
+    () =>
+      hook({
+        data: {
+          label: 'Home',
+          firstName: 'John',
+          lastName: 'Doe',
+          street1: '123 Main St',
+          city: 'Dhaka',
+          country: 'Bangladesh',
+        },
+        originalDoc: undefined,
+      }),
+    /2-letter ISO code/,
+  )
+})
+
+test('beforeValidate should reject clearly invalid street input', () => {
+  const hook = Addresses.hooks?.beforeValidate?.[0] as any
+  assert.throws(
+    () =>
+      hook({
+        data: {
+          label: 'Home',
+          firstName: 'John',
+          lastName: 'Doe',
+          street1: '!!!',
+          city: 'Dhaka',
+          country: 'BD',
+        },
+        originalDoc: undefined,
+      }),
+    /Street address looks invalid/,
+  )
+})
+
 test('beforeChange should force user to self for non-admin', () => {
   const hook = Addresses.hooks?.beforeChange?.[0] as any
   assert.ok(hook)

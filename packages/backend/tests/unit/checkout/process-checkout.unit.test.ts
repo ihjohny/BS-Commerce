@@ -8,6 +8,8 @@ const envKeys = [
   'MULTIVENDOR_ENABLED',
   'INVENTORY_ENABLED',
   'REQUIRE_VERIFIED_FOR_CHECKOUT',
+  'ADDRESS_STORE_VALIDATION_MODE',
+  'GEOGRAPHY_ENABLED',
   'DEFAULT_COMMISSION_RATE',
   'BS_TEST_ORDER_EMAIL_REJECT',
   'PAYMENT_PROVIDER',
@@ -445,6 +447,85 @@ test('should block unverified user when REQUIRE_VERIFIED_FOR_CHECKOUT is on', as
   const result = await processCheckout(payload, { ...baseInput }, 'u-1', req)
   assert.equal(result.statusCode, 403)
   assert.ok(result.error?.includes('verified'))
+})
+
+test('should block checkout when address/store country mismatch and validation mode is enforce', async () => {
+  process.env.ADDRESS_STORE_VALIDATION_MODE = 'enforce'
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'stock-locations') {
+        return { id: 'store-1', address: { country: 'BD' } }
+      }
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          store: { id: 'store-1' },
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      return { id: args.id }
+    },
+  })
+
+  const result = await processCheckout(
+    payload,
+    {
+      ...baseInput,
+      shippingAddress: { ...baseInput.shippingAddress, country: 'US' },
+      billingAddress: { ...baseInput.billingAddress, country: 'US' },
+      guestEmail: 'country-mismatch@test.com',
+    },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.statusCode, 400)
+  assert.ok(result.error?.includes('country'))
+})
+
+test('should return warning when geography mapping fails and validation mode is warn', async () => {
+  process.env.ADDRESS_STORE_VALIDATION_MODE = 'warn'
+  process.env.GEOGRAPHY_ENABLED = 'true'
+
+  const payload = buildPayload({
+    findByID: async (args: any) => {
+      if (args.collection === 'stock-locations') {
+        return { id: 'store-1', address: { country: 'US' } }
+      }
+      if (args.collection === 'carts') {
+        return {
+          id: 'cart-1',
+          guestId: 'guest-abc',
+          store: { id: 'store-1' },
+          items: [{ product: { id: 'prod-1' }, quantity: 1, unitPrice: 50 }],
+        }
+      }
+      if (args.collection === 'products') return { id: 'prod-1', name: 'P', basePrice: 50, tenant: null }
+      return { id: args.id }
+    },
+    find: async (args: any) => {
+      if (args.collection === 'stock-location-service-areas') {
+        return { docs: [] }
+      }
+      if (args.collection === 'orders') return { docs: [] }
+      return { docs: [], totalDocs: 0 }
+    },
+  })
+
+  const result = await processCheckout(
+    payload,
+    {
+      ...baseInput,
+      guestEmail: 'warn@test.com',
+      storeId: 'store-1',
+      serviceArea: { subdivisionId: 'subdivision-x', localityId: 'locality-x' },
+    },
+    undefined,
+    guestReq(),
+  )
+  assert.equal(result.error, undefined)
+  assert.ok(result.warnings?.length)
 })
 
 test('should delete cart after successful checkout', async () => {

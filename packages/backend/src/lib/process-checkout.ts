@@ -32,6 +32,10 @@ import {
   normalizeCheckoutPhoneToE164,
   normalizeOptionalCheckoutPhone,
 } from './validation/phone-format'
+import {
+  validateAddressStoreAlignment,
+  type CheckoutServiceAreaInput,
+} from './address-store-validation'
 
 function sanitizeOrderNotesFromCart(raw: unknown): string {
   if (typeof raw !== 'string') return ''
@@ -76,6 +80,8 @@ export interface ProcessCheckoutInput {
   idempotencyKey?: string
   /** Explicit store override; falls back to cart.store if not provided. */
   storeId?: string
+  /** Optional geography ids from storefront service-area selection. */
+  serviceArea?: CheckoutServiceAreaInput
   shippingMethodIds?: string[]
   /**
    * When true with validated COD-only shipping methods, skips hosted/simulated payment;
@@ -112,7 +118,12 @@ export interface ProcessCheckoutResult {
   transaction?: { id: string }
   /** Present when the shopper must complete payment on the gateway (SSL Commerz hosted page). */
   paymentRedirectUrl?: string
+  /** Non-blocking validation notices; currently used for warn-mode address/store mismatch checks. */
+  warnings?: string[]
+  warningCodes?: string[]
+  resolvedStoreId?: string
   error?: string
+  errorCode?: string
   statusCode?: number
 }
 
@@ -292,6 +303,28 @@ export async function processCheckout(
   const storeLocationId = input.storeId
     || (cartStore ? (typeof cartStore === 'object' ? cartStore?.id : cartStore) : null)
     || null
+
+  const addressStoreValidation = await validateAddressStoreAlignment({
+    payload,
+    shippingAddress: persistShippingAddress,
+    storeLocationId,
+    serviceArea: input.serviceArea,
+  })
+  if (addressStoreValidation.error) {
+    return {
+      order: { id: '', orderNumber: '' },
+      error: addressStoreValidation.error,
+      errorCode: addressStoreValidation.errorCode,
+      statusCode: 400,
+    }
+  }
+  if (addressStoreValidation.warning) {
+    console.warn('[checkout/address-store-validation]', {
+      mode: process.env.ADDRESS_STORE_VALIDATION_MODE || 'warn',
+      code: addressStoreValidation.warningCode ?? 'UNKNOWN_WARNING',
+      storeId: addressStoreValidation.resolvedStoreId ?? storeLocationId,
+    })
+  }
 
   const items = cart.items as Array<{
     product: { id: string } | string
@@ -935,5 +968,8 @@ export async function processCheckout(
     },
     transaction: paymentTransactionId ? { id: paymentTransactionId } : undefined,
     paymentRedirectUrl,
+    warnings: addressStoreValidation.warning ? [addressStoreValidation.warning] : undefined,
+    warningCodes: addressStoreValidation.warningCode ? [addressStoreValidation.warningCode] : undefined,
+    resolvedStoreId: addressStoreValidation.resolvedStoreId ?? undefined,
   }
 }
