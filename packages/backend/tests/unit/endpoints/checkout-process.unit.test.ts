@@ -178,6 +178,41 @@ test('should return 201 when processCheckout succeeds', async () => {
   assert.equal(j.order && (j.order as { orderNumber: string }).orderNumber, 'ORD-99')
 })
 
+test('should pass storeId and serviceArea to processCheckout when provided', async () => {
+  let seenStoreId: string | undefined
+  let seenServiceArea:
+    | { countryId?: string | null; subdivisionId?: string | null; localityId?: string | null }
+    | undefined
+  const req = mockHandlerReq({
+    body: {
+      ...baseBody,
+      storeId: 'store-1',
+      serviceArea: {
+        countryId: 'country-1',
+        subdivisionId: 'subdivision-1',
+        localityId: 'locality-1',
+      },
+    },
+  })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async (_p, input) => {
+      seenStoreId = input.storeId
+      seenServiceArea = input.serviceArea
+      return {
+        order: { id: 'order-1', orderNumber: 'ORD-99' },
+      }
+    },
+  })
+  assert.equal(res.status, 201)
+  assert.equal(seenStoreId, 'store-1')
+  assert.deepEqual(seenServiceArea, {
+    countryId: 'country-1',
+    subdivisionId: 'subdivision-1',
+    localityId: 'locality-1',
+  })
+})
+
 test('should allow authenticated checkout without guestEmail when user is present', async () => {
   const req = mockHandlerReq({
     body: { cartId: 'c1', shippingAddress: validAddr, billingAddress: validAddr },
@@ -206,6 +241,22 @@ test('should return processCheckout error status when business logic fails', asy
   assert.equal(res.status, 404)
   const j = await jsonBody(res)
   assert.equal(j.error, 'Cart not found')
+})
+
+test('should return processCheckout errorCode when provided', async () => {
+  const req = mockHandlerReq({ body: baseBody })
+  const res = await checkoutProcessHandler(req, {
+    enforceRateLimit: async () => null,
+    processCheckout: async () => ({
+      order: { id: '', orderNumber: '' },
+      error: 'Area mismatch',
+      errorCode: 'ADDRESS_STORE_LOCALITY_UNSERVED',
+      statusCode: 400,
+    }),
+  })
+  assert.equal(res.status, 400)
+  const j = await jsonBody(res)
+  assert.equal(j.errorCode, 'ADDRESS_STORE_LOCALITY_UNSERVED')
 })
 
 test('should default to 400 when processCheckout error omits statusCode', async () => {

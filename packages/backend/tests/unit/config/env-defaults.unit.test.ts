@@ -16,6 +16,7 @@ const envKeys = [
   'VENDOR_AUTO_APPROVE',
   'CHECKOUT_RATE_LIMIT_POINTS',
   'CHECKOUT_RATE_LIMIT_DURATION_SECONDS',
+  'ADDRESS_STORE_VALIDATION_MODE',
 ]
 
 let backups: Record<string, string | undefined> = {}
@@ -84,4 +85,10 @@ test('VENDOR_AUTO_APPROVE defaults to falsy', () => {
 test('DEFAULT_COMMISSION_RATE defaults to 0', () => {
   const rate = Number(process.env.DEFAULT_COMMISSION_RATE ?? '0')
   assert.equal(rate, 0)
+})
+
+test('ADDRESS_STORE_VALIDATION_MODE defaults to "warn"', async () => {
+  // @ts-ignore
+  const { getAddressStoreValidationMode } = await import('../../../src/lib/address-store-validation.ts')
+  assert.equal(getAddressStoreValidationMode(), 'warn')
 })

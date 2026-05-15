@@ -4,6 +4,7 @@ import * as migration_20260430_120000_add_carts_customer_note from './20260430_1
 import * as migration_20260507_120000_order_items_product_slug from './20260507_120000_order_items_product_slug';
 import * as migration_20260513_142155_add_bundle_product_type from './20260513_142155_add_bundle_product_type';
 import * as migration_20260514_171500_products_sku_optional_unique from './20260514_171500_products_sku_optional_unique';
+import * as migration_20260515_120000_addresses_geo_affinity from './20260515_120000_addresses_geo_affinity';
 
 export const migrations = [
   {
@@ -35,5 +36,10 @@ export const migrations = [
     up: migration_20260514_171500_products_sku_optional_unique.up,
     down: migration_20260514_171500_products_sku_optional_unique.down,
     name: '20260514_171500_products_sku_optional_unique',
+  },
+  {
+    up: migration_20260515_120000_addresses_geo_affinity.up,
+    down: migration_20260515_120000_addresses_geo_affinity.down,
+    name: '20260515_120000_addresses_geo_affinity',
   },
 ];

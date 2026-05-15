@@ -98,11 +98,11 @@ export const customEndpointsOpenApi = {
       post: {
         summary: 'Process checkout payload into an order',
         description:
-          'Guest identifiers follow AUTH_REQUIRED_IDENTIFIER (guestEmail / guestPhone). cashOnDelivery with shippingMethodIds skips hosted payment when every method has collect-on-delivery enabled; order keeps checkoutPaymentChannel=cash_on_delivery and paymentStatus unpaid.',
+          'Guest identifiers follow AUTH_REQUIRED_IDENTIFIER (guestEmail / guestPhone). cashOnDelivery with shippingMethodIds skips hosted payment when every method has collect-on-delivery enabled; order keeps checkoutPaymentChannel=cash_on_delivery and paymentStatus unpaid. Optional `storeId` + `serviceArea` enable address-vs-store alignment checks controlled by ADDRESS_STORE_VALIDATION_MODE=off|warn|enforce.',
         responses: {
           201: {
             description:
-              'Order created; JSON includes order.checkoutPaymentChannel (online|cash_on_delivery), paymentStatus snapshot, optional transaction id, optional paymentRedirectUrl for hosted gateway.',
+              'Order created; JSON includes order.checkoutPaymentChannel (online|cash_on_delivery), paymentStatus snapshot, optional transaction id, optional paymentRedirectUrl for hosted gateway, and optional warnings/warningCodes/resolvedStoreId for address-store warn mode.',
           },
           400: { description: 'Invalid payload.' },
           401: { description: 'Unauthorized when required.' },
