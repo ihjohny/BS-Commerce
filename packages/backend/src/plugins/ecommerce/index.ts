@@ -3,6 +3,7 @@ import { createProductsConfig } from './collections/products'
 import { createProductVariantsConfig } from './collections/product-variants'
 import { createCartsConfig } from './collections/carts'
 import { Addresses } from './collections/addresses'
+import { WishlistItems } from './collections/wishlist-items'
 
 export interface EcommercePluginOptions {
   enabled?: boolean
@@ -26,6 +27,7 @@ export const ecommercePlugin =
         createProductVariantsConfig(multivendorEnabled),
         createCartsConfig(multivendorEnabled, allowGuestCheckout),
         Addresses,
+        WishlistItems,
       ],
     }
   }
