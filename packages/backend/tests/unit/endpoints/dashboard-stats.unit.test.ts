@@ -60,7 +60,7 @@ test('dashboardStatsEndpoint.handler delegates to dashboardStatsHandler', async 
   assert.equal(res.status, 200)
 })
 
-test('dashboardStatsHandler 200 for admin', async () => {
+test('dashboardStatsHandler 200 for admin with query parameters', async () => {
   const payload = {
     collections: {
       orders: {},
@@ -68,15 +68,23 @@ test('dashboardStatsHandler 200 for admin', async () => {
       tenants: {},
       products: {},
       'vendor-applications': {},
+      'stock-locations': {},
     },
     count: async () => ({ totalDocs: 7 }),
+    find: async () => ({ docs: [] }),
   } as unknown as Payload
   const res = await dashboardStatsHandler({
     user: { id: 'a1', role: 'admin' },
     payload,
+    url: 'http://localhost/api/dashboard-stats?timeRange=30d&storeId=store-123',
   })
   assert.equal(res.status, 200)
   const body = await res.json()
   assert.equal(body.role, 'admin')
   assert.equal(body.ordersTotal, 7)
+  assert.equal(body.dateRange.timeRange, '30d')
+  assert.equal(body.selectedStoreId, 'store-123')
+  assert.ok(body.kpis)
+  assert.ok(body.salesSummary)
+  assert.ok(Array.isArray(body.salesChart))
 })
