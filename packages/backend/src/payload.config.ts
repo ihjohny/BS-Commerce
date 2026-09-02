@@ -48,6 +48,7 @@ import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-pr
 import { storefrontVariantAvailabilityEndpoint } from './endpoints/storefront-variant-availability'
 import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
 import { geographyPlugin } from './plugins/geography'
+import { reportsPlugin } from './plugins/reports'
 import { migrations } from '../migrations'
 
 const filename = fileURLToPath(import.meta.url)
@@ -280,6 +281,11 @@ export default buildConfig({
       enabled: process.env.REVIEWS_ENABLED !== 'false',
       requireApproval: process.env.REVIEW_REQUIRES_APPROVAL === 'true',
       vendorReviews: process.env.MULTIVENDOR_ENABLED === 'true',
+    }),
+
+    // Reports & Analytics Plugin
+    reportsPlugin({
+      enabled: process.env.REPORTS_ENABLED !== 'false',
     }),
 
     // Future plugins (added per phase):
