@@ -1,20 +1,21 @@
 /**
  * Comprehensive Electronics Store Seeding Engine (Apple Gadgets BD + Pickaboo Showcase)
  * 
- * Safely clears existing catalog and transaction data while preserving schema migrations
- * and the primary admin account (frontend-seed-sv@bscommerce.local / FrontendSeed2026!).
+ * Safely clears existing catalog, transactions, and old CMS pages while preserving
+ * schema migrations and the primary admin account (frontend-seed-sv@bscommerce.local / FrontendSeed2026!).
  * Populates:
  * - 9 Categories (with existing media images)
  * - 13 Brands & Series (Apple, Samsung, Sony, Pixel, DJI, Anker, Bose, Marshall, OnePlus, Xiaomi, Asus, TP-Link, Dyson)
  * - 38 Flagship Products with multi-dimensional variants and existing media images
  * - Storefront Top Carousel Hero Banners (home-hero-banners) with 4 high-tech slides
+ * - 14 Comprehensive Storefront CMS Pages (About Us, Showrooms, Warranty, EMI, Trade-In, Return, Privacy, Terms, FAQ, etc.)
  * - 4 Showroom Outlets (Bashundhara, Jamuna Future Park, Uttara, Chittagong)
  * - Distributed Stock Levels across variants and outlets
  * - 10 Registered Customers with verified BD addresses
  * - 42 Realistic Orders spanning past 30 days with client device tracking (mobile/desktop/tablet)
  * - Verified 5★ Customer Reviews
  * - 4 Active Promo Coupons
- * - 4 Active Shopping Carts & 10 Abandoned Carts (with high lost basket opportunities)
+ * - 4 Active Shopping Carts & 11 Abandoned Carts (with high lost basket opportunities)
  * - Storefront Globals (Header, Footer, Announcement, Platform Settings)
  */
 import type { Payload } from 'payload'
@@ -39,11 +40,45 @@ export interface SeedResult {
     reviewsCount: number
     couponsCount: number
     heroSlidesCount: number
+    pagesCount: number
   }
 }
 
 /**
- * 1. Database Wiper: Clears all catalog and transactional data, keeping admin intact.
+ * Helper to generate Lexical RichText payload
+ */
+function makeLexicalDoc(paragraphs: string[]) {
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      direction: 'ltr',
+      children: paragraphs.map((text) => ({
+        type: 'paragraph',
+        format: '',
+        indent: 0,
+        version: 1,
+        direction: 'ltr',
+        children: [
+          {
+            mode: 'normal',
+            text,
+            type: 'text',
+            style: '',
+            detail: 0,
+            format: 0,
+            version: 1,
+          },
+        ],
+      })),
+    },
+  }
+}
+
+/**
+ * 1. Database Wiper: Clears all catalog, transaction and page data, keeping admin intact.
  */
 export async function wipeDatabaseForElectronics(
   payload: Payload,
@@ -67,6 +102,7 @@ export async function wipeDatabaseForElectronics(
     'shipping-methods',
     'shipping-zones',
     'stock-locations',
+    'pages',
   ]
 
   for (const slug of collectionsToClear) {
@@ -240,32 +276,58 @@ export async function seedElectronicsStore(
             {
               heading: 'Featured Categories',
               links: [
-                { label: 'Phones & Tablets', url: '/en/categories/phones-tablets' },
-                { label: 'Laptops & MacBooks', url: '/en/categories/laptops-macbooks' },
-                { label: 'Watches & Wearables', url: '/en/categories/watches-wearables' },
-                { label: 'Audio & Sound', url: '/en/categories/audio-sound' },
-                { label: 'TV & Entertainment', url: '/en/categories/tv-entertainment' },
-                { label: 'Smart Home & Appliances', url: '/en/categories/smart-home-appliances' },
+                { label: 'Phones & Tablets', url: '/en/categories/phones-tablets', enabled: true, visibility: 'public' },
+                { label: 'Laptops & MacBooks', url: '/en/categories/laptops-macbooks', enabled: true, visibility: 'public' },
+                { label: 'Watches & Wearables', url: '/en/categories/watches-wearables', enabled: true, visibility: 'public' },
+                { label: 'Audio & Sound', url: '/en/categories/audio-sound', enabled: true, visibility: 'public' },
+                { label: 'TV & Entertainment', url: '/en/categories/tv-entertainment', enabled: true, visibility: 'public' },
+                { label: 'Smart Home & Appliances', url: '/en/categories/smart-home-appliances', enabled: true, visibility: 'public' },
               ],
             },
             {
               heading: 'Our Showrooms',
               links: [
-                { label: 'Bashundhara City Flagship (Level 6)', url: '/en/showrooms/bashundhara' },
-                { label: 'Jamuna Future Park (Level 4)', url: '/en/showrooms/jamuna' },
-                { label: 'Uttara Experience Center (Sector 3)', url: '/en/showrooms/uttara' },
-                { label: 'Agrabad Commercial Hub (Chittagong)', url: '/en/showrooms/chittagong' },
+                { label: 'Bashundhara City Flagship', url: '/en/showrooms-bashundhara', enabled: true, visibility: 'public' },
+                { label: 'Jamuna Future Park Center', url: '/en/showrooms-jamuna', enabled: true, visibility: 'public' },
+                { label: 'Uttara Experience Hub', url: '/en/showrooms-uttara', enabled: true, visibility: 'public' },
+                { label: 'Agrabad Hub (Chittagong)', url: '/en/showrooms-chittagong', enabled: true, visibility: 'public' },
+                { label: 'All Showroom Locations', url: '/en/showrooms', enabled: true, visibility: 'public' },
               ],
             },
             {
-              heading: 'Customer Care & Policy',
+              heading: 'Customer Care & Benefits',
               links: [
-                { label: 'AppleCare+ Official Warranty', url: '/en/warranty' },
-                { label: '0% EMI Facility (24+ Banks)', url: '/en/emi' },
-                { label: 'Track Your Order', url: '/en/track-order' },
-                { label: 'Exchange & Trade-In Policy', url: '/en/exchange' },
+                { label: 'AppleCare+ Official Warranty', url: '/en/warranty', enabled: true, visibility: 'public' },
+                { label: '0% EMI Facility (24+ Banks)', url: '/en/emi', enabled: true, visibility: 'public' },
+                { label: 'Device Exchange & Trade-In', url: '/en/exchange', enabled: true, visibility: 'public' },
+                { label: 'Track Your Order', url: '/en/track-order', enabled: true, visibility: 'public' },
+                { label: 'Help Center & FAQ', url: '/en/faq', enabled: true, visibility: 'public' },
+                { label: 'Contact & Support Desk', url: '/en/contact', enabled: true, visibility: 'public' },
               ],
             },
+            {
+              heading: 'Company & Policies',
+              links: [
+                { label: 'About Apple Gadgets BD', url: '/en/about-us', enabled: true, visibility: 'public' },
+                { label: '7-Day Return & Replacement', url: '/en/return-refund', enabled: true, visibility: 'public' },
+                { label: 'Privacy & Data Security', url: '/en/privacy-policy', enabled: true, visibility: 'public' },
+                { label: 'Terms & Conditions of Sale', url: '/en/terms-conditions', enabled: true, visibility: 'public' },
+              ],
+            },
+          ],
+          bottomLinks: [
+            { label: 'About Us', url: '/en/about-us' },
+            { label: 'Warranty Policy', url: '/en/warranty' },
+            { label: '0% EMI', url: '/en/emi' },
+            { label: 'Trade-In', url: '/en/exchange' },
+            { label: 'Return Policy', url: '/en/return-refund' },
+            { label: 'Privacy Policy', url: '/en/privacy-policy' },
+            { label: 'Terms of Service', url: '/en/terms-conditions' },
+          ],
+          socialLinks: [
+            { platform: 'facebook', url: 'https://facebook.com/applegadgetsbd' },
+            { platform: 'instagram', url: 'https://instagram.com/applegadgetsbd' },
+            { platform: 'youtube', url: 'https://youtube.com/@applegadgetsbd' },
           ],
         } as any,
         overrideAccess: true,
@@ -275,83 +337,506 @@ export async function seedElectronicsStore(
     payload.logger.warn(`[Electronics Seeder] Globals note: ${e?.message || e}`)
   }
 
-  // ─── 2. STOREFRONT TOP CAROUSEL HERO BANNERS ───────────────────────────────
+  // ─── 2. STOREFRONT CMS PAGES (Top Carousel + Bottom Footer Pages) ──────────
+  let pagesCount = 0
   let heroSlidesCount = 0
-  try {
-    const heroSlides = [
-      {
-        blockType: 'hero',
-        heading: 'Apple iPhone 16 Pro Max — Pure Titanium',
-        subheading: 'A18 Pro Silicon, 5x Optical Telephoto & Camera Control. 0% EMI up to 36 Months with Official AppleCare Warranty.',
-        backgroundImage: findMediaId('category-electronics-1'),
-        ctaLabel: 'Shop iPhone 16 Pro',
-        ctaUrl: '/en/products/apple-iphone-16-pro-max',
-      },
-      {
-        blockType: 'hero',
-        heading: 'MacBook Pro M3 Max & Creator Studio',
-        subheading: 'Unstoppable Apple Silicon powerhouses and RTX 4090 laptops for professional creative workflows.',
-        backgroundImage: findMediaId('category-creator-studio-1'),
-        ctaLabel: 'Explore MacBooks',
-        ctaUrl: '/en/categories/laptops-macbooks',
-      },
-      {
-        blockType: 'hero',
-        heading: 'Premium Audio, Drones & Smart Living',
-        subheading: 'AirPods Pro 2, Sony WH-1000XM5, Marshall, and DJI 4K Drones at authentic Bangladeshi prices.',
-        backgroundImage: findMediaId('category-smart-home-1'),
-        ctaLabel: 'Browse All Gadgets',
-        ctaUrl: '/en/products',
-      },
-      {
-        blockType: 'hero',
-        heading: 'Official Warranty Across 4 Showrooms',
-        subheading: 'Visit our flagship experience centers in Bashundhara City, Jamuna Future Park, Uttara & Chittagong.',
-        backgroundImage: findMediaId('category-office-gear-1'),
-        ctaLabel: 'View Catalog',
-        ctaUrl: '/en/categories',
-      },
-    ]
 
-    const existingHeroPage = await payload.find({
-      collection: 'pages',
-      where: { slug: { equals: 'home-hero-banners' } },
-      limit: 1,
-      overrideAccess: true,
-    })
+  const cmsPagesToSeed = [
+    // 1. Home Hero Carousel
+    {
+      title: 'Home Hero Banners',
+      slug: 'home-hero-banners',
+      meta: { title: 'Apple Gadgets BD | Flagship Electronics Store', description: 'Hero banner slides for homepage.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Apple iPhone 16 Pro Max — Pure Titanium',
+          subheading: 'A18 Pro Silicon, 5x Optical Telephoto & Camera Control. 0% EMI up to 36 Months with Official AppleCare Warranty.',
+          backgroundImage: findMediaId('category-electronics-1'),
+          ctaLabel: 'Shop iPhone 16 Pro',
+          ctaUrl: '/en/products/apple-iphone-16-pro-max',
+        },
+        {
+          blockType: 'hero',
+          heading: 'MacBook Pro M3 Max & Creator Studio',
+          subheading: 'Unstoppable Apple Silicon powerhouses and RTX 4090 laptops for professional creative workflows.',
+          backgroundImage: findMediaId('category-creator-studio-1'),
+          ctaLabel: 'Explore MacBooks',
+          ctaUrl: '/en/categories/laptops-macbooks',
+        },
+        {
+          blockType: 'hero',
+          heading: 'Premium Audio, Drones & Smart Living',
+          subheading: 'AirPods Pro 2, Sony WH-1000XM5, Marshall, and DJI 4K Drones at authentic Bangladeshi prices.',
+          backgroundImage: findMediaId('category-smart-home-1'),
+          ctaLabel: 'Browse All Gadgets',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'hero',
+          heading: 'Official Warranty Across 4 Showrooms',
+          subheading: 'Visit our flagship experience centers in Bashundhara City, Jamuna Future Park, Uttara & Chittagong.',
+          backgroundImage: findMediaId('category-office-gear-1'),
+          ctaLabel: 'View Catalog',
+          ctaUrl: '/en/categories',
+        },
+      ],
+    },
+    // 2. About Us
+    {
+      title: 'About Apple Gadgets BD',
+      slug: 'about-us',
+      meta: { title: 'About Us | Apple Gadgets BD', description: 'Learn about Apple Gadgets BD, our mission, values, and authenticity guarantee.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Bangladesh’s Premier Gadget Experience',
+          subheading: 'Connecting technology enthusiasts with 100% genuine Apple ecosystem devices, premium computing, and world-class acoustics.',
+          backgroundImage: findMediaId('category-creator-studio-1'),
+          ctaLabel: 'Explore Our Catalog',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Founded with a steadfast commitment to authenticity and transparency, Apple Gadgets BD has become Bangladesh’s premier multi-brand retail destination. We specialize in official Apple hardware, high-performance Samsung flagships, Sony imaging & audio, and the smart IoT gadgets shaping modern lifestyles.',
+            'Operating 4 flagship showrooms across Dhaka and Chittagong, we provide authentic unboxing experiences, live demo stations, and dedicated technical consultation. Every product in our inventory undergoes strict IMEI verification to guarantee original manufacturer provenance.',
+            'Beyond physical retail, our nationwide express delivery network ensures customers across all 64 districts of Bangladesh receive factory-sealed electronics with authorized warranty and 0% EMI flexibility.',
+          ]),
+        },
+        {
+          blockType: 'faq',
+          heading: 'Why Tech Shoppers Trust Apple Gadgets BD',
+          items: [
+            {
+              question: 'Are all products 100% authentic and original?',
+              answer: makeLexicalDoc(['Yes. Every device is brand new, factory sealed, and sourced directly through authorized international distribution channels with verifiable serial numbers.']),
+            },
+            {
+              question: 'Do you offer corporate or enterprise procurement?',
+              answer: makeLexicalDoc(['Yes, our enterprise solutions team supports corporate bulk orders, tax invoicing, and tailored service level agreements for IT companies and institutions.']),
+            },
+          ],
+        },
+      ],
+    },
+    // 3. Warranty Policy
+    {
+      title: 'AppleCare+ & Official Brand Warranty Policy',
+      slug: 'warranty',
+      meta: { title: 'Official Warranty Policy | Apple Gadgets BD', description: 'Comprehensive warranty details covering Apple, Samsung, Sony, Anker, and Asus products.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Authorized Manufacturer Warranty Support',
+          subheading: 'Shop with total confidence. All our products carry official brand warranty and responsive local customer care.',
+          backgroundImage: findMediaId('category-office-gear-1'),
+          ctaLabel: 'Shop With Warranty',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Apple Official Warranty: Apple devices (iPhones, MacBooks, iPads, Watches) are backed by 1-Year Apple Official International Warranty, claimable through Apple Authorized Service Providers (AASP) in Bangladesh and worldwide.',
+            'Android & Audio Warranties: Samsung smartphones include 1-Year National Official Warranty. Sony headphones carry 1-Year Official Warranty. Anker GaN chargers and power banks feature our signature 18-Month Instant Replacement Guarantee.',
+            'Asus ROG Gaming Laptops: Covered under 2-Year Global Hardware Warranty covering motherboards, display panels, and high-frequency cooling systems.',
+          ]),
+        },
+        {
+          blockType: 'faq',
+          heading: 'Warranty Claims & Service FAQ',
+          items: [
+            {
+              question: 'How do I claim warranty for an Apple product?',
+              answer: makeLexicalDoc(['Simply bring your device and the original Apple Gadgets BD invoice to any of our 4 showrooms or any Apple Authorized Service Provider in Bangladesh.']),
+            },
+            {
+              question: 'What is covered under the 18-month Anker replacement guarantee?',
+              answer: makeLexicalDoc(['Any hardware malfunction, power failure, or port defect occurring under normal usage is replaced with a brand new unit within 48 hours.']),
+            },
+            {
+              question: 'What is NOT covered under standard warranty?',
+              answer: makeLexicalDoc(['Physical damage, accidental drops, water/liquid damage (unless covered by explicit IP claims), unauthorized third-party repairs, and software rooting.']),
+            },
+          ],
+        },
+      ],
+    },
+    // 4. EMI Facility
+    {
+      title: '0% Interest EMI Facility (Up to 36 Months)',
+      slug: 'emi',
+      meta: { title: '0% EMI Facility | Apple Gadgets BD', description: 'Avail up to 36 months 0% interest EMI across 24+ top Bangladeshi commercial banks.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Own Your Dream Gadget with 0% EMI',
+          subheading: 'Flexible installments from 3 to 36 months across 24+ Bangladeshi banks. Available both online and at all 4 showrooms.',
+          backgroundImage: findMediaId('category-electronics-1'),
+          ctaLabel: 'Explore EMI Products',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'We have partnered with 24+ leading commercial banks in Bangladesh to provide 0% interest Equal Monthly Installment (EMI) facilities. Now you can purchase any flagship iPhone 16 Pro, MacBook Pro, or Sony OLED TV with affordable monthly payments.',
+            'Supported Banks: City Bank (American Express), Standard Chartered Bank, BRAC Bank, Eastern Bank (EBL), Dutch-Bangla Bank (DBBL), Dhaka Bank, Prime Bank, Mutual Trust Bank (MTB), Southeast Bank, Premier Bank, United Commercial Bank (UCB), Jamuna Bank, and Bank Asia.',
+            'Available Tenures: 3 months, 6 months, 9 months, 12 months, 18 months, 24 months, and 36 months.',
+          ]),
+        },
+        {
+          blockType: 'faq',
+          heading: 'EMI Application & Processing FAQ',
+          items: [
+            {
+              question: 'Can I purchase using EMI on the website?',
+              answer: makeLexicalDoc(['Yes! During checkout, select "Online Payment" and choose your bank under the EMI tab in the secure gateway. Your card limit will convert into monthly installments automatically.']),
+            },
+            {
+              question: 'Can I process EMI in-store?',
+              answer: makeLexicalDoc(['Yes! Simply swipe your credit card on our specialized POS terminals at any of our 4 showrooms for instant EMI conversion.']),
+            },
+            {
+              question: 'Is a minimum purchase amount required for EMI?',
+              answer: makeLexicalDoc(['A minimum cart value of ৳10,000 is required to qualify for credit card EMI facilities.']),
+            },
+          ],
+        },
+      ],
+    },
+    // 5. Device Exchange & Trade-In
+    {
+      title: 'Smart Trade-In & Device Exchange Program',
+      slug: 'exchange',
+      meta: { title: 'Device Exchange & Trade-In | Apple Gadgets BD', description: 'Trade in your old smartphone, iPad, or MacBook for instant credit toward a new device.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Upgrade Smartly with Instant Trade-In',
+          subheading: 'Bring your pre-owned smartphone or laptop to any showroom, receive fair diagnostic evaluation in 10 minutes, and pay only the difference.',
+          backgroundImage: findMediaId('category-creator-studio-1'),
+          ctaLabel: 'Find Nearest Showroom',
+          ctaUrl: '/en/showrooms',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'How Trade-In Works in 3 Simple Steps:',
+            '1. Bring Your Device: Visit any of our 4 physical showrooms with your existing device (iPhone, iPad, MacBook, or Galaxy flagship).',
+            '2. Instant Computerized Valuation: Our certified technicians inspect your battery health, display integrity, and internal diagnostics to offer top market trade-in value in 10 minutes.',
+            '3. Upgrade Instantly: Apply your trade-in credit directly toward any new device in store and walk out with your brand new purchase.',
+          ]),
+        },
+        {
+          blockType: 'faq',
+          heading: 'Trade-In Requirements & Conditions',
+          items: [
+            {
+              question: 'What documents do I need to bring?',
+              answer: makeLexicalDoc(['You must present a photocopy of your National ID Card (NID) or Passport for verification and legal ownership transfer.']),
+            },
+            {
+              question: 'Can I exchange a device without its original box?',
+              answer: makeLexicalDoc(['Yes. Original accessories and packaging increase the valuation, but device-only exchanges are fully accepted with proper identification.']),
+            },
+          ],
+        },
+      ],
+    },
+    // 6. All Showrooms
+    {
+      title: 'Our Showroom Locations & Experience Centers',
+      slug: 'showrooms',
+      meta: { title: 'Showroom Locations | Apple Gadgets BD', description: 'Visit our flagship experience centers in Bashundhara City, Jamuna Future Park, Uttara & Chittagong.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: '4 Flagship Showrooms Across Bangladesh',
+          subheading: 'Experience live unboxings, interactive gaming lounges, and audio listening booths at prime retail destinations in Dhaka & Chittagong.',
+          backgroundImage: findMediaId('category-workspace-furniture-1'),
+          ctaLabel: 'Browse Products First',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Bashundhara City Flagship Store (Dhaka): Level 6, Block D, Shop 42–45, Panthapath, Dhaka 1205. Phone: +880 1711-234567. Open 10:00 AM – 8:30 PM (Closed Tuesday). Featuring our full Apple ecosystem wall and dedicated DJI flight simulator.',
+            'Jamuna Future Park Experience Center (Dhaka): Level 4, Zone A, Shop 18B, Kuril, Dhaka 1229. Phone: +880 1819-345678. Open 11:00 AM – 9:00 PM (Closed Wednesday). Featuring high-fidelity Bose/Marshall sound booths and Asus ROG gaming test zones.',
+            'Uttara Tech Hub Outlet (Dhaka): House 12, Road 7, Sector 3, Uttara, Dhaka 1230. Phone: +880 1912-456789. Open 10:00 AM – 8:30 PM (Open 7 Days). Express pickup hub with rapid airport road dispatch.',
+            'Agrabad Commercial Hub (Chittagong): Central Commercial Plaza, Ground Floor, GEC Circle, Chittagong 4000. Phone: +880 1815-789012. Open 10:00 AM – 8:30 PM (Open 7 Days). Premier tech showroom serving Greater Chittagong.',
+          ]),
+        },
+        {
+          blockType: 'faq',
+          heading: 'Visiting Our Showrooms FAQ',
+          items: [
+            {
+              question: 'Can I pick up an online order from any showroom?',
+              answer: makeLexicalDoc(['Yes! Choose "Store Pickup" at checkout and select your preferred showroom. Your order will be packed and ready within 2 hours.']),
+            },
+            {
+              question: 'Are website prices and showroom prices the same?',
+              answer: makeLexicalDoc(['Yes, our pricing, warranty packages, and 0% EMI campaigns are completely synchronized across both online and physical stores.']),
+            },
+          ],
+        },
+      ],
+    },
+    // 7. Bashundhara City Flagship
+    {
+      title: 'Bashundhara City Flagship Store',
+      slug: 'showrooms-bashundhara',
+      meta: { title: 'Bashundhara City Flagship | Apple Gadgets BD', description: 'Visit our flagship showroom on Level 6, Block D, Bashundhara City Shopping Mall, Panthapath.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Bashundhara City Flagship Store',
+          subheading: 'Level 6, Block D, Panthapath, Dhaka 1205. Our largest flagship destination with interactive Apple and DJI demo stations.',
+          backgroundImage: findMediaId('category-workspace-furniture-1'),
+          ctaLabel: 'View In-Stock Products',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Location & Hours: Level 6, Block D, Shop 42–45, Bashundhara City Shopping Mall, Panthapath, Dhaka.',
+            'Operating Hours: 10:00 AM – 8:30 PM (Closed every Tuesday according to market schedule).',
+            'Hotline: +880 1711-234567 | Email: bashundhara@applegadgetsbd.local',
+            'Highlights: Complete iPhone, iPad, and MacBook M3 experience zones; live DJI drone camera demonstration; certified trade-in counter; on-the-spot 0% EMI processing.',
+          ]),
+        },
+      ],
+    },
+    // 8. Jamuna Future Park Center
+    {
+      title: 'Jamuna Future Park Experience Center',
+      slug: 'showrooms-jamuna',
+      meta: { title: 'Jamuna Future Park Center | Apple Gadgets BD', description: 'Visit our experience showroom on Level 4, Zone A, Jamuna Future Park, Kuril, Dhaka.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Jamuna Future Park Experience Center',
+          subheading: 'Level 4, Zone A, Kuril, Dhaka 1229. Immersive gaming test stations and sound booths.',
+          backgroundImage: findMediaId('category-creator-studio-1'),
+          ctaLabel: 'View Products',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Location & Hours: Level 4, Zone A, Shop 18B, Jamuna Future Park, Kuril, Dhaka.',
+            'Operating Hours: 11:00 AM – 9:00 PM (Closed every Wednesday).',
+            'Hotline: +880 1819-345678 | Email: jamuna@applegadgetsbd.local',
+            'Highlights: Dedicated PlayStation 5 and Asus ROG gaming showcase; Marshall and Sony noise cancellation sound booth; high-speed checkout and express pickup counter.',
+          ]),
+        },
+      ],
+    },
+    // 9. Uttara Tech Hub
+    {
+      title: 'Uttara Tech Hub Outlet',
+      slug: 'showrooms-uttara',
+      meta: { title: 'Uttara Tech Hub Outlet | Apple Gadgets BD', description: 'Visit our Uttara outlet at House 12, Road 7, Sector 3, Uttara, Dhaka.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Uttara Tech Hub Outlet',
+          subheading: 'House 12, Road 7, Sector 3, Uttara, Dhaka 1230. Convenient North Dhaka location with fast doorstep delivery support.',
+          backgroundImage: findMediaId('category-office-gear-1'),
+          ctaLabel: 'Shop Online',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Location & Hours: House 12, Road 7, Sector 3, Uttara, Dhaka 1230.',
+            'Operating Hours: 10:00 AM – 8:30 PM (Open all 7 days of the week).',
+            'Hotline: +880 1912-456789 | Email: uttara@applegadgetsbd.local',
+            'Highlights: Rapid curbside pickup; specialized Apple accessories and GaN charging station; regional delivery dispatch center for Gazipur and Tongi.',
+          ]),
+        },
+      ],
+    },
+    // 10. Agrabad Chittagong Hub
+    {
+      title: 'Agrabad Commercial Hub (Chittagong)',
+      slug: 'showrooms-chittagong',
+      meta: { title: 'Chittagong Showroom | Apple Gadgets BD', description: 'Visit our Chittagong flagship center at Central Commercial Plaza, GEC Circle.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Chittagong Experience Center',
+          subheading: 'Central Commercial Plaza, Ground Floor, GEC Circle, Chittagong 4000. Serving tech lovers across Greater Chittagong.',
+          backgroundImage: findMediaId('category-smart-home-1'),
+          ctaLabel: 'Browse Gadgets',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Location & Hours: Central Commercial Plaza, Ground Floor, GEC Circle, Chittagong 4000.',
+            'Operating Hours: 10:00 AM – 8:30 PM (Open 7 days a week).',
+            'Hotline: +880 1815-789012 | Email: chittagong@applegadgetsbd.local',
+            'Highlights: Full product lineup of Apple, Samsung, Sony, and Anker; same-day delivery across Chittagong city; official warranty intake center.',
+          ]),
+        },
+      ],
+    },
+    // 11. Return & Refund Policy
+    {
+      title: '7-Day Replacement & Return Policy',
+      slug: 'return-refund',
+      meta: { title: 'Return & Refund Policy | Apple Gadgets BD', description: 'Clear, transparent 7-day replacement guarantee and refund policies.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: '7-Day Hassle-Free Replacement Policy',
+          subheading: 'Your satisfaction is our priority. If any manufacturing defect is detected within 7 days, we replace your unit immediately.',
+          backgroundImage: findMediaId('category-office-gear-1'),
+          ctaLabel: 'Browse Products',
+          ctaUrl: '/en/products',
+        },
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            '7-Day Replacement Guarantee: If your purchased product develops any hardware malfunction or manufacturing defect within 7 days of delivery, visit any of our showrooms or contact our support team for an immediate replacement.',
+            'Return Eligibility: Products must be in pristine condition with all original packaging, stickers, manuals, and accessories intact. Unopened items may be returned within 48 hours for store credit.',
+            'Refund Processing: Online transaction refunds are credited back to the original source (bKash, Nagad, Visa/Mastercard) within 3 to 5 business days upon inspection approval.',
+          ]),
+        },
+        {
+          blockType: 'faq',
+          heading: 'Return & Refund FAQ',
+          items: [
+            {
+              question: 'How do I initiate a replacement request?',
+              answer: makeLexicalDoc(['Call our hotline (+880 1711-234567) or bring your invoice to any showroom. Our technical desk will inspect and process your replacement on the spot.']),
+            },
+            {
+              question: 'What if a product is out of stock when requesting replacement?',
+              answer: makeLexicalDoc(['You may choose an alternative model with adjusted price difference, or receive a 100% full refund immediately.']),
+            },
+          ],
+        },
+      ],
+    },
+    // 12. Privacy Policy
+    {
+      title: 'Privacy & Data Security Policy',
+      slug: 'privacy-policy',
+      meta: { title: 'Privacy Policy | Apple Gadgets BD', description: 'How Apple Gadgets BD protects your personal data and online transactions.' },
+      layout: [
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'At Apple Gadgets BD, we take your privacy and data security seriously. This Privacy Policy details how we collect, handle, and protect your information when you use our website and retail services.',
+            'Information Collection: We collect essential contact information (name, delivery address, phone number, email) solely for order fulfillment, courier delivery updates, and warranty registration.',
+            'Payment Security: All online payments are encrypted through 256-bit SSL connections via PCI-DSS certified gateways (SSLCommerz / PortPos). We never store your credit card numbers or PINs on our servers.',
+            'No Third-Party Sharing: We do not sell, trade, or disclose your personal information to unauthorized third-party marketing companies under any circumstances.',
+          ]),
+        },
+      ],
+    },
+    // 13. Terms & Conditions
+    {
+      title: 'Terms & Conditions of Service',
+      slug: 'terms-conditions',
+      meta: { title: 'Terms & Conditions | Apple Gadgets BD', description: 'Terms of sale, pricing transparency, and service policies for Apple Gadgets BD.' },
+      layout: [
+        {
+          blockType: 'richText',
+          content: makeLexicalDoc([
+            'Welcome to Apple Gadgets BD. By placing an order online or purchasing at our showrooms, you agree to the following terms and conditions:',
+            '1. Pricing and Availability: All product prices are listed in Bangladeshi Taka (BDT) including applicable taxes. While we strive for absolute accuracy, prices and stock levels may change based on global currency fluctuations and availability.',
+            '2. Delivery and Inspection: Please inspect parcel packaging before signing courier receipts. In case of exterior transit damage, please notify the delivery agent and our support hotline immediately.',
+            '3. Warranty Terms: Official brand warranties are subject to manufacturer guidelines and are fulfilled through authorized service centers.',
+            '4. Governing Law: These terms and conditions are governed by the laws and commercial regulations of Bangladesh.',
+          ]),
+        },
+      ],
+    },
+    // 14. FAQ
+    {
+      title: 'Frequently Asked Questions & Help Center',
+      slug: 'faq',
+      meta: { title: 'FAQ & Help Center | Apple Gadgets BD', description: 'Answers to common questions about orders, payments, delivery, and authenticity.' },
+      layout: [
+        {
+          blockType: 'hero',
+          heading: 'Frequently Asked Questions',
+          subheading: 'Find quick answers to common questions about ordering, delivery, warranty, and showroom services.',
+          backgroundImage: findMediaId('category-smart-home-1'),
+          ctaLabel: 'Contact Support',
+          ctaUrl: '/en/contact',
+        },
+        {
+          blockType: 'faq',
+          heading: 'General Inquiries',
+          items: [
+            {
+              question: 'How fast is nationwide delivery in Bangladesh?',
+              answer: makeLexicalDoc(['Inside Dhaka: Same-day express delivery within 2 to 4 hours. Outside Dhaka: 24 to 48 hours nationwide via Steadfast and Sundarban Courier.']),
+            },
+            {
+              question: 'How can I track my shipment?',
+              answer: makeLexicalDoc(['Go to our Track Order page (/en/track-order) and enter your Order ID and contact number to view live courier status.']),
+            },
+            {
+              question: 'What payment methods do you accept?',
+              answer: makeLexicalDoc(['We accept bKash, Nagad, Visa, Mastercard, AMEX, Cash on Delivery (COD), and 0% EMI across 24+ Bangladeshi banks.']),
+            },
+            {
+              question: 'Can I inspect the product before accepting delivery?',
+              answer: makeLexicalDoc(['Yes, you may verify exterior seal and box condition with our delivery personnel before completing COD payment.']),
+            },
+          ],
+        },
+      ],
+    },
+  ]
 
-    if (existingHeroPage.totalDocs > 0) {
-      await payload.update({
+  for (const pageDef of cmsPagesToSeed) {
+    try {
+      const existing = await payload.find({
         collection: 'pages',
-        id: existingHeroPage.docs[0].id,
-        data: {
-          title: 'Home Hero Banners',
-          status: 'published',
-          _status: 'published',
-          publishedAt: new Date().toISOString(),
-          layout: heroSlides,
-        } as any,
+        where: { slug: { equals: pageDef.slug } },
+        limit: 1,
         overrideAccess: true,
       })
-    } else {
-      await payload.create({
-        collection: 'pages',
-        data: {
-          title: 'Home Hero Banners',
-          slug: 'home-hero-banners',
-          status: 'published',
-          _status: 'published',
-          publishedAt: new Date().toISOString(),
-          layout: heroSlides,
-        } as any,
-        overrideAccess: true,
-      })
+
+      const pageData: any = {
+        title: pageDef.title,
+        slug: pageDef.slug,
+        status: 'published',
+        _status: 'published',
+        publishedAt: new Date().toISOString(),
+        meta: pageDef.meta,
+        layout: pageDef.layout,
+      }
+
+      if (existing.totalDocs > 0) {
+        await payload.update({
+          collection: 'pages',
+          id: existing.docs[0].id,
+          data: pageData,
+          overrideAccess: true,
+        })
+      } else {
+        await payload.create({
+          collection: 'pages',
+          data: pageData,
+          overrideAccess: true,
+        })
+      }
+      pagesCount++
+      if (pageDef.slug === 'home-hero-banners') {
+        heroSlidesCount = (pageDef.layout as any[]).length
+      }
+    } catch (pageErr: any) {
+      payload.logger.warn(`[Electronics Seeder] Page "${pageDef.slug}" note: ${pageErr?.message || pageErr}`)
     }
-    heroSlidesCount = heroSlides.length
-    payload.logger.info('[Electronics Seeder] Updated storefront top carousel hero banners.')
-  } catch (e: any) {
-    payload.logger.warn(`[Electronics Seeder] Hero banners update note: ${e?.message || e}`)
   }
+  payload.logger.info(`[Electronics Seeder] Seeded ${pagesCount} published CMS pages with rich blocks.`)
 
   // ─── 3. STOCK LOCATIONS (4 Showrooms) ──────────────────────────────────────
   const outletsData = [
@@ -1682,6 +2167,7 @@ export async function seedElectronicsStore(
       reviewsCount: totalReviews,
       couponsCount: totalCoupons,
       heroSlidesCount,
+      pagesCount,
     },
   }
 }

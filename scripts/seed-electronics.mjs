@@ -53,6 +53,7 @@ async function run() {
     console.log(`Products Created:     ${data.seeded?.productsCount || 38}`)
     console.log(`Variants Created:     ${data.seeded?.variantsCount || 74}`)
     console.log(`Store Outlets:        ${data.seeded?.outletsCount || 4}`)
+    console.log(`Storefront Pages:     ${data.seeded?.pagesCount || 14}`)
     console.log(`Hero Carousel Slides: ${data.seeded?.heroSlidesCount || 4}`)
     console.log(`Customers Created:    ${data.seeded?.customersCount || 10}`)
     console.log(`Orders Seeded:        ${data.seeded?.ordersCount || 42}`)
