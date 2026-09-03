@@ -19,6 +19,9 @@
  * - Storefront Globals (Header, Footer, Announcement, Platform Settings)
  */
 import type { Payload } from 'payload'
+import fs from 'node:fs'
+import path from 'node:path'
+import { getMediaStaticDir } from './media-upload-dir'
 
 export interface SeedResult {
   success: boolean
@@ -224,6 +227,28 @@ export async function seedElectronicsStore(
       overrideAccess: true,
     })
     allMediaDocs = mediaRes.docs || []
+
+    if (!allMediaDocs.length) {
+      const mediaDir = getMediaStaticDir()
+      if (fs.existsSync(mediaDir)) {
+        const files = fs.readdirSync(mediaDir)
+        for (const file of files) {
+          if (/\.(jpe?g|png|webp)$/i.test(file) && !/-\d+x\d+\./.test(file)) {
+            try {
+              const doc = await payload.create({
+                collection: 'media',
+                filePath: path.join(mediaDir, file),
+                data: { alt: file },
+                overrideAccess: true,
+              })
+              allMediaDocs.push(doc)
+            } catch {
+              /* ignore individual insert errors */
+            }
+          }
+        }
+      }
+    }
   } catch (e: any) {
     payload.logger.warn(`[Electronics Seeder] Media lookup note: ${e?.message || e}`)
   }
