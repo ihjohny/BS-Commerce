@@ -531,12 +531,17 @@ type ReportHeaderProps = {
   customEndDate: string
   selectedStoreId: string | null
   availableStores: Array<{ id: string; name: string; code: string }>
+  selectedCurrency?: string | null
+  defaultCurrency?: string
+  availableCurrencies?: string[]
+  activeCurrency?: string
   loading: boolean
   onReportTypeChange: (type: ReportType) => void
   onPeriodChange: (period: ReportPeriod) => void
   onCustomDateChange: (start: string, end: string) => void
   onApplyCustomRange: () => void
   onStoreChange: (storeId: string | null) => void
+  onCurrencyChange?: (currency: string | null) => void
   onRefresh: () => void
   onExportCsv: () => void
 }
@@ -551,12 +556,17 @@ export function ReportHeader({
   customEndDate,
   selectedStoreId,
   availableStores,
+  selectedCurrency,
+  defaultCurrency,
+  availableCurrencies,
+  activeCurrency,
   loading,
   onReportTypeChange,
   onPeriodChange,
   onCustomDateChange,
   onApplyCustomRange,
   onStoreChange,
+  onCurrencyChange,
   onRefresh,
   onExportCsv,
 }: ReportHeaderProps) {
@@ -607,25 +617,9 @@ export function ReportHeader({
           gap: '1rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              background: 'var(--theme-elevation-100)',
-              color: 'var(--theme-elevation-700)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <CategoryIcon category={category} size={20} />
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--theme-text)' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--theme-text)' }}>
                 {categoryMeta.title}
               </h1>
               <span
@@ -655,10 +649,25 @@ export function ReportHeader({
               {categoryMeta.description}
             </p>
           </div>
-        </div>
 
-        {/* Global Store Filter & Action Buttons */}
+        {/* Global Currency & Store Filters & Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {availableCurrencies && availableCurrencies.length > 0 && onCurrencyChange && (
+            <select
+              value={selectedCurrency || ''}
+              onChange={(e) => onCurrencyChange(e.target.value ? e.target.value : null)}
+              style={inputStyle}
+              title="Select currency for reports and analytics"
+            >
+              <option value="">Currency: {defaultCurrency || 'USD'} (Default)</option>
+              {availableCurrencies.map((c) => (
+                <option key={c} value={c}>
+                  Currency: {c} ({c === 'BDT' ? '৳' : c === 'USD' ? '$' : c})
+                </option>
+              ))}
+            </select>
+          )}
+
           {availableStores.length > 0 && (
             <select
               value={selectedStoreId || ''}
@@ -782,21 +791,40 @@ export function ReportHeader({
           </div>
 
           {startDate && endDate && (
-            <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', whiteSpace: 'nowrap' }}>
-              <span>Period: </span>
-              <strong style={{ color: 'var(--theme-text)', fontWeight: 600 }}>
-                {new Date(startDate).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}{' '}
-                –{' '}
-                {new Date(endDate).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--theme-elevation-500)', whiteSpace: 'nowrap', flexWrap: 'wrap' }}>
+              {activeCurrency && (
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    background: 'var(--theme-elevation-150)',
+                    color: 'var(--theme-text)',
+                    fontWeight: 600,
+                    fontSize: 11,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                  title={`Active reporting currency: ${activeCurrency}`}
+                >
+                  Currency: {activeCurrency} ({activeCurrency === 'BDT' ? '৳' : activeCurrency === 'USD' ? '$' : activeCurrency})
+                </span>
+              )}
+              <div>
+                <span>Period: </span>
+                <strong style={{ color: 'var(--theme-text)', fontWeight: 600 }}>
+                  {new Date(startDate).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}{' '}
+                  –{' '}
+                  {new Date(endDate).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </strong>
+              </div>
             </div>
           )}
         </div>

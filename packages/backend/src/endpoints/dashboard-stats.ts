@@ -30,6 +30,7 @@ export async function dashboardStatsHandler(req: {
     startDate: qs.get('startDate') ?? undefined,
     endDate: qs.get('endDate') ?? undefined,
     storeId: qs.get('storeId') ?? qs.get('store') ?? undefined,
+    currency: qs.get('currency') ?? undefined,
   }
 
   try {

@@ -32,6 +32,7 @@ export type ReportFilterOptions = {
   startDate?: string
   endDate?: string
   storeId?: string
+  currency?: string
   format?: 'json' | 'csv'
 }
 
@@ -78,6 +79,8 @@ export type ReportResult = {
     startDate: string
     endDate: string
     currency: string
+    defaultCurrency?: string
+    availableCurrencies?: string[]
     storeId: string | null
     storeName: string | null
     generatedAt: string
@@ -103,12 +106,50 @@ function tenantIdFromUser(user: { tenant?: unknown }): string | null {
   return String(t)
 }
 
+const REPORT_CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: '$',
+  BDT: '৳',
+  EUR: '€',
+  GBP: '£',
+  INR: '₹',
+  CAD: 'CA$',
+  AUD: 'AU$',
+  JPY: '¥',
+  AED: 'AED ',
+  SAR: 'SAR ',
+}
+
 export function formatReportCurrency(amount: number, currency = 'USD'): string {
-  const symbol = currency === 'BDT' ? '৳' : currency === 'USD' ? '$' : `${currency} `
+  const code = (currency || 'USD').toUpperCase().trim()
+  const symbol = REPORT_CURRENCY_SYMBOLS[code] ?? `${code} `
   return `${symbol}${Number(amount || 0).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
+}
+
+export function convertReportCurrency(
+  amount: number,
+  fromCurrency?: string | null,
+  toCurrency = 'USD',
+  usdToBdtRate = 110,
+): number {
+  const num = Number(amount || 0)
+  const from = (fromCurrency || toCurrency || 'USD').toUpperCase().trim()
+  const to = (toCurrency || 'USD').toUpperCase().trim()
+
+  if (from === to) return num
+
+  const rate = Number(usdToBdtRate) > 0 ? Number(usdToBdtRate) : 110
+
+  if (from === 'USD' && to === 'BDT') {
+    return num * rate
+  }
+  if (from === 'BDT' && to === 'USD') {
+    return num / rate
+  }
+
+  return num
 }
 
 export function formatReportNumber(num: number): string {
@@ -206,7 +247,47 @@ export async function generateAdminReport(
 ): Promise<ReportResult> {
   const isVendor = user.role === 'vendor'
   const tenantId = isVendor ? tenantIdFromUser(user) : null
-  const currency = getDefaultCurrency()
+
+  // 1. Resolve Currency Settings from platform-settings global
+  let defaultCurrency = getDefaultCurrency()
+  let supportedCurrencies: string[] = ['USD', 'BDT']
+  let usdToBdtRate = 110
+
+  if (typeof payload.findGlobal === 'function') {
+    try {
+      const settings = (await payload.findGlobal({
+        slug: 'platform-settings' as never,
+        depth: 0,
+        overrideAccess: true,
+      })) as any
+      const curr = settings?.currency
+      if (curr) {
+        if (typeof curr.defaultCurrency === 'string' && curr.defaultCurrency.trim()) {
+          defaultCurrency = curr.defaultCurrency.trim().toUpperCase()
+        }
+        if (Array.isArray(curr.supportedCurrencies) && curr.supportedCurrencies.length > 0) {
+          supportedCurrencies = curr.supportedCurrencies
+            .map((c: any) => String(c).trim().toUpperCase())
+            .filter(Boolean)
+        }
+        if (typeof curr.usdToBdtRate === 'number' && curr.usdToBdtRate > 0) {
+          usdToBdtRate = curr.usdToBdtRate
+        }
+      }
+    } catch {
+      // Fallback gracefully if platform-settings is uninitialized
+    }
+  }
+
+  if (!supportedCurrencies.includes(defaultCurrency)) {
+    supportedCurrencies.unshift(defaultCurrency)
+  }
+
+  // 2. Resolve Active Target Currency: user selection || Currency Settings default
+  const requestedCurrency = options.currency ? options.currency.trim().toUpperCase() : null
+  const currency = requestedCurrency && supportedCurrencies.includes(requestedCurrency)
+    ? requestedCurrency
+    : defaultCurrency
 
   const category: ReportCategory = options.category || 'sales'
   const reportType: ReportType = options.reportType || (category === 'sales' ? 'sales-overview' : category === 'products' ? 'product-performance' : category === 'customers' ? 'abandoned-carts' : 'low-stock-alert')
@@ -236,46 +317,61 @@ export async function generateAdminReport(
 
   const selectedStore = storeId ? availableStores.find((s) => s.id === storeId) : null
 
+  const ctx: Context = {
+    startDate,
+    endDate,
+    currency,
+    defaultCurrency,
+    availableCurrencies: supportedCurrencies,
+    usdToBdtRate,
+    storeId,
+    selectedStore,
+    availableStores,
+    isVendor,
+    tenantId,
+    period,
+  }
+
   // Dispatch to category runners
   switch (reportType) {
     // ── SALES ──────────────────────────────────────────
     case 'sales-overview':
-      return runSalesOverviewReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesOverviewReport(payload, ctx)
     case 'sales-by-time':
-      return runSalesByTimeReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesByTimeReport(payload, ctx)
     case 'sales-by-payment':
-      return runSalesByPaymentReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesByPaymentReport(payload, ctx)
     case 'sales-by-coupon':
-      return runSalesByCouponReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesByCouponReport(payload, ctx)
     case 'sales-by-geo':
-      return runSalesByGeoReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesByGeoReport(payload, ctx)
     case 'new-vs-returning':
-      return runNewVsReturningReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runNewVsReturningReport(payload, ctx)
 
     // ── PRODUCTS ───────────────────────────────────────
     case 'product-performance':
-      return runProductPerformanceReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runProductPerformanceReport(payload, ctx)
     case 'sales-by-category':
-      return runSalesByCategoryReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesByCategoryReport(payload, ctx)
     case 'product-demand':
-      return runProductDemandReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runProductDemandReport(payload, ctx)
 
     // ── CUSTOMERS ──────────────────────────────────────
     case 'abandoned-carts':
-      return runAbandonedCartsReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runAbandonedCartsReport(payload, ctx)
     case 'customer-ltv':
-      return runCustomerLtvReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runCustomerLtvReport(payload, ctx)
     case 'abandoned-products':
-      return runAbandonedProductsReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runAbandonedProductsReport(payload, ctx)
 
     // ── INVENTORY ──────────────────────────────────────
     case 'low-stock-alert':
-      return runLowStockReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runLowStockReport(payload, ctx)
     case 'stock-valuation':
-      return runStockValuationReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runStockValuationReport(payload, ctx)
 
     default:
-      return runSalesOverviewReport(payload, { startDate, endDate, currency, storeId, selectedStore, availableStores, isVendor, tenantId, period })
+      return runSalesOverviewReport(payload, ctx)
   }
 }
 
@@ -287,12 +383,38 @@ type Context = {
   startDate: Date
   endDate: Date
   currency: string
+  defaultCurrency: string
+  availableCurrencies: string[]
+  usdToBdtRate: number
   storeId: string | null
   selectedStore: { id: string; name: string; code: string } | undefined | null
   availableStores: Array<{ id: string; name: string; code: string }>
   isVendor: boolean
   tenantId: string | null
   period: ReportPeriod
+}
+
+function buildReportMeta(
+  ctx: Context,
+  category: ReportCategory,
+  reportType: ReportType,
+  reportName: string,
+) {
+  return {
+    category,
+    reportType,
+    reportName,
+    period: ctx.period,
+    startDate: ctx.startDate.toISOString(),
+    endDate: ctx.endDate.toISOString(),
+    currency: ctx.currency,
+    defaultCurrency: ctx.defaultCurrency,
+    availableCurrencies: ctx.availableCurrencies,
+    storeId: ctx.storeId,
+    storeName: ctx.selectedStore?.name || null,
+    generatedAt: new Date().toISOString(),
+    availableStores: ctx.availableStores,
+  }
 }
 
 /**
@@ -372,11 +494,13 @@ async function runSalesOverviewReport(payload: Payload, ctx: Context): Promise<R
 
     const items = Array.isArray(order.items) ? order.items : []
     const itemsCount = items.reduce((sum: number, it: any) => sum + (Number(it?.quantity) || 1), 0)
-    const subtotal = Number(order.subtotal) || 0
-    const discount = Number(order.discountTotal) || 0
-    const shipping = Number(order.shippingTotal) || 0
-    const tax = Number(order.taxTotal) || 0
-    const grand = Number(order.grandTotal) || 0
+    const orderCurr = String(order.currency || ctx.currency).toUpperCase()
+    const rate = ctx.usdToBdtRate
+    const subtotal = convertReportCurrency(Number(order.subtotal) || 0, orderCurr, ctx.currency, rate)
+    const discount = convertReportCurrency(Number(order.discountTotal) || 0, orderCurr, ctx.currency, rate)
+    const shipping = convertReportCurrency(Number(order.shippingTotal) || 0, orderCurr, ctx.currency, rate)
+    const tax = convertReportCurrency(Number(order.taxTotal) || 0, orderCurr, ctx.currency, rate)
+    const grand = convertReportCurrency(Number(order.grandTotal) || 0, orderCurr, ctx.currency, rate)
     const refund = order.paymentStatus === 'refunded' ? grand : order.paymentStatus === 'partially-refunded' ? grand * 0.5 : 0
 
     buckets[key].ordersCount += 1
@@ -493,19 +617,7 @@ async function runSalesOverviewReport(payload: Payload, ctx: Context): Promise<R
   const csvData = generateCsv(columns, rows, totals)
 
   return {
-    meta: {
-      category: 'sales',
-      reportType: 'sales-overview',
-      reportName: 'Sales Overview & Revenue Performance',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'sales', 'sales-overview', 'Sales Overview & Revenue Performance'),
     kpis,
     chart: {
       type: 'line',
@@ -555,7 +667,8 @@ async function runSalesByTimeReport(payload: Payload, ctx: Context): Promise<Rep
   for (const order of orders) {
     const d = new Date(order.placedAt || order.createdAt)
     const dayIdx = d.getDay()
-    const rev = Number(order.grandTotal) || 0
+    const orderCurr = String(order.currency || ctx.currency).toUpperCase()
+    const rev = convertReportCurrency(Number(order.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     dayStats[dayIdx].orders += 1
     dayStats[dayIdx].revenue += rev
   }
@@ -625,19 +738,7 @@ async function runSalesByTimeReport(payload: Payload, ctx: Context): Promise<Rep
   }))
 
   return {
-    meta: {
-      category: 'sales',
-      reportType: 'sales-by-time',
-      reportName: 'Sales by Day of Week & Peak Times',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'sales', 'sales-by-time', 'Sales by Day of Week & Peak Times'),
     kpis,
     chart: {
       type: 'bar',
@@ -680,7 +781,8 @@ async function runSalesByPaymentReport(payload: Payload, ctx: Context): Promise<
     if (!map[channelKey]) {
       map[channelKey] = { channel: channelKey, orders: 0, revenue: 0, paidCount: 0, unpaidCount: 0 }
     }
-    const grand = Number(o.grandTotal) || 0
+    const orderCurr = String(o.currency || ctx.currency).toUpperCase()
+    const grand = convertReportCurrency(Number(o.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     map[channelKey].orders += 1
     map[channelKey].revenue += grand
     if (o.paymentStatus === 'paid') map[channelKey].paidCount += 1
@@ -746,19 +848,7 @@ async function runSalesByPaymentReport(payload: Payload, ctx: Context): Promise<
   }))
 
   return {
-    meta: {
-      category: 'sales',
-      reportType: 'sales-by-payment',
-      reportName: 'Sales by Payment Type & Channel',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'sales', 'sales-by-payment', 'Sales by Payment Type & Channel'),
     kpis,
     chart: {
       type: 'bar',
@@ -803,8 +893,9 @@ async function runSalesByCouponReport(payload: Payload, ctx: Context): Promise<R
     if (!couponMap[code]) {
       couponMap[code] = { code, uses: 0, totalDiscount: 0, totalGross: 0 }
     }
-    const disc = Number(o.discountTotal) || 0
-    const gross = Number(o.grandTotal) || 0
+    const orderCurr = String(o.currency || ctx.currency).toUpperCase()
+    const disc = convertReportCurrency(Number(o.discountTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
+    const gross = convertReportCurrency(Number(o.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     couponMap[code].uses += 1
     couponMap[code].totalDiscount += disc
     couponMap[code].totalGross += gross
@@ -869,19 +960,7 @@ async function runSalesByCouponReport(payload: Payload, ctx: Context): Promise<R
   }))
 
   return {
-    meta: {
-      category: 'sales',
-      reportType: 'sales-by-coupon',
-      reportName: 'Sales by Coupon & Discount Rule',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'sales', 'sales-by-coupon', 'Sales by Coupon & Discount Rule'),
     kpis,
     chart: {
       type: 'bar',
@@ -929,7 +1008,8 @@ async function runSalesByGeoReport(payload: Payload, ctx: Context): Promise<Repo
     if (!geoMap[key]) {
       geoMap[key] = { city, state, country, orders: 0, revenue: 0 }
     }
-    const rev = Number(o.grandTotal) || 0
+    const orderCurr = String(o.currency || ctx.currency).toUpperCase()
+    const rev = convertReportCurrency(Number(o.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     geoMap[key].orders += 1
     geoMap[key].revenue += rev
     totalRev += rev
@@ -991,19 +1071,7 @@ async function runSalesByGeoReport(payload: Payload, ctx: Context): Promise<Repo
   }))
 
   return {
-    meta: {
-      category: 'sales',
-      reportType: 'sales-by-geo',
-      reportName: 'Sales by Geographic Region',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'sales', 'sales-by-geo', 'Sales by Geographic Region'),
     kpis,
     chart: {
       type: 'bar',
@@ -1061,7 +1129,8 @@ async function runNewVsReturningReport(payload: Payload, ctx: Context): Promise<
 
   for (const o of currentOrders) {
     const email = o.guestEmail || o.buyerSnapshot?.email
-    const rev = Number(o.grandTotal) || 0
+    const orderCurr = String(o.currency || ctx.currency).toUpperCase()
+    const rev = convertReportCurrency(Number(o.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     if (email && pastBuyerEmails.has(email.toLowerCase())) {
       retOrdersCount += 1
       retRev += rev
@@ -1130,19 +1199,7 @@ async function runNewVsReturningReport(payload: Payload, ctx: Context): Promise<
   ]
 
   return {
-    meta: {
-      category: 'sales',
-      reportType: 'new-vs-returning',
-      reportName: 'New vs. Returning Customer Cohorts',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'sales', 'new-vs-returning', 'New vs. Returning Customer Cohorts'),
     kpis,
     chart: {
       type: 'bar',
@@ -1188,7 +1245,10 @@ async function runProductPerformanceReport(payload: Payload, ctx: Context): Prom
     const name = it.productName || (typeof it.product === 'object' ? it.product?.title : 'Product')
     const sku = it.sku || ''
     const qty = Number(it.quantity) || 1
-    const price = Number(it.totalPrice) || 0
+    const itOrder = typeof it.order === 'object' ? it.order : null
+    const orderCurr = String(itOrder?.currency || it.currency || ctx.currency).toUpperCase()
+    const rawPrice = Number(it.totalPrice) || (Number(it.price || 0) * qty)
+    const price = convertReportCurrency(rawPrice, orderCurr, ctx.currency, ctx.usdToBdtRate)
     const orderId = typeof it.order === 'object' ? it.order?.id : it.order
 
     if (!prodMap[prodId]) {
@@ -1269,19 +1329,7 @@ async function runProductPerformanceReport(payload: Payload, ctx: Context): Prom
   }))
 
   return {
-    meta: {
-      category: 'products',
-      reportType: 'product-performance',
-      reportName: 'Product Performance & Sales Volume',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'products', 'product-performance', 'Product Performance & Sales Volume'),
     kpis,
     chart: {
       type: 'bar',
@@ -1321,8 +1369,11 @@ async function runSalesByCategoryReport(payload: Payload, ctx: Context): Promise
   for (const it of items) {
     const prod = typeof it.product === 'object' ? it.product : null
     const cats = Array.isArray(prod?.categories) ? prod.categories : []
+    const itOrder = typeof it.order === 'object' ? it.order : null
+    const orderCurr = String(itOrder?.currency || it.currency || ctx.currency).toUpperCase()
     const qty = Number(it.quantity) || 1
-    const price = Number(it.totalPrice) || 0
+    const rawPrice = Number(it.totalPrice) || 0
+    const price = convertReportCurrency(rawPrice, orderCurr, ctx.currency, ctx.usdToBdtRate)
 
     if (cats.length === 0) {
       if (!catMap['uncategorized']) catMap['uncategorized'] = { id: 'uncategorized', name: 'Uncategorized', units: 0, revenue: 0 }
@@ -1391,19 +1442,7 @@ async function runSalesByCategoryReport(payload: Payload, ctx: Context): Promise
   }))
 
   return {
-    meta: {
-      category: 'products',
-      reportType: 'sales-by-category',
-      reportName: 'Sales Distribution by Product Category',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'products', 'sales-by-category', 'Sales Distribution by Product Category'),
     kpis,
     chart: {
       type: 'bar',
@@ -1443,10 +1482,12 @@ async function runProductDemandReport(payload: Payload, ctx: Context): Promise<R
     const wishlists = wishlistCounts[p.id] || 0
     const rating = p.rating || 0
     const reviews = p.totalReviews || 0
+    const prodCurr = String(p.currency || ctx.currency).toUpperCase()
+    const basePrice = convertReportCurrency(Number(p.basePrice || 0), prodCurr, ctx.currency, ctx.usdToBdtRate)
     return {
       productName: p.title || p.name || 'Product',
       sku: p.sku || 'N/A',
-      basePrice: formatReportCurrency(p.basePrice || 0, ctx.currency),
+      basePrice: formatReportCurrency(basePrice, ctx.currency),
       wishlistCount: wishlists,
       rating: rating ? `${Number(rating).toFixed(1)} ★` : 'No reviews',
       reviewsCount: reviews,
@@ -1497,19 +1538,7 @@ async function runProductDemandReport(payload: Payload, ctx: Context): Promise<R
   }))
 
   return {
-    meta: {
-      category: 'products',
-      reportType: 'product-demand',
-      reportName: 'Product Engagement & Shopper Demand',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'products', 'product-demand', 'Product Engagement & Shopper Demand'),
     kpis,
     chart: {
       type: 'bar',
@@ -1549,7 +1578,9 @@ async function runAbandonedCartsReport(payload: Payload, ctx: Context): Promise<
   const rows = carts.map((c) => {
     const items = Array.isArray(c.items) ? c.items : []
     const count = items.reduce((sum: number, it: any) => sum + (Number(it?.quantity) || 1), 0)
-    const val = Number(c.grandTotal || c.subtotal) || 0
+    const cartCurr = String(c.currency || ctx.currency).toUpperCase()
+    const rawVal = Number(c.grandTotal || c.subtotal) || 0
+    const val = convertReportCurrency(rawVal, cartCurr, ctx.currency, ctx.usdToBdtRate)
     totalLostValue += val
     totalItemsInCarts += count
 
@@ -1622,19 +1653,7 @@ async function runAbandonedCartsReport(payload: Payload, ctx: Context): Promise<
   }))
 
   return {
-    meta: {
-      category: 'customers',
-      reportType: 'abandoned-carts',
-      reportName: 'Abandoned Carts & Lost Opportunity',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'customers', 'abandoned-carts', 'Abandoned Carts & Lost Opportunity'),
     kpis,
     chart: {
       type: 'bar',
@@ -1673,7 +1692,8 @@ async function runCustomerLtvReport(payload: Payload, ctx: Context): Promise<Rep
     const email = (o.guestEmail || o.buyerSnapshot?.email || (typeof o.customer === 'object' ? o.customer?.email : null) || 'guest@anonymous.com').toLowerCase()
     const name = o.buyerSnapshot?.name || (typeof o.customer === 'object' ? o.customer?.name : 'Guest Customer')
     const phone = o.buyerSnapshot?.phone || (typeof o.customer === 'object' ? o.customer?.phone : '')
-    const grand = Number(o.grandTotal) || 0
+    const orderCurr = String(o.currency || ctx.currency).toUpperCase()
+    const grand = convertReportCurrency(Number(o.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     const orderDate = o.placedAt || o.createdAt
 
     if (!custMap[email]) {
@@ -1744,19 +1764,7 @@ async function runCustomerLtvReport(payload: Payload, ctx: Context): Promise<Rep
   }))
 
   return {
-    meta: {
-      category: 'customers',
-      reportType: 'customer-ltv',
-      reportName: 'Customer Lifetime Value & Top Spenders',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'customers', 'customer-ltv', 'Customer Lifetime Value & Top Spenders'),
     kpis,
     chart: {
       type: 'bar',
@@ -1803,7 +1811,9 @@ async function runAbandonedProductsReport(payload: Payload, ctx: Context): Promi
       if (!prodId) continue
       const name = prod?.title || prod?.name || 'Product'
       const sku = prod?.sku || ''
-      const price = Number(it.unitPrice || prod?.basePrice || 0)
+      const prodCurr = String(prod?.currency || it.currency || ctx.currency).toUpperCase()
+      const rawPrice = Number(it.unitPrice || prod?.basePrice || 0)
+      const price = convertReportCurrency(rawPrice, prodCurr, ctx.currency, ctx.usdToBdtRate)
       const qty = Number(it.quantity) || 1
 
       if (!prodMap[prodId]) {
@@ -1871,19 +1881,7 @@ async function runAbandonedProductsReport(payload: Payload, ctx: Context): Promi
   }))
 
   return {
-    meta: {
-      category: 'customers',
-      reportType: 'abandoned-products',
-      reportName: 'Most Frequently Abandoned Products',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'customers', 'abandoned-products', 'Most Frequently Abandoned Products'),
     kpis,
     chart: {
       type: 'bar',
@@ -2012,19 +2010,7 @@ async function runLowStockReport(payload: Payload, ctx: Context): Promise<Report
   }))
 
   return {
-    meta: {
-      category: 'inventory',
-      reportType: 'low-stock-alert',
-      reportName: 'Low Stock & Restock Replenishment Alerts',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'inventory', 'low-stock-alert', 'Low Stock & Restock Replenishment Alerts'),
     kpis,
     chart: {
       type: 'bar',
@@ -2063,7 +2049,8 @@ async function runStockValuationReport(payload: Payload, ctx: Context): Promise<
     const locId = loc?.id || 'default'
     const locName = loc?.name || loc?.code || 'Main Warehouse'
     const prod = typeof s.product === 'object' ? s.product : null
-    const basePrice = Number(prod?.basePrice || 0)
+    const prodCurr = String(prod?.currency || ctx.currency).toUpperCase()
+    const basePrice = convertReportCurrency(Number(prod?.basePrice || 0), prodCurr, ctx.currency, ctx.usdToBdtRate)
     const qty = Number(s.quantity) || 0
     const val = qty * basePrice
 
@@ -2129,19 +2116,7 @@ async function runStockValuationReport(payload: Payload, ctx: Context): Promise<
   }))
 
   return {
-    meta: {
-      category: 'inventory',
-      reportType: 'stock-valuation',
-      reportName: 'Inventory Asset Valuation by Location',
-      period: ctx.period,
-      startDate: ctx.startDate.toISOString(),
-      endDate: ctx.endDate.toISOString(),
-      currency: ctx.currency,
-      storeId: ctx.storeId,
-      storeName: ctx.selectedStore?.name || null,
-      generatedAt: new Date().toISOString(),
-      availableStores: ctx.availableStores,
-    },
+    meta: buildReportMeta(ctx, 'inventory', 'stock-valuation', 'Inventory Asset Valuation by Location'),
     kpis,
     chart: {
       type: 'bar',

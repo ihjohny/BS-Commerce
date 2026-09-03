@@ -7,6 +7,7 @@ import {
   resolveReportDates,
   generateCsv,
   formatReportCurrency,
+  convertReportCurrency,
   formatReportNumber,
   formatReportPercent,
 } from '../../../src/lib/admin-reports.ts'
@@ -472,3 +473,85 @@ test('generateAdminReport runs Stock Valuation report', async () => {
   assert.equal(res.table.rows[0].location, 'Downtown Store')
   assert.equal(res.table.rows[0].valuation, '$1,000.00')
 })
+
+test('convertReportCurrency properly converts between USD and BDT and handles identical currency', () => {
+  assert.equal(convertReportCurrency(100, 'USD', 'USD'), 100)
+  assert.equal(convertReportCurrency(100, 'USD', 'BDT', 110), 11000)
+  assert.equal(convertReportCurrency(11000, 'BDT', 'USD', 110), 100)
+  assert.equal(convertReportCurrency(50, 'EUR', 'EUR'), 50)
+})
+
+test('generateAdminReport respects selected currency options.currency = BDT', async () => {
+  const mockOrders = [
+    {
+      id: 'ord-1',
+      orderNumber: 'ORD-001',
+      createdAt: '2026-08-20T10:00:00Z',
+      currency: 'USD',
+      subtotal: 100,
+      taxTotal: 0,
+      shippingTotal: 0,
+      discountTotal: 0,
+      grandTotal: 100,
+      paymentStatus: 'paid',
+      items: [{ quantity: 1 }],
+    },
+  ]
+
+  const payload = mockPayload({}, { orders: mockOrders })
+  const res = await generateAdminReport(
+    payload,
+    { id: 'usr-1', role: 'admin' },
+    { category: 'sales', reportType: 'sales-overview', period: 'month', currency: 'BDT' }
+  )
+
+  assert.equal(res.meta.currency, 'BDT')
+  // $100 * 110 rate = ৳11,000.00
+  assert.equal(res.table.totals?.grandTotal, '৳11,000.00')
+  assert.equal(res.kpis.find((k) => k.key === 'revenue')?.formattedValue, '৳11,000.00')
+})
+
+test('generateAdminReport loads default currency from platform-settings global', async () => {
+  const mockOrders = [
+    {
+      id: 'ord-1',
+      orderNumber: 'ORD-001',
+      createdAt: '2026-08-20T10:00:00Z',
+      currency: 'BDT',
+      subtotal: 500,
+      taxTotal: 0,
+      shippingTotal: 0,
+      discountTotal: 0,
+      grandTotal: 500,
+      paymentStatus: 'paid',
+      items: [{ quantity: 1 }],
+    },
+  ]
+
+  const payload = mockPayload({}, { orders: mockOrders })
+  // Mock findGlobal returning BDT defaultCurrency from platform-settings
+  ;(payload as any).findGlobal = async ({ slug }: { slug: string }) => {
+    if (slug === 'platform-settings') {
+      return {
+        currency: {
+          defaultCurrency: 'BDT',
+          supportedCurrencies: ['BDT', 'USD'],
+          usdToBdtRate: 115,
+        },
+      }
+    }
+    return null
+  }
+
+  const res = await generateAdminReport(
+    payload,
+    { id: 'usr-1', role: 'admin' },
+    { category: 'sales', reportType: 'sales-overview', period: 'month' }
+  )
+
+  assert.equal(res.meta.currency, 'BDT')
+  assert.equal(res.meta.defaultCurrency, 'BDT')
+  assert.deepEqual(res.meta.availableCurrencies, ['BDT', 'USD'])
+  assert.equal(res.table.totals?.grandTotal, '৳500.00')
+})
+

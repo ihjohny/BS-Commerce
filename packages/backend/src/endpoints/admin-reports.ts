@@ -38,6 +38,7 @@ export async function adminReportsHandler(req: {
     startDate: qs.get('startDate') || undefined,
     endDate: qs.get('endDate') || undefined,
     storeId: qs.get('storeId') || undefined,
+    currency: qs.get('currency') || undefined,
     format: (qs.get('format') as 'json' | 'csv') || 'json',
   }
 

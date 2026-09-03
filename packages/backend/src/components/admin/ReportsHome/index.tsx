@@ -21,7 +21,7 @@ export default function ReportsHome(props: AdminViewServerProps) {
       permissions={initPageResult?.permissions}
       req={initPageResult?.req}
       searchParams={searchParams}
-      user={initPageResult?.req?.user}
+      user={initPageResult?.req?.user ?? undefined}
       visibleEntities={initPageResult?.visibleEntities || { collections: [], globals: [] }}
     >
       <Gutter>

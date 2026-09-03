@@ -32,7 +32,7 @@ export function ReportTable({ table, currency }: ReportTableProps) {
     let valB = b[sortKey]
 
     // Parse currency strings or numbers if raw value is available
-    if (typeof valA === 'string' && (valA.startsWith('$') || valA.startsWith('৳'))) {
+    if (typeof valA === 'string' && /[\$৳€£₹¥]|(?:[A-Z]{3}\s)/.test(valA)) {
       valA = parseFloat(valA.replace(/[^0-9.-]+/g, ''))
       valB = parseFloat(String(valB).replace(/[^0-9.-]+/g, ''))
     }

@@ -338,14 +338,29 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
             <div style={{ fontWeight: 700, marginBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: 2 }}>
               {String(data[hoverIndex][xAxisKey])}
             </div>
-            {visibleSeries.map((s) => (
-              <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: s.color }}>{s.name}:</span>
-                <span style={{ fontWeight: 600 }}>
-                  {Number(data[hoverIndex][s.key] || 0).toLocaleString()}
-                </span>
-              </div>
-            ))}
+            {visibleSeries.map((s) => {
+              const val = Number(data[hoverIndex][s.key] || 0)
+              const isMonetary =
+                s.key.toLowerCase().includes('revenue') ||
+                s.key.toLowerCase().includes('spend') ||
+                s.key.toLowerCase().includes('sales') ||
+                s.key.toLowerCase().includes('discount') ||
+                s.key.toLowerCase().includes('gross') ||
+                s.key.toLowerCase().includes('value') ||
+                s.key.toLowerCase().includes('valuation') ||
+                s.key.toLowerCase().includes('aov')
+              const symbol = currency === 'BDT' ? '৳' : currency === 'USD' ? '$' : `${currency} `
+              const displayVal = isMonetary
+                ? `${symbol}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : val.toLocaleString('en-US')
+
+              return (
+                <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ color: s.color }}>{s.name}:</span>
+                  <span style={{ fontWeight: 600 }}>{displayVal}</span>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

@@ -207,6 +207,7 @@ export type DashboardFilterOptions = {
   startDate?: string
   endDate?: string
   storeId?: string
+  currency?: string
 }
 
 function collectionExists(payload: Payload, slug: string): boolean {
@@ -330,7 +331,40 @@ export async function loadDashboardStats(
   user: { id: string; role?: string | null; tenant?: unknown },
   options?: DashboardFilterOptions,
 ): Promise<AdminDashboardStats> {
-  const currency = getDefaultCurrency()
+  let defaultCurrency = getDefaultCurrency()
+  let supportedCurrencies: string[] = ['USD', 'BDT']
+
+  if (typeof payload.findGlobal === 'function') {
+    try {
+      const settings = (await payload.findGlobal({
+        slug: 'platform-settings' as never,
+        depth: 0,
+        overrideAccess: true,
+      })) as any
+      const curr = settings?.currency
+      if (curr) {
+        if (typeof curr.defaultCurrency === 'string' && curr.defaultCurrency.trim()) {
+          defaultCurrency = curr.defaultCurrency.trim().toUpperCase()
+        }
+        if (Array.isArray(curr.supportedCurrencies) && curr.supportedCurrencies.length > 0) {
+          supportedCurrencies = curr.supportedCurrencies
+            .map((c: any) => String(c).trim().toUpperCase())
+            .filter(Boolean)
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (!supportedCurrencies.includes(defaultCurrency)) {
+    supportedCurrencies.unshift(defaultCurrency)
+  }
+
+  const requestedCurrency = options?.currency ? options.currency.trim().toUpperCase() : null
+  const currency = requestedCurrency && supportedCurrencies.includes(requestedCurrency)
+    ? requestedCurrency
+    : defaultCurrency
   const dates = resolveDateRanges(options)
   const storeId = options?.storeId?.trim() || null
 

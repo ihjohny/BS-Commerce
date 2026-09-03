@@ -51,6 +51,7 @@ function ReportsHomeContent() {
   const [customStartDate, setCustomStartDate] = useState<string>('')
   const [customEndDate, setCustomEndDate] = useState<string>('')
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
+  const [selectedCurrency, setSelectedCurrency] = useState<string | null>(searchParams?.get('currency') || null)
 
   const fetchReport = useCallback(async () => {
     setLoading(true)
@@ -61,6 +62,7 @@ function ReportsHomeContent() {
       params.set('reportType', reportType)
       params.set('period', period)
       if (selectedStoreId) params.set('storeId', selectedStoreId)
+      if (selectedCurrency) params.set('currency', selectedCurrency)
       if (period === 'custom' && customStartDate && customEndDate) {
         params.set('startDate', new Date(customStartDate).toISOString())
         params.set('endDate', new Date(customEndDate).toISOString())
@@ -81,13 +83,13 @@ function ReportsHomeContent() {
     } finally {
       setLoading(false)
     }
-  }, [category, reportType, period, selectedStoreId, customStartDate, customEndDate])
+  }, [category, reportType, period, selectedStoreId, selectedCurrency, customStartDate, customEndDate])
 
   useEffect(() => {
     if (period !== 'custom') {
       fetchReport()
     }
-  }, [category, reportType, period, selectedStoreId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category, reportType, period, selectedStoreId, selectedCurrency]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchReport()
@@ -95,7 +97,21 @@ function ReportsHomeContent() {
 
   const handleReportTypeChange = (newType: ReportType) => {
     const newCat = REPORT_DEFINITIONS[newType]?.category || category
-    router.replace(`/admin/reports?category=${newCat}&type=${newType}`, { scroll: false })
+    const params = new URLSearchParams(searchParams?.toString() || '')
+    params.set('category', newCat)
+    params.set('type', newType)
+    router.replace(`/admin/reports?${params.toString()}`, { scroll: false })
+  }
+
+  const handleCurrencyChange = (newCurr: string | null) => {
+    setSelectedCurrency(newCurr)
+    const params = new URLSearchParams(searchParams?.toString() || '')
+    if (newCurr) {
+      params.set('currency', newCurr)
+    } else {
+      params.delete('currency')
+    }
+    router.replace(`/admin/reports?${params.toString()}`, { scroll: false })
   }
 
   const handlePeriodChange = (newPeriod: ReportPeriod) => {
@@ -126,6 +142,7 @@ function ReportsHomeContent() {
     params.set('period', period)
     params.set('format', 'csv')
     if (selectedStoreId) params.set('storeId', selectedStoreId)
+    if (selectedCurrency) params.set('currency', selectedCurrency)
     if (period === 'custom' && customStartDate && customEndDate) {
       params.set('startDate', new Date(customStartDate).toISOString())
       params.set('endDate', new Date(customEndDate).toISOString())
@@ -153,12 +170,17 @@ function ReportsHomeContent() {
         customEndDate={customEndDate}
         selectedStoreId={selectedStoreId}
         availableStores={report?.meta.availableStores || []}
+        selectedCurrency={selectedCurrency}
+        defaultCurrency={report?.meta.defaultCurrency}
+        availableCurrencies={report?.meta.availableCurrencies || []}
+        activeCurrency={report?.meta.currency}
         loading={loading}
         onReportTypeChange={handleReportTypeChange}
         onPeriodChange={handlePeriodChange}
         onCustomDateChange={handleCustomDateChange}
         onApplyCustomRange={handleApplyCustomRange}
         onStoreChange={(id) => setSelectedStoreId(id)}
+        onCurrencyChange={handleCurrencyChange}
         onRefresh={fetchReport}
         onExportCsv={handleExportCsv}
       />
