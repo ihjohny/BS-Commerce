@@ -51,12 +51,30 @@ export function ReportTable({ table, currency }: ReportTableProps) {
   const paginatedRows = sortedRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const renderBadge = (value: string) => {
-    const isOut = value === 'Out of Stock'
-    const isLow = value === 'Low Stock'
-    const isIn = value === 'In Stock'
+    const valLower = String(value || '').toLowerCase()
+    const isSuccess = ['in stock', 'paid', 'completed', 'delivered', 'registered'].includes(valLower)
+    const isWarning = ['low stock', 'pending', 'processing', 'partially-shipped'].includes(valLower)
+    const isError = ['out of stock', 'unpaid', 'cancelled', 'refunded', 'failed'].includes(valLower)
+    const isDevice = ['desktop', 'mobile', 'tablet', 'bot', 'other/direct'].includes(valLower)
 
-    const bg = isOut ? 'var(--theme-error-100, #fee2e2)' : isLow ? 'var(--theme-warning-100, #fef3c7)' : isIn ? 'var(--theme-success-100, #dcfce7)' : 'var(--theme-elevation-150)'
-    const color = isOut ? 'var(--theme-error-700, #b91c1c)' : isLow ? 'var(--theme-warning-700, #b45309)' : isIn ? 'var(--theme-success-700, #15803d)' : 'var(--theme-elevation-800)'
+    const bg = isError
+      ? 'var(--theme-error-100, #fee2e2)'
+      : isWarning
+      ? 'var(--theme-warning-100, #fef3c7)'
+      : isSuccess
+      ? 'var(--theme-success-100, #dcfce7)'
+      : isDevice
+      ? 'var(--theme-elevation-150, #f1f5f9)'
+      : 'var(--theme-elevation-150)'
+    const color = isError
+      ? 'var(--theme-error-700, #b91c1c)'
+      : isWarning
+      ? 'var(--theme-warning-700, #b45309)'
+      : isSuccess
+      ? 'var(--theme-success-700, #15803d)'
+      : isDevice
+      ? 'var(--theme-elevation-700, #334155)'
+      : 'var(--theme-elevation-800)'
 
     return (
       <span
@@ -68,6 +86,7 @@ export function ReportTable({ table, currency }: ReportTableProps) {
           fontWeight: 600,
           background: bg,
           color: color,
+          textTransform: isDevice ? 'none' : 'capitalize',
         }}
       >
         {value}

@@ -126,6 +126,13 @@ export const REPORT_DEFINITIONS: Record<ReportType, ReportMetaDef> = {
     categoryLabel: 'Customer Engagement',
     description: 'Products frequently added to cart but abandoned prior to payment completion.',
   },
+  'customer-orders': {
+    key: 'customer-orders',
+    label: 'Customer Orders & Devices',
+    category: 'customers',
+    categoryLabel: 'Customer Engagement',
+    description: 'Detailed customer purchase orders with client device type, browser, OS, and IP address intelligence.',
+  },
   'low-stock-alert': {
     key: 'low-stock-alert',
     label: 'Low Stock & Restock Alerts',
@@ -298,6 +305,14 @@ export function ReportIcon({ type, size = 15 }: { type: ReportType; size?: numbe
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
           <line x1="3" y1="6" x2="21" y2="6" />
           <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+      )
+    case 'customer-orders':
+      return (
+        <svg {...props}>
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
         </svg>
       )
     case 'low-stock-alert':

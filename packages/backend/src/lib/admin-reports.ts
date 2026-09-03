@@ -19,6 +19,7 @@ export type ReportType =
   | 'abandoned-carts'
   | 'customer-ltv'
   | 'abandoned-products'
+  | 'customer-orders'
   // Inventory
   | 'low-stock-alert'
   | 'stock-valuation'
@@ -363,6 +364,8 @@ export async function generateAdminReport(
       return runCustomerLtvReport(payload, ctx)
     case 'abandoned-products':
       return runAbandonedProductsReport(payload, ctx)
+    case 'customer-orders':
+      return runCustomerOrdersReport(payload, ctx)
 
     // ── INVENTORY ──────────────────────────────────────
     case 'low-stock-alert':
@@ -1690,8 +1693,10 @@ async function runCustomerLtvReport(payload: Payload, ctx: Context): Promise<Rep
 
   for (const o of orders) {
     const email = (o.guestEmail || o.buyerSnapshot?.email || (typeof o.customer === 'object' ? o.customer?.email : null) || 'guest@anonymous.com').toLowerCase()
-    const name = o.buyerSnapshot?.name || (typeof o.customer === 'object' ? o.customer?.name : 'Guest Customer')
-    const phone = o.buyerSnapshot?.phone || (typeof o.customer === 'object' ? o.customer?.phone : '')
+    const custObj = typeof o.customer === 'object' && o.customer !== null ? o.customer : null
+    const custFullName = custObj ? [custObj.firstName, custObj.lastName].filter(Boolean).join(' ') || custObj.displayName || custObj.name : null
+    const name = String(o.buyerSnapshot?.name || custFullName || (email !== 'guest@anonymous.com' ? email.split('@')[0] : 'Guest Customer')).trim() || 'Guest Customer'
+    const phone = o.buyerSnapshot?.phone || (typeof o.customer === 'object' ? o.customer?.phone : '') || 'N/A'
     const orderCurr = String(o.currency || ctx.currency).toUpperCase()
     const grand = convertReportCurrency(Number(o.grandTotal) || 0, orderCurr, ctx.currency, ctx.usdToBdtRate)
     const orderDate = o.placedAt || o.createdAt
@@ -1746,7 +1751,7 @@ async function runCustomerLtvReport(payload: Payload, ctx: Context): Promise<Rep
       label: 'Top Customer Spend',
       value: topCust?.totalSpend || 0,
       formattedValue: topCust ? `${formatReportCurrency(topCust.totalSpend, ctx.currency)}` : 'N/A',
-      subtext: topCust ? `${topCust.name} (${topCust.ordersCount} orders)` : 'No data',
+      subtext: topCust ? `${topCust.name || 'Customer'} (${topCust.ordersCount} orders)` : 'No data',
     },
     {
       key: 'avg_ltv',
@@ -1758,7 +1763,7 @@ async function runCustomerLtvReport(payload: Payload, ctx: Context): Promise<Rep
   ]
 
   const chartData = sorted.slice(0, 10).map((c) => ({
-    name: c.name.slice(0, 14),
+    name: String(c.name || c.email || 'Customer').slice(0, 14),
     spend: Math.round(c.totalSpend),
     orders: c.ordersCount,
   }))
@@ -1889,6 +1894,210 @@ async function runAbandonedProductsReport(payload: Payload, ctx: Context): Promi
       series: [
         { key: 'qty', name: 'Abandoned Units', color: '#f59e0b' },
         { key: 'carts', name: 'Cart Count', color: '#ef4444' },
+      ],
+      data: chartData,
+    },
+    table: { columns, rows, totals },
+    csvData: generateCsv(columns, rows, totals),
+  }
+}
+
+/**
+ * 15. Customer Orders & Device Activity Report
+ */
+async function runCustomerOrdersReport(payload: Payload, ctx: Context): Promise<ReportResult> {
+  const where: Where = {
+    and: [
+      { createdAt: { greater_than_equal: ctx.startDate.toISOString() } },
+      { createdAt: { less_than_equal: ctx.endDate.toISOString() } },
+    ],
+  }
+
+  if (ctx.storeId) {
+    where.and!.push({ store: { equals: ctx.storeId } })
+  }
+
+  let orders: any[] = []
+  if (collectionExists(payload, 'orders')) {
+    const res = await payload.find({
+      collection: 'orders' as never,
+      where,
+      limit: 3000,
+      depth: 1,
+      sort: '-createdAt',
+    })
+    orders = res.docs as any[]
+  }
+
+  let totalRevenue = 0
+  let totalItemsCount = 0
+  const uniqueCustomers = new Set<string>()
+  const deviceCounts: Record<string, { count: number; revenue: number }> = {
+    Desktop: { count: 0, revenue: 0 },
+    Mobile: { count: 0, revenue: 0 },
+    Tablet: { count: 0, revenue: 0 },
+    'Other/Direct': { count: 0, revenue: 0 },
+  }
+
+  const rows = orders.map((o) => {
+    const email = String(
+      o.guestEmail ||
+      o.buyerSnapshot?.email ||
+      (typeof o.customer === 'object' ? o.customer?.email : null) ||
+      'guest@anonymous.com'
+    ).toLowerCase()
+
+    const custObj = typeof o.customer === 'object' && o.customer !== null ? o.customer : null
+    const custFullName = custObj
+      ? [custObj.firstName, custObj.lastName].filter(Boolean).join(' ') || custObj.displayName || custObj.name
+      : null
+    const customer = String(
+      o.buyerSnapshot?.name ||
+      custFullName ||
+      (email !== 'guest@anonymous.com' ? email.split('@')[0] : 'Guest Shopper')
+    ).trim() || 'Guest Shopper'
+
+    const phone = o.buyerSnapshot?.phone || (typeof o.customer === 'object' ? o.customer?.phone : '') || 'N/A'
+    const accountType = custObj ? 'Registered' : 'Guest'
+
+    if (email && email !== 'guest@anonymous.com') {
+      uniqueCustomers.add(email)
+    } else {
+      uniqueCustomers.add(String(o.id))
+    }
+
+    const items = Array.isArray(o.items) ? o.items : []
+    const itemsCount = items.reduce((sum: number, it: any) => sum + (Number(it?.quantity) || 1), 0)
+    totalItemsCount += itemsCount
+
+    const orderCurr = String(o.currency || ctx.currency).toUpperCase()
+    const rawGrand = Number(o.grandTotal) || 0
+    const grand = convertReportCurrency(rawGrand, orderCurr, ctx.currency, ctx.usdToBdtRate)
+    totalRevenue += grand
+
+    // Device Tracking Data
+    const dt = o.deviceTracking || {}
+    const rawDev = String(dt.deviceType || '').toLowerCase()
+    let deviceLabel = 'Desktop'
+    if (rawDev.includes('mobile')) deviceLabel = 'Mobile'
+    else if (rawDev.includes('tablet')) deviceLabel = 'Tablet'
+    else if (rawDev.includes('desktop')) deviceLabel = 'Desktop'
+    else deviceLabel = 'Other/Direct'
+
+    if (!deviceCounts[deviceLabel]) {
+      deviceCounts[deviceLabel] = { count: 0, revenue: 0 }
+    }
+    deviceCounts[deviceLabel].count += 1
+    deviceCounts[deviceLabel].revenue += grand
+
+    const browser = dt.browser || 'Chrome (Web)'
+    const os = dt.os || 'Desktop OS'
+    const ipAddress = dt.ipAddress || '127.0.0.1'
+
+    const orderDate = new Date(o.placedAt || o.createdAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    return {
+      orderNumber: o.orderNumber || `ORD-${String(o.id).slice(0, 8)}`,
+      placedAt: orderDate,
+      customer,
+      email,
+      phone,
+      accountType,
+      itemsCount,
+      grandTotal: formatReportCurrency(grand, ctx.currency),
+      paymentStatus: String(o.paymentStatus || 'unpaid'),
+      orderStatus: String(o.status || 'pending'),
+      deviceType: deviceLabel,
+      browserOs: `${browser} / ${os}`,
+      ipAddress,
+      _rawTotal: grand,
+    }
+  })
+
+  const columns: TableColumn[] = [
+    { key: 'orderNumber', label: 'Order Number', align: 'left', format: 'text' },
+    { key: 'placedAt', label: 'Date & Time', align: 'left', format: 'date' },
+    { key: 'customer', label: 'Customer Name', align: 'left', format: 'text' },
+    { key: 'email', label: 'Email Address', align: 'left', format: 'text' },
+    { key: 'accountType', label: 'Account', align: 'center', format: 'badge' },
+    { key: 'itemsCount', label: 'Items', align: 'right', format: 'number' },
+    { key: 'grandTotal', label: 'Order Total', align: 'right', format: 'currency' },
+    { key: 'paymentStatus', label: 'Payment', align: 'center', format: 'badge' },
+    { key: 'deviceType', label: 'Device', align: 'center', format: 'badge' },
+    { key: 'browserOs', label: 'Browser & OS', align: 'left', format: 'text' },
+    { key: 'ipAddress', label: 'IP Address', align: 'left', format: 'text' },
+  ]
+
+  const totals = {
+    orderNumber: 'All Customer Orders',
+    placedAt: `${orders.length} Total Orders`,
+    customer: `${uniqueCustomers.size} Unique Shoppers`,
+    email: '',
+    accountType: '',
+    itemsCount: formatReportNumber(totalItemsCount),
+    grandTotal: formatReportCurrency(totalRevenue, ctx.currency),
+    paymentStatus: '',
+    deviceType: `${deviceCounts.Desktop.count} Desk / ${deviceCounts.Mobile.count} Mob`,
+    browserOs: '',
+    ipAddress: '',
+  }
+
+  const topDeviceEntry = Object.entries(deviceCounts).sort((a, b) => b[1].count - a[1].count)[0]
+  const topDeviceShare = orders.length > 0 && topDeviceEntry ? (topDeviceEntry[1].count / orders.length) * 100 : 0
+  const aov = orders.length > 0 ? totalRevenue / orders.length : 0
+
+  const kpis: ReportKpi[] = [
+    {
+      key: 'total_orders',
+      label: 'Total Customer Orders',
+      value: orders.length,
+      formattedValue: formatReportNumber(orders.length),
+      subtext: `${uniqueCustomers.size} active purchasers`,
+    },
+    {
+      key: 'customer_revenue',
+      label: 'Total Customer Volume',
+      value: totalRevenue,
+      formattedValue: formatReportCurrency(totalRevenue, ctx.currency),
+      subtext: `Avg Order ${formatReportCurrency(aov, ctx.currency)}`,
+    },
+    {
+      key: 'primary_device',
+      label: 'Primary Device Channel',
+      value: topDeviceEntry ? topDeviceEntry[1].count : 0,
+      formattedValue: topDeviceEntry ? `${topDeviceEntry[0]} (${topDeviceShare.toFixed(1)}%)` : 'N/A',
+      subtext: topDeviceEntry ? `${topDeviceEntry[1].count} checkouts captured` : 'No device data',
+    },
+    {
+      key: 'unique_customers',
+      label: 'Customer Shopper Base',
+      value: uniqueCustomers.size,
+      formattedValue: formatReportNumber(uniqueCustomers.size),
+      subtext: `${totalItemsCount} total items ordered`,
+    },
+  ]
+
+  const chartData = Object.entries(deviceCounts).map(([device, data]) => ({
+    device,
+    orders: data.count,
+    revenue: Math.round(data.revenue),
+  }))
+
+  return {
+    meta: buildReportMeta(ctx, 'customers', 'customer-orders', 'Customer Orders & Device Tracking'),
+    kpis,
+    chart: {
+      type: 'bar',
+      xAxisKey: 'device',
+      series: [
+        { key: 'orders', name: 'Order Volume', color: '#3b82f6' },
+        { key: 'revenue', name: 'Revenue', color: '#10b981' },
       ],
       data: chartData,
     },

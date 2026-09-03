@@ -555,3 +555,73 @@ test('generateAdminReport loads default currency from platform-settings global',
   assert.equal(res.table.totals?.grandTotal, '৳500.00')
 })
 
+test('generateAdminReport runs Customer Lifetime Value report with missing customer name without throwing', async () => {
+  const mockOrders = [
+    {
+      id: 'ord-1',
+      orderNumber: 'ORD-001',
+      createdAt: '2026-08-20T10:00:00Z',
+      currency: 'USD',
+      grandTotal: 100,
+      customer: { id: 'usr-1', email: 'user@example.com' }, // no name property!
+      buyerSnapshot: null,
+    },
+  ]
+
+  const payload = mockPayload({}, { orders: mockOrders })
+  const res = await generateAdminReport(
+    payload,
+    { id: 'usr-1', role: 'admin' },
+    { category: 'customers', reportType: 'customer-ltv', period: 'month' }
+  )
+
+  assert.equal(res.meta.reportType, 'customer-ltv')
+  assert.equal(res.table.rows.length, 1)
+  assert.equal(res.table.rows[0].customer, 'user')
+  assert.equal(res.chart.data[0].name, 'user')
+})
+
+test('generateAdminReport runs Customer Orders & Device Activity report', async () => {
+  const mockOrders = [
+    {
+      id: 'ord-1',
+      orderNumber: 'ORD-001',
+      createdAt: '2026-08-20T10:00:00Z',
+      currency: 'USD',
+      grandTotal: 250,
+      paymentStatus: 'paid',
+      status: 'completed',
+      customer: { id: 'usr-1', displayName: 'Jane Doe', email: 'jane@example.com' },
+      buyerSnapshot: { name: 'Jane Doe', email: 'jane@example.com', phone: '+123456789' },
+      items: [{ quantity: 2 }, { quantity: 1 }],
+      deviceTracking: {
+        deviceType: 'mobile',
+        browser: 'Safari 18',
+        os: 'iOS',
+        ipAddress: '192.168.1.1',
+      },
+    },
+  ]
+
+  const payload = mockPayload({}, { orders: mockOrders })
+  const res = await generateAdminReport(
+    payload,
+    { id: 'usr-1', role: 'admin' },
+    { category: 'customers', reportType: 'customer-orders', period: 'month' }
+  )
+
+  assert.equal(res.meta.reportType, 'customer-orders')
+  assert.equal(res.meta.reportName, 'Customer Orders & Device Tracking')
+  assert.equal(res.table.rows.length, 1)
+  assert.equal(res.table.rows[0].orderNumber, 'ORD-001')
+  assert.equal(res.table.rows[0].customer, 'Jane Doe')
+  assert.equal(res.table.rows[0].accountType, 'Registered')
+  assert.equal(res.table.rows[0].itemsCount, 3)
+  assert.equal(res.table.rows[0].grandTotal, '$250.00')
+  assert.equal(res.table.rows[0].deviceType, 'Mobile')
+  assert.equal(res.table.rows[0].browserOs, 'Safari 18 / iOS')
+  assert.equal(res.table.rows[0].ipAddress, '192.168.1.1')
+  assert.equal(res.kpis.find((k) => k.key === 'total_orders')?.formattedValue, '1')
+})
+
+
