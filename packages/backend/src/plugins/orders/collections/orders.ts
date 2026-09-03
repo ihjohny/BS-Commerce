@@ -182,6 +182,32 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
     },
     { name: 'notes', type: 'textarea', admin: { description: 'Customer notes.' } },
     { name: 'placedAt', type: 'date', admin: { description: 'When order was placed.' } },
+    {
+      name: 'deviceTracking',
+      type: 'group',
+      admin: {
+        description: 'Client device, browser, OS, and IP address recorded at checkout.',
+      },
+      fields: [
+        { name: 'ipAddress', type: 'text', admin: { readOnly: true } },
+        { name: 'userAgent', type: 'text', admin: { readOnly: true } },
+        {
+          name: 'deviceType',
+          type: 'select',
+          admin: { readOnly: true },
+          options: [
+            { label: 'Desktop', value: 'desktop' },
+            { label: 'Mobile', value: 'mobile' },
+            { label: 'Tablet', value: 'tablet' },
+            { label: 'Bot / Automated', value: 'bot' },
+            { label: 'Unknown', value: 'unknown' },
+          ],
+        },
+        { name: 'browser', type: 'text', admin: { readOnly: true } },
+        { name: 'os', type: 'text', admin: { readOnly: true } },
+        { name: 'referrer', type: 'text', admin: { readOnly: true } },
+      ],
+    },
   ]
 
   if (splitByVendor) {

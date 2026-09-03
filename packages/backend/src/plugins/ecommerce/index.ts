@@ -1,4 +1,5 @@
 import type { Plugin } from 'payload'
+import { Attributes } from './collections/attributes'
 import { createProductsConfig } from './collections/products'
 import { createProductVariantsConfig } from './collections/product-variants'
 import { createCartsConfig } from './collections/carts'
@@ -23,6 +24,7 @@ export const ecommercePlugin =
       ...incomingConfig,
       collections: [
         ...(incomingConfig.collections || []),
+        Attributes,
         createProductsConfig(multivendorEnabled),
         createProductVariantsConfig(multivendorEnabled),
         createCartsConfig(multivendorEnabled, allowGuestCheckout),

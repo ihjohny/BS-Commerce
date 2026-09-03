@@ -11,6 +11,7 @@ import { isValidUUID } from '../lib/utils'
 import { getAuthRequiredIdentifier } from '../lib/auth-config'
 import { guestCheckoutIdentifiersError } from '../lib/guest-checkout-identifiers'
 import { collectGuestPhoneLookupVariants } from '../lib/validation/phone-format'
+import { detectDeviceFromUserAgent } from '../lib/device-detector'
 
 /** Lazy so importing this module in unit tests does not open Redis (ioredis keeps the process alive). */
 let checkoutLimiter: RateLimiterRedis | undefined
@@ -148,6 +149,23 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
   const isDev = process.env.NODE_ENV === 'development'
   const safeSimulatePayment = (isAdminUser || isDev) ? simulatePayment === true : false
 
+  const reqHeaders = req?.headers instanceof Headers
+    ? req.headers
+    : req?.headers && typeof req.headers.get === 'function'
+      ? req.headers
+      : new Headers(req?.headers || {})
+  const userAgent = reqHeaders.get('user-agent') || ''
+  const referrer = reqHeaders.get('referer') || reqHeaders.get('referrer') || ''
+  const detected = detectDeviceFromUserAgent(userAgent)
+  const deviceTracking = {
+    ipAddress: clientIp,
+    userAgent: userAgent ? userAgent.slice(0, 500) : '',
+    deviceType: detected.deviceType,
+    browser: detected.browser,
+    os: detected.os,
+    referrer: referrer ? referrer.slice(0, 500) : '',
+  }
+
   try {
     const result = await pc(
       req.payload,
@@ -172,6 +190,7 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
         idempotencyKey,
         shippingMethodIds,
         cashOnDelivery: cashOnDelivery === true,
+        deviceTracking,
       },
       userId,
       req,

@@ -47,6 +47,7 @@ import { openapiAllEndpoint } from './endpoints/openapi-all'
 import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
 import { storefrontVariantAvailabilityEndpoint } from './endpoints/storefront-variant-availability'
 import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
+import { customerAnalyticsEndpoint, customerRecommendationsEndpoint } from './endpoints/customer-analytics'
 import { geographyPlugin } from './plugins/geography'
 import { reportsPlugin } from './plugins/reports'
 import { migrations } from '../migrations'
@@ -163,6 +164,8 @@ export default buildConfig({
     storefrontStoreProductsEndpoint,
     storefrontVariantAvailabilityEndpoint,
     storefrontGeographyEndpoint,
+    customerAnalyticsEndpoint,
+    customerRecommendationsEndpoint,
   ],
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────

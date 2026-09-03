@@ -284,6 +284,15 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       hasMany: true,
     },
     {
+      name: 'attributes',
+      type: 'relationship',
+      relationTo: 'attributes',
+      hasMany: true,
+      admin: {
+        description: 'Brand, Manufacturer, Series, and dynamic attributes tagged to this product.',
+      },
+    },
+    {
       name: 'tags',
       type: 'array',
       fields: [{ name: 'tag', type: 'text' }],

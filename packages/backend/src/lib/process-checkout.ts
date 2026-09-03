@@ -88,6 +88,14 @@ export interface ProcessCheckoutInput {
    * order stays unpaid until cash on delivery is collected (ops).
    */
   cashOnDelivery?: boolean
+  deviceTracking?: {
+    ipAddress?: string
+    userAgent?: string
+    deviceType?: 'desktop' | 'mobile' | 'tablet' | 'bot' | 'unknown'
+    browser?: string
+    os?: string
+    referrer?: string
+  }
 }
 
 export interface OrderItemSummary {
@@ -573,6 +581,7 @@ export async function processCheckout(
     if (idempotencyKey) orderData.idempotencyKey = idempotencyKey
     if (storeLocationId) orderData.store = storeLocationId
     if (splitByVendor) orderData.subOrders = []
+    if (input.deviceTracking) orderData.deviceTracking = input.deviceTracking
 
     order = await payload.create({
       collection: 'orders',
