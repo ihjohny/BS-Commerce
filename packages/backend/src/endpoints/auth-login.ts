@@ -54,19 +54,13 @@ export const authLoginEndpoint: Endpoint = {
         }
       }
 
-      const response = Response.json(result, { status: 200 })
-
-      // payload.login() does not set cookies on custom endpoint responses.
-      // Mirror Payload's built-in cookie: HttpOnly, SameSite=Lax, Path=/.
-      if (result.token && result.exp) {
-        const expires = new Date(result.exp * 1000).toUTCString()
-        response.headers.append(
-          'Set-Cookie',
-          `payload-token=${result.token}; Expires=${expires}; Path=/; HttpOnly=true; SameSite=Lax`,
-        )
-      }
-
-      return response
+      // Return authentication result with JWT token and user info.
+      // We do NOT attach a Set-Cookie header for payload-token here because:
+      // 1. External clients (like storefront) manage sessions via Authorization: Bearer tokens
+      //    and their own scoped session cookies (e.g. on localhost:3001 via /api/auth/sync-token).
+      // 2. Setting a payload-token cookie on the backend origin (localhost:3000) would overwrite
+      //    the admin panel's active session cookie whenever a customer signs in on the storefront.
+      return Response.json(result, { status: 200 })
     } catch (err) {
       const status = (err as { status?: number })?.status ?? 401
       const message = err instanceof Error ? err.message : 'Authentication failed'

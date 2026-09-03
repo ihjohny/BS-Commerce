@@ -254,7 +254,7 @@ export function DashboardHeader({
             onClick={async () => {
               if (
                 window.confirm(
-                  '⚠️ Clear all existing data and reseed the Electronics Shop (Apple Gadgets BD)?\n\nThis will reset catalog/orders while preserving your admin login.'
+                  '⚠️ Clear all existing data and reseed the Electronics Shop (BS Commerce)?\n\nThis will reset catalog/orders while preserving your admin login.'
                 )
               ) {
                 const btn = document.getElementById('btn-reseed-electronics')

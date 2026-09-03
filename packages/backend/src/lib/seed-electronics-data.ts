@@ -248,7 +248,8 @@ export async function seedElectronicsStore(
             supportedCurrencies: ['BDT', 'USD'],
             usdToBdtRate: 120,
           },
-          storeName: 'Apple Gadgets BD',
+          storeName: 'BS Commerce',
+          platformName: 'BS Commerce',
         } as any,
         overrideAccess: true,
       })
@@ -256,7 +257,7 @@ export async function seedElectronicsStore(
       await payload.updateGlobal({
         slug: 'header' as never,
         data: {
-          siteName: 'Apple Gadgets BD',
+          siteName: 'BS Commerce',
           navLinks: [
             { label: 'Home', url: '/en', enabled: true, showInDesktopNav: true, showInMobileDrawer: true },
             { label: 'Products', url: '/en/products', enabled: true, showInDesktopNav: true, showInMobileDrawer: true },
@@ -271,7 +272,7 @@ export async function seedElectronicsStore(
       await payload.updateGlobal({
         slug: 'footer' as never,
         data: {
-          copyrightText: '© 2026 Apple Gadgets BD. Bangladesh’s Leading Apple & Multi-Brand Gadget Store.',
+          copyrightText: '© 2026 BS Commerce. Bangladesh’s Leading Multi-Brand Electronics & Gadget Store.',
           columns: [
             {
               heading: 'Featured Categories',
@@ -297,7 +298,7 @@ export async function seedElectronicsStore(
             {
               heading: 'Customer Care & Benefits',
               links: [
-                { label: 'AppleCare+ Official Warranty', url: '/en/warranty', enabled: true, visibility: 'public' },
+                { label: 'Brand Official Warranty', url: '/en/warranty', enabled: true, visibility: 'public' },
                 { label: '0% EMI Facility (24+ Banks)', url: '/en/emi', enabled: true, visibility: 'public' },
                 { label: 'Device Exchange & Trade-In', url: '/en/exchange', enabled: true, visibility: 'public' },
                 { label: 'Track Your Order', url: '/en/track-order', enabled: true, visibility: 'public' },
@@ -308,7 +309,7 @@ export async function seedElectronicsStore(
             {
               heading: 'Company & Policies',
               links: [
-                { label: 'About Apple Gadgets BD', url: '/en/about-us', enabled: true, visibility: 'public' },
+                { label: 'About BS Commerce', url: '/en/about-us', enabled: true, visibility: 'public' },
                 { label: '7-Day Return & Replacement', url: '/en/return-refund', enabled: true, visibility: 'public' },
                 { label: 'Privacy & Data Security', url: '/en/privacy-policy', enabled: true, visibility: 'public' },
                 { label: 'Terms & Conditions of Sale', url: '/en/terms-conditions', enabled: true, visibility: 'public' },
@@ -346,7 +347,7 @@ export async function seedElectronicsStore(
     {
       title: 'Home Hero Banners',
       slug: 'home-hero-banners',
-      meta: { title: 'Apple Gadgets BD | Flagship Electronics Store', description: 'Hero banner slides for homepage.' },
+      meta: { title: 'BS Commerce | Flagship Electronics Store', description: 'Hero banner slides for homepage.' },
       layout: [
         {
           blockType: 'hero',
@@ -384,14 +385,14 @@ export async function seedElectronicsStore(
     },
     // 2. About Us
     {
-      title: 'About Apple Gadgets BD',
+      title: 'About BS Commerce',
       slug: 'about-us',
-      meta: { title: 'About Us | Apple Gadgets BD', description: 'Learn about Apple Gadgets BD, our mission, values, and authenticity guarantee.' },
+      meta: { title: 'About Us | BS Commerce', description: 'Learn about BS Commerce, our mission, values, and authenticity guarantee.' },
       layout: [
         {
           blockType: 'hero',
           heading: 'Bangladesh’s Premier Gadget Experience',
-          subheading: 'Connecting technology enthusiasts with 100% genuine Apple ecosystem devices, premium computing, and world-class acoustics.',
+          subheading: 'Connecting technology enthusiasts with 100% genuine electronics, premium computing, and world-class acoustics.',
           backgroundImage: findMediaId('category-creator-studio-1'),
           ctaLabel: 'Explore Our Catalog',
           ctaUrl: '/en/products',
@@ -399,14 +400,14 @@ export async function seedElectronicsStore(
         {
           blockType: 'richText',
           content: makeLexicalDoc([
-            'Founded with a steadfast commitment to authenticity and transparency, Apple Gadgets BD has become Bangladesh’s premier multi-brand retail destination. We specialize in official Apple hardware, high-performance Samsung flagships, Sony imaging & audio, and the smart IoT gadgets shaping modern lifestyles.',
+            'Founded with a steadfast commitment to authenticity and transparency, BS Commerce has become Bangladesh’s premier multi-brand retail destination. We specialize in official Apple hardware, high-performance Samsung flagships, Sony imaging & audio, and the smart IoT gadgets shaping modern lifestyles.',
             'Operating 4 flagship showrooms across Dhaka and Chittagong, we provide authentic unboxing experiences, live demo stations, and dedicated technical consultation. Every product in our inventory undergoes strict IMEI verification to guarantee original manufacturer provenance.',
             'Beyond physical retail, our nationwide express delivery network ensures customers across all 64 districts of Bangladesh receive factory-sealed electronics with authorized warranty and 0% EMI flexibility.',
           ]),
         },
         {
           blockType: 'faq',
-          heading: 'Why Tech Shoppers Trust Apple Gadgets BD',
+          heading: 'Why Tech Shoppers Trust BS Commerce',
           items: [
             {
               question: 'Are all products 100% authentic and original?',
@@ -422,9 +423,9 @@ export async function seedElectronicsStore(
     },
     // 3. Warranty Policy
     {
-      title: 'AppleCare+ & Official Brand Warranty Policy',
+      title: 'Brand Official Warranty & Protection Policy',
       slug: 'warranty',
-      meta: { title: 'Official Warranty Policy | Apple Gadgets BD', description: 'Comprehensive warranty details covering Apple, Samsung, Sony, Anker, and Asus products.' },
+      meta: { title: 'Official Warranty Policy | BS Commerce', description: 'Comprehensive warranty details covering Apple, Samsung, Sony, Anker, and Asus products.' },
       layout: [
         {
           blockType: 'hero',
@@ -448,7 +449,7 @@ export async function seedElectronicsStore(
           items: [
             {
               question: 'How do I claim warranty for an Apple product?',
-              answer: makeLexicalDoc(['Simply bring your device and the original Apple Gadgets BD invoice to any of our 4 showrooms or any Apple Authorized Service Provider in Bangladesh.']),
+              answer: makeLexicalDoc(['Simply bring your device and the original BS Commerce invoice to any of our 4 showrooms or any Apple Authorized Service Provider in Bangladesh.']),
             },
             {
               question: 'What is covered under the 18-month Anker replacement guarantee?',
@@ -466,7 +467,7 @@ export async function seedElectronicsStore(
     {
       title: '0% Interest EMI Facility (Up to 36 Months)',
       slug: 'emi',
-      meta: { title: '0% EMI Facility | Apple Gadgets BD', description: 'Avail up to 36 months 0% interest EMI across 24+ top Bangladeshi commercial banks.' },
+      meta: { title: '0% EMI Facility | BS Commerce', description: 'Avail up to 36 months 0% interest EMI across 24+ top Bangladeshi commercial banks.' },
       layout: [
         {
           blockType: 'hero',
@@ -508,7 +509,7 @@ export async function seedElectronicsStore(
     {
       title: 'Smart Trade-In & Device Exchange Program',
       slug: 'exchange',
-      meta: { title: 'Device Exchange & Trade-In | Apple Gadgets BD', description: 'Trade in your old smartphone, iPad, or MacBook for instant credit toward a new device.' },
+      meta: { title: 'Device Exchange & Trade-In | BS Commerce', description: 'Trade in your old smartphone, iPad, or MacBook for instant credit toward a new device.' },
       layout: [
         {
           blockType: 'hero',
@@ -547,7 +548,7 @@ export async function seedElectronicsStore(
     {
       title: 'Our Showroom Locations & Experience Centers',
       slug: 'showrooms',
-      meta: { title: 'Showroom Locations | Apple Gadgets BD', description: 'Visit our flagship experience centers in Bashundhara City, Jamuna Future Park, Uttara & Chittagong.' },
+      meta: { title: 'Showroom Locations | BS Commerce', description: 'Visit our flagship experience centers in Bashundhara City, Jamuna Future Park, Uttara & Chittagong.' },
       layout: [
         {
           blockType: 'hero',
@@ -586,7 +587,7 @@ export async function seedElectronicsStore(
     {
       title: 'Bashundhara City Flagship Store',
       slug: 'showrooms-bashundhara',
-      meta: { title: 'Bashundhara City Flagship | Apple Gadgets BD', description: 'Visit our flagship showroom on Level 6, Block D, Bashundhara City Shopping Mall, Panthapath.' },
+      meta: { title: 'Bashundhara City Flagship | BS Commerce', description: 'Visit our flagship showroom on Level 6, Block D, Bashundhara City Shopping Mall, Panthapath.' },
       layout: [
         {
           blockType: 'hero',
@@ -601,7 +602,7 @@ export async function seedElectronicsStore(
           content: makeLexicalDoc([
             'Location & Hours: Level 6, Block D, Shop 42–45, Bashundhara City Shopping Mall, Panthapath, Dhaka.',
             'Operating Hours: 10:00 AM – 8:30 PM (Closed every Tuesday according to market schedule).',
-            'Hotline: +880 1711-234567 | Email: bashundhara@applegadgetsbd.local',
+            'Hotline: +880 1711-234567 | Email: bashundhara@bscommerce.local',
             'Highlights: Complete iPhone, iPad, and MacBook M3 experience zones; live DJI drone camera demonstration; certified trade-in counter; on-the-spot 0% EMI processing.',
           ]),
         },
@@ -611,7 +612,7 @@ export async function seedElectronicsStore(
     {
       title: 'Jamuna Future Park Experience Center',
       slug: 'showrooms-jamuna',
-      meta: { title: 'Jamuna Future Park Center | Apple Gadgets BD', description: 'Visit our experience showroom on Level 4, Zone A, Jamuna Future Park, Kuril, Dhaka.' },
+      meta: { title: 'Jamuna Future Park Center | BS Commerce', description: 'Visit our experience showroom on Level 4, Zone A, Jamuna Future Park, Kuril, Dhaka.' },
       layout: [
         {
           blockType: 'hero',
@@ -626,7 +627,7 @@ export async function seedElectronicsStore(
           content: makeLexicalDoc([
             'Location & Hours: Level 4, Zone A, Shop 18B, Jamuna Future Park, Kuril, Dhaka.',
             'Operating Hours: 11:00 AM – 9:00 PM (Closed every Wednesday).',
-            'Hotline: +880 1819-345678 | Email: jamuna@applegadgetsbd.local',
+            'Hotline: +880 1819-345678 | Email: jamuna@bscommerce.local',
             'Highlights: Dedicated PlayStation 5 and Asus ROG gaming showcase; Marshall and Sony noise cancellation sound booth; high-speed checkout and express pickup counter.',
           ]),
         },
@@ -636,7 +637,7 @@ export async function seedElectronicsStore(
     {
       title: 'Uttara Tech Hub Outlet',
       slug: 'showrooms-uttara',
-      meta: { title: 'Uttara Tech Hub Outlet | Apple Gadgets BD', description: 'Visit our Uttara outlet at House 12, Road 7, Sector 3, Uttara, Dhaka.' },
+      meta: { title: 'Uttara Tech Hub Outlet | BS Commerce', description: 'Visit our Uttara outlet at House 12, Road 7, Sector 3, Uttara, Dhaka.' },
       layout: [
         {
           blockType: 'hero',
@@ -651,7 +652,7 @@ export async function seedElectronicsStore(
           content: makeLexicalDoc([
             'Location & Hours: House 12, Road 7, Sector 3, Uttara, Dhaka 1230.',
             'Operating Hours: 10:00 AM – 8:30 PM (Open all 7 days of the week).',
-            'Hotline: +880 1912-456789 | Email: uttara@applegadgetsbd.local',
+            'Hotline: +880 1912-456789 | Email: uttara@bscommerce.local',
             'Highlights: Rapid curbside pickup; specialized Apple accessories and GaN charging station; regional delivery dispatch center for Gazipur and Tongi.',
           ]),
         },
@@ -661,7 +662,7 @@ export async function seedElectronicsStore(
     {
       title: 'Agrabad Commercial Hub (Chittagong)',
       slug: 'showrooms-chittagong',
-      meta: { title: 'Chittagong Showroom | Apple Gadgets BD', description: 'Visit our Chittagong flagship center at Central Commercial Plaza, GEC Circle.' },
+      meta: { title: 'Chittagong Showroom | BS Commerce', description: 'Visit our Chittagong flagship center at Central Commercial Plaza, GEC Circle.' },
       layout: [
         {
           blockType: 'hero',
@@ -676,7 +677,7 @@ export async function seedElectronicsStore(
           content: makeLexicalDoc([
             'Location & Hours: Central Commercial Plaza, Ground Floor, GEC Circle, Chittagong 4000.',
             'Operating Hours: 10:00 AM – 8:30 PM (Open 7 days a week).',
-            'Hotline: +880 1815-789012 | Email: chittagong@applegadgetsbd.local',
+            'Hotline: +880 1815-789012 | Email: chittagong@bscommerce.local',
             'Highlights: Full product lineup of Apple, Samsung, Sony, and Anker; same-day delivery across Chittagong city; official warranty intake center.',
           ]),
         },
@@ -686,7 +687,7 @@ export async function seedElectronicsStore(
     {
       title: '7-Day Replacement & Return Policy',
       slug: 'return-refund',
-      meta: { title: 'Return & Refund Policy | Apple Gadgets BD', description: 'Clear, transparent 7-day replacement guarantee and refund policies.' },
+      meta: { title: 'Return & Refund Policy | BS Commerce', description: 'Clear, transparent 7-day replacement guarantee and refund policies.' },
       layout: [
         {
           blockType: 'hero',
@@ -724,12 +725,12 @@ export async function seedElectronicsStore(
     {
       title: 'Privacy & Data Security Policy',
       slug: 'privacy-policy',
-      meta: { title: 'Privacy Policy | Apple Gadgets BD', description: 'How Apple Gadgets BD protects your personal data and online transactions.' },
+      meta: { title: 'Privacy Policy | BS Commerce', description: 'How BS Commerce protects your personal data and online transactions.' },
       layout: [
         {
           blockType: 'richText',
           content: makeLexicalDoc([
-            'At Apple Gadgets BD, we take your privacy and data security seriously. This Privacy Policy details how we collect, handle, and protect your information when you use our website and retail services.',
+            'At BS Commerce, we take your privacy and data security seriously. This Privacy Policy details how we collect, handle, and protect your information when you use our website and retail services.',
             'Information Collection: We collect essential contact information (name, delivery address, phone number, email) solely for order fulfillment, courier delivery updates, and warranty registration.',
             'Payment Security: All online payments are encrypted through 256-bit SSL connections via PCI-DSS certified gateways (SSLCommerz / PortPos). We never store your credit card numbers or PINs on our servers.',
             'No Third-Party Sharing: We do not sell, trade, or disclose your personal information to unauthorized third-party marketing companies under any circumstances.',
@@ -741,12 +742,12 @@ export async function seedElectronicsStore(
     {
       title: 'Terms & Conditions of Service',
       slug: 'terms-conditions',
-      meta: { title: 'Terms & Conditions | Apple Gadgets BD', description: 'Terms of sale, pricing transparency, and service policies for Apple Gadgets BD.' },
+      meta: { title: 'Terms & Conditions | BS Commerce', description: 'Terms of sale, pricing transparency, and service policies for BS Commerce.' },
       layout: [
         {
           blockType: 'richText',
           content: makeLexicalDoc([
-            'Welcome to Apple Gadgets BD. By placing an order online or purchasing at our showrooms, you agree to the following terms and conditions:',
+            'Welcome to BS Commerce. By placing an order online or purchasing at our showrooms, you agree to the following terms and conditions:',
             '1. Pricing and Availability: All product prices are listed in Bangladeshi Taka (BDT) including applicable taxes. While we strive for absolute accuracy, prices and stock levels may change based on global currency fluctuations and availability.',
             '2. Delivery and Inspection: Please inspect parcel packaging before signing courier receipts. In case of exterior transit damage, please notify the delivery agent and our support hotline immediately.',
             '3. Warranty Terms: Official brand warranties are subject to manufacturer guidelines and are fulfilled through authorized service centers.',
@@ -759,7 +760,7 @@ export async function seedElectronicsStore(
     {
       title: 'Frequently Asked Questions & Help Center',
       slug: 'faq',
-      meta: { title: 'FAQ & Help Center | Apple Gadgets BD', description: 'Answers to common questions about orders, payments, delivery, and authenticity.' },
+      meta: { title: 'FAQ & Help Center | BS Commerce', description: 'Answers to common questions about orders, payments, delivery, and authenticity.' },
       layout: [
         {
           blockType: 'hero',

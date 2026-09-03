@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Electronics Store Showcase Seeder (Apple Gadgets BD)
+ * Electronics Store Showcase Seeder (BS Commerce)
  * 
  * Usage from repository root or cloud container:
  *   node scripts/seed-electronics.mjs
@@ -17,7 +17,7 @@ const secret = process.env.SEED_SECRET || 'FrontendSeed2026!'
 
 async function run() {
   console.log('==================================================================')
-  console.log('⚡ ELECTRONICS E-COMMERCE SEEDER (Apple Gadgets BD Showcase) ⚡')
+  console.log('⚡ ELECTRONICS E-COMMERCE SEEDER (BS Commerce Showcase) ⚡')
   console.log('==================================================================')
   console.log(`Connecting to Backend: ${baseUrl}`)
   console.log('Preserving Admin Account: frontend-seed-sv@bscommerce.local (Password: FrontendSeed2026!)')
