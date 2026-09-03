@@ -39,9 +39,11 @@ export async function customerAnalyticsHandler(req: PayloadRequest): Promise<Res
         const dt = order.deviceTracking as Record<string, unknown>
         if (devicesList.length < 5) {
           devicesList.push({
+            orderNumber: typeof order.orderNumber === 'string' ? order.orderNumber : undefined,
             deviceType: typeof dt.deviceType === 'string' ? dt.deviceType : undefined,
             browser: typeof dt.browser === 'string' ? dt.browser : undefined,
             os: typeof dt.os === 'string' ? dt.os : undefined,
+            ipAddress: typeof dt.ipAddress === 'string' ? dt.ipAddress : undefined,
             placedAt: typeof order.placedAt === 'string' ? order.placedAt : undefined,
           })
         }
