@@ -48,6 +48,7 @@ import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-pr
 import { storefrontVariantAvailabilityEndpoint } from './endpoints/storefront-variant-availability'
 import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
 import { customerAnalyticsEndpoint, customerRecommendationsEndpoint } from './endpoints/customer-analytics'
+import { seedElectronicsEndpoint, seedElectronicsPostEndpoint } from './endpoints/seed-electronics'
 import { geographyPlugin } from './plugins/geography'
 import { reportsPlugin } from './plugins/reports'
 import { migrations } from '../migrations'
@@ -166,6 +167,8 @@ export default buildConfig({
     storefrontGeographyEndpoint,
     customerAnalyticsEndpoint,
     customerRecommendationsEndpoint,
+    seedElectronicsEndpoint,
+    seedElectronicsPostEndpoint,
   ],
 
   // ─── Plugins ─────────────────────────────────────────────────────────────────

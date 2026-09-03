@@ -16,6 +16,7 @@
     "seed:frontend-demo:produce-bd": "node scripts/seed-client-demo-produce-bd.mjs",
     "seed:frontend-demo:produce-bd:images": "node scripts/download-produce-demo-images.mjs",
     "seed:farm-greens": "node scripts/seed-farm-greens.mjs",
+    "seed:electronics": "node scripts/seed-electronics.mjs",
     "reset:local-admin-password": "node scripts/reset-local-admin-password.mjs",
     "demo:sync-passwords": "node scripts/sync-all-user-passwords.mjs",
     "demo:bootstrap": "node scripts/run-client-demo-bootstrap.mjs",

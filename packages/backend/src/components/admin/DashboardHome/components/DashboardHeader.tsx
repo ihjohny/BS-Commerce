@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { StoreOption } from '../../../lib/admin-dashboard-stats'
+import type { StoreOption } from '../../../../lib/admin-dashboard-stats'
 
 type DashboardHeaderProps = {
   role: 'admin' | 'vendor'
@@ -245,6 +245,48 @@ export function DashboardHeader({
             }}
           >
             Reset to Default
+          </button>
+        )}
+
+        {/* Seed Electronics Store Button */}
+        {role === 'admin' && (
+          <button
+            onClick={async () => {
+              if (
+                window.confirm(
+                  '⚠️ Clear all existing data and reseed the Electronics Shop (Apple Gadgets BD)?\n\nThis will reset catalog/orders while preserving your admin login.'
+                )
+              ) {
+                const btn = document.getElementById('btn-reseed-electronics')
+                if (btn) btn.innerText = '⏳ Seeding Electronics...'
+                try {
+                  const res = await fetch('/api/seed/electronics?secret=FrontendSeed2026!', { method: 'POST' })
+                  const data = await res.json()
+                  if (data.success) {
+                    alert('✅ Electronics store successfully seeded! Reloading dashboard...')
+                    window.location.reload()
+                  } else {
+                    alert('❌ Error: ' + (data.error || 'Failed to seed'))
+                  }
+                } catch (e: any) {
+                  alert('❌ Error: ' + e.message)
+                } finally {
+                  if (btn) btn.innerText = '⚡ Seed Electronics Store'
+                }
+              }
+            }}
+            id="btn-reseed-electronics"
+            title="Clear database and populate rich electronics catalog"
+            style={{
+              ...inputStyle,
+              background: 'var(--theme-elevation-800, #1e293b)',
+              borderColor: 'var(--theme-elevation-700, #334155)',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: 12,
+            }}
+          >
+            ⚡ Seed Electronics Store
           </button>
         )}
       </div>
