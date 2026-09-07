@@ -1,9 +1,21 @@
-import type { CollectionBeforeValidateHook, CollectionConfig, Payload } from 'payload'
+import {
+  type CollectionBeforeOperationHook,
+  type CollectionBeforeValidateHook,
+  type CollectionConfig,
+  type Payload,
+  type Where,
+  APIError,
+} from 'payload'
 import { randomBytes } from 'node:crypto'
 import { isAdmin } from '../../../access/is-admin'
 import { isAdminOrVendorOwner } from '../../../access/is-admin-or-vendor-owner'
 import { slugField } from '../../../fields/slug'
 import { getCurrencyOptions, getDefaultCurrency } from '../../../lib/currencies'
+import {
+  parseSpecsFromSearchParams,
+  getMatchingProductIdsForSpecs,
+} from '../../../lib/specifications-query'
+import { productsCollectionFacetsEndpoint } from '../../../endpoints/storefront-facets'
 
 type SkuAutofillPolicy = 'always' | 'on-publish' | 'never'
 
@@ -239,6 +251,162 @@ function enforceBundleRules(multivendorEnabled: boolean): CollectionBeforeValida
   }
 }
 
+export const validateClassSpecifications: CollectionBeforeValidateHook = async ({ data, req }) => {
+  if (!data || typeof data !== 'object') return data
+  const d = data as Record<string, unknown>
+  const productClassId = toId(d.productClass)
+
+  // If productClass is explicitly cleared or missing, remove specifications
+  if (!productClassId) {
+    if (d.productClass === null || d.productClass === '') {
+      d.specifications = []
+    }
+    return data
+  }
+
+  if (!req?.payload) return data
+
+  try {
+    const classDoc = (await req.payload.findByID({
+      collection: 'classes',
+      id: productClassId,
+      depth: 1,
+      overrideAccess: true,
+    })) as Record<string, unknown> | null
+
+    if (!classDoc || !Array.isArray(classDoc.parameters)) return data
+
+    const allowedParamMap = new Map<string, Record<string, unknown>>()
+    for (const param of classDoc.parameters as Array<Record<string, unknown>>) {
+      if (param && param.key) {
+        allowedParamMap.set(String(param.key), param)
+      }
+    }
+
+    const specs = Array.isArray(d.specifications)
+      ? (d.specifications as Array<Record<string, unknown>>)
+      : []
+
+    // Clean up specifications:
+    // 1. Remove old parameters that do not belong to the current product class
+    // 2. Auto-sync label and unit from parameter definitions
+    const cleanedSpecs: Array<Record<string, unknown>> = []
+    const specMap = new Map<string, string>()
+
+    for (const s of specs) {
+      if (!s || typeof s !== 'object') continue
+      const k = String(s.key || '')
+      if (allowedParamMap.has(k)) {
+        const paramDef = allowedParamMap.get(k)!
+        const paramLabel =
+          typeof paramDef.label === 'object' && paramDef.label !== null
+            ? (paramDef.label as Record<string, string>).en ||
+              Object.values(paramDef.label)[0] ||
+              k
+            : String(paramDef.label || k)
+        const unitVal =
+          s.unit !== undefined && s.unit !== null && String(s.unit).trim() !== ''
+            ? String(s.unit)
+            : String(paramDef.unit || '')
+        const val =
+          s.value !== undefined && s.value !== null ? String(s.value).trim() : ''
+
+        cleanedSpecs.push({
+          ...s,
+          key: k,
+          value: val,
+          label: s.label ? String(s.label) : paramLabel,
+          unit: unitVal,
+        })
+        specMap.set(k, val)
+      }
+    }
+
+    d.specifications = cleanedSpecs
+
+    const status = String(d.status ?? 'draft')
+    for (const [paramKey, param] of allowedParamMap.entries()) {
+      const val = specMap.get(paramKey) || ''
+
+      if (status === 'published' && param.isRequired && !val) {
+        const paramLabel =
+          typeof param.label === 'object' && param.label !== null
+            ? (param.label as Record<string, string>).en ||
+              Object.values(param.label)[0] ||
+              paramKey
+            : String(param.label || paramKey)
+        throw new APIError(`Required specification "${paramLabel}" is missing.`, 400)
+      }
+
+      if (
+        val &&
+        param.type === 'select' &&
+        Array.isArray(param.options) &&
+        param.options.length > 0
+      ) {
+        const allowed = param.options.map((o: Record<string, unknown>) =>
+          String(o.value).toLowerCase()
+        )
+        if (!allowed.includes(val.toLowerCase())) {
+          const paramLabel =
+            typeof param.label === 'object' && param.label !== null
+              ? (param.label as Record<string, string>).en ||
+                Object.values(param.label)[0] ||
+                paramKey
+              : String(param.label || paramKey)
+          throw new APIError(
+            `Invalid value "${val}" for specification "${paramLabel}". Allowed: ${allowed.join(', ')}`,
+            400
+          )
+        }
+      }
+    }
+  } catch (err: any) {
+    if (err instanceof APIError || (err?.message && err.message.includes('specification'))) {
+      throw err
+    }
+  }
+
+  return data
+}
+
+const applySpecificationFacetFilters: CollectionBeforeOperationHook = async ({
+  args,
+  operation,
+  req,
+}) => {
+  if (operation === 'read' || operation === 'count' || (operation as any) === 'find') {
+    try {
+      const rawParams =
+        (req as any)?.query ||
+        (req as any)?.searchParams ||
+        (req?.url ? new URL(req.url, 'http://localhost').searchParams : undefined)
+
+      if (rawParams) {
+        const { productClass, specs } = parseSpecsFromSearchParams(rawParams)
+        if (productClass || Object.keys(specs).length > 0) {
+          const matchingIds = await getMatchingProductIdsForSpecs(req.payload, specs, productClass)
+          if (matchingIds !== undefined) {
+            const idFilter: Where =
+              matchingIds.length > 0
+                ? { id: { in: matchingIds } }
+                : { id: { equals: '00000000-0000-0000-0000-000000000000' } }
+
+            if (args.where) {
+              args.where = { and: [args.where, idFilter] }
+            } else {
+              args.where = idFilter
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      req.payload.logger?.warn(`[applySpecificationFacetFilters] Error: ${e?.message || e}`)
+    }
+  }
+  return args
+}
+
 export function createProductsConfig(multivendorEnabled = false): CollectionConfig {
   const fields: CollectionConfig['fields'] = [
     { name: 'name', type: 'text', required: true, localized: true },
@@ -300,6 +468,37 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       admin: {
         description: 'Series, technical specifications, and feature facets tagged to this product.',
       },
+    },
+    {
+      name: 'productClass',
+      type: 'relationship',
+      relationTo: 'classes',
+      hasMany: false,
+      admin: {
+        description:
+          'Dynamic Specification Template / Class (e.g., "Power Bank", "Smartphone", "Headphones"). Products inherit defined parameters.',
+      },
+    },
+    {
+      name: 'specifications',
+      type: 'array',
+      labels: {
+        singular: 'Specification',
+        plural: 'Specifications',
+      },
+      admin: {
+        description:
+          'Structured technical specifications inherited from the assigned Product Class.',
+        components: {
+          Field: '/components/admin/ProductSpecificationsField',
+        },
+      },
+      fields: [
+        { name: 'key', type: 'text', required: true },
+        { name: 'value', type: 'text', required: true },
+        { name: 'label', type: 'text' },
+        { name: 'unit', type: 'text' },
+      ],
     },
     {
       name: 'tags',
@@ -434,9 +633,12 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       beforeValidate: [
         ...(multivendorEnabled ? [autoAssignTenantForVendor] : []),
         ensureProductSkuAutofill,
+        validateClassSpecifications,
         enforceBundleRules(multivendorEnabled),
       ],
+      beforeOperation: [applySpecificationFacetFilters],
     },
+    endpoints: [productsCollectionFacetsEndpoint],
     fields,
     timestamps: true,
   }

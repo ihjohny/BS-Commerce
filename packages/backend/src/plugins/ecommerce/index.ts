@@ -1,6 +1,7 @@
 import type { Plugin } from 'payload'
 import { Brands } from './collections/brands'
 import { Attributes } from './collections/attributes'
+import { Classes } from './collections/classes'
 import { createProductsConfig } from './collections/products'
 import { createProductVariantsConfig } from './collections/product-variants'
 import { createCartsConfig } from './collections/carts'
@@ -9,6 +10,7 @@ import { WishlistItems } from './collections/wishlist-items'
 
 export { Brands } from './collections/brands'
 export { Attributes } from './collections/attributes'
+export { Classes } from './collections/classes'
 
 export interface EcommercePluginOptions {
   enabled?: boolean
@@ -30,6 +32,7 @@ export const ecommercePlugin =
         ...(incomingConfig.collections || []),
         Brands,
         Attributes,
+        Classes,
         createProductsConfig(multivendorEnabled),
         createProductVariantsConfig(multivendorEnabled),
         createCartsConfig(multivendorEnabled, allowGuestCheckout),
@@ -38,3 +41,4 @@ export const ecommercePlugin =
       ],
     }
   }
+

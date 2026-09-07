@@ -47,6 +47,10 @@ import { openapiAllEndpoint } from './endpoints/openapi-all'
 import { storefrontStoreProductsEndpoint } from './endpoints/storefront-store-products'
 import { storefrontVariantAvailabilityEndpoint } from './endpoints/storefront-variant-availability'
 import { storefrontGeographyEndpoint } from './endpoints/storefront-geography'
+import {
+  storefrontFacetsEndpoint,
+  productsFacetsEndpoint,
+} from './endpoints/storefront-facets'
 import { customerAnalyticsEndpoint, customerRecommendationsEndpoint } from './endpoints/customer-analytics'
 import { seedElectronicsEndpoint, seedElectronicsPostEndpoint } from './endpoints/seed-electronics'
 import { geographyPlugin } from './plugins/geography'
@@ -165,6 +169,8 @@ export default buildConfig({
     storefrontStoreProductsEndpoint,
     storefrontVariantAvailabilityEndpoint,
     storefrontGeographyEndpoint,
+    storefrontFacetsEndpoint,
+    productsFacetsEndpoint,
     customerAnalyticsEndpoint,
     customerRecommendationsEndpoint,
     seedElectronicsEndpoint,

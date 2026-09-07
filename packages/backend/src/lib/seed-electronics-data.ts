@@ -33,6 +33,7 @@ export interface SeedResult {
   seeded?: {
     categoriesCount: number
     brandsCount: number
+    classesCount?: number
     productsCount: number
     variantsCount: number
     outletsCount: number
@@ -162,6 +163,220 @@ export async function ensureBrandCatalogSchema(payload: Payload): Promise<void> 
 }
 
 /**
+ * Ensures Classes, parameters, and products.product_class_id tables exist in PostgreSQL without requiring separate migrations.
+ */
+export async function ensureClassesCatalogSchema(payload: Payload): Promise<void> {
+  try {
+    const db = (payload.db as any)?.drizzle || (payload.db as any)
+    if (db && typeof db.execute === 'function') {
+      const { sql } = await import('@payloadcms/db-postgres')
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS "classes" (
+          "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+          "slug" character varying,
+          "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+          "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+        );
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "classes_slug_idx" ON "classes" USING btree ("slug");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_created_at_idx" ON "classes" USING btree ("created_at");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_updated_at_idx" ON "classes" USING btree ("updated_at");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_locales" (
+          "name" character varying NOT NULL,
+          "description" character varying,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" uuid NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_locales" ADD CONSTRAINT "classes_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "classes_locales_locale_parent_id_unique" ON "classes_locales" USING btree ("_locale", "_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_parameters" (
+          "_order" integer NOT NULL,
+          "_parent_id" uuid NOT NULL,
+          "id" character varying PRIMARY KEY NOT NULL,
+          "key" character varying NOT NULL,
+          "type" character varying DEFAULT 'text' NOT NULL,
+          "unit" character varying,
+          "is_filterable" boolean DEFAULT true,
+          "is_required" boolean DEFAULT true,
+          "display_order" numeric DEFAULT 0
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_parameters" ADD CONSTRAINT "classes_parameters_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_parameters_order_idx" ON "classes_parameters" USING btree ("_order");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_parameters_parent_id_idx" ON "classes_parameters" USING btree ("_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_parameters_locales" (
+          "label" character varying NOT NULL,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" character varying NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_parameters_locales" ADD CONSTRAINT "classes_parameters_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_parameters"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "classes_parameters_locales_locale_parent_id_unique" ON "classes_parameters_locales" USING btree ("_locale", "_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_parameters_options" (
+          "_order" integer NOT NULL,
+          "_parent_id" character varying NOT NULL,
+          "id" character varying PRIMARY KEY NOT NULL,
+          "value" character varying NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_parameters_options" ADD CONSTRAINT "classes_parameters_options_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_parameters"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_parameters_options_order_idx" ON "classes_parameters_options" USING btree ("_order");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_parameters_options_parent_id_idx" ON "classes_parameters_options" USING btree ("_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_parameters_options_locales" (
+          "label" character varying NOT NULL,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" character varying NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_parameters_options_locales" ADD CONSTRAINT "classes_parameters_options_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_parameters_options"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "classes_parameters_options_locales_locale_parent_id_unique" ON "classes_parameters_options_locales" USING btree ("_locale", "_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        ALTER TABLE "products" DROP CONSTRAINT IF EXISTS "products_product_class_id_product_classes_id_fk";
+        ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "product_class_id" uuid;
+
+        DO $$ BEGIN
+          ALTER TABLE "products" ADD CONSTRAINT "products_product_class_id_classes_id_fk" FOREIGN KEY ("product_class_id") REFERENCES "classes"("id") ON DELETE set null ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "products_product_class_idx" ON "products" USING btree ("product_class_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "products_specifications" (
+          "_order" integer NOT NULL,
+          "_parent_id" uuid NOT NULL,
+          "id" character varying PRIMARY KEY NOT NULL,
+          "key" character varying NOT NULL,
+          "value" character varying NOT NULL,
+          "label" character varying,
+          "unit" character varying
+        );
+
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "label" character varying;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "unit" character varying;
+
+        DO $$ BEGIN
+          ALTER TABLE "products_specifications" ADD CONSTRAINT "products_specifications_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "products_specifications_order_idx" ON "products_specifications" USING btree ("_order");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "products_specifications_parent_id_idx" ON "products_specifications" USING btree ("_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "products_specifications_key_idx" ON "products_specifications" USING btree ("key");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "classes_id" uuid;
+        DO $$ BEGIN
+          ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_classes_fk" FOREIGN KEY ("classes_id") REFERENCES "classes"("id") ON DELETE CASCADE;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+        CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_classes_id_idx" ON "payload_locked_documents_rels" USING btree ("classes_id");
+      `)
+      payload.logger.info('[Electronics Seeder] Verified Classes & Specifications schema readiness.')
+    }
+  } catch (err: any) {
+    payload.logger.warn(`[Electronics Seeder] Notice verifying Classes schema: ${err?.message || err}`)
+  }
+}
+
+/**
  * 1. Database Wiper: Clears all catalog, transaction and page data, keeping admin intact.
  */
 export async function wipeDatabaseForElectronics(
@@ -171,6 +386,7 @@ export async function wipeDatabaseForElectronics(
   payload.logger.info('[Electronics Seeder] Starting clean wipe of existing data...')
 
   const collectionsToClear = [
+    'addresses',
     'order-items',
     'orders',
     'carts',
@@ -180,6 +396,7 @@ export async function wipeDatabaseForElectronics(
     'stock-levels',
     'product-variants',
     'products',
+    'classes',
     'brands',
     'attributes',
     'categories',
@@ -248,8 +465,9 @@ export async function seedElectronicsStore(
   const adminEmail = options.adminEmail || 'frontend-seed-sv@bscommerce.local'
   let wipedInfo: { collections: string[]; nonAdminUsersDeleted: number } | undefined
 
-  // Ensure DB schema for brands exists even if migrations were not run
+  // Ensure DB schema for brands and classes exists even if migrations were not run
   await ensureBrandCatalogSchema(payload)
+  await ensureClassesCatalogSchema(payload)
 
   if (options.wipeFirst !== false) {
     wipedInfo = await wipeDatabaseForElectronics(payload, adminEmail)
@@ -1113,12 +1331,379 @@ export async function seedElectronicsStore(
     attributeMap[a.slug] = String(doc.id)
   }
 
+  // ─── 6.5. PRODUCT CLASSES (Specification Templates / Attribute Sets) ──────
+  const classesData = [
+    {
+      name: 'Power Bank',
+      slug: 'power-bank',
+      description:
+        'Portable external battery packs, MagSafe wireless chargers, and fast-charge power banks.',
+      parameters: [
+        {
+          key: 'capacity',
+          label: 'Battery Capacity',
+          type: 'select',
+          unit: 'mAh',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 1,
+          options: [
+            { label: '10,000 mAh', value: '10000mah' },
+            { label: '20,000 mAh', value: '20000mah' },
+            { label: '24,000 mAh', value: '24000mah' },
+            { label: '30,000 mAh', value: '30000mah' },
+          ],
+        },
+        {
+          key: 'battery_type',
+          label: 'Battery Cell Type',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 2,
+          options: [
+            { label: 'Lithium-Polymer', value: 'lithium-polymer' },
+            { label: 'Lithium-Ion', value: 'lithium-ion' },
+          ],
+        },
+        {
+          key: 'total_output',
+          label: 'Total Output',
+          type: 'text',
+          unit: 'W',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 3,
+        },
+        {
+          key: 'fast_charging_tech',
+          label: 'Fast Charging Standard',
+          type: 'select',
+          isFilterable: true,
+          isRequired: false,
+          displayOrder: 4,
+          options: [
+            { label: 'Power Delivery (PD)', value: 'power-delivery' },
+            { label: 'GaNFast / GaNPrime', value: 'gan-prime' },
+            { label: 'Quick Charge 4.0+', value: 'quick-charge' },
+            { label: 'Qi2 Wireless', value: 'qi2-wireless' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Smartphone',
+      slug: 'smartphone',
+      description: 'Flagship and premium smartphones, Android & iOS devices.',
+      parameters: [
+        {
+          key: 'screen_size',
+          label: 'Display Screen Size',
+          type: 'text',
+          unit: 'inch',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 1,
+        },
+        {
+          key: 'processor',
+          label: 'Processor / Chipset',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 2,
+          options: [
+            { label: 'Apple A18 Pro', value: 'apple-a18-pro' },
+            { label: 'Apple A18', value: 'apple-a18' },
+            { label: 'Snapdragon 8 Gen 3', value: 'snapdragon-8-gen-3' },
+            { label: 'Google Tensor G4', value: 'google-tensor-g4' },
+          ],
+        },
+        {
+          key: 'ram',
+          label: 'RAM Capacity',
+          type: 'select',
+          unit: 'GB',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 3,
+          options: [
+            { label: '8 GB', value: '8gb' },
+            { label: '12 GB', value: '12gb' },
+            { label: '16 GB', value: '16gb' },
+          ],
+        },
+        {
+          key: 'storage',
+          label: 'Internal Storage',
+          type: 'select',
+          unit: 'GB',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 4,
+          options: [
+            { label: '128 GB', value: '128gb' },
+            { label: '256 GB', value: '256gb' },
+            { label: '512 GB', value: '512gb' },
+            { label: '1 TB', value: '1tb' },
+          ],
+        },
+        {
+          key: 'battery_capacity',
+          label: 'Battery Capacity',
+          type: 'select',
+          unit: 'mAh',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 5,
+          options: [
+            { label: '3,561 mAh', value: '3561mah' },
+            { label: '4,685 mAh', value: '4685mah' },
+            { label: '5,000 mAh', value: '5000mah' },
+            { label: '5,060 mAh', value: '5060mah' },
+          ],
+        },
+        {
+          key: 'cellular_network',
+          label: 'Cellular Connectivity',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 6,
+          options: [
+            { label: '5G Sub-6 / mmWave', value: '5g' },
+            { label: '4G LTE', value: '4g-lte' },
+          ],
+        },
+        {
+          key: 'operating_system',
+          label: 'Operating System',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 7,
+          options: [
+            { label: 'iOS 18', value: 'ios-18' },
+            { label: 'Android 14', value: 'android-14' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Headphones & Earbuds',
+      slug: 'headphones',
+      description:
+        'Over-ear headphones, noise cancelling acoustics, and true wireless stereo (TWS) earbuds.',
+      parameters: [
+        {
+          key: 'type',
+          label: 'Headphone Form Factor',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 1,
+          options: [
+            { label: 'In-Ear (TWS)', value: 'in-ear' },
+            { label: 'Over-Ear', value: 'over-ear' },
+            { label: 'On-Ear', value: 'on-ear' },
+          ],
+        },
+        {
+          key: 'connectivity',
+          label: 'Wireless Connectivity',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 2,
+          options: [
+            { label: 'Bluetooth 5.3', value: 'bluetooth-5-3' },
+            { label: 'Bluetooth 5.2', value: 'bluetooth-5-2' },
+            { label: 'Wired 3.5mm', value: 'wired-3-5mm' },
+          ],
+        },
+        {
+          key: 'battery_life',
+          label: 'Battery Playtime',
+          type: 'text',
+          unit: 'hrs',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 3,
+        },
+        {
+          key: 'noise_cancellation',
+          label: 'Active Noise Cancellation',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 4,
+          options: [
+            { label: 'Active Noise Cancellation (ANC)', value: 'anc' },
+            { label: 'Adaptive ANC', value: 'adaptive-anc' },
+            { label: 'Environmental Noise Cancellation (ENC)', value: 'enc' },
+            { label: 'Passive Noise Isolation', value: 'none' },
+          ],
+        },
+        {
+          key: 'water_resistance',
+          label: 'Water / Sweat Resistance',
+          type: 'select',
+          isFilterable: true,
+          isRequired: false,
+          displayOrder: 5,
+          options: [
+            { label: 'IP54 Dust & Splash Resistant', value: 'ip54' },
+            { label: 'IPX4 Sweat Resistant', value: 'ipx4' },
+            { label: 'IPX5 Water Resistant', value: 'ipx5' },
+            { label: 'Not Rated', value: 'none' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Laptop & Computer',
+      slug: 'laptop',
+      description: 'Pro laptops, MacBooks, and creator workstations.',
+      parameters: [
+        {
+          key: 'screen_size',
+          label: 'Display Screen Size',
+          type: 'text',
+          unit: 'inch',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 1,
+        },
+        {
+          key: 'cpu',
+          label: 'Processor (CPU)',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 2,
+          options: [
+            { label: 'Apple M3 Max', value: 'apple-m3-max' },
+            { label: 'Apple M3 Pro', value: 'apple-m3-pro' },
+            { label: 'Apple M3', value: 'apple-m3' },
+            { label: 'Intel Core Ultra 9', value: 'intel-ultra-9' },
+          ],
+        },
+        {
+          key: 'ram',
+          label: 'Unified RAM Memory',
+          type: 'select',
+          unit: 'GB',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 3,
+          options: [
+            { label: '16 GB', value: '16gb' },
+            { label: '32 GB', value: '32gb' },
+            { label: '36 GB', value: '36gb' },
+            { label: '64 GB', value: '64gb' },
+          ],
+        },
+        {
+          key: 'storage',
+          label: 'SSD Storage',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 4,
+          options: [
+            { label: '512 GB SSD', value: '512gb-ssd' },
+            { label: '1 TB SSD', value: '1tb-ssd' },
+            { label: '2 TB SSD', value: '2tb-ssd' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'Smartwatch',
+      slug: 'smartwatch',
+      description: 'Adventure smartwatches, health trackers, and wearable tech.',
+      parameters: [
+        {
+          key: 'display_type',
+          label: 'Display Panel Type',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 1,
+          options: [
+            { label: 'LTPO OLED Retina', value: 'ltpo-oled' },
+            { label: 'Super AMOLED', value: 'super-amoled' },
+          ],
+        },
+        {
+          key: 'battery_life',
+          label: 'Battery Life',
+          type: 'text',
+          unit: 'hrs',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 2,
+        },
+        {
+          key: 'water_resistance',
+          label: 'Water Resistance Depth',
+          type: 'select',
+          isFilterable: true,
+          isRequired: true,
+          displayOrder: 3,
+          options: [
+            { label: '100m / 10ATM (Diving)', value: '100m-dive' },
+            { label: '50m / 5ATM (Swimming)', value: '50m-swim' },
+          ],
+        },
+        {
+          key: 'case_material',
+          label: 'Case Enclosure Material',
+          type: 'select',
+          isFilterable: true,
+          isRequired: false,
+          displayOrder: 4,
+          options: [
+            { label: 'Aerospace Grade Titanium', value: 'aerospace-titanium' },
+            { label: 'Recycled Aluminum', value: 'recycled-aluminum' },
+          ],
+        },
+      ],
+    },
+  ]
+
+  const classMap: Record<string, string> = {}
+  const classParamsMap: Record<string, Record<string, { label: string; unit: string }>> = {}
+  for (const c of classesData) {
+    const doc = await payload.create({
+      collection: 'classes',
+      data: c as any,
+      overrideAccess: true,
+    })
+    classMap[c.slug] = String(doc.id)
+    classParamsMap[c.slug] = {}
+    if (Array.isArray(c.parameters)) {
+      for (const p of c.parameters) {
+        const paramLabel =
+          typeof p.label === 'object' && p.label !== null
+            ? (p.label as any).en || Object.values(p.label)[0] || p.key
+            : String(p.label || p.key)
+        classParamsMap[c.slug][p.key] = {
+          label: paramLabel,
+          unit: p.unit || '',
+        }
+      }
+    }
+  }
+
   // ─── 7. 38 FLAGSHIP PRODUCTS WITH VARIANTS & MEDIA IMAGES ──────────────────
   interface ProductSeedDef {
     name: string
     slug: string
     categorySlug: string
     brandSlug: string
+    classSlug?: string
+    specifications?: Array<{ key: string; value: string; label?: string; unit?: string }>
     basePrice: number
     compareAtPrice?: number
     saleDisplayMode?: string
@@ -1142,6 +1727,16 @@ export async function seedElectronicsStore(
       slug: 'apple-iphone-16-pro-max',
       categorySlug: 'phones-tablets',
       brandSlug: 'apple',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.9' },
+        { key: 'processor', value: 'apple-a18-pro' },
+        { key: 'ram', value: '8gb' },
+        { key: 'storage', value: '256gb' },
+        { key: 'battery_capacity', value: '4685mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'ios-18' },
+      ],
       basePrice: 172000,
       compareAtPrice: 185000,
       saleDisplayMode: 'strike_and_badge',
@@ -1162,6 +1757,16 @@ export async function seedElectronicsStore(
       slug: 'apple-iphone-16',
       categorySlug: 'phones-tablets',
       brandSlug: 'apple',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.1' },
+        { key: 'processor', value: 'apple-a18' },
+        { key: 'ram', value: '8gb' },
+        { key: 'storage', value: '128gb' },
+        { key: 'battery_capacity', value: '3561mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'ios-18' },
+      ],
       basePrice: 112000,
       compareAtPrice: 120000,
       featured: true,
@@ -1179,6 +1784,16 @@ export async function seedElectronicsStore(
       slug: 'samsung-galaxy-s24-ultra',
       categorySlug: 'phones-tablets',
       brandSlug: 'samsung',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.8' },
+        { key: 'processor', value: 'snapdragon-8-gen-3' },
+        { key: 'ram', value: '12gb' },
+        { key: 'storage', value: '256gb' },
+        { key: 'battery_capacity', value: '5000mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'android-14' },
+      ],
       basePrice: 148000,
       compareAtPrice: 162000,
       featured: true,
@@ -1196,6 +1811,16 @@ export async function seedElectronicsStore(
       slug: 'google-pixel-9-pro-xl',
       categorySlug: 'phones-tablets',
       brandSlug: 'google-pixel',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.8' },
+        { key: 'processor', value: 'google-tensor-g4' },
+        { key: 'ram', value: '16gb' },
+        { key: 'storage', value: '128gb' },
+        { key: 'battery_capacity', value: '5060mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'android-14' },
+      ],
       basePrice: 135000,
       compareAtPrice: 145000,
       featured: true,
@@ -1212,6 +1837,16 @@ export async function seedElectronicsStore(
       slug: 'xiaomi-14-ultra-5g',
       categorySlug: 'phones-tablets',
       brandSlug: 'xiaomi',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.73' },
+        { key: 'processor', value: 'snapdragon-8-gen-3' },
+        { key: 'ram', value: '16gb' },
+        { key: 'storage', value: '512gb' },
+        { key: 'battery_capacity', value: '5000mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'android-14' },
+      ],
       basePrice: 135000,
       compareAtPrice: 148000,
       featured: true,
@@ -1228,6 +1863,16 @@ export async function seedElectronicsStore(
       slug: 'oneplus-12-5g',
       categorySlug: 'phones-tablets',
       brandSlug: 'oneplus',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.82' },
+        { key: 'processor', value: 'snapdragon-8-gen-3' },
+        { key: 'ram', value: '16gb' },
+        { key: 'storage', value: '512gb' },
+        { key: 'battery_capacity', value: '5000mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'android-14' },
+      ],
       basePrice: 92000,
       compareAtPrice: 99000,
       imageKey: 'category-electronics-1',
@@ -1243,6 +1888,16 @@ export async function seedElectronicsStore(
       slug: 'google-pixel-8a',
       categorySlug: 'phones-tablets',
       brandSlug: 'google-pixel',
+      classSlug: 'smartphone',
+      specifications: [
+        { key: 'screen_size', value: '6.1' },
+        { key: 'processor', value: 'google-tensor-g4' },
+        { key: 'ram', value: '8gb' },
+        { key: 'storage', value: '128gb' },
+        { key: 'battery_capacity', value: '4685mah' },
+        { key: 'cellular_network', value: '5g' },
+        { key: 'operating_system', value: 'android-14' },
+      ],
       basePrice: 58000,
       compareAtPrice: 64000,
       imageKey: 'category-electronics-1',
@@ -1291,6 +1946,13 @@ export async function seedElectronicsStore(
       slug: 'apple-macbook-pro-16-m3-max',
       categorySlug: 'laptops-macbooks',
       brandSlug: 'apple',
+      classSlug: 'laptop',
+      specifications: [
+        { key: 'screen_size', value: '16.2' },
+        { key: 'cpu', value: 'apple-m3-max' },
+        { key: 'ram', value: '36gb' },
+        { key: 'storage', value: '512gb-ssd' },
+      ],
       basePrice: 385000,
       compareAtPrice: 415000,
       featured: true,
@@ -1307,6 +1969,13 @@ export async function seedElectronicsStore(
       slug: 'apple-macbook-air-15-m3',
       categorySlug: 'laptops-macbooks',
       brandSlug: 'apple',
+      classSlug: 'laptop',
+      specifications: [
+        { key: 'screen_size', value: '15.3' },
+        { key: 'cpu', value: 'apple-m3' },
+        { key: 'ram', value: '16gb' },
+        { key: 'storage', value: '512gb-ssd' },
+      ],
       basePrice: 168000,
       compareAtPrice: 180000,
       featured: true,
@@ -1323,6 +1992,13 @@ export async function seedElectronicsStore(
       slug: 'apple-macbook-air-13-m2',
       categorySlug: 'laptops-macbooks',
       brandSlug: 'apple',
+      classSlug: 'laptop',
+      specifications: [
+        { key: 'screen_size', value: '13.6' },
+        { key: 'cpu', value: 'apple-m3' },
+        { key: 'ram', value: '16gb' },
+        { key: 'storage', value: '512gb-ssd' },
+      ],
       basePrice: 118000,
       compareAtPrice: 128000,
       imageKey: 'category-creator-studio-1',
@@ -1338,6 +2014,13 @@ export async function seedElectronicsStore(
       slug: 'asus-rog-strix-scar-18',
       categorySlug: 'laptops-macbooks',
       brandSlug: 'asus-rog',
+      classSlug: 'laptop',
+      specifications: [
+        { key: 'screen_size', value: '18.0' },
+        { key: 'cpu', value: 'intel-ultra-9' },
+        { key: 'ram', value: '32gb' },
+        { key: 'storage', value: '2tb-ssd' },
+      ],
       basePrice: 425000,
       compareAtPrice: 460000,
       imageKey: 'category-creator-studio-1',
@@ -1354,6 +2037,13 @@ export async function seedElectronicsStore(
       slug: 'apple-watch-ultra-2',
       categorySlug: 'watches-wearables',
       brandSlug: 'apple',
+      classSlug: 'smartwatch',
+      specifications: [
+        { key: 'display_type', value: 'ltpo-oled' },
+        { key: 'battery_life', value: '72' },
+        { key: 'water_resistance', value: '100m-dive' },
+        { key: 'case_material', value: 'aerospace-titanium' },
+      ],
       basePrice: 98000,
       compareAtPrice: 108000,
       featured: true,
@@ -1370,6 +2060,13 @@ export async function seedElectronicsStore(
       slug: 'apple-watch-series-10',
       categorySlug: 'watches-wearables',
       brandSlug: 'apple',
+      classSlug: 'smartwatch',
+      specifications: [
+        { key: 'display_type', value: 'ltpo-oled' },
+        { key: 'battery_life', value: '18' },
+        { key: 'water_resistance', value: '50m-swim' },
+        { key: 'case_material', value: 'recycled-aluminum' },
+      ],
       basePrice: 58000,
       compareAtPrice: 64000,
       featured: true,
@@ -1386,6 +2083,13 @@ export async function seedElectronicsStore(
       slug: 'samsung-galaxy-watch-ultra',
       categorySlug: 'watches-wearables',
       brandSlug: 'samsung',
+      classSlug: 'smartwatch',
+      specifications: [
+        { key: 'display_type', value: 'super-amoled' },
+        { key: 'battery_life', value: '60' },
+        { key: 'water_resistance', value: '100m-dive' },
+        { key: 'case_material', value: 'aerospace-titanium' },
+      ],
       basePrice: 72000,
       compareAtPrice: 79000,
       imageKey: 'category-office-gear-1',
@@ -1402,6 +2106,14 @@ export async function seedElectronicsStore(
       slug: 'apple-airpods-pro-2-usb-c',
       categorySlug: 'audio-sound',
       brandSlug: 'apple',
+      classSlug: 'headphones',
+      specifications: [
+        { key: 'type', value: 'in-ear' },
+        { key: 'connectivity', value: 'bluetooth-5-3' },
+        { key: 'battery_life', value: '30' },
+        { key: 'noise_cancellation', value: 'adaptive-anc' },
+        { key: 'water_resistance', value: 'ip54' },
+      ],
       basePrice: 26500,
       compareAtPrice: 29500,
       featured: true,
@@ -1417,6 +2129,14 @@ export async function seedElectronicsStore(
       slug: 'apple-airpods-max-usb-c',
       categorySlug: 'audio-sound',
       brandSlug: 'apple',
+      classSlug: 'headphones',
+      specifications: [
+        { key: 'type', value: 'over-ear' },
+        { key: 'connectivity', value: 'bluetooth-5-3' },
+        { key: 'battery_life', value: '20' },
+        { key: 'noise_cancellation', value: 'anc' },
+        { key: 'water_resistance', value: 'none' },
+      ],
       basePrice: 68000,
       compareAtPrice: 75000,
       featured: true,
@@ -1433,6 +2153,14 @@ export async function seedElectronicsStore(
       slug: 'sony-wh-1000xm5',
       categorySlug: 'audio-sound',
       brandSlug: 'sony',
+      classSlug: 'headphones',
+      specifications: [
+        { key: 'type', value: 'over-ear' },
+        { key: 'connectivity', value: 'bluetooth-5-2' },
+        { key: 'battery_life', value: '30' },
+        { key: 'noise_cancellation', value: 'anc' },
+        { key: 'water_resistance', value: 'none' },
+      ],
       basePrice: 38500,
       compareAtPrice: 43000,
       featured: true,
@@ -1449,6 +2177,14 @@ export async function seedElectronicsStore(
       slug: 'samsung-galaxy-buds3-pro',
       categorySlug: 'audio-sound',
       brandSlug: 'samsung',
+      classSlug: 'headphones',
+      specifications: [
+        { key: 'type', value: 'in-ear' },
+        { key: 'connectivity', value: 'bluetooth-5-3' },
+        { key: 'battery_life', value: '30' },
+        { key: 'noise_cancellation', value: 'adaptive-anc' },
+        { key: 'water_resistance', value: 'ip54' },
+      ],
       basePrice: 23000,
       compareAtPrice: 26000,
       imageKey: 'sv-demo-earbuds',
@@ -1464,6 +2200,14 @@ export async function seedElectronicsStore(
       slug: 'oneplus-buds-pro-3',
       categorySlug: 'audio-sound',
       brandSlug: 'oneplus',
+      classSlug: 'headphones',
+      specifications: [
+        { key: 'type', value: 'in-ear' },
+        { key: 'connectivity', value: 'bluetooth-5-3' },
+        { key: 'battery_life', value: '43' },
+        { key: 'noise_cancellation', value: 'adaptive-anc' },
+        { key: 'water_resistance', value: 'ip54' },
+      ],
       basePrice: 18500,
       compareAtPrice: 21000,
       imageKey: 'sv-demo-earbuds',
@@ -1479,6 +2223,14 @@ export async function seedElectronicsStore(
       slug: 'bose-quietcomfort-ultra',
       categorySlug: 'audio-sound',
       brandSlug: 'bose',
+      classSlug: 'headphones',
+      specifications: [
+        { key: 'type', value: 'over-ear' },
+        { key: 'connectivity', value: 'bluetooth-5-3' },
+        { key: 'battery_life', value: '24' },
+        { key: 'noise_cancellation', value: 'anc' },
+        { key: 'water_resistance', value: 'none' },
+      ],
       basePrice: 46000,
       compareAtPrice: 52000,
       imageKey: 'sv-demo-earbuds',
@@ -1617,6 +2369,13 @@ export async function seedElectronicsStore(
       slug: 'anker-prime-27650mah-250w',
       categorySlug: 'power-accessories',
       brandSlug: 'anker',
+      classSlug: 'power-bank',
+      specifications: [
+        { key: 'capacity', value: '30000mah' },
+        { key: 'battery_type', value: 'lithium-ion' },
+        { key: 'total_output', value: '250W' },
+        { key: 'fast_charging_tech', value: 'gan-prime' },
+      ],
       basePrice: 18500,
       compareAtPrice: 21000,
       featured: true,
@@ -1625,6 +2384,49 @@ export async function seedElectronicsStore(
       description: 'Ultra-fast 250W multi-device fast charging power bank with smart digital display, Anker App connectivity, and airline approval.',
       variants: [
         { name: 'Prime 27,650mAh 250W (Smart Display)', price: 18500, compareAtPrice: 21000, options: [{ name: 'Capacity', value: '27,650mAh / 250W' }], stockQty: 25 },
+      ],
+    },
+    {
+      name: 'Anker 737 Power Bank (PowerCore 24K 140W)',
+      slug: 'anker-737-power-bank-24000mah',
+      categorySlug: 'power-accessories',
+      brandSlug: 'anker',
+      classSlug: 'power-bank',
+      specifications: [
+        { key: 'capacity', value: '24000mah' },
+        { key: 'battery_type', value: 'lithium-ion' },
+        { key: 'total_output', value: '140W' },
+        { key: 'fast_charging_tech', value: 'power-delivery' },
+      ],
+      basePrice: 14500,
+      compareAtPrice: 16500,
+      featured: true,
+      imageKey: 'sv-portable-ssd-1tb-pro',
+      tags: ['Anker', 'Power Bank', '140W', 'PD 3.1'],
+      description: 'Equipped with USB Power Delivery 3.1 and bi-directional technology to quickly recharge the portable charger or get a 140W ultra-powerful charge.',
+      variants: [
+        { name: '24,000mAh / 140W Fast Charge', price: 14500, compareAtPrice: 16500, options: [{ name: 'Capacity', value: '24,000mAh' }], stockQty: 20 },
+      ],
+    },
+    {
+      name: 'Baseus Blade HD 100W 20,000mAh Ultra-Slim Power Bank',
+      slug: 'baseus-blade-hd-100w-20000mah',
+      categorySlug: 'power-accessories',
+      brandSlug: 'anker',
+      classSlug: 'power-bank',
+      specifications: [
+        { key: 'capacity', value: '20000mah' },
+        { key: 'battery_type', value: 'lithium-polymer' },
+        { key: 'total_output', value: '100W' },
+        { key: 'fast_charging_tech', value: 'power-delivery' },
+      ],
+      basePrice: 8900,
+      compareAtPrice: 10500,
+      imageKey: 'sv-portable-ssd-1tb-pro',
+      tags: ['Baseus', 'Blade', '100W', 'Ultra-Slim', 'Power Bank'],
+      description: 'Ultra-thin 0.7-inch laptop power bank with 100W dual USB-C Power Delivery and digital status monitor.',
+      variants: [
+        { name: '20,000mAh / 100W Blade HD', price: 8900, compareAtPrice: 10500, options: [{ name: 'Capacity', value: '20,000mAh' }], stockQty: 22 },
       ],
     },
     {
@@ -1646,6 +2448,13 @@ export async function seedElectronicsStore(
       slug: 'apple-magsafe-battery-pack-usb-c',
       categorySlug: 'power-accessories',
       brandSlug: 'apple',
+      classSlug: 'power-bank',
+      specifications: [
+        { key: 'capacity', value: '10000mah' },
+        { key: 'battery_type', value: 'lithium-polymer' },
+        { key: 'total_output', value: '15W' },
+        { key: 'fast_charging_tech', value: 'qi2-wireless' },
+      ],
       basePrice: 12500,
       compareAtPrice: 14000,
       imageKey: 'sv-wall-charger-65w-pro',
@@ -1766,6 +2575,19 @@ export async function seedElectronicsStore(
         brand: brandId || null,
         categories: catId ? [catId] : [],
         attributes: attributesList,
+        productClass: p.classSlug && classMap[p.classSlug] ? classMap[p.classSlug] : null,
+        specifications: (p.specifications || []).map((spec) => {
+          const paramInfo =
+            p.classSlug && classParamsMap[p.classSlug]
+              ? classParamsMap[p.classSlug][spec.key]
+              : null
+          return {
+            key: spec.key,
+            value: spec.value,
+            label: spec.label || paramInfo?.label || spec.key,
+            unit: spec.unit !== undefined ? spec.unit : (paramInfo?.unit || ''),
+          }
+        }),
         images: imgId ? [{ image: imgId }] : [],
         tags: p.tags.map((t) => ({ tag: t })),
         basePrice: p.basePrice,
@@ -2281,6 +3103,7 @@ export async function seedElectronicsStore(
     seeded: {
       categoriesCount: categoriesData.length,
       brandsCount: brandsData.length,
+      classesCount: classesData.length,
       productsCount: totalProducts,
       variantsCount: totalVariants,
       outletsCount: createdOutlets.length,

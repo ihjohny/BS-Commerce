@@ -11,6 +11,10 @@
  *   store, page, limit, sort, category, search, featured, locale, tenant, depth
  */
 import type { Endpoint, Where } from 'payload'
+import {
+  parseSpecsFromSearchParams,
+  getMatchingProductIdsForSpecs,
+} from '../lib/specifications-query'
 
 export const storefrontStoreProductsEndpoint: Endpoint = {
   path: '/storefront/store-products',
@@ -34,6 +38,8 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
     const productType = qs.get('productType') ?? undefined
     const minPrice = qs.get('minPrice') ?? undefined
     const maxPrice = qs.get('maxPrice') ?? undefined
+    const productClass = qs.get('class') ?? qs.get('productClass') ?? undefined
+    const { specs } = parseSpecsFromSearchParams(qs)
 
     try {
       let productIdFilter: string[] | undefined
@@ -106,6 +112,27 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
       }
       if (maxPrice) {
         andClauses.push({ basePrice: { less_than_equal: Number(maxPrice) } })
+      }
+      if (productClass || Object.keys(specs).length > 0) {
+        const specProductIds = await getMatchingProductIdsForSpecs(
+          req.payload,
+          specs,
+          productClass
+        )
+        if (specProductIds !== undefined) {
+          if (specProductIds.length === 0) {
+            return Response.json({
+              docs: [],
+              totalDocs: 0,
+              totalPages: 0,
+              page,
+              limit,
+              hasNextPage: false,
+              hasPrevPage: false,
+            })
+          }
+          andClauses.push({ id: { in: specProductIds } })
+        }
       }
 
       const where: Where = andClauses.length === 1 ? andClauses[0] : { and: andClauses }
