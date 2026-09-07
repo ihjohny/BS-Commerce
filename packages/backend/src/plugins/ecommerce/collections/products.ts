@@ -278,6 +278,15 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
     },
     { name: 'featured', type: 'checkbox', defaultValue: false },
     {
+      name: 'brand',
+      type: 'relationship',
+      relationTo: 'brands',
+      hasMany: false,
+      admin: {
+        description: 'The brand or manufacturer for this product.',
+      },
+    },
+    {
       name: 'categories',
       type: 'relationship',
       relationTo: 'categories',
@@ -289,7 +298,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       relationTo: 'attributes',
       hasMany: true,
       admin: {
-        description: 'Brand, Manufacturer, Series, and dynamic attributes tagged to this product.',
+        description: 'Series, technical specifications, and feature facets tagged to this product.',
       },
     },
     {
@@ -406,8 +415,8 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
     admin: {
       useAsTitle: 'name',
       defaultColumns: multivendorEnabled
-        ? ['name', 'slug', 'tenant', 'status', 'basePrice', 'currency', 'publishedAt']
-        : ['name', 'slug', 'status', 'basePrice', 'currency', 'publishedAt'],
+        ? ['name', 'brand', 'slug', 'tenant', 'status', 'basePrice', 'currency', 'publishedAt']
+        : ['name', 'brand', 'slug', 'status', 'basePrice', 'currency', 'publishedAt'],
       group: 'Ecommerce',
     },
     access: {

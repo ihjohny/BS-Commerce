@@ -28,6 +28,7 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
 
     const category = qs.get('category') ?? undefined
     const search = qs.get('search') ?? undefined
+    const brand = qs.get('brand') ?? undefined
     const featured = qs.get('featured') ?? undefined
     const tenant = qs.get('tenant') ?? undefined
     const productType = qs.get('productType') ?? undefined
@@ -84,6 +85,9 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
       }
       if (category) {
         andClauses.push({ categories: { in: [category] } })
+      }
+      if (brand) {
+        andClauses.push({ brand: { equals: brand } })
       }
       if (search) {
         andClauses.push({ name: { like: search } })

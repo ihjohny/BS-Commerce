@@ -81,6 +81,87 @@ function makeLexicalDoc(paragraphs: string[]) {
 }
 
 /**
+ * Ensures Brands and refactored Attributes tables and relations exist in PostgreSQL without requiring separate migrations.
+ */
+export async function ensureBrandCatalogSchema(payload: Payload): Promise<void> {
+  try {
+    const db = (payload.db as any)?.drizzle || (payload.db as any)
+    if (db && typeof db.execute === 'function') {
+      const { sql } = await import('@payloadcms/db-postgres')
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS "brands" (
+          "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+          "slug" character varying,
+          "logo_id" uuid,
+          "banner_image_id" uuid,
+          "website" character varying,
+          "featured" boolean DEFAULT false,
+          "display_order" numeric DEFAULT 0,
+          "meta_image_id" uuid,
+          "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+          "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "brands" ADD CONSTRAINT "brands_logo_id_media_id_fk" FOREIGN KEY ("logo_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          ALTER TABLE "brands" ADD CONSTRAINT "brands_banner_image_id_media_id_fk" FOREIGN KEY ("banner_image_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          ALTER TABLE "brands" ADD CONSTRAINT "brands_meta_image_id_media_id_fk" FOREIGN KEY ("meta_image_id") REFERENCES "media"("id") ON DELETE set null ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        CREATE UNIQUE INDEX IF NOT EXISTS "brands_slug_idx" ON "brands" USING btree ("slug");
+        CREATE INDEX IF NOT EXISTS "brands_logo_idx" ON "brands" USING btree ("logo_id");
+        CREATE INDEX IF NOT EXISTS "brands_banner_image_idx" ON "brands" USING btree ("banner_image_id");
+        CREATE INDEX IF NOT EXISTS "brands_created_at_idx" ON "brands" USING btree ("created_at");
+        CREATE INDEX IF NOT EXISTS "brands_updated_at_idx" ON "brands" USING btree ("updated_at");
+
+        CREATE TABLE IF NOT EXISTS "brands_locales" (
+          "name" character varying NOT NULL,
+          "description" character varying,
+          "meta_title" character varying,
+          "meta_description" character varying,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" uuid NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "brands_locales" ADD CONSTRAINT "brands_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "brands"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        CREATE UNIQUE INDEX IF NOT EXISTS "brands_locales_locale_parent_id_unique" ON "brands_locales" USING btree ("_locale", "_parent_id");
+
+        ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "brand_id" uuid;
+
+        DO $$ BEGIN
+          ALTER TABLE "products" ADD CONSTRAINT "products_brand_id_brands_id_fk" FOREIGN KEY ("brand_id") REFERENCES "brands"("id") ON DELETE set null ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        CREATE INDEX IF NOT EXISTS "products_brand_idx" ON "products" USING btree ("brand_id");
+      `)
+      payload.logger.info('[Electronics Seeder] Verified Brands & Attributes schema readiness.')
+    }
+  } catch (err: any) {
+    payload.logger.warn(`[Electronics Seeder] Notice verifying database schema: ${err?.message || err}`)
+  }
+}
+
+/**
  * 1. Database Wiper: Clears all catalog, transaction and page data, keeping admin intact.
  */
 export async function wipeDatabaseForElectronics(
@@ -99,6 +180,7 @@ export async function wipeDatabaseForElectronics(
     'stock-levels',
     'product-variants',
     'products',
+    'brands',
     'attributes',
     'categories',
     'coupons',
@@ -165,6 +247,9 @@ export async function seedElectronicsStore(
 ): Promise<SeedResult> {
   const adminEmail = options.adminEmail || 'frontend-seed-sv@bscommerce.local'
   let wipedInfo: { collections: string[]; nonAdminUsersDeleted: number } | undefined
+
+  // Ensure DB schema for brands exists even if migrations were not run
+  await ensureBrandCatalogSchema(payload)
 
   if (options.wipeFirst !== false) {
     wipedInfo = await wipeDatabaseForElectronics(payload, adminEmail)
@@ -977,48 +1062,55 @@ export async function seedElectronicsStore(
 
   // ─── 6. BRANDS & ATTRIBUTES ────────────────────────────────────────────────
   const brandsData = [
-    { label: 'Apple', key: 'brand-apple', slug: 'apple', type: 'brand', featured: true, website: 'https://www.apple.com', description: 'Original Apple iPhones, MacBooks, iPads, Watches & Audio with Official Warranty.', properties: [{ propertyKey: 'originCountry', propertyValue: 'USA', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Apple Official International', propertyType: 'text' }] },
-    { label: 'Samsung', key: 'brand-samsung', slug: 'samsung', type: 'brand', featured: true, website: 'https://www.samsung.com', description: 'Galaxy S-Series, Z-Fold/Flip and premium ecosystem devices.', properties: [{ propertyKey: 'originCountry', propertyValue: 'South Korea', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official National Warranty', propertyType: 'text' }] },
-    { label: 'Sony', key: 'brand-sony', slug: 'sony', type: 'brand', featured: true, website: 'https://www.sony.com', description: 'Industry benchmark audio gear, PlayStation 5 consoles, and Alpha imaging.', properties: [{ propertyKey: 'originCountry', propertyValue: 'Japan', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official Warranty', propertyType: 'text' }] },
-    { label: 'Google Pixel', key: 'brand-google-pixel', slug: 'google-pixel', type: 'brand', featured: true, website: 'https://store.google.com', description: 'Pure Google Android with Tensor AI and computational photography.', properties: [{ propertyKey: 'originCountry', propertyValue: 'USA', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Global Warranty', propertyType: 'text' }] },
-    { label: 'DJI', key: 'brand-dji', slug: 'dji', type: 'brand', featured: true, website: 'https://www.dji.com', description: 'World standard aerial drones, Osmo gimbals, and stabilization systems.', properties: [{ propertyKey: 'originCountry', propertyValue: 'China', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official DJI Service', propertyType: 'text' }] },
-    { label: 'Anker', key: 'brand-anker', slug: 'anker', type: 'brand', featured: true, website: 'https://www.anker.com', description: 'Global leader in GaN fast charging, high-capacity power banks, and cables.', properties: [{ propertyKey: 'originCountry', propertyValue: 'USA', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '18 Months Replacement Guarantee', propertyType: 'text' }] },
-    { label: 'Bose', key: 'brand-bose', slug: 'bose', type: 'brand', featured: true, website: 'https://www.bose.com', description: 'Acoustic Noise Cancelling headphones and immersive home sound.', properties: [{ propertyKey: 'originCountry', propertyValue: 'USA', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official Warranty', propertyType: 'text' }] },
-    { label: 'Marshall', key: 'brand-marshall', slug: 'marshall', type: 'brand', featured: true, website: 'https://www.marshallheadphones.com', description: 'Iconic vintage British audio amplification, home speakers, and earbuds.', properties: [{ propertyKey: 'originCountry', propertyValue: 'United Kingdom', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official Warranty', propertyType: 'text' }] },
-    { label: 'OnePlus', key: 'brand-oneplus', slug: 'oneplus', type: 'brand', featured: true, website: 'https://www.oneplus.com', description: 'Fast and Smooth smartphones with Hasselblad camera systems.', properties: [{ propertyKey: 'originCountry', propertyValue: 'China', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official Warranty', propertyType: 'text' }] },
-    { label: 'Xiaomi', key: 'brand-xiaomi', slug: 'xiaomi', type: 'brand', featured: true, website: 'https://www.mi.com', description: 'Smart living ecosystem, Leica camera flagships, and smart appliances.', properties: [{ propertyKey: 'originCountry', propertyValue: 'China', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '1 Year Official Warranty', propertyType: 'text' }] },
-    { label: 'Asus ROG', key: 'brand-asus-rog', slug: 'asus-rog', type: 'brand', featured: true, website: 'https://rog.asus.com', description: 'Republic of Gamers — highest tier gaming laptops and handhelds.', properties: [{ propertyKey: 'originCountry', propertyValue: 'Taiwan', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '2 Years Global Warranty', propertyType: 'text' }] },
-    { label: 'TP-Link', key: 'brand-tp-link', slug: 'tp-link', type: 'brand', featured: true, website: 'https://www.tp-link.com', description: 'Deco Mesh Wi-Fi 6, smart routers, and seamless home connectivity.', properties: [{ propertyKey: 'originCountry', propertyValue: 'China', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '2 Years Replacement Warranty', propertyType: 'text' }] },
-    { label: 'Dyson', key: 'brand-dyson', slug: 'dyson', type: 'brand', featured: true, website: 'https://www.dyson.com', description: 'Laser detect slim vacuums, air purifiers, and intelligent home appliances.', properties: [{ propertyKey: 'originCountry', propertyValue: 'United Kingdom', propertyType: 'text' }, { propertyKey: 'warrantyPolicy', propertyValue: '2 Years Official Warranty', propertyType: 'text' }] },
+    { name: 'Apple', slug: 'apple', featured: true, website: 'https://www.apple.com', description: 'Original Apple iPhones, MacBooks, iPads, Watches & Audio with Official Warranty.' },
+    { name: 'Samsung', slug: 'samsung', featured: true, website: 'https://www.samsung.com', description: 'Galaxy S-Series, Z-Fold/Flip and premium ecosystem devices.' },
+    { name: 'Sony', slug: 'sony', featured: true, website: 'https://www.sony.com', description: 'Industry benchmark audio gear, PlayStation 5 consoles, and Alpha imaging.' },
+    { name: 'Google Pixel', slug: 'google-pixel', featured: true, website: 'https://store.google.com', description: 'Pure Google Android with Tensor AI and computational photography.' },
+    { name: 'DJI', slug: 'dji', featured: true, website: 'https://www.dji.com', description: 'World standard aerial drones, Osmo gimbals, and stabilization systems.' },
+    { name: 'Anker', slug: 'anker', featured: true, website: 'https://www.anker.com', description: 'Global leader in GaN fast charging, high-capacity power banks, and cables.' },
+    { name: 'Bose', slug: 'bose', featured: true, website: 'https://www.bose.com', description: 'Acoustic Noise Cancelling headphones and immersive home sound.' },
+    { name: 'Marshall', slug: 'marshall', featured: true, website: 'https://www.marshallheadphones.com', description: 'Iconic vintage British audio amplification, home speakers, and earbuds.' },
+    { name: 'OnePlus', slug: 'oneplus', featured: true, website: 'https://www.oneplus.com', description: 'Fast and Smooth smartphones with Hasselblad camera systems.' },
+    { name: 'Xiaomi', slug: 'xiaomi', featured: true, website: 'https://www.mi.com', description: 'Smart living ecosystem, Leica camera flagships, and smart appliances.' },
+    { name: 'Asus ROG', slug: 'asus-rog', featured: true, website: 'https://rog.asus.com', description: 'Republic of Gamers — highest tier gaming laptops and handhelds.' },
+    { name: 'TP-Link', slug: 'tp-link', featured: true, website: 'https://www.tp-link.com', description: 'Deco Mesh Wi-Fi 6, smart routers, and seamless home connectivity.' },
+    { name: 'Dyson', slug: 'dyson', featured: true, website: 'https://www.dyson.com', description: 'Laser detect slim vacuums, air purifiers, and intelligent home appliances.' },
   ]
 
   const brandMap: Record<string, string> = {}
   for (const b of brandsData) {
     const doc = await payload.create({
-      collection: 'attributes',
+      collection: 'brands',
       data: b as any,
       overrideAccess: true,
     })
     brandMap[b.slug] = String(doc.id)
   }
 
-  // Series Attributes
-  const seriesData = [
+  // Specifications, Series, and Feature Attributes
+  const attributesData = [
+    // Series
     { label: 'Pro Max Series', key: 'series-pro-max', slug: 'pro-max-series', type: 'series', properties: [{ propertyKey: 'tier', propertyValue: 'Top Flagship', propertyType: 'text' }] },
     { label: 'Ultra Series', key: 'series-ultra', slug: 'ultra-series', type: 'series', properties: [{ propertyKey: 'tier', propertyValue: 'Extreme Performance', propertyType: 'text' }] },
     { label: 'M3 Silicon Series', key: 'series-m3-silicon', slug: 'm3-silicon-series', type: 'series', properties: [{ propertyKey: 'architecture', propertyValue: 'Apple ARM Silicon', propertyType: 'text' }] },
     { label: 'GaNPrime Series', key: 'series-ganprime', slug: 'ganprime-series', type: 'series', properties: [{ propertyKey: 'chargingTech', propertyValue: 'Gallium Nitride 3.0', propertyType: 'text' }] },
     { label: 'Bravia XR Series', key: 'series-bravia-xr', slug: 'bravia-xr-series', type: 'series', properties: [{ propertyKey: 'panelTech', propertyValue: 'Cognitive Processor XR OLED', propertyType: 'text' }] },
+    // Technical Specifications, Features & Connectivity
+    { label: '5G Cellular', key: 'conn-5g', slug: '5g-cellular', type: 'connectivity', properties: [{ propertyKey: 'standard', propertyValue: '5G NR Sub-6', propertyType: 'text' }] },
+    { label: '120Hz OLED Display', key: 'spec-120hz-oled', slug: '120hz-oled', type: 'specification', properties: [{ propertyKey: 'refreshRate', propertyValue: '120Hz', propertyType: 'text' }] },
+    { label: 'Active Noise Cancelling', key: 'feat-anc', slug: 'active-noise-cancelling', type: 'feature', properties: [{ propertyKey: 'feature', propertyValue: 'Adaptive ANC', propertyType: 'text' }] },
+    { label: 'Aerospace Titanium', key: 'mat-titanium', slug: 'aerospace-titanium', type: 'material', properties: [{ propertyKey: 'grade', propertyValue: 'Grade 5', propertyType: 'text' }] },
+    { label: 'IP68 Water Resistant', key: 'cert-ip68', slug: 'ip68-water-resistant', type: 'certification', properties: [{ propertyKey: 'depth', propertyValue: 'Up to 6 meters', propertyType: 'text' }] },
   ]
 
-  const seriesMap: Record<string, string> = {}
-  for (const s of seriesData) {
+  const attributeMap: Record<string, string> = {}
+  for (const a of attributesData) {
     const doc = await payload.create({
       collection: 'attributes',
-      data: s as any,
+      data: a as any,
       overrideAccess: true,
     })
-    seriesMap[s.slug] = String(doc.id)
+    attributeMap[a.slug] = String(doc.id)
   }
 
   // ─── 7. 38 FLAGSHIP PRODUCTS WITH VARIANTS & MEDIA IMAGES ──────────────────
@@ -1651,12 +1743,17 @@ export async function seedElectronicsStore(
   for (const p of productsToSeed) {
     const catId = categoryMap[p.categorySlug]
     const brandId = brandMap[p.brandSlug]
-    const attributesList = [brandId].filter(Boolean)
-    if (p.name.includes('Pro Max') && seriesMap['pro-max-series']) attributesList.push(seriesMap['pro-max-series'])
-    if (p.name.includes('Ultra') && seriesMap['ultra-series']) attributesList.push(seriesMap['ultra-series'])
-    if (p.name.includes('M3') && seriesMap['m3-silicon-series']) attributesList.push(seriesMap['m3-silicon-series'])
-    if (p.name.includes('Prime') && seriesMap['ganprime-series']) attributesList.push(seriesMap['ganprime-series'])
-    if (p.name.includes('BRAVIA') && seriesMap['bravia-xr-series']) attributesList.push(seriesMap['bravia-xr-series'])
+    const attributesList: string[] = []
+    if (p.name.includes('Pro Max') && attributeMap['pro-max-series']) attributesList.push(attributeMap['pro-max-series'])
+    if (p.name.includes('Ultra') && attributeMap['ultra-series']) attributesList.push(attributeMap['ultra-series'])
+    if (p.name.includes('M3') && attributeMap['m3-silicon-series']) attributesList.push(attributeMap['m3-silicon-series'])
+    if (p.name.includes('Prime') && attributeMap['ganprime-series']) attributesList.push(attributeMap['ganprime-series'])
+    if (p.name.includes('BRAVIA') && attributeMap['bravia-xr-series']) attributesList.push(attributeMap['bravia-xr-series'])
+    if ((p.name.includes('Pro') || p.name.includes('Ultra')) && attributeMap['120hz-oled']) attributesList.push(attributeMap['120hz-oled'])
+    if ((p.name.includes('Pro') || p.name.includes('Ultra') || p.name.includes('Pixel')) && attributeMap['5g-cellular']) attributesList.push(attributeMap['5g-cellular'])
+    if ((p.name.includes('Headphones') || p.name.includes('Buds') || p.name.includes('Earbuds') || p.name.includes('QuietComfort')) && attributeMap['active-noise-cancelling']) attributesList.push(attributeMap['active-noise-cancelling'])
+    if ((p.name.includes('Titanium') || p.name.includes('Pro Max')) && attributeMap['aerospace-titanium']) attributesList.push(attributeMap['aerospace-titanium'])
+    if ((p.name.includes('Pro Max') || p.name.includes('Ultra') || p.name.includes('Action') || p.name.includes('Osmo')) && attributeMap['ip68-water-resistant']) attributesList.push(attributeMap['ip68-water-resistant'])
 
     const imgId = findMediaId(p.imageKey)
     const productDoc = await payload.create({
@@ -1666,6 +1763,7 @@ export async function seedElectronicsStore(
         slug: p.slug,
         status: 'published',
         featured: Boolean(p.featured),
+        brand: brandId || null,
         categories: catId ? [catId] : [],
         attributes: attributesList,
         images: imgId ? [{ image: imgId }] : [],

@@ -1,10 +1,14 @@
 import type { Plugin } from 'payload'
+import { Brands } from './collections/brands'
 import { Attributes } from './collections/attributes'
 import { createProductsConfig } from './collections/products'
 import { createProductVariantsConfig } from './collections/product-variants'
 import { createCartsConfig } from './collections/carts'
 import { Addresses } from './collections/addresses'
 import { WishlistItems } from './collections/wishlist-items'
+
+export { Brands } from './collections/brands'
+export { Attributes } from './collections/attributes'
 
 export interface EcommercePluginOptions {
   enabled?: boolean
@@ -24,6 +28,7 @@ export const ecommercePlugin =
       ...incomingConfig,
       collections: [
         ...(incomingConfig.collections || []),
+        Brands,
         Attributes,
         createProductsConfig(multivendorEnabled),
         createProductVariantsConfig(multivendorEnabled),

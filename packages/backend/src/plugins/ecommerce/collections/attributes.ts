@@ -6,9 +6,9 @@ export const Attributes: CollectionConfig = {
   slug: 'attributes',
   admin: {
     useAsTitle: 'label',
-    defaultColumns: ['label', 'key', 'type', 'slug', 'featured', 'displayOrder'],
+    defaultColumns: ['label', 'key', 'type', 'customType', 'slug', 'featured', 'displayOrder'],
     group: 'Ecommerce',
-    description: 'Manage product attributes (Brands, Manufacturers, Series, Specifications, and Dynamic Properties).',
+    description: 'Manage product specifications, series, features, and dynamic filter facets.',
   },
   access: {
     read: () => true,
@@ -23,7 +23,7 @@ export const Attributes: CollectionConfig = {
       required: true,
       localized: true,
       admin: {
-        description: 'Display name (e.g. "Apple", "Samsung", "Galaxy S24", "Wireless")',
+        description: 'Display name (e.g. "Galaxy S24 Series", "120Hz OLED", "Active Noise Cancelling", "Titanium")',
       },
     },
     {
@@ -33,25 +33,35 @@ export const Attributes: CollectionConfig = {
       unique: true,
       index: true,
       admin: {
-        description: 'Unique internal code (e.g. "brand-apple", "series-galaxy-s24")',
+        description: 'Unique internal code (e.g. "series-galaxy-s24", "spec-120hz-oled", "feature-anc")',
       },
     },
     {
       name: 'type',
       type: 'select',
       required: true,
-      defaultValue: 'brand',
+      defaultValue: 'specification',
       index: true,
       options: [
-        { label: 'Brand', value: 'brand' },
-        { label: 'Manufacturer', value: 'manufacturer' },
+        { label: 'Technical Specification', value: 'specification' },
         { label: 'Product Series', value: 'series' },
-        { label: 'Material', value: 'material' },
         { label: 'Feature', value: 'feature' },
+        { label: 'Material', value: 'material' },
+        { label: 'Connectivity', value: 'connectivity' },
+        { label: 'Compatibility', value: 'compatibility' },
+        { label: 'Certification', value: 'certification' },
         { label: 'Custom', value: 'custom' },
       ],
       admin: {
         description: 'Attribute category type for filtering and grouping.',
+      },
+    },
+    {
+      name: 'customType',
+      type: 'text',
+      admin: {
+        description: 'Dynamic custom type identifier (e.g. "lens-mount", "fabric-weight") when type is custom.',
+        condition: (data) => data?.type === 'custom',
       },
     },
     slugField('label'),
@@ -60,22 +70,7 @@ export const Attributes: CollectionConfig = {
       type: 'textarea',
       localized: true,
       admin: {
-        description: 'Brief description shown on brand/attribute landing pages.',
-      },
-    },
-    {
-      name: 'logo',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Brand or manufacturer logo/icon.',
-      },
-    },
-    {
-      name: 'website',
-      type: 'text',
-      admin: {
-        description: 'Official website URL (for brands/manufacturers).',
+        description: 'Brief description shown on attribute or facet landing pages.',
       },
     },
     {
@@ -83,7 +78,7 @@ export const Attributes: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Show in featured brands/attributes sections on the storefront.',
+        description: 'Show in featured specifications/facets sections on the storefront.',
       },
     },
     {
@@ -102,7 +97,7 @@ export const Attributes: CollectionConfig = {
         plural: 'Dynamic Properties',
       },
       admin: {
-        description: 'Dynamic extensible key-value properties (e.g., countryOfOrigin, hexColor, warrantyYears).',
+        description: 'Dynamic extensible key-value properties (e.g., unit, hexColor, wattage).',
       },
       fields: [
         {
@@ -110,7 +105,7 @@ export const Attributes: CollectionConfig = {
           type: 'text',
           required: true,
           admin: {
-            description: 'Property identifier (e.g. "originCountry", "accentColor", "releaseYear")',
+            description: 'Property identifier (e.g. "wattage", "refreshRate", "panelType")',
           },
         },
         {
@@ -118,7 +113,7 @@ export const Attributes: CollectionConfig = {
           type: 'text',
           required: true,
           admin: {
-            description: 'Property value (e.g. "USA", "#FF0000", "2026")',
+            description: 'Property value (e.g. "65W", "120Hz", "LTPO OLED")',
           },
         },
         {
