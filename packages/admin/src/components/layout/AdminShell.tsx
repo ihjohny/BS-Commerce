@@ -297,7 +297,7 @@ function SidebarBody() {
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+        <main className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-4 p-4 md:p-6">
           <Outlet />
         </main>
       </SidebarInset>

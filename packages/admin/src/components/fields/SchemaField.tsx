@@ -1,8 +1,23 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Copy,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 import type { NormField } from "@/lib/schema";
-import { RelationInput, UploadInput } from "@/components/fields/FieldInputs";
+import {
+  ImagesArrayField,
+  RelationInput,
+  TagsField,
+  UploadInput,
+} from "@/components/fields/FieldInputs";
+import { RichTextInput } from "@/components/fields/RichTextInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +44,9 @@ interface FieldProps {
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  error?: string | null;
+  /** Context-aware message shown when an array field has no rows. */
+  emptyHint?: string;
 }
 
 function Description({ text }: { text?: string }) {
@@ -52,8 +70,16 @@ function Label({ field }: { field: NormField }) {
 
 // ─── Simple inputs ──────────────────────────────────────────────────────────────
 
-function SimpleField({ field, value, onChange, disabled }: FieldProps) {
+function ErrorText({ error }: { error?: string | null }) {
+  if (!error) return null;
+  return <p className="text-xs font-medium text-destructive">{error}</p>;
+}
+
+function SimpleField({ field, value, onChange, disabled, error }: FieldProps) {
   const id = `f-${field.name}`;
+  // readOnly fields (e.g. aggregated stats) render disabled even with edit rights.
+  const dis = disabled || Boolean(field.readOnly);
+  const errCls = error ? "border-destructive" : undefined;
   const str = value === null || value === undefined ? "" : String(value);
 
   switch (field.type) {
@@ -65,11 +91,13 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             id={id}
             rows={4}
             value={str}
-            disabled={disabled}
+            disabled={dis}
             maxLength={field.max}
+            className={errCls}
             onChange={(e) => onChange(e.target.value)}
           />
           <Description text={field.description} />
+          <ErrorText error={error} />
         </Field>
       );
     case "number": {
@@ -83,12 +111,14 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             value={num}
             min={field.min}
             max={field.max}
-            disabled={disabled}
+            disabled={dis}
+            className={errCls}
             onChange={(e) =>
               onChange(e.target.value === "" ? null : Number(e.target.value))
             }
           />
           <Description text={field.description} />
+          <ErrorText error={error} />
         </Field>
       );
     }
@@ -108,13 +138,15 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
                   : "text"
             }
             value={str}
-            disabled={disabled}
+            disabled={dis}
+            className={errCls}
             autoComplete={
               field.type === "password" ? "new-password" : undefined
             }
             onChange={(e) => onChange(e.target.value)}
           />
           <Description text={field.description} />
+          <ErrorText error={error} />
         </Field>
       );
     case "checkbox":
@@ -125,11 +157,12 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             type="checkbox"
             className="size-4 accent-primary"
             checked={Boolean(value)}
-            disabled={disabled}
+            disabled={dis}
             onChange={(e) => onChange(e.target.checked)}
           />
           <Label field={field} />
           <Description text={field.description} />
+          <ErrorText error={error} />
         </Field>
       );
     case "select":
@@ -172,9 +205,9 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
           <Select
             value={str || NONE}
             onValueChange={(v) => onChange(v === NONE ? null : v)}
-            disabled={disabled}
+            disabled={dis}
           >
-            <SelectTrigger id={id} className="w-full">
+            <SelectTrigger id={id} className={`w-full ${errCls ?? ""}`}>
               <SelectValue placeholder="Select…" />
             </SelectTrigger>
             <SelectContent>
@@ -189,6 +222,7 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             </SelectContent>
           </Select>
           <Description text={field.description} />
+          <ErrorText error={error} />
         </Field>
       );
     }
@@ -202,7 +236,8 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             id={id}
             type="datetime-local"
             value={local}
-            disabled={disabled}
+            disabled={dis}
+            className={errCls}
             onChange={(e) =>
               onChange(
                 e.target.value ? new Date(e.target.value).toISOString() : null,
@@ -210,11 +245,23 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             }
           />
           <Description text={field.description} />
+          <ErrorText error={error} />
         </Field>
       );
     }
-    case "json":
-    case "richtext": {
+    case "richText":
+    case "richtext":
+      // Visual editor: renders stored Lexical JSON as rich text (never raw JSON).
+      return (
+        <RichTextInput
+          field={field}
+          value={value}
+          onChange={onChange}
+          disabled={dis}
+          error={error}
+        />
+      );
+    case "json": {
       const text =
         typeof value === "string"
           ? value
@@ -228,19 +275,13 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
             id={id}
             rows={8}
             spellCheck={false}
-            className="font-mono text-xs"
+            className={`font-mono text-xs ${errCls ?? ""}`}
             value={text}
-            disabled={disabled}
+            disabled={dis}
             onChange={(e) => onChange(e.target.value)}
           />
-          <Description
-            text={
-              field.description ??
-              (field.type === "richtext"
-                ? "Lexical rich text, edited as JSON."
-                : "JSON value.")
-            }
-          />
+          <Description text={field.description ?? "JSON value."} />
+          <ErrorText error={error} />
         </Field>
       );
     }
@@ -267,11 +308,7 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
               }
             }}
           />
-          <Description
-            text={
-              field.description ?? `Field type “${field.type}” edited as JSON.`
-            }
-          />
+          <Description text={field.description} />
         </Field>
       );
   }
@@ -282,24 +319,25 @@ function SimpleField({ field, value, onChange, disabled }: FieldProps) {
 function GroupField(props: FieldProps) {
   const { field, value, onChange, disabled } = props;
   const group = (value ?? {}) as FieldValues;
+  const subs = (field.fields ?? []).filter((f) => !f.hidden);
+  // Groups of 3+ plain numbers (e.g. dimensions) fit a compact 3-column grid.
+  const threeCol = subs.length >= 3 && subs.every((f) => f.type === "number");
   const setValue = (name: string, v: unknown) =>
     onChange({ ...group, [name]: v });
 
   return (
     <fieldset className="rounded-lg border p-4">
       <legend className="px-1 text-sm font-medium">{field.label}</legend>
-      <div className="grid gap-4">
-        {(field.fields ?? [])
-          .filter((f) => !f.hidden)
-          .map((sub) => (
-            <SchemaField
-              key={sub.name}
-              field={sub}
-              value={group[sub.name ?? ""]}
-              onChange={(v) => sub.name && setValue(sub.name, v)}
-              disabled={disabled}
-            />
-          ))}
+      <div className={`grid gap-4 ${threeCol ? "sm:grid-cols-3" : ""}`}>
+        {subs.map((sub) => (
+          <SchemaField
+            key={sub.name}
+            field={sub}
+            value={group[sub.name ?? ""]}
+            onChange={(v) => sub.name && setValue(sub.name, v)}
+            disabled={disabled}
+          />
+        ))}
       </div>
     </fieldset>
   );
@@ -338,10 +376,42 @@ function CollapsibleField(props: FieldProps) {
   );
 }
 
-function ArrayField({ field, value, onChange, disabled }: FieldProps) {
+function ArrayField({
+  field,
+  value,
+  onChange,
+  disabled,
+  error,
+  emptyHint,
+}: FieldProps) {
   const items: FieldValues[] = Array.isArray(value)
     ? (value as FieldValues[])
     : [];
+  const [openRows, setOpenRows] = useState<ReadonlySet<number>>(new Set());
+
+  const baseLabel = field.label ?? "Item";
+
+  // First text value inside the row gives a meaningful collapsed summary.
+  const rowDetail = (item: FieldValues): string | null => {
+    for (const sub of field.fields ?? []) {
+      if (
+        sub.name &&
+        (sub.type === "text" || sub.type === "textarea" || sub.type === "email")
+      ) {
+        const v = item[sub.name];
+        if (typeof v === "string" && v.trim()) return v;
+      }
+    }
+    return null;
+  };
+
+  const toggleRow = (idx: number, open: boolean) =>
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(idx);
+      else next.delete(idx);
+      return next;
+    });
 
   const setItem = (idx: number, v: FieldValues) =>
     onChange(items.map((it, i) => (i === idx ? v : it)));
@@ -362,36 +432,99 @@ function ArrayField({ field, value, onChange, disabled }: FieldProps) {
     return out;
   };
 
+  const addItem = () => {
+    onChange([...items, newItem()]);
+    setOpenRows((prev) => new Set(prev).add(items.length));
+  };
+
   return (
     <Field>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Label field={field} />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          onClick={() => onChange([...items, newItem()])}
-        >
-          <Plus />
-          Add
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled || items.length === 0}
+            onClick={() => setOpenRows(new Set())}
+            title="Collapse all items"
+          >
+            <ChevronsDownUp />
+            Collapse
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled || items.length === 0}
+            onClick={() => setOpenRows(new Set(items.map((_, i) => i)))}
+            title="Expand all items"
+          >
+            <ChevronsUpDown />
+            Expand
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled}
+            onClick={addItem}
+          >
+            <Plus />
+            Add
+          </Button>
+        </div>
       </div>
+      <ErrorText error={error} />
       <div className="flex flex-col gap-2">
         {items.length === 0 && (
-          <p className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
-            No items yet.
+          <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+            {emptyHint ?? `No ${baseLabel.toLowerCase()} yet.`}
           </p>
         )}
-        {items.map((item, idx) => (
-          <div key={idx} className="rounded-lg border p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">#{idx + 1}</span>
-              <div className="flex items-center gap-0.5">
+        {items.map((item, idx) => {
+          const open = openRows.has(idx);
+          const detail = rowDetail(item);
+          return (
+            <Collapsible
+              key={idx}
+              open={open}
+              onOpenChange={(o) => toggleRow(idx, o)}
+              className="rounded-lg border bg-background"
+            >
+              <div className="flex items-center gap-1 py-1 pl-2 pr-1">
+                <CollapsibleTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 text-left"
+                    />
+                  }
+                >
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                      open ? "" : "-rotate-90"
+                    }`}
+                  />
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 px-1.5 font-mono text-[10px]"
+                  >
+                    {baseLabel} {String(idx + 1).padStart(2, "0")}
+                  </Badge>
+                  {detail ? (
+                    <span className="min-w-0 truncate text-sm text-muted-foreground">
+                      {detail}
+                    </span>
+                  ) : null}
+                </CollapsibleTrigger>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-8"
+                  title="Move up"
                   aria-label="Move up"
                   disabled={idx === 0 || disabled}
                   onClick={() => move(idx, -1)}
@@ -402,6 +535,8 @@ function ArrayField({ field, value, onChange, disabled }: FieldProps) {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-8"
+                  title="Move down"
                   aria-label="Move down"
                   disabled={idx === items.length - 1 || disabled}
                   onClick={() => move(idx, 1)}
@@ -412,6 +547,8 @@ function ArrayField({ field, value, onChange, disabled }: FieldProps) {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-8"
+                  title="Duplicate"
                   aria-label="Duplicate"
                   disabled={disabled}
                   onClick={() =>
@@ -428,6 +565,8 @@ function ArrayField({ field, value, onChange, disabled }: FieldProps) {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-8 text-destructive hover:text-destructive"
+                  title="Remove"
                   aria-label="Remove"
                   disabled={disabled}
                   onClick={() => onChange(items.filter((_, i) => i !== idx))}
@@ -435,24 +574,26 @@ function ArrayField({ field, value, onChange, disabled }: FieldProps) {
                   <Trash2 />
                 </Button>
               </div>
-            </div>
-            <div className="grid gap-3">
-              {(field.fields ?? [])
-                .filter((f) => !f.hidden)
-                .map((sub) => (
-                  <SchemaField
-                    key={sub.name}
-                    field={sub}
-                    value={item[sub.name ?? ""]}
-                    onChange={(v) =>
-                      sub.name && setItem(idx, { ...item, [sub.name]: v })
-                    }
-                    disabled={disabled}
-                  />
-                ))}
-            </div>
-          </div>
-        ))}
+              <CollapsibleContent>
+                <div className="grid gap-3 border-t px-3 py-3 sm:grid-cols-2">
+                  {(field.fields ?? [])
+                    .filter((f) => !f.hidden)
+                    .map((sub) => (
+                      <SchemaField
+                        key={sub.name}
+                        field={sub}
+                        value={item[sub.name ?? ""]}
+                        onChange={(v) =>
+                          sub.name && setItem(idx, { ...item, [sub.name]: v })
+                        }
+                        disabled={disabled}
+                      />
+                    ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          );
+        })}
       </div>
       <Description text={field.description} />
     </Field>
@@ -701,36 +842,61 @@ export function SchemaField(props: FieldProps) {
 
   if (field.hidden) return null;
 
+  // Schema-level readOnly applies regardless of the user's permissions.
+  const merged: FieldProps = field.readOnly
+    ? { ...props, disabled: true }
+    : props;
+
   switch (field.type) {
     case "tabs":
-      return <TabsField {...props} />;
+      return <TabsField {...merged} />;
     case "group":
-      return <GroupField {...props} />;
+      return <GroupField {...merged} />;
     case "collapsible":
-      return <CollapsibleField {...props} />;
-    case "array":
-      return <ArrayField {...props} />;
+      return <CollapsibleField {...merged} />;
+    case "array": {
+      // Purpose-built editors for the common single-subfield array shapes.
+      const subs = (field.fields ?? []).filter((f) => !f.hidden && f.name);
+      if (
+        subs.length === 1 &&
+        subs[0].type === "upload" &&
+        subs[0].name === "image"
+      )
+        return <ImagesArrayField {...merged} />;
+      if (
+        subs.length === 1 &&
+        subs[0].type === "text" &&
+        subs[0].name === "tag"
+      )
+        return <TagsField {...merged} />;
+      return <ArrayField {...merged} />;
+    }
     case "blocks":
-      return <BlocksField {...props} />;
+      return <BlocksField {...merged} />;
     case "relationship":
       return (
-        <RelationInput {...props} relationTo={field.relationTo ?? "media"} />
+        <RelationInput {...merged} relationTo={field.relationTo ?? "media"} />
       );
     case "upload":
-      return <UploadInput {...props} />;
+      return <UploadInput {...merged} />;
     default:
-      return <SimpleField {...props} />;
+      return <SimpleField {...merged} />;
   }
 }
 
 /** Recursively convert editor state into an API-ready value. */
 export function serializeForSave(field: NormField, value: unknown): unknown {
   switch (field.type) {
+    case "richText":
     case "richtext":
     case "json":
     case "textarea":
     case "text":
-      if (field.type === "richtext" || field.type === "json") {
+      if (
+        field.type === "richText" ||
+        field.type === "richtext" ||
+        field.type === "json"
+      ) {
         if (typeof value === "string") {
           if (!value.trim()) return null;
           try {

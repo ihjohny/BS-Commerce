@@ -38,6 +38,8 @@ export interface NormField {
   description?: string;
   readOnly?: boolean;
   hidden?: boolean;
+  /** Payload admin.position === "sidebar" → rendered in the edit view's right rail. */
+  sidebar?: boolean;
   options?: SelectOption[];
   relationTo?: string | string[];
   hasMany?: boolean;

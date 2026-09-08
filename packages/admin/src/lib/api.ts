@@ -1,10 +1,17 @@
+export interface FieldError {
+  field?: string;
+  message?: string;
+}
+
 export class ApiError extends Error {
   status: number;
+  fieldErrors: FieldError[];
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, fieldErrors: FieldError[] = []) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
 }
 
@@ -19,7 +26,13 @@ export function assetUrl(path: string | null | undefined): string {
 }
 
 interface PayloadErrorBody {
-  errors?: Array<{ message?: string }>;
+  errors?: Array<{
+    message?: string;
+    field?: string;
+    data?: {
+      errors?: Array<{ message?: string; path?: string; label?: string }>;
+    };
+  }>;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -41,10 +54,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const data: unknown = isJson ? await res.json().catch(() => null) : null;
 
   if (!res.ok) {
-    const message =
-      (data as PayloadErrorBody | null)?.errors?.[0]?.message ??
-      `Request failed (${res.status})`;
-    throw new ApiError(message, res.status);
+    const errors = (data as PayloadErrorBody | null)?.errors ?? [];
+    // Payload 3 nests per-field validation errors under errors[0].data.errors[].
+    const nested = errors[0]?.data?.errors ?? [];
+    const fieldErrors: FieldError[] =
+      nested.length > 0
+        ? nested.map((e) => ({ field: e.path, message: e.message }))
+        : errors.map((e) => ({ field: e.field, message: e.message }));
+    const message = errors[0]?.message ?? `Request failed (${res.status})`;
+    throw new ApiError(message, res.status, fieldErrors);
   }
 
   return data as T;

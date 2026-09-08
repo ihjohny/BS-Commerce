@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08T11:58:25.157Z",
+  "generatedAt": "2026-09-08T13:49:52.582Z",
   "localization": {
     "locales": [
       {
@@ -482,7 +482,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from title. Customize if needed."
+          "description": "Auto-generated from title. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "select",
@@ -490,6 +491,7 @@
           "label": "Status",
           "required": true,
           "defaultValue": "draft",
+          "sidebar": true,
           "options": [
             {
               "label": "draft",
@@ -852,7 +854,8 @@
         {
           "type": "date",
           "name": "publishedAt",
-          "label": "Published At"
+          "label": "Published At",
+          "sidebar": true
         },
         {
           "type": "date",
@@ -914,7 +917,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from name. Customize if needed."
+          "description": "Auto-generated from name. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "richText",
@@ -1028,7 +1032,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from name. Customize if needed."
+          "description": "Auto-generated from name. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "textarea",
@@ -1153,7 +1158,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from label. Customize if needed."
+          "description": "Auto-generated from label. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "select",
@@ -1362,7 +1368,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from name. Customize if needed."
+          "description": "Auto-generated from name. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "textarea",
@@ -1495,7 +1502,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from name. Customize if needed."
+          "description": "Auto-generated from name. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "richText",
@@ -3435,6 +3443,7 @@
           "defaultValue": "online",
           "description": "Recorded at checkout: online gateway vs cash on delivery. Do not change (audit / fulfillment).",
           "readOnly": true,
+          "sidebar": true,
           "options": [
             {
               "label": "online",
@@ -3863,7 +3872,8 @@
           "name": "slug",
           "label": "Slug",
           "unique": true,
-          "description": "Auto-generated from name. Customize if needed."
+          "description": "Auto-generated from name. Customize if needed.",
+          "sidebar": true
         },
         {
           "type": "select",

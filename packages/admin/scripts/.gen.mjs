@@ -21221,6 +21221,7 @@ function normField(f) {
   if (typeof description === "string") base.description = description;
   if (f.admin?.readOnly === true || f.readOnly === true) base.readOnly = true;
   if (f.admin?.hidden === true) base.hidden = true;
+  if (f.admin?.position === "sidebar") base.sidebar = true;
   switch (type) {
     case "collapsible":
       base.label = normLabel(f.label) ?? f.admin?.title ?? base.label;
