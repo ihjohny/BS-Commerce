@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { SalesSummary } from '../../../lib/admin-dashboard-stats'
+import type { SalesSummary } from '../../../../lib/admin-dashboard-stats'
 
 type SalesSummaryCardProps = {
   summary: SalesSummary
@@ -68,6 +68,7 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
               style={{
                 fontSize: 13,
                 fontWeight: row.bold ? 700 : 600,
+                fontVariantNumeric: 'tabular-nums',
                 color: row.isError ? 'var(--bs-error, #dc2626)' : 'var(--theme-text)',
               }}
             >
@@ -82,7 +83,7 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
       <div
         style={{
           marginTop: '1.25rem',
-          padding: '0.85rem 1rem',
+          padding: '0.75rem 0.95rem',
           borderRadius: 'var(--bs-radius-sm, 6px)',
           background: 'var(--theme-elevation-100)',
           border: '1px solid var(--theme-elevation-150)',
@@ -96,12 +97,14 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
         </span>
         <span
           style={{
-            fontSize: 13,
+            fontSize: 12.5,
             fontWeight: 700,
             color: 'var(--bs-primary, #2563eb)',
             background: 'var(--bs-primary-subtle)',
+            border: '1px solid var(--bs-primary-border)',
             padding: '2px 8px',
             borderRadius: 'var(--bs-radius-full)',
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {summary.revenue > 0 ? `${((summary.subtotal / summary.revenue) * 100).toFixed(1)}%` : '100%'}

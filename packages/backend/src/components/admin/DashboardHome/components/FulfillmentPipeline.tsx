@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import type { OrderStatusBreakdown } from '../../../lib/admin-dashboard-stats'
+import type { OrderStatusBreakdown } from '../../../../lib/admin-dashboard-stats'
 
 type FulfillmentPipelineProps = {
   breakdown: OrderStatusBreakdown
@@ -156,7 +156,7 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
               textDecoration: 'none',
               padding: '0.65rem 0.85rem',
               borderRadius: 'var(--bs-radius-sm, 6px)',
-              background: 'var(--theme-elevation-0, #fff)',
+              background: 'var(--theme-elevation-0, var(--theme-bg))',
               border: '1px solid var(--theme-elevation-150)',
               transition: 'all 0.15s ease',
               cursor: 'pointer',
@@ -186,7 +186,7 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
                 {st.label}
               </span>
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--theme-text)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--theme-text)', lineHeight: 1.2, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
               {st.count}
             </div>
           </a>

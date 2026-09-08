@@ -124,8 +124,8 @@ export function createStockLevelsConfig(): CollectionConfig {
               }),
             ])
 
-            const prodTenant = relationId((product as Record<string, unknown>)?.tenant)
-            const locTenant = relationId((location as Record<string, unknown>)?.tenant)
+            const prodTenant = relationId((product as unknown as Record<string, unknown>)?.tenant)
+            const locTenant = relationId((location as unknown as Record<string, unknown>)?.tenant)
 
             if (prodTenant && locTenant && prodTenant !== locTenant) {
               const err = new Error(
@@ -169,7 +169,7 @@ export function createStockLevelsConfig(): CollectionConfig {
                 req,
               })
               if (hydrated && typeof hydrated === 'object') {
-                source = hydrated as Record<string, unknown>
+                source = hydrated as unknown as Record<string, unknown>
               }
             } catch {
               // Best-effort only; leave as-is if hydration fails.

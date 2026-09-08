@@ -8,6 +8,7 @@
  */
 import type { Payload, PayloadRequest } from 'payload'
 import { NotFound } from 'payload'
+import type { Cart } from '../payload-types'
 import { getDefaultCurrency } from './currencies'
 import { DefaultOrderSplitter, getPlatformItems } from '../plugins/orders/strategies/order-splitter'
 import type { CartItemForSplit } from '../plugins/orders/strategies/order-splitter'
@@ -269,14 +270,14 @@ export async function processCheckout(
     }
   }
 
-  let cart: Awaited<ReturnType<Payload['findByID']>>
+  let cart: Cart
   try {
-    cart = await payload.findByID({
+    cart = (await payload.findByID({
       collection: 'carts',
       id: cartId,
       depth: 2,
       overrideAccess: true, // Access enforced below via ownership check
-    })
+    })) as Cart
   } catch (err) {
     if (err instanceof NotFound) {
       return { order: { id: '', orderNumber: '' }, error: 'Cart not found', statusCode: 404 }
@@ -773,7 +774,7 @@ export async function processCheckout(
         collection: 'transactions',
         overrideAccess: true,
         data: {
-          order: order.id,
+          order: String(order.id),
           type: 'charge',
           provider: 'test',
           providerTransactionId: `test-${Date.now()}`,
@@ -813,7 +814,7 @@ export async function processCheckout(
         collection: 'transactions',
         overrideAccess: true,
         data: {
-          order: order.id,
+          order: String(order.id),
           type: 'charge',
           provider: 'sslcommerz',
           providerTransactionId: tranId,

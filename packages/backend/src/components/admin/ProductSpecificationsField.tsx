@@ -450,9 +450,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
       style={{
         margin: '1.5rem 0',
         padding: '1.25rem',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: '8px',
-        backgroundColor: 'var(--theme-elevation-50, #f8fafc)',
+        border: '1px solid var(--theme-elevation-150)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
+        backgroundColor: 'var(--theme-elevation-50)',
       }}
     >
       <div style={{ marginBottom: '1.25rem' }}>
@@ -462,7 +462,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
               margin: '0 0 0.25rem 0',
               fontSize: '1rem',
               fontWeight: 600,
-              color: 'var(--theme-text, #1e293b)',
+              color: 'var(--theme-text)',
             }}
           >
             Product Specifications &amp; Attributes
@@ -472,17 +472,18 @@ export default function ProductSpecificationsField(props: { path?: string; label
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 600,
-                backgroundColor: 'var(--theme-primary-500, #3b82f6)',
-                color: '#fff',
+                backgroundColor: 'var(--bs-primary-subtle)',
+                color: 'var(--bs-primary)',
+                border: '1px solid var(--bs-primary-border)',
                 padding: '0.2rem 0.6rem',
-                borderRadius: '12px',
+                borderRadius: 'var(--bs-radius-full, 9999px)',
               }}
             >
               Class: {formatLabel(classDoc.name, classDoc.slug)}
             </span>
           )}
         </div>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--theme-elevation-500, #64748b)' }}>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--theme-elevation-500)' }}>
           {classDoc
             ? 'Fill in template parameters below or attach ad-hoc and custom attributes. Values power storefront facets and PDP specifications.'
             : 'Select a Product Class above to load standard template parameters, or attach global/custom attributes below.'}
@@ -499,9 +500,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
         <div
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: 'rgba(220, 38, 38, 0.08)',
+            backgroundColor: 'var(--bs-error-subtle)',
             color: 'var(--bs-error, #dc2626)',
-            border: '1px solid rgba(220, 38, 38, 0.2)',
+            border: '1px solid var(--bs-error-subtle)',
             borderRadius: 'var(--bs-radius-sm, 6px)',
             fontSize: '0.85rem',
             marginBottom: '1rem',
@@ -522,9 +523,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
               <div
                 key={group.id || groupName}
                 style={{
-                  backgroundColor: 'var(--theme-elevation-0, #ffffff)',
-                  border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-                  borderRadius: '6px',
+                  backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+                  border: '1px solid var(--theme-elevation-150)',
+                  borderRadius: 'var(--bs-radius-md, 6px)',
                   padding: '1rem',
                 }}
               >
@@ -535,8 +536,8 @@ export default function ProductSpecificationsField(props: { path?: string; label
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    color: 'var(--theme-elevation-700, #334155)',
-                    borderBottom: '1px solid var(--theme-elevation-100, #f1f5f9)',
+                    color: 'var(--theme-elevation-700)',
+                    borderBottom: '1px solid var(--theme-elevation-150)',
                     paddingBottom: '0.4rem',
                   }}
                 >
@@ -566,9 +567,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
                           flexDirection: 'column',
                           gap: '0.35rem',
                           padding: '0.65rem',
-                          borderRadius: '4px',
-                          border: '1px solid var(--theme-elevation-100, #f1f5f9)',
-                          backgroundColor: 'var(--theme-elevation-50, #f8fafc)',
+                          borderRadius: 'var(--bs-radius-sm, 4px)',
+                          border: '1px solid var(--theme-elevation-150)',
+                          backgroundColor: 'var(--theme-elevation-50)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -576,18 +577,19 @@ export default function ProductSpecificationsField(props: { path?: string; label
                             style={{
                               fontSize: '0.825rem',
                               fontWeight: 600,
-                              color: 'var(--theme-text, #334155)',
+                              color: 'var(--theme-text)',
                             }}
                           >
                             {attrLabel}
-                            {item.isRequired && <span style={{ color: '#ef4444', marginLeft: '0.2rem' }}>*</span>}
+                            {item.isRequired && <span style={{ color: 'var(--bs-error, #ef4444)', marginLeft: '0.2rem' }}>*</span>}
                           </label>
                           {unitSuffix && (
                             <span
                               style={{
                                 fontSize: '0.7rem',
                                 fontWeight: 500,
-                                backgroundColor: 'var(--theme-elevation-150, #e2e8f0)',
+                                backgroundColor: 'var(--theme-elevation-150)',
+                                color: 'var(--theme-elevation-600)',
                                 padding: '0.1rem 0.35rem',
                                 borderRadius: '4px',
                               }}
@@ -611,8 +613,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                             style={{
                               padding: '0.45rem 0.6rem',
                               fontSize: '0.85rem',
-                              borderRadius: '4px',
-                              border: '1px solid var(--theme-elevation-250, #cbd5e1)',
+                              borderRadius: 'var(--bs-radius-sm, 4px)',
+                              border: '1px solid var(--theme-elevation-200)',
+                              background: 'var(--theme-input-bg)',
+                              color: 'var(--theme-text)',
                             }}
                           >
                             <option value="">— Select {attrLabel} —</option>
@@ -637,13 +641,14 @@ export default function ProductSpecificationsField(props: { path?: string; label
                                 flex: 1,
                                 padding: '0.35rem',
                                 fontSize: '0.8rem',
-                                fontWeight: 500,
-                                borderRadius: '4px',
+                                fontWeight: 600,
+                                borderRadius: 'var(--bs-radius-sm, 4px)',
                                 border: '1px solid',
-                                borderColor: currentVal === 'true' ? '#22c55e' : '#cbd5e1',
-                                backgroundColor: currentVal === 'true' ? '#dcfce7' : '#fff',
-                                color: currentVal === 'true' ? '#166534' : '#64748b',
+                                borderColor: currentVal === 'true' ? 'var(--bs-success)' : 'var(--theme-elevation-200)',
+                                backgroundColor: currentVal === 'true' ? 'var(--bs-success-subtle)' : 'var(--theme-elevation-0, var(--theme-bg))',
+                                color: currentVal === 'true' ? 'var(--bs-success)' : 'var(--theme-elevation-600)',
                                 cursor: 'pointer',
+                                transition: 'all 0.12s ease',
                               }}
                             >
                               Yes
@@ -661,13 +666,14 @@ export default function ProductSpecificationsField(props: { path?: string; label
                                 flex: 1,
                                 padding: '0.35rem',
                                 fontSize: '0.8rem',
-                                fontWeight: 500,
-                                borderRadius: '4px',
+                                fontWeight: 600,
+                                borderRadius: 'var(--bs-radius-sm, 4px)',
                                 border: '1px solid',
-                                borderColor: currentVal === 'false' ? '#ef4444' : '#cbd5e1',
-                                backgroundColor: currentVal === 'false' ? '#fee2e2' : '#fff',
-                                color: currentVal === 'false' ? '#991b1b' : '#64748b',
+                                borderColor: currentVal === 'false' ? 'var(--bs-error)' : 'var(--theme-elevation-200)',
+                                backgroundColor: currentVal === 'false' ? 'var(--bs-error-subtle)' : 'var(--theme-elevation-0, var(--theme-bg))',
+                                color: currentVal === 'false' ? 'var(--bs-error)' : 'var(--theme-elevation-600)',
                                 cursor: 'pointer',
+                                transition: 'all 0.12s ease',
                               }}
                             >
                               No
@@ -689,8 +695,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                             style={{
                               padding: '0.45rem 0.6rem',
                               fontSize: '0.85rem',
-                              borderRadius: '4px',
-                              border: '1px solid var(--theme-elevation-250, #cbd5e1)',
+                              borderRadius: 'var(--bs-radius-sm, 4px)',
+                              border: '1px solid var(--theme-elevation-200)',
+                              background: 'var(--theme-input-bg)',
+                              color: 'var(--theme-text)',
                             }}
                           />
                         )}
@@ -707,9 +715,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
       <div
         style={{
           marginTop: '1.25rem',
-          backgroundColor: 'var(--theme-elevation-0, #ffffff)',
-          border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-          borderRadius: '6px',
+          backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+          border: '1px solid var(--theme-elevation-150)',
+          borderRadius: 'var(--bs-radius-md, 6px)',
           padding: '1rem',
         }}
       >
@@ -720,12 +728,12 @@ export default function ProductSpecificationsField(props: { path?: string; label
                 margin: 0,
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: 'var(--theme-elevation-700, #334155)',
+                color: 'var(--theme-elevation-700)',
               }}
             >
               Ad-Hoc Global &amp; Custom Specifications
             </h5>
-            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--theme-elevation-500)' }}>
               Add one-off custom specs or attach global attributes outside the assigned template.
             </span>
           </div>
@@ -738,11 +746,12 @@ export default function ProductSpecificationsField(props: { path?: string; label
                 padding: '0.35rem 0.75rem',
                 fontSize: '0.8rem',
                 fontWeight: 500,
-                borderRadius: '4px',
-                border: '1px solid var(--theme-elevation-300, #cbd5e1)',
-                backgroundColor: 'var(--theme-elevation-50, #f8fafc)',
-                color: 'var(--theme-text, #334155)',
+                borderRadius: 'var(--bs-radius-sm, 4px)',
+                border: '1px solid var(--theme-elevation-200)',
+                backgroundColor: 'var(--theme-elevation-50)',
+                color: 'var(--theme-text)',
                 cursor: 'pointer',
+                transition: 'all 0.12s ease',
               }}
             >
               + Add Custom Spec
@@ -757,9 +766,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
               gap: '0.5rem',
               alignItems: 'center',
               padding: '0.5rem',
-              borderRadius: '4px',
-              backgroundColor: 'var(--theme-elevation-50, #f8fafc)',
-              border: '1px dashed var(--theme-elevation-200, #e2e8f0)',
+              borderRadius: 'var(--bs-radius-sm, 4px)',
+              backgroundColor: 'var(--theme-elevation-50)',
+              border: '1px dashed var(--theme-elevation-200)',
               marginBottom: '0.85rem',
             }}
           >
@@ -770,8 +779,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                 flex: 1,
                 padding: '0.4rem 0.5rem',
                 fontSize: '0.825rem',
-                borderRadius: '4px',
-                border: '1px solid var(--theme-elevation-250, #cbd5e1)',
+                borderRadius: 'var(--bs-radius-sm, 4px)',
+                border: '1px solid var(--theme-elevation-200)',
+                background: 'var(--theme-input-bg)',
+                color: 'var(--theme-text)',
               }}
             >
               <option value="">— Attach Global Attribute ({availableGlobalAttrs.length} available) —</option>
@@ -789,11 +800,12 @@ export default function ProductSpecificationsField(props: { path?: string; label
                 padding: '0.4rem 0.85rem',
                 fontSize: '0.825rem',
                 fontWeight: 600,
-                borderRadius: '4px',
+                borderRadius: 'var(--bs-radius-sm, 4px)',
                 border: 'none',
-                backgroundColor: selectedAdHocAttrId ? 'var(--theme-primary-500, #3b82f6)' : '#94a3b8',
-                color: '#fff',
+                backgroundColor: selectedAdHocAttrId ? 'var(--bs-primary, #3b82f6)' : 'var(--theme-elevation-200)',
+                color: selectedAdHocAttrId ? '#ffffff' : 'var(--theme-elevation-500)',
                 cursor: selectedAdHocAttrId ? 'pointer' : 'not-allowed',
+                transition: 'all 0.12s ease',
               }}
             >
               Attach
@@ -814,9 +826,9 @@ export default function ProductSpecificationsField(props: { path?: string; label
                     flexDirection: 'column',
                     gap: '0.35rem',
                     padding: '0.65rem',
-                    borderRadius: '4px',
-                    border: '1px solid var(--theme-elevation-200, #e2e8f0)',
-                    backgroundColor: item.isCustom ? '#fffbeb' : '#f0fdf4',
+                    borderRadius: 'var(--bs-radius-sm, 4px)',
+                    border: '1px solid var(--theme-elevation-150)',
+                    backgroundColor: 'var(--theme-elevation-50)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -828,13 +840,13 @@ export default function ProductSpecificationsField(props: { path?: string; label
                           textTransform: 'uppercase',
                           padding: '0.1rem 0.35rem',
                           borderRadius: '4px',
-                          backgroundColor: item.isCustom ? '#fef3c7' : '#dcfce7',
-                          color: item.isCustom ? '#b45309' : '#15803d',
+                          backgroundColor: item.isCustom ? 'var(--bs-warning-subtle)' : 'var(--bs-success-subtle)',
+                          color: item.isCustom ? 'var(--bs-warning, #d97706)' : 'var(--bs-success, #16a34a)',
                         }}
                       >
                         {item.isCustom ? 'Custom' : 'Ad-Hoc'}
                       </span>
-                      <strong style={{ fontSize: '0.825rem', color: '#1e293b' }}>
+                      <strong style={{ fontSize: '0.825rem', color: 'var(--theme-text)' }}>
                         {item.label || item.key}
                       </strong>
                     </div>
@@ -846,7 +858,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#94a3b8',
+                        color: 'var(--theme-elevation-400)',
                         cursor: 'pointer',
                         fontSize: '1rem',
                         lineHeight: 1,
@@ -863,8 +875,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       style={{
                         padding: '0.4rem 0.5rem',
                         fontSize: '0.825rem',
-                        borderRadius: '4px',
-                        border: '1px solid #cbd5e1',
+                        borderRadius: 'var(--bs-radius-sm, 4px)',
+                        border: '1px solid var(--theme-elevation-200)',
+                        background: 'var(--theme-input-bg)',
+                        color: 'var(--theme-text)',
                       }}
                     >
                       <option value="">— Select Value —</option>
@@ -885,8 +899,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                           flex: 1,
                           padding: '0.4rem 0.5rem',
                           fontSize: '0.825rem',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
+                          borderRadius: 'var(--bs-radius-sm, 4px)',
+                          border: '1px solid var(--theme-elevation-200)',
+                          background: 'var(--theme-input-bg)',
+                          color: 'var(--theme-text)',
                         }}
                       />
                       {item.unit && (
@@ -895,7 +911,8 @@ export default function ProductSpecificationsField(props: { path?: string; label
                             fontSize: '0.75rem',
                             fontWeight: 500,
                             padding: '0.4rem',
-                            backgroundColor: '#e2e8f0',
+                            backgroundColor: 'var(--theme-elevation-150)',
+                            color: 'var(--theme-elevation-600)',
                             borderRadius: '4px',
                           }}
                         >
@@ -909,7 +926,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
             })}
           </div>
         ) : (
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--theme-elevation-400)', fontStyle: 'italic' }}>
             No ad-hoc or custom specifications attached.
           </p>
         )}
@@ -921,7 +938,8 @@ export default function ProductSpecificationsField(props: { path?: string; label
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -930,21 +948,23 @@ export default function ProductSpecificationsField(props: { path?: string; label
         >
           <div
             style={{
-              backgroundColor: '#fff',
-              borderRadius: '8px',
+              backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+              color: 'var(--theme-text)',
+              border: '1px solid var(--theme-elevation-200)',
+              borderRadius: 'var(--bs-radius-lg, 12px)',
               padding: '1.5rem',
               width: '90%',
               maxWidth: '440px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+              boxShadow: 'var(--bs-shadow-lg)',
             }}
           >
-            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 600 }}>
+            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--theme-text)' }}>
               Add Custom Specification
             </h4>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Label *</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Label *</label>
                 <input
                   type="text"
                   placeholder="e.g. Special Box Contents"
@@ -955,51 +975,51 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       setCustomKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, '_'))
                     }
                   }}
-                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Key / Identifier *</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Key / Identifier *</label>
                 <input
                   type="text"
                   placeholder="e.g. special_box_contents"
                   value={customKey}
                   onChange={(e) => setCustomKey(e.target.value)}
-                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Value *</label>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Value *</label>
                 <input
                   type="text"
                   placeholder="e.g. Includes Commemorative Coin"
                   value={customValue}
                   onChange={(e) => setCustomValue(e.target.value)}
-                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Unit (Optional)</label>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Unit (Optional)</label>
                   <input
                     type="text"
                     placeholder="e.g. mm, g, pcs"
                     value={customUnit}
                     onChange={(e) => setCustomUnit(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                    style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Group (Section)</label>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Group (Section)</label>
                   <input
                     type="text"
                     placeholder="e.g. Package Contents"
                     value={customGroup}
                     onChange={(e) => setCustomGroup(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                    style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
                   />
                 </div>
               </div>
@@ -1008,7 +1028,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
+                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
@@ -1020,10 +1040,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                     padding: '0.45rem 1rem',
                     fontSize: '0.85rem',
                     fontWeight: 600,
-                    borderRadius: '4px',
+                    borderRadius: 'var(--bs-radius-sm, 4px)',
                     border: 'none',
-                    backgroundColor: customKey.trim() && customValue.trim() ? '#3b82f6' : '#94a3b8',
-                    color: '#fff',
+                    backgroundColor: customKey.trim() && customValue.trim() ? 'var(--bs-primary, #3b82f6)' : 'var(--theme-elevation-200)',
+                    color: customKey.trim() && customValue.trim() ? '#ffffff' : 'var(--theme-elevation-500)',
                     cursor: customKey.trim() && customValue.trim() ? 'pointer' : 'not-allowed',
                   }}
                 >

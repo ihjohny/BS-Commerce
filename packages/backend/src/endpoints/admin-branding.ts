@@ -14,7 +14,7 @@ export async function adminBrandingHandler(req: PayloadRequest): Promise<Respons
     overrideAccess: true,
     req,
   })
-  const body = resolveAdminBrandingFromGlobal(doc as Record<string, unknown>, req.payload)
+  const body = resolveAdminBrandingFromGlobal(doc as unknown as Record<string, unknown>, req.payload)
   return Response.json(body, { headers: NO_STORE })
 }
 

@@ -57,10 +57,10 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
 
         const availableIds = new Set<string>()
         for (const row of stockRows) {
-          const qty = Number((row as Record<string, unknown>).quantity) || 0
-          const reserved = Number((row as Record<string, unknown>).reservedQuantity) || 0
+          const qty = Number(row.quantity) || 0
+          const reserved = Number(row.reservedQuantity) || 0
           if (qty - reserved > 0) {
-            const productRef = (row as Record<string, unknown>).product
+            const productRef = row.product
             const pid = typeof productRef === 'object' && productRef !== null
               ? (productRef as { id: string }).id
               : String(productRef)
@@ -143,7 +143,7 @@ export const storefrontStoreProductsEndpoint: Endpoint = {
         page,
         limit,
         sort,
-        locale: locale as string | undefined,
+        locale: locale as never,
         depth,
         overrideAccess: true,
       })

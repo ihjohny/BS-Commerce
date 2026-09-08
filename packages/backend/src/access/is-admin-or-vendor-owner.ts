@@ -12,8 +12,9 @@ export const isAdminOrVendorOwner: Access = ({ req }) => {
   if (!user) return false
   if (user.role === 'admin') return true
 
-  if (user.role === 'vendor' && user.tenant) {
-    const tenantId = typeof user.tenant === 'object' ? user.tenant.id : user.tenant
+  const userRecord = user as Record<string, any>
+  if (user.role === 'vendor' && userRecord.tenant) {
+    const tenantId = typeof userRecord.tenant === 'object' ? userRecord.tenant.id : userRecord.tenant
     return {
       tenant: {
         equals: tenantId,

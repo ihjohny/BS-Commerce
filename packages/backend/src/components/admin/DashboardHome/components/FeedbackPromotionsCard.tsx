@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import type { RecentReview, ActiveCoupon } from '../../../lib/admin-dashboard-stats'
+import type { RecentReview, ActiveCoupon } from '../../../../lib/admin-dashboard-stats'
 
 type FeedbackPromotionsCardProps = {
   reviews: RecentReview[]
@@ -51,18 +51,19 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
             borderRadius: 'var(--bs-radius-sm, 6px)',
             background: 'var(--theme-elevation-100)',
             border: '1px solid var(--theme-elevation-200)',
-            gap: 2,
+            gap: 1,
           }}
         >
           <button
             onClick={() => setTab('reviews')}
             style={{
-              border: 'none',
               borderRadius: 4,
               fontSize: 12,
               fontWeight: tab === 'reviews' ? 600 : 500,
-              color: tab === 'reviews' ? '#ffffff' : 'var(--theme-elevation-600)',
-              background: tab === 'reviews' ? 'var(--bs-primary, #2563eb)' : 'transparent',
+              color: tab === 'reviews' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+              background: tab === 'reviews' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              border: tab === 'reviews' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+              boxShadow: tab === 'reviews' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -73,12 +74,13 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           <button
             onClick={() => setTab('coupons')}
             style={{
-              border: 'none',
               borderRadius: 4,
               fontSize: 12,
               fontWeight: tab === 'coupons' ? 600 : 500,
-              color: tab === 'coupons' ? '#ffffff' : 'var(--theme-elevation-600)',
-              background: tab === 'coupons' ? 'var(--bs-primary, #2563eb)' : 'transparent',
+              color: tab === 'coupons' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+              background: tab === 'coupons' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              border: tab === 'coupons' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+              boxShadow: tab === 'coupons' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -172,10 +174,10 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                           borderRadius: 999,
                           letterSpacing: '0.04em',
                           background: isPending
-                            ? 'rgba(217, 119, 6, 0.12)'
+                            ? 'var(--bs-warning-subtle)'
                             : isApproved
-                            ? 'rgba(22, 163, 74, 0.12)'
-                            : 'rgba(220, 38, 38, 0.12)',
+                            ? 'var(--bs-success-subtle)'
+                            : 'var(--bs-error-subtle)',
                           color: isPending
                             ? 'var(--bs-warning, #d97706)'
                             : isApproved
@@ -185,7 +187,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                       >
                         {r.status}
                       </span>
-                      <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 3 }}>
+                      <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
                         {formatDate(r.createdAt)}
                       </div>
                     </div>
@@ -241,8 +243,8 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                           fontFamily: 'monospace',
                           letterSpacing: '0.06em',
                           color: 'var(--bs-primary, #2563eb)',
-                          background: 'rgba(37, 99, 235, 0.08)',
-                          border: '1px dashed rgba(37, 99, 235, 0.3)',
+                          background: 'var(--bs-primary-subtle)',
+                          border: '1px dashed var(--bs-primary-border)',
                           padding: '2px 7px',
                           borderRadius: 4,
                         }}
@@ -261,10 +263,10 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text)', fontVariantNumeric: 'tabular-nums' }}>
                       {c.totalUses} used
                     </div>
-                    <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 2 }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
                       {c.expiresAt ? `Exp: ${formatDate(c.expiresAt)}` : 'No Expiry'}
                     </div>
                   </div>

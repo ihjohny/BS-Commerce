@@ -16,7 +16,7 @@ export interface MultivendorPluginOptions {
 const tenantField = {
   name: 'tenant',
   type: 'relationship' as const,
-  relationTo: 'tenants',
+  relationTo: 'tenants' as any,
   admin: {
     description: 'Vendor tenant. Set when user becomes a vendor (approved application).',
   },
@@ -60,7 +60,7 @@ export const multivendorPlugin =
         mediaFields.unshift({
           name: 'tenant',
           type: 'relationship' as const,
-          relationTo: 'tenants',
+          relationTo: 'tenants' as any,
           admin: {
             description: 'Vendor tenant. Null = platform media (admin-uploaded).',
           },

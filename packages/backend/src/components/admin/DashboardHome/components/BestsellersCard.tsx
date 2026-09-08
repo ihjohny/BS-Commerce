@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import type { BestsellingProduct, TopEngagedProduct } from '../../../lib/admin-dashboard-stats'
+import type { BestsellingProduct, TopEngagedProduct } from '../../../../lib/admin-dashboard-stats'
 
 type BestsellersCardProps = {
   bestsellers: BestsellingProduct[]
@@ -48,18 +48,19 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
             borderRadius: 'var(--bs-radius-sm, 6px)',
             background: 'var(--theme-elevation-100)',
             border: '1px solid var(--theme-elevation-200)',
-            gap: 2,
+            gap: 1,
           }}
         >
           <button
             onClick={() => setTab('bestsellers')}
             style={{
-              border: 'none',
               borderRadius: 4,
               fontSize: 12,
               fontWeight: tab === 'bestsellers' ? 600 : 500,
-              color: tab === 'bestsellers' ? '#ffffff' : 'var(--theme-elevation-600)',
-              background: tab === 'bestsellers' ? 'var(--bs-primary, #2563eb)' : 'transparent',
+              color: tab === 'bestsellers' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+              background: tab === 'bestsellers' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              border: tab === 'bestsellers' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+              boxShadow: tab === 'bestsellers' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -70,12 +71,13 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
           <button
             onClick={() => setTab('engaged')}
             style={{
-              border: 'none',
               borderRadius: 4,
               fontSize: 12,
               fontWeight: tab === 'engaged' ? 600 : 500,
-              color: tab === 'engaged' ? '#ffffff' : 'var(--theme-elevation-600)',
-              background: tab === 'engaged' ? 'var(--bs-primary, #2563eb)' : 'transparent',
+              color: tab === 'engaged' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+              background: tab === 'engaged' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              border: tab === 'engaged' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+              boxShadow: tab === 'engaged' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -133,8 +135,8 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                         width: 36,
                         height: 36,
                         borderRadius: 6,
-                        background: idx === 0 ? '#fef3c7' : idx === 1 ? '#f1f5f9' : idx === 2 ? '#ffedd5' : 'var(--theme-elevation-200)',
-                        border: idx < 3 ? `1px solid ${idx === 0 ? '#fde68a' : idx === 1 ? '#e2e8f0' : '#fed7aa'}` : 'none',
+                        background: 'var(--theme-elevation-150)',
+                        border: '1px solid var(--theme-elevation-200)',
                         overflow: 'hidden',
                         flexShrink: 0,
                         display: 'flex',
@@ -142,7 +144,8 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                         justifyContent: 'center',
                         fontSize: 11,
                         fontWeight: 700,
-                        color: idx === 0 ? '#b45309' : idx === 1 ? '#475569' : idx === 2 ? '#c2410c' : 'var(--theme-elevation-500)',
+                        color: idx < 3 ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
                       {item.imageUrl ? (
@@ -171,10 +174,10 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--theme-text)' }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--theme-text)', fontVariantNumeric: 'tabular-nums' }}>
                       {item.unitsSold} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--theme-elevation-500)' }}>sold</span>
                     </div>
-                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--bs-primary, #2563eb)', marginTop: 2 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--bs-primary, #2563eb)', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
                       {formatCurrency(item.revenue, currency)}
                     </div>
                   </div>
@@ -225,7 +228,8 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                         width: 36,
                         height: 36,
                         borderRadius: 6,
-                        background: 'var(--theme-elevation-200)',
+                        background: 'var(--theme-elevation-150)',
+                        border: '1px solid var(--theme-elevation-200)',
                         overflow: 'hidden',
                         flexShrink: 0,
                         display: 'flex',
@@ -234,6 +238,7 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                         fontSize: 11,
                         fontWeight: 700,
                         color: 'var(--theme-elevation-500)',
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
                       {item.imageUrl ? (

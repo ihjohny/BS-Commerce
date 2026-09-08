@@ -54,10 +54,8 @@ async function generateUniqueVariantSku(args: {
   const slugFromProduct =
     product &&
     typeof product === 'object' &&
-    product !== null &&
-    'slug' in product &&
-    typeof (product as Record<string, unknown>).slug === 'string'
-      ? String((product as Record<string, unknown>).slug).trim()
+    typeof (product as any).slug === 'string'
+      ? String((product as any).slug).trim()
       : ''
   const slugRaw = slugFromProduct.length > 0 ? slugFromProduct : String(productId)
 

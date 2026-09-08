@@ -121,7 +121,7 @@ async function markTransactionByIpnFailure(
   })
   if (!orderDoc) return
 
-  const order = orderDoc as Record<string, unknown>
+  const order = orderDoc as unknown as Record<string, unknown>
   if (order.paymentStatus === 'paid') return
 
   const orderNumber = String(order.orderNumber ?? '').trim()
@@ -278,7 +278,7 @@ export async function processSslCommerzIpnNotification(
     return
   }
 
-  const order = orderDoc as Record<string, unknown>
+  const order = orderDoc as unknown as Record<string, unknown>
   const alreadyPaid = order.paymentStatus === 'paid'
 
   await payload.update({

@@ -58,22 +58,22 @@ export function ReportTable({ table, currency: _currency }: ReportTableProps) {
     const isDevice = ['desktop', 'mobile', 'tablet', 'bot', 'other/direct'].includes(valLower)
 
     const bg = isError
-      ? 'var(--theme-error-100, #fee2e2)'
+      ? 'var(--bs-error-subtle)'
       : isWarning
-      ? 'var(--theme-warning-100, #fef3c7)'
+      ? 'var(--bs-warning-subtle)'
       : isSuccess
-      ? 'var(--theme-success-100, #dcfce7)'
+      ? 'var(--bs-success-subtle)'
       : isDevice
-      ? 'var(--theme-elevation-150, #f1f5f9)'
+      ? 'var(--theme-elevation-150)'
       : 'var(--theme-elevation-150)'
     const color = isError
-      ? 'var(--theme-error-700, #b91c1c)'
+      ? 'var(--bs-error, #dc2626)'
       : isWarning
-      ? 'var(--theme-warning-700, #b45309)'
+      ? 'var(--bs-warning, #d97706)'
       : isSuccess
-      ? 'var(--theme-success-700, #15803d)'
+      ? 'var(--bs-success, #16a34a)'
       : isDevice
-      ? 'var(--theme-elevation-700, #334155)'
+      ? 'var(--theme-elevation-700)'
       : 'var(--theme-elevation-800)'
 
     return (
@@ -81,7 +81,7 @@ export function ReportTable({ table, currency: _currency }: ReportTableProps) {
         style={{
           display: 'inline-block',
           padding: '2px 8px',
-          borderRadius: 4,
+          borderRadius: 'var(--bs-radius-full, 9999px)',
           fontSize: 11,
           fontWeight: 600,
           background: bg,
@@ -167,7 +167,7 @@ export function ReportTable({ table, currency: _currency }: ReportTableProps) {
                   key={rowIdx}
                   style={{
                     borderBottom: '1px solid var(--theme-elevation-150)',
-                    background: rowIdx % 2 === 0 ? 'var(--theme-elevation-0, #fff)' : 'var(--theme-elevation-50)',
+                    background: rowIdx % 2 === 0 ? 'var(--theme-elevation-0, var(--theme-bg))' : 'var(--theme-elevation-50)',
                     transition: 'background 0.1s ease',
                   }}
                 >
@@ -231,7 +231,7 @@ export function ReportTable({ table, currency: _currency }: ReportTableProps) {
             alignItems: 'center',
             padding: '0.75rem 1rem',
             borderTop: '1px solid var(--theme-elevation-200)',
-            background: 'var(--theme-elevation-0, #fff)',
+            background: 'var(--theme-elevation-0, var(--theme-bg))',
             fontSize: 12,
             color: 'var(--theme-elevation-600)',
           }}

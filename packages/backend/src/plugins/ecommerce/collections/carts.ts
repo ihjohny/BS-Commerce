@@ -314,7 +314,7 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
       type: 'array',
       required: false, // Allow empty cart after checkout; required=true would reject []
       defaultValue: [],
-      fields: itemFields,
+      fields: itemFields as any,
     },
     {
       name: 'subtotal',

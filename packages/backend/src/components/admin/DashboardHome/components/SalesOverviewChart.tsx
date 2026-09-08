@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import type { SalesChartPoint } from '../../../lib/admin-dashboard-stats'
+import type { SalesChartPoint } from '../../../../lib/admin-dashboard-stats'
 
 type SalesOverviewChartProps = {
   data: SalesChartPoint[]
@@ -107,20 +107,21 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
             borderRadius: 'var(--bs-radius-sm, 6px)',
             background: 'var(--theme-elevation-100)',
             border: '1px solid var(--theme-elevation-200)',
+            gap: 1,
           }}
         >
           <button
             onClick={() => setMetric('revenue')}
             style={{
-              padding: '0.35rem 0.75rem',
+              padding: '0.3rem 0.75rem',
               borderRadius: 4,
               fontSize: 12,
               fontWeight: isRevenue ? 600 : 500,
-              border: 'none',
+              border: isRevenue ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
               cursor: 'pointer',
-              background: isRevenue ? 'var(--bs-primary, #2563eb)' : 'transparent',
-              color: isRevenue ? '#ffffff' : 'var(--theme-elevation-600)',
-              boxShadow: isRevenue ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+              background: isRevenue ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              color: isRevenue ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+              boxShadow: isRevenue ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
               transition: 'all 0.12s ease',
             }}
           >
@@ -129,15 +130,15 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           <button
             onClick={() => setMetric('orders')}
             style={{
-              padding: '0.35rem 0.75rem',
+              padding: '0.3rem 0.75rem',
               borderRadius: 4,
               fontSize: 12,
               fontWeight: !isRevenue ? 600 : 500,
-              border: 'none',
+              border: !isRevenue ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
               cursor: 'pointer',
-              background: !isRevenue ? 'var(--bs-primary, #2563eb)' : 'transparent',
-              color: !isRevenue ? '#ffffff' : 'var(--theme-elevation-600)',
-              boxShadow: !isRevenue ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+              background: !isRevenue ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              color: !isRevenue ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+              boxShadow: !isRevenue ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
               transition: 'all 0.12s ease',
             }}
           >
@@ -165,7 +166,7 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
             <defs>
               <linearGradient id="chartGradientAccent" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--bs-primary, #2563eb)" stopOpacity="0.22" />
+                <stop offset="0%" stopColor="var(--bs-primary, #2563eb)" stopOpacity="0.2" />
                 <stop offset="100%" stopColor="var(--bs-primary, #2563eb)" stopOpacity="0.0" />
               </linearGradient>
             </defs>
@@ -218,7 +219,7 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
                   cy={p.y}
                   r={hoverIndex === idx ? 5 : 2.5}
                   fill="var(--bs-primary, #2563eb)"
-                  stroke="var(--theme-elevation-50, #fff)"
+                  stroke="var(--theme-elevation-0, var(--theme-bg))"
                   strokeWidth="2"
                   style={{ cursor: 'pointer', transition: 'r 0.15s ease' }}
                 />
@@ -252,6 +253,7 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
                 transform: 'translateX(-50%)',
                 background: 'var(--theme-elevation-900, #1e293b)',
                 color: '#fff',
+                border: '1px solid var(--theme-elevation-700, #334155)',
                 padding: '6px 12px',
                 borderRadius: 'var(--bs-radius-sm, 6px)',
                 fontSize: 12,
@@ -262,8 +264,8 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
               }}
             >
               <div style={{ fontWeight: 600, marginBottom: 2, color: '#93c5fd' }}>{points[hoverIndex].data.date}</div>
-              <div>Revenue: <strong>{formatCurrency(points[hoverIndex].data.revenue, currency)}</strong></div>
-              <div>Orders: <strong>{points[hoverIndex].data.orders}</strong></div>
+              <div style={{ fontVariantNumeric: 'tabular-nums' }}>Revenue: <strong>{formatCurrency(points[hoverIndex].data.revenue, currency)}</strong></div>
+              <div style={{ fontVariantNumeric: 'tabular-nums' }}>Orders: <strong>{points[hoverIndex].data.orders}</strong></div>
             </div>
           )}
         </div>

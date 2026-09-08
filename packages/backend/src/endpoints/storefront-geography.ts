@@ -47,7 +47,7 @@ async function getSubdivisionIdsServedByPublicStores(req: PayloadRequest): Promi
   const stockIds = await getActivePublicStoreIds(req)
   if (stockIds.length === 0) return new Set()
   const { docs: areas } = await req.payload.find({
-    collection: 'stock-location-service-areas',
+    collection: 'stock-location-service-areas' as any,
     where: { stockLocation: { in: stockIds } },
     limit: 10_000,
     depth: 0,
@@ -72,7 +72,7 @@ async function getServedLocalitiesInSubdivision(
 ): Promise<ServedLocalitiesResult> {
   if (stockIds.length === 0) return { kind: 'ids', ids: new Set() }
   const { docs: areas } = await req.payload.find({
-    collection: 'stock-location-service-areas',
+    collection: 'stock-location-service-areas' as any,
     where: {
       and: [{ stockLocation: { in: stockIds } }, { subdivision: { equals: subdivisionId } }],
     },
@@ -167,7 +167,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
     try {
       if (resource === 'countries') {
         const { docs } = await req.payload.find({
-          collection: 'geo-countries',
+          collection: 'geo-countries' as any,
           where: { isActive: { equals: true } },
           sort: 'name',
           limit: 200,
@@ -193,7 +193,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
         const onlyServed = parseOnlyServedFlag(url)
 
         let { docs } = await req.payload.find({
-          collection: 'geo-subdivisions',
+          collection: 'geo-subdivisions' as any,
           where: {
             and: [{ country: { equals: countryId.trim() } }, { isActive: { equals: true } }],
           },
@@ -242,7 +242,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
         const onlyServed = parseOnlyServedFlag(url)
 
         let { docs } = await req.payload.find({
-          collection: 'geo-localities',
+          collection: 'geo-localities' as any,
           where: {
             and: [{ subdivision: { equals: subId } }, { isActive: { equals: true } }],
           },
@@ -288,7 +288,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
         }
 
         const subdivisionDoc = await req.payload.findByID({
-          collection: 'geo-subdivisions',
+          collection: 'geo-subdivisions' as any,
           id: subdivisionIdParam,
           depth: 0,
           overrideAccess: true,
@@ -297,7 +297,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
         let localityDoc: Record<string, unknown> | null = null
         if (localityIdParam) {
           localityDoc = (await req.payload.findByID({
-            collection: 'geo-localities',
+            collection: 'geo-localities' as any,
             id: localityIdParam,
             depth: 0,
             overrideAccess: true,
@@ -332,7 +332,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
         }
 
         const { docs: areaRows } = await req.payload.find({
-          collection: 'stock-location-service-areas',
+          collection: 'stock-location-service-areas' as any,
           where: serviceWhere,
           limit: 10_000,
           depth: 0,
@@ -366,7 +366,7 @@ export const storefrontGeographyEndpoint: Endpoint = {
             depth: 0,
             overrideAccess: true,
           })
-          stores = locs as Record<string, unknown>[]
+          stores = locs as unknown as Record<string, unknown>[]
           stores.sort((a, b) => {
             const pa = Number(a.sortPriority) || 0
             const pb = Number(b.sortPriority) || 0

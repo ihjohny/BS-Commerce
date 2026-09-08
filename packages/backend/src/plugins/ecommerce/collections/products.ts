@@ -196,7 +196,7 @@ function enforceBundleRules(multivendorEnabled: boolean): CollectionBeforeValida
         id: childProductId,
         depth: 0,
         overrideAccess: true,
-      })) as Record<string, unknown> | null
+      })) as unknown as Record<string, unknown> | null
       if (!childProduct) {
         throw new Error(`Bundle item product not found: ${childProductId}`)
       }
@@ -233,7 +233,7 @@ function enforceBundleRules(multivendorEnabled: boolean): CollectionBeforeValida
           id: variantId,
           depth: 0,
           overrideAccess: true,
-        })) as Record<string, unknown> | null
+        })) as unknown as Record<string, unknown> | null
         if (!variant) {
           throw new Error(`Bundle item variant not found: ${variantId}`)
         }
@@ -271,7 +271,7 @@ export const validateClassSpecifications: CollectionBeforeValidateHook = async (
         id: productClassId,
         depth: 2,
         overrideAccess: true,
-      })) as Record<string, unknown> | null
+      })) as unknown as Record<string, unknown> | null
 
       if (classDoc) {
         // Collect from groups.attributes
@@ -463,10 +463,11 @@ const applySpecificationFacetFilters: CollectionBeforeOperationHook = async ({
                 ? { id: { in: matchingIds } }
                 : { id: { equals: '00000000-0000-0000-0000-000000000000' } }
 
-            if (args.where) {
-              args.where = { and: [args.where, idFilter] }
+            const anyArgs = args as any
+            if (anyArgs.where) {
+              anyArgs.where = { and: [anyArgs.where, idFilter] }
             } else {
-              args.where = idFilter
+              anyArgs.where = idFilter
             }
           }
         }

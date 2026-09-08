@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import type { LowStockItem } from '../../../lib/admin-dashboard-stats'
+import type { LowStockItem } from '../../../../lib/admin-dashboard-stats'
 
 type LowStockCardProps = {
   items: LowStockItem[]
@@ -41,10 +41,11 @@ export function LowStockCard({ items }: LowStockCardProps) {
                 style={{
                   fontSize: 10.5,
                   fontWeight: 700,
-                  padding: '2px 7px',
+                  padding: '1px 6px',
                   borderRadius: 999,
-                  background: 'rgba(220, 38, 38, 0.1)',
+                  background: 'var(--bs-error-subtle)',
                   color: 'var(--bs-error, #dc2626)',
+                  border: '1px solid var(--bs-error-subtle)',
                 }}
               >
                 {items.length}
@@ -135,17 +136,18 @@ export function LowStockCard({ items }: LowStockCardProps) {
                   <span
                     style={{
                       fontSize: 11,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       padding: '2px 8px',
                       borderRadius: 999,
-                      background: isOutOfStock ? 'rgba(220, 38, 38, 0.12)' : 'rgba(217, 119, 6, 0.12)',
+                      background: isOutOfStock ? 'var(--bs-error-subtle)' : 'var(--bs-warning-subtle)',
                       color: isOutOfStock ? 'var(--bs-error, #dc2626)' : 'var(--bs-warning, #d97706)',
+                      fontVariantNumeric: 'tabular-nums',
                     }}
                   >
                     {isOutOfStock ? 'Out of Stock' : `${item.quantity} In Stock`}
                   </span>
                   {item.reservedQuantity > 0 && (
-                    <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 2 }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
                       ({item.reservedQuantity} reserved)
                     </div>
                   )}

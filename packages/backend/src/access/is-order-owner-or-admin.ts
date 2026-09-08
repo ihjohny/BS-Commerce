@@ -12,11 +12,12 @@ export const isOrderOwnerOrAdmin: Access = async ({ req }) => {
   if (user.role === 'customer') {
     return { customer: { equals: user.id } } as any
   }
-  if (user.role === 'vendor' && user.tenant) {
+  const userRecord = user as Record<string, any>
+  if (user.role === 'vendor' && userRecord.tenant) {
     try {
-      const tenantId = typeof user.tenant === 'object' ? user.tenant.id : user.tenant
+      const tenantId = typeof userRecord.tenant === 'object' ? userRecord.tenant.id : userRecord.tenant
       const { docs } = await req.payload.find({
-        collection: 'sub-orders',
+        collection: 'sub-orders' as any,
         where: { tenant: { equals: tenantId } },
         limit: 5000,
         depth: 0,

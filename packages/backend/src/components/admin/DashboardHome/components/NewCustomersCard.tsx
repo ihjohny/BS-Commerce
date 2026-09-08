@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import type { NewCustomer } from '../../../lib/admin-dashboard-stats'
+import type { NewCustomer } from '../../../../lib/admin-dashboard-stats'
 
 type NewCustomersCardProps = {
   customers: NewCustomer[]
@@ -106,18 +106,18 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   <div
                     style={{
-                      width: 34,
-                      height: 34,
+                      width: 32,
+                      height: 32,
                       borderRadius: '50%',
-                      background: 'rgba(37, 99, 235, 0.1)',
-                      color: 'var(--bs-primary, #2563eb)',
+                      background: 'var(--theme-elevation-150)',
+                      border: '1px solid var(--theme-elevation-200)',
+                      color: 'var(--theme-elevation-700)',
                       fontWeight: 700,
-                      fontSize: 11.5,
+                      fontSize: 11,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      border: '1px solid rgba(37, 99, 235, 0.2)',
                     }}
                   >
                     {initials}
@@ -159,13 +159,13 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                       padding: '2px 7px',
                       borderRadius: 999,
                       letterSpacing: '0.04em',
-                      background: c.status === 'active' ? 'rgba(22, 163, 74, 0.12)' : 'rgba(220, 38, 38, 0.12)',
+                      background: c.status === 'active' ? 'var(--bs-success-subtle)' : 'var(--bs-error-subtle)',
                       color: c.status === 'active' ? 'var(--bs-success, #16a34a)' : 'var(--bs-error, #dc2626)',
                     }}
                   >
                     {c.status}
                   </span>
-                  <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 3 }}>
+                  <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
                     {formatDate(c.createdAt)}
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { KpiMetric } from '../../../lib/admin-dashboard-stats'
+import type { KpiMetric } from '../../../../lib/admin-dashboard-stats'
 
 type KpiCardsProps = {
   currency: string
@@ -42,11 +42,11 @@ function TrendBadge({ change }: { change: number | null }) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 3,
-        fontSize: 11.5,
+        fontSize: 11,
         fontWeight: 600,
         color: color,
         background: bg,
-        padding: '2px 7px',
+        padding: '1.5px 7px',
         borderRadius: 'var(--bs-radius-full, 9999px)',
       }}
     >
@@ -73,30 +73,26 @@ function TrendBadge({ change }: { change: number | null }) {
 export function KpiCards({ currency, kpis }: KpiCardsProps) {
   const cards = [
     {
-      label: 'Revenue',
+      label: 'Total Revenue',
       value: formatCurrency(kpis.revenue.value, currency),
       metric: kpis.revenue,
       href: '/admin/collections/orders',
       sublabel: `Prev: ${formatCurrency(kpis.revenue.previousValue, currency)}`,
-      iconBg: 'rgba(16, 185, 129, 0.12)',
-      iconColor: '#10b981',
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="12" y1="1" x2="12" y2="23" />
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
         </svg>
       ),
     },
     {
-      label: 'Orders',
+      label: 'Order Volume',
       value: kpis.orders.value.toLocaleString(),
       metric: kpis.orders,
       href: '/admin/collections/orders',
       sublabel: `Prev: ${kpis.orders.previousValue.toLocaleString()} orders`,
-      iconBg: 'rgba(37, 99, 235, 0.12)',
-      iconColor: '#2563eb',
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="9" cy="21" r="1" />
           <circle cx="20" cy="21" r="1" />
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
@@ -104,15 +100,13 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       ),
     },
     {
-      label: 'Customers',
+      label: 'Total Customers',
       value: kpis.customers.value.toLocaleString(),
       metric: kpis.customers,
       href: '/admin/collections/users',
       sublabel: 'Registered accounts',
-      iconBg: 'rgba(139, 92, 246, 0.12)',
-      iconColor: '#8b5cf6',
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -121,15 +115,13 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       ),
     },
     {
-      label: 'Avg. Order Value',
+      label: 'Average Order Value',
       value: formatCurrency(kpis.aov.value, currency),
       metric: kpis.aov,
       href: '/admin/collections/orders',
       sublabel: `Prev: ${formatCurrency(kpis.aov.previousValue, currency)}`,
-      iconBg: 'rgba(245, 158, 11, 0.12)',
-      iconColor: '#f59e0b',
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
         </svg>
       ),
@@ -172,17 +164,18 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
             e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--theme-elevation-500)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--theme-elevation-500)', letterSpacing: '0.01em' }}>
               {c.label}
             </span>
             <div
               style={{
-                width: 34,
-                height: 34,
+                width: 32,
+                height: 32,
                 borderRadius: 'var(--bs-radius-sm, 6px)',
-                background: c.iconBg,
-                color: c.iconColor,
+                background: 'var(--theme-elevation-100)',
+                border: '1px solid var(--theme-elevation-200)',
+                color: 'var(--theme-elevation-600)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -195,10 +188,11 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
             <div
               style={{
-                fontSize: 26,
+                fontSize: 25,
                 fontWeight: 700,
                 lineHeight: 1.15,
-                letterSpacing: '-0.02em',
+                letterSpacing: '-0.03em',
+                fontVariantNumeric: 'tabular-nums',
                 color: 'var(--theme-text)',
               }}
             >
@@ -207,7 +201,7 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
             <TrendBadge change={c.metric.changePercentage} />
           </div>
 
-          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-450, #888)' }}>
+          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)' }}>
             {c.sublabel}
           </div>
         </a>

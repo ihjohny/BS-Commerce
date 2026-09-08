@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
-import type { RecentOrder } from '../../../lib/admin-dashboard-stats'
+import type { RecentOrder } from '../../../../lib/admin-dashboard-stats'
 
 type RecentOrdersCardProps = {
   orders: RecentOrder[]
@@ -149,7 +149,17 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
           borderBottom: '1px solid var(--theme-elevation-150)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            flexWrap: 'wrap',
+            padding: 2,
+            borderRadius: 'var(--bs-radius-sm, 6px)',
+            background: 'var(--theme-elevation-100)',
+            border: '1px solid var(--theme-elevation-200)',
+            gap: 1,
+          }}
+        >
           {['all', 'pending', 'processing', 'delivered', 'refunded'].map((st) => {
             const isActive = statusFilter === st
             return (
@@ -158,14 +168,15 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                 onClick={() => setStatusFilter(st)}
                 style={{
                   padding: '3px 9px',
-                  borderRadius: 'var(--bs-radius-sm, 6px)',
-                  border: 'none',
-                  background: isActive ? 'var(--theme-elevation-200)' : 'transparent',
-                  color: isActive ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+                  borderRadius: 4,
+                  border: isActive ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+                  background: isActive ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+                  color: isActive ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
                   fontSize: 12,
                   fontWeight: isActive ? 600 : 500,
                   textTransform: 'capitalize',
                   cursor: 'pointer',
+                  boxShadow: isActive ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
                   transition: 'all 0.12s ease',
                 }}
               >
@@ -175,21 +186,41 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
           })}
         </div>
 
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              position: 'absolute',
+              left: 9,
+              color: 'var(--theme-elevation-400)',
+              pointerEvents: 'none',
+            }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             type="text"
             placeholder="Search orders…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              padding: '0.35rem 0.65rem',
+              padding: '0.35rem 0.65rem 0.35rem 1.85rem',
               borderRadius: 'var(--bs-radius-sm, 6px)',
               border: '1px solid var(--theme-elevation-200)',
-              background: 'var(--theme-elevation-0, #fff)',
+              background: 'var(--theme-elevation-0, var(--theme-bg))',
               color: 'var(--theme-text)',
               fontSize: 12.5,
               outline: 'none',
-              width: 180,
+              width: 190,
+              boxShadow: 'var(--bs-shadow-xs)',
             }}
           />
         </div>
@@ -263,8 +294,9 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                             width: 26,
                             height: 26,
                             borderRadius: '50%',
-                            background: 'var(--theme-elevation-200)',
-                            color: 'var(--theme-elevation-800)',
+                            background: 'var(--theme-elevation-150)',
+                            border: '1px solid var(--theme-elevation-200)',
+                            color: 'var(--theme-elevation-700)',
                             fontSize: 10,
                             fontWeight: 700,
                             display: 'flex',
@@ -279,7 +311,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                           <div style={{ fontWeight: 500, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={o.customerName}>
                             {o.customerName}
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--theme-elevation-450, #888)' }}>
+                          <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
                             {formatDate(o.createdAt)}
                           </div>
                         </div>
@@ -297,6 +329,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
                       {formatCurrency(o.grandTotal, o.currency || currency)}
@@ -314,7 +347,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                           background: 'var(--theme-elevation-100)',
                           border: '1px solid var(--theme-elevation-200)',
                           display: 'inline-block',
-                          transition: 'background-color 0.12s ease',
+                          transition: 'all 0.12s ease',
                         }}
                       >
                         View

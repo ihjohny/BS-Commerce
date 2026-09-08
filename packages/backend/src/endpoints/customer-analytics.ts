@@ -1,4 +1,4 @@
-import type { Endpoint, PayloadRequest } from 'payload'
+import type { Endpoint, PayloadRequest, Where } from 'payload'
 
 /**
  * GET /api/customer/analytics
@@ -29,7 +29,14 @@ export async function customerAnalyticsHandler(req: PayloadRequest): Promise<Res
     let currency = 'USD'
     const categoryCountMap = new Map<string, number>()
     const brandCountMap = new Map<string, number>()
-    const devicesList: Array<{ deviceType?: string; browser?: string; os?: string; placedAt?: string }> = []
+    const devicesList: Array<{
+      orderNumber?: string
+      deviceType?: string
+      browser?: string
+      os?: string
+      ipAddress?: string
+      placedAt?: string
+    }> = []
 
     for (const order of orders) {
       totalSpent += Number(order.grandTotal ?? 0)
@@ -53,7 +60,7 @@ export async function customerAnalyticsHandler(req: PayloadRequest): Promise<Res
       if (Array.isArray(order.items)) {
         for (const item of order.items) {
           if (typeof item === 'object' && item !== null) {
-            const product = (item as Record<string, unknown>).product
+            const product = (item as unknown as Record<string, unknown>).product
             if (typeof product === 'object' && product !== null) {
               const p = product as Record<string, unknown>
               if (Array.isArray(p.categories)) {
@@ -136,7 +143,7 @@ export async function customerRecommendationsHandler(req: PayloadRequest): Promi
         if (Array.isArray(order.items)) {
           for (const item of order.items) {
             if (typeof item === 'object' && item !== null) {
-              const product = (item as Record<string, unknown>).product
+              const product = (item as unknown as Record<string, unknown>).product
               if (typeof product === 'object' && product !== null) {
                 const p = product as Record<string, unknown>
                 if (Array.isArray(p.categories)) {
@@ -165,7 +172,7 @@ export async function customerRecommendationsHandler(req: PayloadRequest): Promi
 
     // If customer has preferred categories or brands, query related products
     if (preferredCategoryIds.length > 0 || preferredBrandIds.length > 0) {
-      const conditions: Record<string, unknown>[] = []
+      const conditions: Where[] = []
       if (preferredCategoryIds.length > 0) {
         conditions.push({ categories: { in: preferredCategoryIds } })
       }

@@ -110,45 +110,58 @@ export function DashboardHeader({
               onClick={async () => {
                 if (
                   window.confirm(
-                    '⚠️ Clear all existing data and reseed the Electronics Shop (BS Commerce)?\n\nThis will reset catalog/orders while preserving your admin login.'
+                    'Clear existing catalog data and reseed the Electronics Demo Shop?\n\nThis resets products and orders to a fresh demo dataset while preserving your admin login.'
                   )
                 ) {
                   const btn = document.getElementById('btn-reseed-electronics')
-                  if (btn) btn.innerText = '⏳ Seeding Electronics...'
+                  if (btn) btn.innerText = 'Seeding Catalog…'
                   try {
                     const res = await fetch('/api/seed/electronics?secret=FrontendSeed2026!', { method: 'POST' })
                     const data = await res.json()
                     if (data.success) {
-                      alert('✅ Electronics store successfully seeded! Reloading dashboard...')
                       window.location.reload()
                     } else {
-                      alert('❌ Error: ' + (data.error || 'Failed to seed'))
+                      alert('Error: ' + (data.error || 'Failed to seed'))
                     }
                   } catch (e: any) {
-                    alert('❌ Error: ' + e.message)
+                    alert('Error: ' + e.message)
                   } finally {
-                    if (btn) btn.innerText = '⚡ Seed Electronics Store'
+                    if (btn) btn.innerText = 'Seed Catalog'
                   }
                 }
               }}
               id="btn-reseed-electronics"
-              title="Clear database and populate rich electronics catalog"
+              title="Reset catalog and populate rich electronics store data"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
                 padding: '0.45rem 0.85rem',
                 borderRadius: 'var(--bs-radius-sm, 6px)',
-                background: 'var(--theme-elevation-800, #1e293b)',
-                border: '1px solid var(--theme-elevation-700, #334155)',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: 12,
+                background: 'var(--theme-elevation-50)',
+                border: '1px solid var(--theme-elevation-200)',
+                color: 'var(--theme-text)',
+                fontWeight: 500,
+                fontSize: 12.5,
                 cursor: 'pointer',
-                transition: 'opacity 0.15s ease',
+                boxShadow: 'var(--bs-shadow-xs)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--theme-elevation-100)'
+                e.currentTarget.style.borderColor = 'var(--theme-elevation-300)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--theme-elevation-50)'
+                e.currentTarget.style.borderColor = 'var(--theme-elevation-200)'
               }}
             >
-              ⚡ Seed Electronics Store
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3" />
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+              </svg>
+              <span>Seed Catalog</span>
             </button>
           )}
 
@@ -170,7 +183,18 @@ export function DashboardHeader({
               fontWeight: 500,
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1,
+              boxShadow: 'var(--bs-shadow-xs)',
               transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = 'var(--theme-elevation-100)'
+                e.currentTarget.style.borderColor = 'var(--theme-elevation-300)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--theme-elevation-50)'
+              e.currentTarget.style.borderColor = 'var(--theme-elevation-200)'
             }}
           >
             <svg
@@ -199,14 +223,14 @@ export function DashboardHeader({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '0.85rem',
-          padding: '0.75rem 1rem',
+          padding: '0.65rem 0.85rem',
           borderRadius: 'var(--bs-radius-md, 8px)',
           background: 'var(--theme-elevation-50)',
           border: '1px solid var(--theme-elevation-150)',
           boxShadow: 'var(--bs-shadow-xs)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
           {/* Store Selector Dropdown */}
           {stores.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -220,7 +244,7 @@ export function DashboardHeader({
                   gap: 4,
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
@@ -233,13 +257,14 @@ export function DashboardHeader({
                   padding: '0.35rem 0.65rem',
                   borderRadius: 'var(--bs-radius-sm, 6px)',
                   border: '1px solid var(--theme-elevation-200)',
-                  background: 'var(--theme-elevation-0, #fff)',
+                  background: 'var(--theme-elevation-0, var(--theme-bg))',
                   color: 'var(--theme-text)',
                   fontSize: 12.5,
                   fontWeight: 500,
                   outline: 'none',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  boxShadow: 'var(--bs-shadow-xs)',
                 }}
                 aria-label="Store View"
               >
@@ -253,15 +278,15 @@ export function DashboardHeader({
             </div>
           )}
 
-          {/* Time Range Pills Group */}
+          {/* Time Range Segmented Control */}
           <div
             style={{
               display: 'inline-flex',
-              padding: 3,
+              padding: 2,
               borderRadius: 'var(--bs-radius-sm, 6px)',
               background: 'var(--theme-elevation-100)',
               border: '1px solid var(--theme-elevation-200)',
-              gap: 2,
+              gap: 1,
             }}
           >
             {timeRangePresets.map((preset) => {
@@ -272,15 +297,28 @@ export function DashboardHeader({
                   type="button"
                   onClick={() => onTimeRangeChange(preset.key)}
                   style={{
-                    border: 'none',
+                    border: active ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
                     borderRadius: 4,
                     padding: '3px 9px',
                     fontSize: 12,
                     fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : 'var(--theme-elevation-600)',
-                    background: active ? 'var(--bs-primary, #2563eb)' : 'transparent',
+                    color: active ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
+                    background: active ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+                    boxShadow: active ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
                     cursor: 'pointer',
                     transition: 'all 0.12s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.color = 'var(--theme-text)'
+                      e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.color = 'var(--theme-elevation-600)'
+                      e.currentTarget.style.background = 'transparent'
+                    }
                   }}
                 >
                   {preset.label}
@@ -300,7 +338,7 @@ export function DashboardHeader({
                   padding: '0.35rem 0.5rem',
                   borderRadius: 'var(--bs-radius-sm, 6px)',
                   border: '1px solid var(--theme-elevation-200)',
-                  background: 'var(--theme-elevation-0, #fff)',
+                  background: 'var(--theme-elevation-0, var(--theme-bg))',
                   color: 'var(--theme-text)',
                   fontSize: 12,
                 }}
@@ -314,7 +352,7 @@ export function DashboardHeader({
                   padding: '0.35rem 0.5rem',
                   borderRadius: 'var(--bs-radius-sm, 6px)',
                   border: '1px solid var(--theme-elevation-200)',
-                  background: 'var(--theme-elevation-0, #fff)',
+                  background: 'var(--theme-elevation-0, var(--theme-bg))',
                   color: 'var(--theme-text)',
                   fontSize: 12,
                 }}
@@ -332,6 +370,7 @@ export function DashboardHeader({
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
+                  transition: 'opacity 0.15s ease',
                 }}
               >
                 Apply
@@ -354,7 +393,15 @@ export function DashboardHeader({
               fontSize: 12,
               fontWeight: 500,
               cursor: 'pointer',
-              transition: 'background-color 0.12s ease',
+              transition: 'all 0.12s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--theme-text)'
+              e.currentTarget.style.backgroundColor = 'var(--theme-elevation-100)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--theme-elevation-600)'
+              e.currentTarget.style.backgroundColor = 'transparent'
             }}
           >
             Reset Filters

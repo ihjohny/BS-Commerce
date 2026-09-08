@@ -64,13 +64,13 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
           {
             name: 'subOrder',
             type: 'relationship' as const,
-            relationTo: 'sub-orders',
+            relationTo: 'sub-orders' as any,
             admin: { description: 'Vendor sub-order this item belongs to.' },
           },
           {
             name: 'tenant',
             type: 'relationship' as const,
-            relationTo: 'tenants',
+            relationTo: 'tenants' as any,
             admin: { description: 'Vendor who owns this item.' },
           },
         ]

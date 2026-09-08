@@ -123,7 +123,16 @@ export const SubOrders: CollectionConfig = {
         const active = statuses.filter((s) => s !== 'cancelled' && s !== 'refunded')
         const hasCancelledOrRefunded = statuses.some((s) => s === 'cancelled' || s === 'refunded')
 
-        let newParentStatus: string | undefined
+        let newParentStatus:
+          | 'pending'
+          | 'processing'
+          | 'partially-shipped'
+          | 'shipped'
+          | 'delivered'
+          | 'completed'
+          | 'cancelled'
+          | 'refunded'
+          | undefined
         if (statuses.length && statuses.every((s) => s === 'cancelled' || s === 'refunded')) {
           newParentStatus = 'cancelled'
         } else if (active.length === 0) {

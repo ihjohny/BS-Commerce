@@ -146,7 +146,7 @@ export const VendorApplications: CollectionConfig = {
 
         const tenant = await req.payload.create({
           collection: 'tenants',
-          data: { name: businessName.trim(), slug },
+          data: { name: businessName.trim(), slug, type: 'vendor' },
           req,
           overrideAccess: true,
         })
@@ -158,7 +158,7 @@ export const VendorApplications: CollectionConfig = {
           data: {
             tenant: tenantId,
             displayName: businessName.trim(),
-            joinedAt: new Date(),
+            joinedAt: new Date().toISOString(),
           },
           req,
           overrideAccess: true,
@@ -189,7 +189,7 @@ export const VendorApplications: CollectionConfig = {
         await req.payload.update({
           collection: 'vendor-applications',
           id: doc.id,
-          data: { reviewedAt: new Date() },
+          data: { reviewedAt: new Date().toISOString() },
           req,
           overrideAccess: true,
         })

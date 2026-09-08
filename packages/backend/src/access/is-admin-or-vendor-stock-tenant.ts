@@ -28,7 +28,7 @@ export const stockLocationTenantRead: Access = ({ req }) => {
     return { isPublicStore: { equals: true } } as any
   }
   if (req.user.role === 'admin') return true
-  if (req.user.role === 'vendor' && req.user.tenant) {
+  if (req.user.role === 'vendor') {
     const tid = tenantIdFromUser(req.user)
     if (!tid) return false
     return {
@@ -67,7 +67,7 @@ export const stockLocationTenantMutate: Access = ({ req }) => {
 export const stockLevelTenantRead: Access = ({ req }) => {
   if (!req.user) return false
   if (req.user.role === 'admin') return true
-  if (req.user.role === 'vendor' && req.user.tenant) {
+  if (req.user.role === 'vendor') {
     const tid = tenantIdFromUser(req.user)
     if (!tid) return false
     return {

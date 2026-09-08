@@ -79,7 +79,7 @@ export async function allocateStockLevelForLine(
 
   const docs = rawDocs.filter((sl) => matchesProductVariant(sl as never, productId, variantId))
 
-  const candidates = (docs as Array<Record<string, unknown>>)
+  const candidates = (docs as unknown as Array<Record<string, unknown>>)
     .filter((sl) => {
       const loc = sl.location
       if (!rowMatchesTenantFilter(loc, tenantId, multivendor)) return false
