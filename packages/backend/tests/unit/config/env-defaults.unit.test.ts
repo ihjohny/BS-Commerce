@@ -41,10 +41,10 @@ test('AUTH_REQUIRED_IDENTIFIER defaults to "either"', async () => {
   assert.equal(getAuthRequiredIdentifier(), 'either')
 })
 
-test('DEFAULT_CURRENCY defaults to "USD"', async () => {
+test('DEFAULT_CURRENCY defaults to "BDT"', async () => {
   // @ts-ignore
   const { getDefaultCurrency } = await import('../../../src/lib/currencies.ts')
-  assert.equal(getDefaultCurrency(), 'USD')
+  assert.equal(getDefaultCurrency(), 'BDT')
 })
 
 test('EMAIL_VERIFICATION_STRATEGY defaults to "link"', () => {

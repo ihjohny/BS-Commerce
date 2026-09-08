@@ -117,10 +117,10 @@ export const PlatformSettings: GlobalConfig = {
         {
           name: 'defaultCurrency',
           type: 'select',
-          defaultValue: 'USD',
+          defaultValue: 'BDT',
           options: [
-            { label: 'US Dollar (USD)', value: 'USD' },
             { label: 'Bangladeshi Taka (BDT)', value: 'BDT' },
+            { label: 'US Dollar (USD)', value: 'USD' },
           ],
         },
         {

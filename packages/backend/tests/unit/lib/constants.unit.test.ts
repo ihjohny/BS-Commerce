@@ -21,7 +21,7 @@ test('should have non-empty CURRENCIES', () => {
 })
 
 test('should have valid DEFAULT_CURRENCY', () => {
-  assert.equal(DEFAULT_CURRENCY, 'USD')
+  assert.equal(DEFAULT_CURRENCY, 'BDT')
   assert.ok((CURRENCIES as readonly string[]).includes(DEFAULT_CURRENCY))
 })
 

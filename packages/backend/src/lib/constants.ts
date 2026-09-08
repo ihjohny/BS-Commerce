@@ -2,7 +2,7 @@ export const LOCALES = ['en', 'bn'] as const
 export const DEFAULT_LOCALE = 'en' as const
 
 export const CURRENCIES = ['USD', 'BDT'] as const
-export const DEFAULT_CURRENCY = 'USD' as const
+export const DEFAULT_CURRENCY = 'BDT' as const
 
 export const USER_ROLES = ['admin', 'vendor', 'customer'] as const
 export const USER_STATUSES = ['active', 'suspended', 'banned'] as const

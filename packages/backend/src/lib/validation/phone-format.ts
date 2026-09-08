@@ -38,7 +38,7 @@ function readOptionalValidationRegex(): RegExp | null {
 }
 
 function defaultRegionFromEnv(): CountryCode | undefined {
-  const raw = process.env.DEFAULT_PHONE_REGION?.trim().toUpperCase()
+  const raw = (process.env.DEFAULT_PHONE_REGION || 'BD').trim().toUpperCase()
   if (!raw || raw.length !== 2) return undefined
   return isSupportedCountry(raw as CountryCode) ? (raw as CountryCode) : undefined
 }
@@ -122,6 +122,9 @@ export function collectGuestPhoneLookupVariants(raw: string): string[] {
   const set = new Set<string>()
   set.add(trimmed)
 
+  const stripped = trimmed.replace(/[\s\-()]/g, '')
+  if (stripped) set.add(stripped)
+
   const addParsed = (parsed: ReturnType<typeof parsePhoneNumber>) => {
     set.add(parsed.format('E.164'))
     set.add(parsed.formatNational().replace(/\D/g, ''))
@@ -136,6 +139,13 @@ export function collectGuestPhoneLookupVariants(raw: string): string[] {
       const region = resolvePhoneValidationRegion(undefined)
       if (region && isValidPhoneNumber(trimmed, region)) {
         addParsed(parsePhoneNumber(trimmed, region))
+      } else if (isValidPhoneNumber(`+${stripped}`)) {
+        addParsed(parsePhoneNumber(`+${stripped}`))
+      } else if (region && stripped.length === 10 && stripped.startsWith('1')) {
+        const withZero = `0${stripped}`
+        if (isValidPhoneNumber(withZero, region)) {
+          addParsed(parsePhoneNumber(withZero, region))
+        }
       }
     }
   } catch {

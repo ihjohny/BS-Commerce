@@ -19,11 +19,11 @@ afterEach(() => {
 // which read from the already-loaded module scope. For env-override tests we test getDefaultCurrency
 // which reads process.env directly each call.
 
-test('should return default currency as USD when env is unset', async () => {
+test('should return default currency as BDT when env is unset', async () => {
   delete process.env.DEFAULT_CURRENCY
   // @ts-ignore
   const { getDefaultCurrency } = await import('../../../src/lib/currencies.ts')
-  assert.equal(getDefaultCurrency(), 'USD')
+  assert.equal(getDefaultCurrency(), 'BDT')
 })
 
 test('should return env value for default currency', async () => {

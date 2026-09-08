@@ -27,8 +27,8 @@ export function getCurrencyOptions(): { label: string; value: string }[] {
  */
 export function getDefaultCurrency(): string {
   const supported = getSupportedCurrencyCodes()
-  const preferred = (process.env.DEFAULT_CURRENCY || 'USD').trim()
-  if (supported.length === 0) return preferred || 'USD'
+  const preferred = (process.env.DEFAULT_CURRENCY || 'BDT').trim()
+  if (supported.length === 0) return preferred || 'BDT'
   if (supported.includes(preferred)) return preferred
   return supported[0]
 }

@@ -125,9 +125,10 @@ test('should query using normalized email and trimmed order number', async () =>
   })
   const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
   assert.equal(res.status, 200)
-  assert.equal(seenWhere.and[0].orderNumber.equals, 'ORD-123')
-  assert.equal(seenWhere.and[1].customer.equals, null)
-  assert.equal(seenWhere.and[2].guestEmail.equals, 'guest@example.com')
+  assert.equal(seenWhere.and[0].or[0].orderNumber.equals, 'ORD-123')
+  assert.ok(Array.isArray(seenWhere.and[1].or))
+  assert.equal(seenWhere.and[1].or[0].guestEmail.equals, 'guest@example.com')
+  assert.equal(seenWhere.and[1].or[1]['buyerSnapshot.email'].equals, 'guest@example.com')
 })
 
 test('should return 200 with order payload when match exists', async () => {
@@ -162,11 +163,14 @@ test('should build guestPhone OR variants for lookup when DEFAULT_PHONE_REGION m
     const res = await guestOrderLookupHandler(req, { enforceRateLimit: async () => null })
     assert.equal(res.status, 200)
     const w = seenWhere as {
-      and: Array<{ or?: Array<{ guestPhone: { equals: string } }>; guestPhone?: { equals: string } }>
+      and: Array<{ orderNumber?: { equals: string }; or?: Array<{ guestPhone?: { equals: string }; 'buyerSnapshot.phone'?: { equals: string } }> }>
     }
-    const phoneClause = w.and[2]
+    const phoneClause = w.and[1]
     assert.ok(phoneClause.or)
-    const equalsValues = phoneClause.or!.map((x) => x.guestPhone.equals).sort()
+    const equalsValues = phoneClause.or!
+      .map((x) => x.guestPhone?.equals || x['buyerSnapshot.phone']?.equals)
+      .filter(Boolean)
+      .sort()
     assert.ok(equalsValues.includes('+8801712345678'))
     assert.ok(equalsValues.includes('01712345678'))
   } finally {

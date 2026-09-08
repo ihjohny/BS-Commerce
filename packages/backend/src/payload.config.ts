@@ -224,7 +224,7 @@ export default buildConfig({
       enabled: true,
       multivendorEnabled: process.env.MULTIVENDOR_ENABLED === 'true',
       currencies: (process.env.SUPPORTED_CURRENCIES || 'USD,BDT').split(','),
-      defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
+      defaultCurrency: process.env.DEFAULT_CURRENCY || 'BDT',
       allowGuestCheckout: process.env.GUEST_CHECKOUT_ENABLED === 'true',
     }),
     inventoryPlugin({

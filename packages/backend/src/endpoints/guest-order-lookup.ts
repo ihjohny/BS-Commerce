@@ -71,18 +71,29 @@ export async function guestOrderLookupHandler(req: any, deps?: GuestOrderLookupD
     return Response.json({ error: 'guestEmail or guestPhone is required' }, { status: 400 })
   }
 
+  const trimmedOrder = orderNumber.trim()
+  const orderClauses: Record<string, unknown>[] = [{ orderNumber: { equals: trimmedOrder } }]
+  if (trimmedOrder.toUpperCase() !== trimmedOrder) {
+    orderClauses.push({ orderNumber: { equals: trimmedOrder.toUpperCase() } })
+  }
+
   const identifierConditions: Record<string, unknown>[] = []
   if (hasEmail) {
-    identifierConditions.push({ guestEmail: { equals: guestEmail.trim().toLowerCase() } })
+    const normEmail = guestEmail.trim().toLowerCase()
+    identifierConditions.push(
+      { guestEmail: { equals: normEmail } },
+      { 'buyerSnapshot.email': { equals: normEmail } },
+    )
   }
   if (hasPhone) {
     const variants = collectGuestPhoneLookupVariants(guestPhone)
-    if (variants.length === 1) {
-      identifierConditions.push({ guestPhone: { equals: variants[0] } })
-    } else {
-      identifierConditions.push({
-        or: variants.map((v) => ({ guestPhone: { equals: v } })),
-      })
+    for (const v of variants) {
+      identifierConditions.push(
+        { guestPhone: { equals: v } },
+        { 'buyerSnapshot.phone': { equals: v } },
+        { 'shippingAddress.phone': { equals: v } },
+        { 'billingAddress.phone': { equals: v } },
+      )
     }
   }
 
@@ -90,11 +101,8 @@ export async function guestOrderLookupHandler(req: any, deps?: GuestOrderLookupD
     collection: 'orders',
     where: {
       and: [
-        { orderNumber: { equals: orderNumber.trim() } },
-        { customer: { equals: null } },
-        ...(identifierConditions.length === 1
-          ? identifierConditions
-          : [{ or: identifierConditions }]),
+        { or: orderClauses },
+        { or: identifierConditions },
       ],
     },
     limit: 1,

@@ -345,7 +345,31 @@ export async function processCheckout(
     return { order: { id: '', orderNumber: '' }, error: 'Cart is empty' }
   }
 
-  const currency = input.currency || getDefaultCurrency()
+  let currency = input.currency
+  if (!currency && items.length > 0) {
+    const firstProduct = items[0].product
+    if (typeof firstProduct === 'object' && firstProduct !== null && 'currency' in firstProduct && (firstProduct as { currency?: string }).currency) {
+      currency = (firstProduct as { currency?: string }).currency
+    } else {
+      const firstProductId = typeof firstProduct === 'object' ? (firstProduct as { id?: string })?.id : firstProduct
+      if (firstProductId) {
+        try {
+          const prodDoc = await payload.findByID({
+            collection: 'products',
+            id: String(firstProductId),
+            depth: 0,
+            overrideAccess: true,
+          })
+          if (prodDoc && (prodDoc as { currency?: string }).currency) {
+            currency = (prodDoc as { currency?: string }).currency
+          }
+        } catch {
+          // ignore error and fallback
+        }
+      }
+    }
+  }
+  currency = currency || getDefaultCurrency()
   const checkoutLocale = parsePreferredLocale(req)
 
   const tenantNameCache = new Map<string, string>()

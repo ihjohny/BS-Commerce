@@ -388,7 +388,7 @@ test('generateAdminReport runs Customer Lifetime Value report', async () => {
   const res = await generateAdminReport(
     payload,
     { id: 'usr-1', role: 'admin' },
-    { category: 'customers', reportType: 'customer-ltv', period: 'month' }
+    { category: 'customers', reportType: 'customer-ltv', period: 'month', currency: 'USD' }
   )
 
   assert.equal(res.meta.reportType, 'customer-ltv')
@@ -465,7 +465,7 @@ test('generateAdminReport runs Stock Valuation report', async () => {
   const res = await generateAdminReport(
     payload,
     { id: 'usr-1', role: 'admin' },
-    { category: 'inventory', reportType: 'stock-valuation', period: 'month' }
+    { category: 'inventory', reportType: 'stock-valuation', period: 'month', currency: 'USD' }
   )
 
   assert.equal(res.meta.reportType, 'stock-valuation')
@@ -607,7 +607,7 @@ test('generateAdminReport runs Customer Orders & Device Activity report', async 
   const res = await generateAdminReport(
     payload,
     { id: 'usr-1', role: 'admin' },
-    { category: 'customers', reportType: 'customer-orders', period: 'month' }
+    { category: 'customers', reportType: 'customer-orders', period: 'month', currency: 'USD' }
   )
 
   assert.equal(res.meta.reportType, 'customer-orders')
