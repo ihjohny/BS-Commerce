@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ChevronsDownUp,
+  ChevronsUpDown,
   Check,
   ChevronDown,
   ChevronRight,
   ChevronUp,
   Eye,
   ImagePlus,
-  Plus,
   Trash2,
   Upload,
   X,
@@ -35,6 +36,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -680,129 +686,9 @@ export function MediaPicker({
   );
 }
 
-// ─── Purpose-built array editors (tags, images) ──────────────────────────
+// ─── Purpose-built image array editor ───────────────────────────────────
 
 type ArrayItem = Record<string, unknown>;
-
-/** Compact chip editor for arrays whose only visible subfield is a text "tag". */
-export function TagsField({
-  field,
-  value,
-  onChange,
-  disabled,
-  error,
-}: {
-  field: NormField;
-  value: unknown;
-  onChange: (v: unknown) => void;
-  disabled?: boolean;
-  error?: string | null;
-}) {
-  const items: ArrayItem[] = Array.isArray(value) ? (value as ArrayItem[]) : [];
-  const sub = (field.fields ?? []).find((f) => f.name && !f.hidden);
-  const key = sub?.name ?? "tag";
-  const [draft, setDraft] = useState("");
-
-  const addTag = () => {
-    const t = draft.trim();
-    if (!t || disabled) return;
-    onChange([...items, { [key]: t }]);
-    setDraft("");
-  };
-  const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
-  const move = (idx: number, dir: -1 | 1) => {
-    const target = idx + dir;
-    if (target < 0 || target >= items.length) return;
-    const next = [...items];
-    [next[idx], next[target]] = [next[target], next[idx]];
-    onChange(next);
-  };
-
-  return (
-    <Field>
-      <FieldLabel>
-        {field.label}
-        {field.required ? " *" : ""}
-      </FieldLabel>
-      {items.length === 0 ? (
-        <p className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
-          No tags yet.
-        </p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {items.map((item, idx) => (
-            <span
-              key={idx}
-              className="inline-flex max-w-full items-center gap-0.5 rounded-full border bg-background py-0.5 pl-2.5 pr-0.5 text-sm"
-            >
-              <span className="truncate">
-                {String(item[key] ?? "") || `Tag ${idx + 1}`}
-              </span>
-              <button
-                type="button"
-                title="Move up"
-                aria-label="Move up"
-                disabled={disabled || idx === 0}
-                onClick={() => move(idx, -1)}
-                className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-              >
-                <ChevronUp className="size-3" />
-              </button>
-              <button
-                type="button"
-                title="Move down"
-                aria-label="Move down"
-                disabled={disabled || idx === items.length - 1}
-                onClick={() => move(idx, 1)}
-                className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-              >
-                <ChevronDown className="size-3" />
-              </button>
-              <button
-                type="button"
-                title="Remove"
-                aria-label="Remove"
-                disabled={disabled}
-                onClick={() => remove(idx)}
-                className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-30"
-              >
-                <X className="size-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="flex items-center gap-2">
-        <Input
-          value={draft}
-          disabled={disabled}
-          placeholder="Add a tag…"
-          className="max-w-xs"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addTag();
-            }
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled || !draft.trim()}
-          onClick={addTag}
-        >
-          <Plus />
-          Add Tag
-        </Button>
-      </div>
-      {field.description && (
-        <FieldDescription>{field.description}</FieldDescription>
-      )}
-      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
-    </Field>
-  );
-}
 
 /** Purpose-built editor for arrays of images (single upload subfield). */
 export function ImagesArrayField({
@@ -823,6 +709,8 @@ export function ImagesArrayField({
   const key = sub?.name ?? "image";
   const relationTo =
     typeof sub?.relationTo === "string" ? sub.relationTo : "media";
+  const baseLabel = field.label ?? "Image";
+  const [openRows, setOpenRows] = useState<ReadonlySet<number>>(new Set());
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -834,8 +722,15 @@ export function ImagesArrayField({
     if (v === null || v === undefined || v === "") return null;
     return String(typeof v === "object" ? (v as { id: unknown }).id : v);
   };
-  const addIds = (ids: string[]) =>
+  const addIds = (ids: string[]) => {
     onChange([...items, ...ids.map((id) => ({ [key]: id }))]);
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      for (let i = items.length; i < items.length + ids.length; i++)
+        next.add(i);
+      return next;
+    });
+  };
   const replace = (idx: number, id: string) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, [key]: id } : it)));
   const remove = (idx: number) => onChange(items.filter((_, i) => i !== idx));
@@ -846,6 +741,13 @@ export function ImagesArrayField({
     [next[idx], next[target]] = [next[target], next[idx]];
     onChange(next);
   };
+  const toggleRow = (idx: number, open: boolean) =>
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(idx);
+      else next.delete(idx);
+      return next;
+    });
 
   const uploadFiles = async (files: FileList | File[]) => {
     if (disabled) return;
@@ -872,10 +774,36 @@ export function ImagesArrayField({
 
   return (
     <Field>
-      <FieldLabel>
-        {field.label}
-        {field.required ? " *" : ""}
-      </FieldLabel>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <FieldLabel>
+          {field.label}
+          {field.required ? " *" : ""}
+        </FieldLabel>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled || items.length === 0}
+            onClick={() => setOpenRows(new Set())}
+            title="Collapse all items"
+          >
+            <ChevronsDownUp />
+            Collapse
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled || items.length === 0}
+            onClick={() => setOpenRows(new Set(items.map((_, i) => i)))}
+            title="Expand all items"
+          >
+            <ChevronsUpDown />
+            Expand
+          </Button>
+        </div>
+      </div>
       <div
         className={`rounded-lg border border-dashed p-3 transition-colors ${
           dragOver ? "border-primary bg-primary/5" : ""
@@ -897,20 +825,86 @@ export function ImagesArrayField({
           </p>
         ) : (
           <div className="flex flex-col gap-2">
-            {items.map((item, idx) => (
-              <ImageCard
-                key={idx}
-                id={imageId(item)}
-                relationTo={relationTo}
-                disabled={disabled}
-                onReplace={(id) => replace(idx, id)}
-                onRemove={() => remove(idx)}
-                onMoveUp={idx > 0 ? () => move(idx, -1) : undefined}
-                onMoveDown={
-                  idx < items.length - 1 ? () => move(idx, 1) : undefined
-                }
-              />
-            ))}
+            {items.map((item, idx) => {
+              const open = openRows.has(idx);
+              return (
+                <Collapsible
+                  key={idx}
+                  open={open}
+                  onOpenChange={(o) => toggleRow(idx, o)}
+                  className="rounded-lg border bg-background"
+                >
+                  <div className="flex items-center gap-1 py-1 pl-2 pr-1">
+                    <CollapsibleTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 text-left"
+                        />
+                      }
+                    >
+                      <ChevronDown
+                        className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                          open ? "" : "-rotate-90"
+                        }`}
+                      />
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 px-1.5 font-mono text-[10px]"
+                      >
+                        {`${baseLabel} ${String(idx + 1).padStart(2, "0")}`}
+                      </Badge>
+                    </CollapsibleTrigger>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8"
+                      title="Move up"
+                      aria-label="Move up"
+                      disabled={idx === 0 || disabled}
+                      onClick={() => move(idx, -1)}
+                    >
+                      <ChevronUp />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8"
+                      title="Move down"
+                      aria-label="Move down"
+                      disabled={idx === items.length - 1 || disabled}
+                      onClick={() => move(idx, 1)}
+                    >
+                      <ChevronDown />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8 text-destructive hover:text-destructive"
+                      title="Remove"
+                      aria-label="Remove"
+                      disabled={disabled}
+                      onClick={() => remove(idx)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="border-t p-2">
+                      <ImageCard
+                        id={imageId(item)}
+                        relationTo={relationTo}
+                        disabled={disabled}
+                        onReplace={(id) => replace(idx, id)}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </div>
         )}
         {pendingUploads > 0 && (
@@ -966,17 +960,11 @@ function ImageCard({
   relationTo,
   disabled,
   onReplace,
-  onRemove,
-  onMoveUp,
-  onMoveDown,
 }: {
   id: string | null;
   relationTo: string;
   disabled?: boolean;
   onReplace: (id: string) => void;
-  onRemove: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
 }) {
   const { data: doc, isError } = useQuery({
     queryKey: ["media-doc", id],
@@ -1034,44 +1022,6 @@ function ImageCard({
             label="Replace"
             size="sm"
           />
-          {onMoveUp && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              title="Move up"
-              aria-label="Move up"
-              disabled={disabled}
-              onClick={onMoveUp}
-            >
-              <ChevronUp />
-            </Button>
-          )}
-          {onMoveDown && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              title="Move down"
-              aria-label="Move down"
-              disabled={disabled}
-              onClick={onMoveDown}
-            >
-              <ChevronDown />
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="text-destructive hover:text-destructive"
-            title="Remove"
-            aria-label="Remove"
-            disabled={disabled}
-            onClick={onRemove}
-          >
-            <Trash2 />
-          </Button>
         </div>
       </div>
     </div>

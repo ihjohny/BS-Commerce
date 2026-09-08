@@ -444,12 +444,7 @@ export function RichTextInput({
           value={text}
           onChange={(e) => onChange(plainTextToLexical(e.target.value))}
         />
-        <FieldDescription>
-          {field.description ??
-            (visual
-              ? "Plain text mode. Switch back to rich text to keep formatting."
-              : "Plain text (value is not rich-text JSON).")}
-        </FieldDescription>
+        <FieldDescription>{field.description}</FieldDescription>
         {visual && !disabled ? (
           <button
             type="button"
@@ -550,14 +545,12 @@ export function RichTextInput({
           suppressContentEditableWarning
           role="textbox"
           aria-multiline="true"
-          className="prose-sm min-h-[200px] bg-background px-3 py-2 text-sm outline-none [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:min-h-5 [&_pre]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:text-xs [&_ul]:list-disc"
+          className="prose-sm min-h-[120px] bg-background px-3 py-2 text-sm outline-none [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:min-h-5 [&_pre]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:text-xs [&_ul]:list-disc"
           onInput={scheduleEmit}
           onBlur={emit}
         />
       </div>
-      <FieldDescription>
-        {field.description ?? "Rich text (stored as Lexical JSON)."}
-      </FieldDescription>
+      <FieldDescription>{field.description}</FieldDescription>
       {error ? (
         <p className="text-xs font-medium text-destructive">{error}</p>
       ) : null}

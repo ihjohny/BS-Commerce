@@ -14,7 +14,6 @@ import type { NormField } from "@/lib/schema";
 import {
   ImagesArrayField,
   RelationInput,
-  TagsField,
   UploadInput,
 } from "@/components/fields/FieldInputs";
 import { RichTextInput } from "@/components/fields/RichTextInput";
@@ -320,26 +319,23 @@ function GroupField(props: FieldProps) {
   const { field, value, onChange, disabled } = props;
   const group = (value ?? {}) as FieldValues;
   const subs = (field.fields ?? []).filter((f) => !f.hidden);
-  // Groups of 3+ plain numbers (e.g. dimensions) fit a compact 3-column grid.
-  const threeCol = subs.length >= 3 && subs.every((f) => f.type === "number");
   const setValue = (name: string, v: unknown) =>
     onChange({ ...group, [name]: v });
 
+  // Borderless stack: the surrounding section provides the heading, so the
+  // group itself stays visually flat (no fieldset-in-card chrome).
   return (
-    <fieldset className="rounded-lg border p-4">
-      <legend className="px-1 text-sm font-medium">{field.label}</legend>
-      <div className={`grid gap-4 ${threeCol ? "sm:grid-cols-3" : ""}`}>
-        {subs.map((sub) => (
-          <SchemaField
-            key={sub.name}
-            field={sub}
-            value={group[sub.name ?? ""]}
-            onChange={(v) => sub.name && setValue(sub.name, v)}
-            disabled={disabled}
-          />
-        ))}
-      </div>
-    </fieldset>
+    <div className="grid gap-4">
+      {subs.map((sub) => (
+        <SchemaField
+          key={sub.name}
+          field={sub}
+          value={group[sub.name ?? ""]}
+          onChange={(v) => sub.name && setValue(sub.name, v)}
+          disabled={disabled}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -392,8 +388,15 @@ function ArrayField({
   const baseLabel = field.label ?? "Item";
 
   // First text value inside the row gives a meaningful collapsed summary.
+  // Prefer human-named fields (label/title/name) over raw keys so technical
+  // values like "screen_size" never become the visible row title.
   const rowDetail = (item: FieldValues): string | null => {
-    for (const sub of field.fields ?? []) {
+    const subs = field.fields ?? [];
+    for (const preferred of ["label", "title", "name"]) {
+      const v = item[preferred];
+      if (typeof v === "string" && v.trim()) return v;
+    }
+    for (const sub of subs) {
       if (
         sub.name &&
         (sub.type === "text" || sub.type === "textarea" || sub.type === "email")
@@ -472,7 +475,7 @@ function ArrayField({
             onClick={addItem}
           >
             <Plus />
-            Add
+            {`Add ${baseLabel}`}
           </Button>
         </div>
       </div>
@@ -863,12 +866,6 @@ export function SchemaField(props: FieldProps) {
         subs[0].name === "image"
       )
         return <ImagesArrayField {...merged} />;
-      if (
-        subs.length === 1 &&
-        subs[0].type === "text" &&
-        subs[0].name === "tag"
-      )
-        return <TagsField {...merged} />;
       return <ArrayField {...merged} />;
     }
     case "blocks":
