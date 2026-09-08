@@ -32,6 +32,7 @@ export interface NormField {
     | string;
   label?: string;
   required?: boolean;
+  unique?: boolean;
   localized?: boolean;
   defaultValue?: unknown;
   description?: string;
