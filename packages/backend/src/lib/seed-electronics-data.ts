@@ -469,6 +469,14 @@ export async function ensureClassesCatalogSchema(payload: Payload): Promise<void
           WHEN duplicate_object THEN null;
         END $$;
         CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_attributes_id_idx" ON "payload_locked_documents_rels" USING btree ("attributes_id");
+
+        ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "brands_id" uuid;
+        DO $$ BEGIN
+          ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_brands_fk" FOREIGN KEY ("brands_id") REFERENCES "brands"("id") ON DELETE CASCADE;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+        CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_brands_id_idx" ON "payload_locked_documents_rels" USING btree ("brands_id");
       `)
       payload.logger.info('[Electronics Seeder] Verified Classes & Specifications schema readiness.')
     }
@@ -485,6 +493,45 @@ export async function wipeDatabaseForElectronics(
   keepAdminEmail = 'frontend-seed-sv@bscommerce.local'
 ): Promise<{ collections: string[]; nonAdminUsersDeleted: number }> {
   payload.logger.info('[Electronics Seeder] Starting clean wipe of existing data...')
+
+  const db = (payload.db as any)?.drizzle || (payload.db as any)
+  if (db && typeof db.execute === 'function') {
+    try {
+      const { sql } = await import('@payloadcms/db-postgres')
+      await db.execute(sql`
+        TRUNCATE TABLE 
+          products, 
+          product_variants, 
+          classes, 
+          brands, 
+          attributes, 
+          categories, 
+          coupons, 
+          shipping_methods, 
+          shipping_zones, 
+          stock_locations, 
+          stock_levels, 
+          orders, 
+          order_items, 
+          order_status_history, 
+          transactions, 
+          carts, 
+          carts_items, 
+          wishlist_items, 
+          addresses, 
+          product_reviews, 
+          pages, 
+          payload_locked_documents, 
+          payload_locked_documents_rels, 
+          payload_preferences, 
+          payload_preferences_rels 
+        CASCADE;
+      `)
+      payload.logger.info('[Electronics Seeder] Clean SQL TRUNCATE completed.')
+    } catch (sqlErr: any) {
+      payload.logger.warn(`[Electronics Seeder] TRUNCATE fallback: ${sqlErr?.message || sqlErr}`)
+    }
+  }
 
   const collectionsToClear = [
     'addresses',

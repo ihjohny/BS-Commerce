@@ -304,7 +304,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   
   CREATE TABLE "products" (
   	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-  	"tenant_id" uuid NOT NULL,
+  	"tenant_id" uuid,
   	"slug" varchar,
   	"sku" varchar,
   	"status" "enum_products_status" DEFAULT 'draft' NOT NULL,
@@ -358,7 +358,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TABLE "product_variants" (
   	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   	"product_id" uuid NOT NULL,
-  	"tenant_id" uuid NOT NULL,
+  	"tenant_id" uuid,
   	"name" varchar NOT NULL,
   	"sku" varchar,
   	"price" numeric NOT NULL,
