@@ -531,12 +531,17 @@ export function Dashboard() {
             {stats.stores.length > 0 && (
               <Field>
                 <FieldLabel htmlFor="dash-store">Store view</FieldLabel>
-                <Select value={storeId} onValueChange={setStoreId}>
+                <Select
+                  value={storeId || "__all__"}
+                  onValueChange={(v) =>
+                    setStoreId(v === "__all__" ? "" : (v ?? ""))
+                  }
+                >
                   <SelectTrigger id="dash-store" className="w-48">
                     <SelectValue placeholder="All store views" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All store views</SelectItem>
+                    <SelectItem value="__all__">All store views</SelectItem>
                     {stats.stores.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name} {s.code ? `(${s.code})` : ""}
@@ -548,7 +553,10 @@ export function Dashboard() {
             )}
             <Field>
               <FieldLabel htmlFor="dash-range">Date range</FieldLabel>
-              <Select value={timeRange} onValueChange={setTimeRange}>
+              <Select
+                value={timeRange}
+                onValueChange={(v) => v && setTimeRange(v)}
+              >
                 <SelectTrigger id="dash-range" className="w-40">
                   <SelectValue />
                 </SelectTrigger>

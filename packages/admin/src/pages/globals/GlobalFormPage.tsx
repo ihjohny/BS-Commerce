@@ -1,67 +1,97 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from '@/lib/api'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { api } from "@/lib/api";
+import { getGlobalSchema } from "@/lib/schema";
+import type { NormField } from "@/lib/schema";
+import { useAccess } from "@/contexts/AccessContext";
+import { serializeForSave, SchemaField } from "@/components/fields/SchemaField";
+import type { FieldValues } from "@/components/fields/SchemaField";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Textarea } from '@/components/ui/textarea'
-import { Spinner } from '@/components/ui/spinner'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 
-const GLOBAL_TITLES: Record<string, string> = {
-  header: 'Header',
-  footer: 'Footer',
-  'platform-settings': 'Platform Settings',
+function visibleFields(fields: NormField[]): NormField[] {
+  return fields.filter((f) => !f.hidden && f.name !== "id");
 }
 
-/**
- * Globals are edited as validated JSON in this phase. This preserves the exact
- * Payload document shape (including localized fields, arrays and blocks) and
- * will be replaced by generated per-global forms in a later iteration.
- */
 export function GlobalFormPage() {
-  const { slug = '' } = useParams()
-  const queryClient = useQueryClient()
+  const { slug = "" } = useParams();
+  const queryClient = useQueryClient();
+  const { locale, setLocale, locales, can } = useAccess();
+  const schema = getGlobalSchema(slug);
 
-  const [text, setText] = useState('')
-  const [parseError, setParseError] = useState<string | null>(null)
+  const [values, setValues] = useState<FieldValues>({});
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const canUpdate = can("globals", slug, "update");
+  const fields = useMemo(
+    () => (schema ? visibleFields(schema.fields) : []),
+    [schema],
+  );
 
   const globalQuery = useQuery({
-    queryKey: ['global', slug],
-    enabled: slug in GLOBAL_TITLES,
-    queryFn: () => api.get<Record<string, unknown>>(`/api/globals/${slug}?depth=0`),
-  })
+    queryKey: ["global", slug, locale],
+    enabled: Boolean(schema),
+    queryFn: () => {
+      const params = new URLSearchParams({ depth: "0", locale });
+      if (schema?.hasLocalized) params.set("fallback-locale", "null");
+      return api.get<Record<string, unknown>>(
+        `/api/globals/${slug}?${params.toString()}`,
+      );
+    },
+  });
 
   useEffect(() => {
     if (globalQuery.data) {
-      const { createdAt: _c, updatedAt: _u, _id: _id2, globalType: _g, ...rest } = globalQuery.data
-      setText(JSON.stringify(rest, null, 2))
+      const {
+        createdAt: _c,
+        updatedAt: _u,
+        _id: _i,
+        globalType: _g,
+        ...rest
+      } = globalQuery.data;
+      setValues(rest as FieldValues);
     }
-  }, [globalQuery.data])
+  }, [globalQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: (payload: unknown) => api.patch(`/api/globals/${slug}`, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['global', slug] })
-      setParseError(null)
+    mutationFn: () => {
+      const payload: FieldValues = {};
+      for (const field of fields) {
+        payload[field.name!] = serializeForSave(
+          field,
+          values[field.name!] ?? null,
+        );
+      }
+      return api.post(
+        `/api/globals/${slug}?locale=${encodeURIComponent(locale)}`,
+        payload,
+      );
     },
-  })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["global", slug] });
+    },
+  });
 
-  if (!(slug in GLOBAL_TITLES)) {
+  if (!schema) {
     return (
       <Alert variant="destructive">
         <AlertTitle>Unknown global</AlertTitle>
-        <AlertDescription>No global named “{slug}” is configured.</AlertDescription>
+        <AlertDescription>
+          No global named “{slug}” is configured.
+        </AlertDescription>
       </Alert>
-    )
+    );
   }
 
   if (globalQuery.isLoading) {
@@ -69,90 +99,118 @@ export function GlobalFormPage() {
       <div className="flex items-center justify-center py-16">
         <Spinner className="size-6" />
       </div>
-    )
+    );
   }
 
   if (globalQuery.error) {
     return (
       <Alert variant="destructive">
-        <AlertTitle>Failed to load {GLOBAL_TITLES[slug]}</AlertTitle>
+        <AlertTitle>Failed to load {schema.label}</AlertTitle>
         <AlertDescription>
-          {globalQuery.error instanceof Error ? globalQuery.error.message : 'Unknown error'}
+          {globalQuery.error instanceof Error
+            ? globalQuery.error.message
+            : "Unknown error"}
         </AlertDescription>
       </Alert>
-    )
+    );
   }
 
   const handleSave = () => {
-    try {
-      const payload = JSON.parse(text)
-      saveMutation.mutate(payload)
-    } catch {
-      setParseError('Invalid JSON — fix the syntax before saving.')
+    setValidationError(null);
+    for (const field of fields) {
+      const v = values[field.name!];
+      if (
+        field.required &&
+        (v === null ||
+          v === undefined ||
+          v === "" ||
+          (Array.isArray(v) && v.length === 0))
+      ) {
+        setValidationError(`“${field.label ?? field.name}” is required.`);
+        return;
+      }
+      if (
+        (field.type === "richtext" || field.type === "json") &&
+        typeof v === "string" &&
+        v.trim()
+      ) {
+        try {
+          JSON.parse(v);
+        } catch {
+          setValidationError(
+            `“${field.label ?? field.name}” contains invalid JSON.`,
+          );
+          return;
+        }
+      }
     }
-  }
-
-  const dirty =
-    globalQuery.data !== undefined &&
-    text !==
-      JSON.stringify(
-        (() => {
-          const { createdAt: _c, updatedAt: _u, _id: _id2, globalType: _g, ...rest } = globalQuery.data
-          return rest
-        })(),
-        null,
-        2,
-      )
+    saveMutation.mutate();
+  };
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{GLOBAL_TITLES[slug]}</h1>
-        <p className="text-sm text-muted-foreground">
-          Edited as validated JSON — the exact Payload document shape, including localized fields
-          and blocks.
-        </p>
+    <div className="flex w-full flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {schema.label}
+          </h1>
+          <p className="text-sm text-muted-foreground">Global configuration</p>
+        </div>
+        {schema.hasLocalized && locales.length > 1 && (
+          <div className="ml-auto">
+            <Select value={locale} onValueChange={(v) => v && setLocale(v)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {locales.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Document</CardTitle>
-          <CardDescription>
-            {saveMutation.isSuccess && !dirty
-              ? 'Saved.'
-              : 'Changes apply on submit. Localized values live under their locale keys.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <Field>
-            <FieldLabel htmlFor="global-json">JSON</FieldLabel>
-            <Textarea
-              id="global-json"
-              rows={22}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="font-mono text-xs"
-              spellCheck={false}
-            />
-          </Field>
+        <CardContent className="pt-4">
+          <div className="grid gap-4">
+            {fields.map((field) => (
+              <SchemaField
+                key={field.name}
+                field={field}
+                value={values[field.name!]}
+                onChange={(v) =>
+                  setValues((prev) => ({ ...prev, [field.name!]: v }))
+                }
+                disabled={!canUpdate || saveMutation.isPending}
+              />
+            ))}
+          </div>
 
-          {(parseError || saveMutation.error) && (
-            <Alert variant="destructive">
-              <AlertTitle>Save failed</AlertTitle>
+          {(validationError || saveMutation.error) && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>
-                {parseError ??
-                  (saveMutation.error instanceof Error ? saveMutation.error.message : 'Unknown error')}
+                {validationError ??
+                  (saveMutation.error instanceof Error
+                    ? saveMutation.error.message
+                    : "Unknown error")}
               </AlertDescription>
             </Alert>
           )}
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saveMutation.isPending || !dirty}>
-              {saveMutation.isPending ? 'Saving…' : 'Save changes'}
-            </Button>
-          </div>
+          {canUpdate && (
+            <div className="mt-4 flex justify-end gap-2">
+              <Button onClick={handleSave} disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

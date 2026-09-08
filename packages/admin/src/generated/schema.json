@@ -1,0 +1,5808 @@
+{
+  "generatedAt": "2026-09-08T11:58:25.157Z",
+  "localization": {
+    "locales": [
+      {
+        "code": "en",
+        "label": "English"
+      },
+      {
+        "code": "bn",
+        "label": "বাংলা"
+      }
+    ],
+    "defaultLocale": "en",
+    "fallback": true
+  },
+  "collections": [
+    {
+      "slug": "users",
+      "label": "User",
+      "group": "Platform",
+      "useAsTitle": "username",
+      "defaultColumns": [
+        "username",
+        "email",
+        "phone",
+        "role",
+        "status",
+        "createdAt"
+      ],
+      "auth": true,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "phone",
+          "label": "Phone",
+          "unique": true,
+          "description": "Required if email is not provided (configurable via AUTH_REQUIRED_IDENTIFIER)."
+        },
+        {
+          "type": "text",
+          "name": "firstName",
+          "label": "First Name"
+        },
+        {
+          "type": "text",
+          "name": "lastName",
+          "label": "Last Name"
+        },
+        {
+          "type": "text",
+          "name": "displayName",
+          "label": "Display Name"
+        },
+        {
+          "type": "upload",
+          "name": "avatar",
+          "label": "Avatar",
+          "relationTo": "media"
+        },
+        {
+          "type": "select",
+          "name": "role",
+          "label": "Role",
+          "required": true,
+          "defaultValue": "customer",
+          "options": [
+            {
+              "label": "admin",
+              "value": "admin"
+            },
+            {
+              "label": "vendor",
+              "value": "vendor"
+            },
+            {
+              "label": "customer",
+              "value": "customer"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "active",
+          "options": [
+            {
+              "label": "active",
+              "value": "active"
+            },
+            {
+              "label": "suspended",
+              "value": "suspended"
+            },
+            {
+              "label": "banned",
+              "value": "banned"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "emailVerified",
+          "label": "Email Verified",
+          "defaultValue": false
+        },
+        {
+          "type": "checkbox",
+          "name": "phoneVerified",
+          "label": "Phone Verified",
+          "defaultValue": false
+        },
+        {
+          "type": "select",
+          "name": "locale",
+          "label": "Locale",
+          "defaultValue": "en",
+          "options": [
+            {
+              "label": "en",
+              "value": "en"
+            },
+            {
+              "label": "bn",
+              "value": "bn"
+            }
+          ]
+        },
+        {
+          "type": "relationship",
+          "name": "addresses",
+          "label": "Addresses",
+          "relationTo": "addresses",
+          "hasMany": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        },
+        {
+          "type": "email",
+          "name": "email",
+          "label": "Email",
+          "unique": true,
+          "description": "Required if phone is not provided (configurable via AUTH_REQUIRED_IDENTIFIER)."
+        },
+        {
+          "type": "text",
+          "name": "username",
+          "label": "Username",
+          "required": true,
+          "unique": true,
+          "description": "Login identifier — auto-set from email or phone. Do not edit.",
+          "readOnly": true
+        },
+        {
+          "type": "array",
+          "name": "sessions",
+          "label": "Sessions",
+          "fields": [
+            {
+              "type": "text",
+              "name": "id",
+              "label": "Id",
+              "required": true
+            },
+            {
+              "type": "date",
+              "name": "createdAt",
+              "label": "Created At"
+            },
+            {
+              "type": "date",
+              "name": "expiresAt",
+              "label": "Expires At",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "media",
+      "label": "Media",
+      "group": "Platform",
+      "useAsTitle": "filename",
+      "auth": false,
+      "upload": true,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "alt",
+          "label": "Alt",
+          "localized": true
+        },
+        {
+          "type": "text",
+          "name": "caption",
+          "label": "Caption",
+          "localized": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        },
+        {
+          "type": "text",
+          "name": "url",
+          "label": "URL",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "text",
+          "name": "thumbnailURL",
+          "label": "Thumbnail URL",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "text",
+          "name": "filename",
+          "label": "Filename",
+          "unique": true,
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "text",
+          "name": "mimeType",
+          "label": "MIME Type",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "number",
+          "name": "filesize",
+          "label": "Filesize",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "number",
+          "name": "width",
+          "label": "Width",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "number",
+          "name": "height",
+          "label": "Height",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "number",
+          "name": "focalX",
+          "label": "Focal X",
+          "hidden": true
+        },
+        {
+          "type": "number",
+          "name": "focalY",
+          "label": "Focal Y",
+          "hidden": true
+        },
+        {
+          "type": "group",
+          "name": "sizes",
+          "label": "Sizes",
+          "hidden": true,
+          "fields": [
+            {
+              "type": "group",
+              "name": "thumbnail",
+              "label": "thumbnail",
+              "hidden": true,
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "url",
+                  "label": "URL",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "width",
+                  "label": "Width",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "height",
+                  "label": "Height",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "mimeType",
+                  "label": "MIME Type",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "filesize",
+                  "label": "Filesize",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "filename",
+                  "label": "Filename",
+                  "readOnly": true,
+                  "hidden": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "name": "card",
+              "label": "card",
+              "hidden": true,
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "url",
+                  "label": "URL",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "width",
+                  "label": "Width",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "height",
+                  "label": "Height",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "mimeType",
+                  "label": "MIME Type",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "filesize",
+                  "label": "Filesize",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "filename",
+                  "label": "Filename",
+                  "readOnly": true,
+                  "hidden": true
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "name": "tablet",
+              "label": "tablet",
+              "hidden": true,
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "url",
+                  "label": "URL",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "width",
+                  "label": "Width",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "height",
+                  "label": "Height",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "mimeType",
+                  "label": "MIME Type",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "number",
+                  "name": "filesize",
+                  "label": "Filesize",
+                  "readOnly": true,
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "filename",
+                  "label": "Filename",
+                  "readOnly": true,
+                  "hidden": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "pages",
+      "label": "Page",
+      "group": "Content",
+      "useAsTitle": "title",
+      "defaultColumns": [
+        "title",
+        "slug",
+        "status",
+        "updatedAt"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": {
+        "drafts": true,
+        "max": 100
+      },
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "title",
+          "label": "Title",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from title. Customize if needed."
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "draft",
+          "options": [
+            {
+              "label": "draft",
+              "value": "draft"
+            },
+            {
+              "label": "published",
+              "value": "published"
+            }
+          ]
+        },
+        {
+          "type": "blocks",
+          "name": "layout",
+          "label": "Layout",
+          "localized": true,
+          "blocks": [
+            {
+              "slug": "richText",
+              "label": "Rich Text",
+              "fields": [
+                {
+                  "type": "richText",
+                  "name": "content",
+                  "label": "Content"
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "hero",
+              "label": "Hero",
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "heading",
+                  "label": "Heading"
+                },
+                {
+                  "type": "textarea",
+                  "name": "subheading",
+                  "label": "Subheading"
+                },
+                {
+                  "type": "upload",
+                  "name": "backgroundImage",
+                  "label": "Background Image",
+                  "relationTo": "media"
+                },
+                {
+                  "type": "text",
+                  "name": "ctaLabel",
+                  "label": "Cta Label"
+                },
+                {
+                  "type": "text",
+                  "name": "ctaUrl",
+                  "label": "Cta Url"
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "image",
+              "label": "Image",
+              "fields": [
+                {
+                  "type": "upload",
+                  "name": "image",
+                  "label": "Image",
+                  "required": true,
+                  "relationTo": "media"
+                },
+                {
+                  "type": "text",
+                  "name": "alt",
+                  "label": "Alt"
+                },
+                {
+                  "type": "text",
+                  "name": "caption",
+                  "label": "Caption"
+                },
+                {
+                  "type": "select",
+                  "name": "variant",
+                  "label": "Variant",
+                  "defaultValue": "rounded",
+                  "options": [
+                    {
+                      "label": "rounded",
+                      "value": "rounded"
+                    },
+                    {
+                      "label": "full",
+                      "value": "full"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "splitSection",
+              "label": "Image + text",
+              "fields": [
+                {
+                  "type": "upload",
+                  "name": "image",
+                  "label": "Image",
+                  "required": true,
+                  "relationTo": "media"
+                },
+                {
+                  "type": "select",
+                  "name": "imagePosition",
+                  "label": "Image Position",
+                  "defaultValue": "left",
+                  "options": [
+                    {
+                      "label": "left",
+                      "value": "left"
+                    },
+                    {
+                      "label": "right",
+                      "value": "right"
+                    }
+                  ]
+                },
+                {
+                  "type": "richText",
+                  "name": "body",
+                  "label": "Body"
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "videoEmbed",
+              "label": "Video embed",
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "title",
+                  "label": "Title"
+                },
+                {
+                  "type": "text",
+                  "name": "embedUrl",
+                  "label": "Embed Url",
+                  "required": true,
+                  "description": "YouTube or Vimeo watch/embed URL"
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "faq",
+              "label": "FAQ",
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "heading",
+                  "label": "Heading"
+                },
+                {
+                  "type": "array",
+                  "name": "items",
+                  "label": "Item",
+                  "fields": [
+                    {
+                      "type": "text",
+                      "name": "question",
+                      "label": "Question",
+                      "required": true
+                    },
+                    {
+                      "type": "richText",
+                      "name": "answer",
+                      "label": "Answer",
+                      "required": true
+                    },
+                    {
+                      "type": "text",
+                      "name": "id",
+                      "label": "ID",
+                      "hidden": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "callout",
+              "label": "Callout",
+              "fields": [
+                {
+                  "type": "select",
+                  "name": "tone",
+                  "label": "Tone",
+                  "defaultValue": "muted",
+                  "options": [
+                    {
+                      "label": "muted",
+                      "value": "muted"
+                    },
+                    {
+                      "label": "primary",
+                      "value": "primary"
+                    },
+                    {
+                      "label": "warning",
+                      "value": "warning"
+                    }
+                  ]
+                },
+                {
+                  "type": "richText",
+                  "name": "content",
+                  "label": "Content"
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            },
+            {
+              "slug": "spacer",
+              "label": "Spacer",
+              "fields": [
+                {
+                  "type": "select",
+                  "name": "size",
+                  "label": "Size",
+                  "defaultValue": "md",
+                  "options": [
+                    {
+                      "label": "sm",
+                      "value": "sm"
+                    },
+                    {
+                      "label": "md",
+                      "value": "md"
+                    },
+                    {
+                      "label": "lg",
+                      "value": "lg"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                },
+                {
+                  "type": "text",
+                  "name": "blockName",
+                  "label": "Block Name"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "meta",
+          "label": "SEO",
+          "fields": [
+            {
+              "type": "text",
+              "name": "title",
+              "label": "Title",
+              "localized": true
+            },
+            {
+              "type": "textarea",
+              "name": "description",
+              "label": "Description",
+              "localized": true
+            },
+            {
+              "type": "upload",
+              "name": "image",
+              "label": "Image",
+              "relationTo": "media"
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "publishedAt",
+          "label": "Published At"
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        },
+        {
+          "type": "select",
+          "name": "_status",
+          "label": " status",
+          "defaultValue": "draft",
+          "options": [
+            {
+              "label": "draft",
+              "value": "draft"
+            },
+            {
+              "label": "published",
+              "value": "published"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "categories",
+      "label": "Category",
+      "group": "Catalog",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "slug",
+        "parent",
+        "isActive",
+        "displayOrder"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from name. Customize if needed."
+        },
+        {
+          "type": "richText",
+          "name": "description",
+          "label": "Description",
+          "localized": true
+        },
+        {
+          "type": "upload",
+          "name": "image",
+          "label": "Image",
+          "relationTo": "media"
+        },
+        {
+          "type": "relationship",
+          "name": "parent",
+          "label": "Parent",
+          "description": "Leave empty for top-level categories.",
+          "relationTo": "categories"
+        },
+        {
+          "type": "number",
+          "name": "displayOrder",
+          "label": "Display Order",
+          "defaultValue": 0,
+          "description": "Lower numbers appear first."
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        },
+        {
+          "type": "number",
+          "name": "commissionOverride",
+          "label": "Commission Override",
+          "description": "Optional: override default platform commission % for products in this category.",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "type": "group",
+          "name": "meta",
+          "label": "SEO",
+          "fields": [
+            {
+              "type": "text",
+              "name": "title",
+              "label": "Title",
+              "localized": true
+            },
+            {
+              "type": "textarea",
+              "name": "description",
+              "label": "Description",
+              "localized": true
+            },
+            {
+              "type": "upload",
+              "name": "image",
+              "label": "Image",
+              "relationTo": "media"
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "brands",
+      "label": "Brand",
+      "group": "Catalog",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "slug",
+        "featured",
+        "displayOrder",
+        "website",
+        "updatedAt"
+      ],
+      "description": "Manage product brands and manufacturers (logos, hero banners, websites, and official brand profiles).",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true,
+          "description": "Brand or manufacturer name (e.g. \"Apple\", \"Samsung\", \"Dyson\")"
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from name. Customize if needed."
+        },
+        {
+          "type": "textarea",
+          "name": "description",
+          "label": "Description",
+          "localized": true,
+          "description": "Brief description shown on brand landing pages."
+        },
+        {
+          "type": "upload",
+          "name": "logo",
+          "label": "Logo",
+          "description": "Brand or manufacturer logo / icon.",
+          "relationTo": "media"
+        },
+        {
+          "type": "upload",
+          "name": "bannerImage",
+          "label": "Banner Image",
+          "description": "Hero banner image displayed on brand showcase pages.",
+          "relationTo": "media"
+        },
+        {
+          "type": "text",
+          "name": "website",
+          "label": "Website",
+          "description": "Official brand website URL (e.g. https://www.apple.com)."
+        },
+        {
+          "type": "checkbox",
+          "name": "featured",
+          "label": "Featured",
+          "defaultValue": false,
+          "description": "Show in featured brands sections and home carousels."
+        },
+        {
+          "type": "number",
+          "name": "displayOrder",
+          "label": "Display Order",
+          "defaultValue": 0,
+          "description": "Sort weight (lower numbers appear first)."
+        },
+        {
+          "type": "group",
+          "name": "meta",
+          "label": "SEO",
+          "fields": [
+            {
+              "type": "text",
+              "name": "title",
+              "label": "Title",
+              "localized": true
+            },
+            {
+              "type": "textarea",
+              "name": "description",
+              "label": "Description",
+              "localized": true
+            },
+            {
+              "type": "upload",
+              "name": "image",
+              "label": "Image",
+              "relationTo": "media"
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "attributes",
+      "label": "Attribute",
+      "group": "Catalog",
+      "useAsTitle": "label",
+      "defaultColumns": [
+        "label",
+        "key",
+        "dataType",
+        "category",
+        "unit",
+        "defaultGroup",
+        "isFilterable",
+        "displayOrder"
+      ],
+      "description": "Manage reusable product specifications, series, features, and dynamic filter facets with predefined standardized values.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "label",
+          "label": "Label",
+          "required": true,
+          "localized": true,
+          "description": "Display name (e.g. \"Screen Refresh Rate\", \"Battery Capacity\", \"RAM\", \"Water Resistance\", \"Series\")"
+        },
+        {
+          "type": "text",
+          "name": "key",
+          "label": "Key",
+          "required": true,
+          "unique": true,
+          "description": "Unique internal code (e.g. \"refresh_rate\", \"battery_capacity\", \"ram\", \"water_resistance\", \"series\")"
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from label. Customize if needed."
+        },
+        {
+          "type": "select",
+          "name": "dataType",
+          "label": "Data Type",
+          "required": true,
+          "defaultValue": "select",
+          "description": "Data input type. Use Select or Multi-Select to provide standardized predefined values for fast one-click assignment and clean facet filters.",
+          "options": [
+            {
+              "label": "select",
+              "value": "select"
+            },
+            {
+              "label": "multiselect",
+              "value": "multiselect"
+            },
+            {
+              "label": "text",
+              "value": "text"
+            },
+            {
+              "label": "number",
+              "value": "number"
+            },
+            {
+              "label": "boolean",
+              "value": "boolean"
+            },
+            {
+              "label": "color",
+              "value": "color"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "category",
+          "label": "Category",
+          "required": true,
+          "defaultValue": "specification",
+          "description": "High-level attribute category for grouping and facet classification.",
+          "options": [
+            {
+              "label": "specification",
+              "value": "specification"
+            },
+            {
+              "label": "series",
+              "value": "series"
+            },
+            {
+              "label": "feature",
+              "value": "feature"
+            },
+            {
+              "label": "material",
+              "value": "material"
+            },
+            {
+              "label": "connectivity",
+              "value": "connectivity"
+            },
+            {
+              "label": "compatibility",
+              "value": "compatibility"
+            },
+            {
+              "label": "certification",
+              "value": "certification"
+            },
+            {
+              "label": "dimensions",
+              "value": "dimensions"
+            },
+            {
+              "label": "general",
+              "value": "general"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "unit",
+          "label": "Unit",
+          "description": "Measurement unit suffix (e.g. \"mAh\", \"W\", \"GB\", \"inch\", \"Hz\", \"kg\", \"V\")."
+        },
+        {
+          "type": "text",
+          "name": "defaultGroup",
+          "label": "Default Group",
+          "description": "Default specification section group on PDP (e.g. \"Display\", \"Performance\", \"Battery & Charging\", \"Connectivity\", \"General\")."
+        },
+        {
+          "type": "array",
+          "name": "options",
+          "label": "Predefined Option / Value",
+          "description": "Standardized predefined values for one-click assignment to any product without manual typing.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "label",
+              "label": "Label",
+              "required": true,
+              "localized": true,
+              "description": "Option label (e.g. \"120Hz LTPO OLED\", \"IP68 Water Resistant\", \"16 GB\", \"Natural Titanium\")"
+            },
+            {
+              "type": "text",
+              "name": "value",
+              "label": "Value",
+              "required": true,
+              "description": "Stored filter key/value (e.g. \"120hz-ltpo-oled\", \"ip68\", \"16gb\", \"natural-titanium\")"
+            },
+            {
+              "type": "text",
+              "name": "hexColor",
+              "label": "Hex Color",
+              "description": "Optional hex color code for visual swatches (e.g. \"#A2AAAD\" for Silver)."
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "isFilterable",
+          "label": "Is Filterable",
+          "defaultValue": true,
+          "description": "Enable catalog facet filtering for this attribute."
+        },
+        {
+          "type": "checkbox",
+          "name": "isComparable",
+          "label": "Is Comparable",
+          "defaultValue": true,
+          "description": "Include this attribute in product comparison tables."
+        },
+        {
+          "type": "checkbox",
+          "name": "featured",
+          "label": "Featured",
+          "defaultValue": false,
+          "description": "Show in featured specifications/facets sections on the storefront."
+        },
+        {
+          "type": "number",
+          "name": "displayOrder",
+          "label": "Display Order",
+          "defaultValue": 0,
+          "description": "Sort weight (lower numbers appear first)."
+        },
+        {
+          "type": "textarea",
+          "name": "description",
+          "label": "Description",
+          "localized": true,
+          "description": "Brief description shown on attribute or facet landing pages."
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "classes",
+      "label": "Class",
+      "group": "Catalog",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "slug",
+        "icon",
+        "updatedAt"
+      ],
+      "description": "Manage dynamic Product Classes (Specification Templates / Attribute Sets) composed of reusable Attributes organized into logical groups.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true,
+          "description": "Class / Template name (e.g. \"Smartphone\", \"Laptop\", \"Power Bank\", \"Audio & Headphones\")"
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from name. Customize if needed."
+        },
+        {
+          "type": "textarea",
+          "name": "description",
+          "label": "Description",
+          "localized": true,
+          "description": "Optional description of this product class and its specification template."
+        },
+        {
+          "type": "text",
+          "name": "icon",
+          "label": "Icon",
+          "description": "Optional icon identifier (e.g. \"smartphone\", \"laptop\", \"battery\", \"headphones\", \"camera\")."
+        },
+        {
+          "type": "array",
+          "name": "groups",
+          "label": "Attribute Group",
+          "description": "Curated specification sections (e.g. \"Display & Screen\", \"Performance & Memory\", \"Battery & Charging\").",
+          "fields": [
+            {
+              "type": "text",
+              "name": "name",
+              "label": "Name",
+              "required": true,
+              "localized": true,
+              "description": "Group header name (e.g. \"Display & Screen\", \"Battery & Charging\", \"Connectivity\")."
+            },
+            {
+              "type": "number",
+              "name": "displayOrder",
+              "label": "Display Order",
+              "defaultValue": 0,
+              "description": "Section display sort order (lower numbers appear first)."
+            },
+            {
+              "type": "array",
+              "name": "attributes",
+              "label": "Attribute Item",
+              "description": "Reusable global attributes included in this template group.",
+              "fields": [
+                {
+                  "type": "relationship",
+                  "name": "attribute",
+                  "label": "Attribute",
+                  "required": true,
+                  "description": "Global attribute definition from the catalog.",
+                  "relationTo": "attributes"
+                },
+                {
+                  "type": "checkbox",
+                  "name": "isRequired",
+                  "label": "Is Required",
+                  "defaultValue": false,
+                  "description": "Whether this attribute must be filled in for products in this class."
+                },
+                {
+                  "type": "number",
+                  "name": "displayOrder",
+                  "label": "Display Order",
+                  "defaultValue": 0,
+                  "description": "Sort order of this attribute within this group."
+                },
+                {
+                  "type": "text",
+                  "name": "helpText",
+                  "label": "Help Text",
+                  "localized": true,
+                  "description": "Optional guidance or tooltip for admin content managers."
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "products",
+      "label": "Product",
+      "group": "Ecommerce",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "brand",
+        "slug",
+        "status",
+        "basePrice",
+        "currency",
+        "publishedAt"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from name. Customize if needed."
+        },
+        {
+          "type": "richText",
+          "name": "description",
+          "label": "Description",
+          "localized": true
+        },
+        {
+          "type": "textarea",
+          "name": "shortDescription",
+          "label": "Short Description",
+          "localized": true
+        },
+        {
+          "type": "text",
+          "name": "sku",
+          "label": "Sku"
+        },
+        {
+          "type": "select",
+          "name": "productType",
+          "label": "Product Type",
+          "required": true,
+          "defaultValue": "standard",
+          "options": [
+            {
+              "label": "standard",
+              "value": "standard"
+            },
+            {
+              "label": "bundle",
+              "value": "bundle"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "draft",
+          "options": [
+            {
+              "label": "draft",
+              "value": "draft"
+            },
+            {
+              "label": "pending-review",
+              "value": "pending-review"
+            },
+            {
+              "label": "published",
+              "value": "published"
+            },
+            {
+              "label": "archived",
+              "value": "archived"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "featured",
+          "label": "Featured",
+          "defaultValue": false
+        },
+        {
+          "type": "relationship",
+          "name": "brand",
+          "label": "Brand",
+          "description": "The brand or manufacturer for this product.",
+          "relationTo": "brands"
+        },
+        {
+          "type": "relationship",
+          "name": "categories",
+          "label": "Categories",
+          "relationTo": "categories",
+          "hasMany": true
+        },
+        {
+          "type": "relationship",
+          "name": "productClass",
+          "label": "Product Class",
+          "description": "Dynamic Specification Template / Class (e.g., \"Power Bank\", \"Smartphone\", \"Headphones\"). Products inherit defined parameters.",
+          "relationTo": "classes"
+        },
+        {
+          "type": "array",
+          "name": "specifications",
+          "label": "Specification",
+          "description": "Structured technical specifications inherited from the assigned Product Class.",
+          "fields": [
+            {
+              "type": "relationship",
+              "name": "attribute",
+              "label": "Attribute",
+              "description": "Associated global attribute definition if linked.",
+              "relationTo": "attributes"
+            },
+            {
+              "type": "text",
+              "name": "key",
+              "label": "Key",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "label",
+              "label": "Label",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "value",
+              "label": "Value",
+              "required": true
+            },
+            {
+              "type": "json",
+              "name": "values",
+              "label": "Values"
+            },
+            {
+              "type": "text",
+              "name": "unit",
+              "label": "Unit"
+            },
+            {
+              "type": "text",
+              "name": "group",
+              "label": "Group"
+            },
+            {
+              "type": "checkbox",
+              "name": "isCustom",
+              "label": "Is Custom",
+              "defaultValue": false
+            },
+            {
+              "type": "checkbox",
+              "name": "isAdHoc",
+              "label": "Is Ad Hoc",
+              "defaultValue": false
+            },
+            {
+              "type": "number",
+              "name": "displayOrder",
+              "label": "Display Order",
+              "defaultValue": 0
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "name": "tags",
+          "label": "Tag",
+          "fields": [
+            {
+              "type": "text",
+              "name": "tag",
+              "label": "Tag"
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "name": "images",
+          "label": "Image",
+          "fields": [
+            {
+              "type": "upload",
+              "name": "image",
+              "label": "Image",
+              "required": true,
+              "relationTo": "media"
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "basePrice",
+          "label": "Base Price",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "number",
+          "name": "compareAtPrice",
+          "label": "Compare At Price",
+          "min": 0
+        },
+        {
+          "type": "select",
+          "name": "saleDisplayMode",
+          "label": "Sale Display Mode",
+          "required": true,
+          "defaultValue": "strike_through",
+          "description": "How to show savings when compare-at price is higher than selling price. Variants can override.",
+          "options": [
+            {
+              "label": "none",
+              "value": "none"
+            },
+            {
+              "label": "strike_through",
+              "value": "strike_through"
+            },
+            {
+              "label": "badge_percent",
+              "value": "badge_percent"
+            },
+            {
+              "label": "badge_amount",
+              "value": "badge_amount"
+            },
+            {
+              "label": "strike_and_badge",
+              "value": "strike_and_badge"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "costPrice",
+          "label": "Cost Price",
+          "min": 0
+        },
+        {
+          "type": "select",
+          "name": "currency",
+          "label": "Currency",
+          "required": true,
+          "defaultValue": "USD",
+          "options": [
+            {
+              "label": "USD",
+              "value": "USD"
+            },
+            {
+              "label": "BDT",
+              "value": "BDT"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "taxable",
+          "label": "Taxable",
+          "defaultValue": true
+        },
+        {
+          "type": "number",
+          "name": "weight",
+          "label": "Weight",
+          "min": 0
+        },
+        {
+          "type": "group",
+          "name": "dimensions",
+          "label": "Dimensions",
+          "fields": [
+            {
+              "type": "number",
+              "name": "length",
+              "label": "Length",
+              "min": 0
+            },
+            {
+              "type": "number",
+              "name": "width",
+              "label": "Width",
+              "min": 0
+            },
+            {
+              "type": "number",
+              "name": "height",
+              "label": "Height",
+              "min": 0
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "hasVariants",
+          "label": "Has Variants",
+          "defaultValue": false
+        },
+        {
+          "type": "array",
+          "name": "bundleItems",
+          "label": "Bundle Item",
+          "fields": [
+            {
+              "type": "relationship",
+              "name": "product",
+              "label": "Product",
+              "required": true,
+              "relationTo": "products"
+            },
+            {
+              "type": "relationship",
+              "name": "variant",
+              "label": "Variant",
+              "relationTo": "product-variants"
+            },
+            {
+              "type": "number",
+              "name": "quantity",
+              "label": "Quantity",
+              "required": true,
+              "defaultValue": 1,
+              "min": 1
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "meta",
+          "label": "SEO",
+          "fields": [
+            {
+              "type": "text",
+              "name": "title",
+              "label": "Title",
+              "localized": true
+            },
+            {
+              "type": "textarea",
+              "name": "description",
+              "label": "Description",
+              "localized": true
+            },
+            {
+              "type": "upload",
+              "name": "image",
+              "label": "Image",
+              "relationTo": "media"
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "publishedAt",
+          "label": "Published At"
+        },
+        {
+          "type": "number",
+          "name": "rating",
+          "label": "Rating",
+          "defaultValue": 0,
+          "description": "Aggregated from approved product reviews.",
+          "readOnly": true
+        },
+        {
+          "type": "number",
+          "name": "totalReviews",
+          "label": "Total Reviews",
+          "defaultValue": 0,
+          "description": "Total approved product reviews.",
+          "readOnly": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "product-variants",
+      "label": "Product Variant",
+      "group": "Ecommerce",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "sku",
+        "price",
+        "product",
+        "isActive"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "product",
+          "label": "Product",
+          "required": true,
+          "relationTo": "products"
+        },
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "sku",
+          "label": "Sku",
+          "unique": true,
+          "description": "Unique per variant. Leave empty for auto-generated."
+        },
+        {
+          "type": "number",
+          "name": "price",
+          "label": "Price",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "number",
+          "name": "compareAtPrice",
+          "label": "Compare At Price",
+          "min": 0
+        },
+        {
+          "type": "select",
+          "name": "saleDisplayMode",
+          "label": "Sale Display Mode",
+          "defaultValue": "inherit",
+          "description": "Leave empty to use the product’s sale display mode. Set to override for this SKU only.",
+          "options": [
+            {
+              "label": "inherit",
+              "value": "inherit"
+            },
+            {
+              "label": "none",
+              "value": "none"
+            },
+            {
+              "label": "strike_through",
+              "value": "strike_through"
+            },
+            {
+              "label": "badge_percent",
+              "value": "badge_percent"
+            },
+            {
+              "label": "badge_amount",
+              "value": "badge_amount"
+            },
+            {
+              "label": "strike_and_badge",
+              "value": "strike_and_badge"
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "name": "options",
+          "label": "Option",
+          "fields": [
+            {
+              "type": "text",
+              "name": "name",
+              "label": "Name",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "value",
+              "label": "Value",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "upload",
+          "name": "image",
+          "label": "Image",
+          "relationTo": "media"
+        },
+        {
+          "type": "number",
+          "name": "weight",
+          "label": "Weight",
+          "min": 0
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "carts",
+      "label": "Cart",
+      "group": "Ecommerce",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "user",
+        "guestId",
+        "subtotal",
+        "expiresAt"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "user",
+          "label": "User",
+          "description": "Null for guest carts.",
+          "relationTo": "users"
+        },
+        {
+          "type": "text",
+          "name": "guestId",
+          "label": "Guest Id",
+          "description": "UUID for guest identification. Set from X-Guest-Id header; never from body."
+        },
+        {
+          "type": "array",
+          "name": "items",
+          "label": "Item",
+          "defaultValue": [],
+          "fields": [
+            {
+              "type": "relationship",
+              "name": "product",
+              "label": "Product",
+              "required": true,
+              "relationTo": "products"
+            },
+            {
+              "type": "relationship",
+              "name": "variant",
+              "label": "Variant",
+              "relationTo": "product-variants"
+            },
+            {
+              "type": "number",
+              "name": "quantity",
+              "label": "Quantity",
+              "required": true,
+              "min": 1
+            },
+            {
+              "type": "number",
+              "name": "unitPrice",
+              "label": "Unit Price",
+              "description": "Auto-set from product basePrice or variant price. Do not send.",
+              "min": 0
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "subtotal",
+          "label": "Subtotal",
+          "defaultValue": 0,
+          "description": "Auto-calculated from items.",
+          "readOnly": true
+        },
+        {
+          "type": "text",
+          "name": "couponCode",
+          "label": "Coupon Code",
+          "description": "Optional coupon code. Validated server-side."
+        },
+        {
+          "type": "relationship",
+          "name": "appliedCoupon",
+          "label": "Applied Coupon",
+          "description": "Resolved coupon from couponCode.",
+          "readOnly": true,
+          "relationTo": "coupons"
+        },
+        {
+          "type": "number",
+          "name": "discountTotal",
+          "label": "Discount Total",
+          "defaultValue": 0,
+          "description": "Discount amount from applied coupon.",
+          "readOnly": true
+        },
+        {
+          "type": "number",
+          "name": "grandTotal",
+          "label": "Grand Total",
+          "defaultValue": 0,
+          "description": "subtotal - discountTotal (shipping/tax excluded in cart).",
+          "readOnly": true
+        },
+        {
+          "type": "relationship",
+          "name": "store",
+          "label": "Store",
+          "description": "Selected store/outlet for this shopping session. Set by storefront when customer picks a store.",
+          "relationTo": "stock-locations"
+        },
+        {
+          "type": "date",
+          "name": "expiresAt",
+          "label": "Expires At",
+          "description": "Guest carts expire. Auto-set to 7 days on guest create."
+        },
+        {
+          "type": "textarea",
+          "name": "customerNote",
+          "label": "Customer Note",
+          "description": "Optional message for the seller / fulfillment team. Copied to the order at checkout.",
+          "max": 2000
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "addresses",
+      "label": "Address",
+      "group": "Ecommerce",
+      "useAsTitle": "label",
+      "defaultColumns": [
+        "label",
+        "firstName",
+        "lastName",
+        "city",
+        "country",
+        "user"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "user",
+          "label": "User",
+          "required": true,
+          "relationTo": "users"
+        },
+        {
+          "type": "text",
+          "name": "label",
+          "label": "Label",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "firstName",
+          "label": "First Name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "lastName",
+          "label": "Last Name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "street1",
+          "label": "Street1",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "street2",
+          "label": "Street2"
+        },
+        {
+          "type": "text",
+          "name": "city",
+          "label": "City",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "state",
+          "label": "State"
+        },
+        {
+          "type": "text",
+          "name": "postalCode",
+          "label": "Postal Code"
+        },
+        {
+          "type": "text",
+          "name": "country",
+          "label": "Country",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "geoCountryId",
+          "label": "Geo Country Id",
+          "description": "Optional geography country id (for store/service-area compatibility checks)."
+        },
+        {
+          "type": "text",
+          "name": "geoSubdivisionId",
+          "label": "Geo Subdivision Id",
+          "description": "Optional geography subdivision id (for store/service-area compatibility checks)."
+        },
+        {
+          "type": "text",
+          "name": "geoLocalityId",
+          "label": "Geo Locality Id",
+          "description": "Optional geography locality id. Leave empty when the address is subdivision-level only."
+        },
+        {
+          "type": "text",
+          "name": "preferredStoreId",
+          "label": "Preferred Store Id",
+          "description": "Optional preferred store/outlet id used for compatibility hints in storefront."
+        },
+        {
+          "type": "text",
+          "name": "phone",
+          "label": "Phone"
+        },
+        {
+          "type": "checkbox",
+          "name": "isDefault",
+          "label": "Is Default",
+          "defaultValue": false
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "wishlist-items",
+      "label": "Wishlist Item",
+      "group": "Ecommerce",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "user",
+        "product",
+        "createdAt"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "user",
+          "label": "User",
+          "required": true,
+          "relationTo": "users"
+        },
+        {
+          "type": "relationship",
+          "name": "product",
+          "label": "Product",
+          "required": true,
+          "relationTo": "products"
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "stock-locations",
+      "label": "Stock Location",
+      "group": "Inventory",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "code",
+        "isPublicStore",
+        "isActive"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "code",
+          "label": "Code",
+          "required": true,
+          "unique": true
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "URL-friendly identifier for public store pages (e.g. /store/dhaka-north). Leave empty for non-public warehouses."
+        },
+        {
+          "type": "group",
+          "name": "address",
+          "label": "Address",
+          "fields": [
+            {
+              "type": "text",
+              "name": "street",
+              "label": "Street"
+            },
+            {
+              "type": "text",
+              "name": "city",
+              "label": "City"
+            },
+            {
+              "type": "text",
+              "name": "state",
+              "label": "State"
+            },
+            {
+              "type": "text",
+              "name": "country",
+              "label": "Country"
+            },
+            {
+              "type": "text",
+              "name": "postalCode",
+              "label": "Postal Code"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        },
+        {
+          "type": "checkbox",
+          "name": "isPublicStore",
+          "label": "Is Public Store",
+          "defaultValue": false,
+          "description": "When true, this location is a customer-facing store/outlet visible on the storefront."
+        },
+        {
+          "type": "number",
+          "name": "sortPriority",
+          "label": "Sort Priority",
+          "defaultValue": 0,
+          "description": "Lower numbers appear first when listing public stores (e.g. service-area resolution). Default 0."
+        },
+        {
+          "type": "group",
+          "name": "storeDetails",
+          "label": "Store / Outlet Details",
+          "description": "Additional fields for customer-facing stores. Only relevant when isPublicStore is true.",
+          "fields": [
+            {
+              "type": "richText",
+              "name": "description",
+              "label": "Description",
+              "localized": true
+            },
+            {
+              "type": "upload",
+              "name": "logo",
+              "label": "Logo",
+              "relationTo": "media"
+            },
+            {
+              "type": "upload",
+              "name": "banner",
+              "label": "Banner",
+              "relationTo": "media"
+            },
+            {
+              "type": "email",
+              "name": "contactEmail",
+              "label": "Contact Email"
+            },
+            {
+              "type": "text",
+              "name": "contactPhone",
+              "label": "Contact Phone"
+            },
+            {
+              "type": "text",
+              "name": "operatingHours",
+              "label": "Operating Hours",
+              "localized": true,
+              "description": "Display string, e.g. \"Mon-Sat 9am-9pm\"."
+            },
+            {
+              "type": "array",
+              "name": "coverageArea",
+              "label": "Coverage Area",
+              "description": "Postal codes, city names, or zone identifiers this store serves.",
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "value",
+                  "label": "Value",
+                  "required": true
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "stock-levels",
+      "label": "Stock Level",
+      "group": "Inventory",
+      "useAsTitle": "title",
+      "defaultColumns": [
+        "product",
+        "variant",
+        "location",
+        "quantity",
+        "reservedQuantity"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "title",
+          "label": "Title",
+          "readOnly": true
+        },
+        {
+          "type": "relationship",
+          "name": "product",
+          "label": "Product",
+          "required": true,
+          "relationTo": "products"
+        },
+        {
+          "type": "relationship",
+          "name": "variant",
+          "label": "Variant",
+          "description": "Optional. Leave empty for product-level stock (no variants).",
+          "relationTo": "product-variants"
+        },
+        {
+          "type": "relationship",
+          "name": "location",
+          "label": "Location",
+          "required": true,
+          "relationTo": "stock-locations"
+        },
+        {
+          "type": "number",
+          "name": "quantity",
+          "label": "Quantity",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "number",
+          "name": "reservedQuantity",
+          "label": "Reserved Quantity",
+          "defaultValue": 0,
+          "min": 0
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "shipping-zones",
+      "label": "Shipping Zone",
+      "group": "Shipping",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "countries",
+        "isActive"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "type": "array",
+          "name": "countries",
+          "label": "Country",
+          "description": "ISO country codes (e.g. BD, US). Empty = rest of world.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "code",
+              "label": "Code",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "shipping-methods",
+      "label": "Shipping Method",
+      "group": "Shipping",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "zone",
+        "collectPaymentOnDelivery",
+        "type",
+        "rate",
+        "currency"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "type": "relationship",
+          "name": "zone",
+          "label": "Zone",
+          "required": true,
+          "relationTo": "shipping-zones"
+        },
+        {
+          "type": "select",
+          "name": "type",
+          "label": "Type",
+          "required": true,
+          "options": [
+            {
+              "label": "flat",
+              "value": "flat"
+            },
+            {
+              "label": "per-item",
+              "value": "per-item"
+            },
+            {
+              "label": "weight-based",
+              "value": "weight-based"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "rate",
+          "label": "Rate",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "select",
+          "name": "currency",
+          "label": "Currency",
+          "required": true,
+          "defaultValue": "USD",
+          "options": [
+            {
+              "label": "USD",
+              "value": "USD"
+            },
+            {
+              "label": "BDT",
+              "value": "BDT"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "minOrderValue",
+          "label": "Min Order Value",
+          "min": 0
+        },
+        {
+          "type": "number",
+          "name": "maxOrderValue",
+          "label": "Max Order Value",
+          "min": 0
+        },
+        {
+          "type": "checkbox",
+          "name": "collectPaymentOnDelivery",
+          "label": "Collect payment on delivery (COD)",
+          "defaultValue": false,
+          "description": "When enabled, this method means the customer pays on delivery (cash or agreed offline). Checkout uses this flag — not the method name — to allow COD flow and to record it on the order. Online gateway payment applies when this is off."
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "transactions",
+      "label": "Transaction",
+      "group": "Payments",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "order",
+        "type",
+        "provider",
+        "amount",
+        "currency",
+        "status",
+        "createdAt"
+      ],
+      "description": "Payment transactions. Created at checkout or refund.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "order",
+          "label": "Order",
+          "required": true,
+          "relationTo": "orders"
+        },
+        {
+          "type": "select",
+          "name": "type",
+          "label": "Type",
+          "required": true,
+          "options": [
+            {
+              "label": "charge",
+              "value": "charge"
+            },
+            {
+              "label": "refund",
+              "value": "refund"
+            },
+            {
+              "label": "partial-refund",
+              "value": "partial-refund"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "provider",
+          "label": "Provider",
+          "required": true,
+          "description": "e.g. sslcommerz, stripe."
+        },
+        {
+          "type": "text",
+          "name": "providerTransactionId",
+          "label": "Provider Transaction Id",
+          "description": "Gateway transaction ID."
+        },
+        {
+          "type": "number",
+          "name": "amount",
+          "label": "Amount",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "text",
+          "name": "currency",
+          "label": "Currency",
+          "required": true
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "pending",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "processing",
+              "value": "processing"
+            },
+            {
+              "label": "succeeded",
+              "value": "succeeded"
+            },
+            {
+              "label": "failed",
+              "value": "failed"
+            },
+            {
+              "label": "cancelled",
+              "value": "cancelled"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "platformFee",
+          "label": "Platform Fee",
+          "description": "Platform commission (multivendor)."
+        },
+        {
+          "type": "json",
+          "name": "metadata",
+          "label": "Metadata",
+          "description": "Provider-specific data."
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "order-items",
+      "label": "Order Item",
+      "group": "Orders",
+      "useAsTitle": "itemLabel",
+      "defaultColumns": [
+        "order",
+        "productName",
+        "variantName",
+        "stockLevel",
+        "quantity",
+        "unitPrice",
+        "totalPrice"
+      ],
+      "description": "Line items for an order. Created at checkout from cart. Commercial snapshots (title, product slug at checkout, SKU, price, qty) are immutable after create; admins may still change stock level for fulfillment routing. Shipping address, store, and totals live on the parent order / sub-order.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "order",
+          "label": "Order",
+          "required": true,
+          "description": "Parent order.",
+          "relationTo": "orders"
+        },
+        {
+          "type": "relationship",
+          "name": "product",
+          "label": "Product",
+          "required": true,
+          "description": "Snapshot reference. Product may change later.",
+          "relationTo": "products"
+        },
+        {
+          "type": "relationship",
+          "name": "variant",
+          "label": "Variant",
+          "description": "Variant if applicable.",
+          "relationTo": "product-variants"
+        },
+        {
+          "type": "relationship",
+          "name": "stockLevel",
+          "label": "Stock Level",
+          "description": "Warehouse stock row used for fulfillment (Phase 12). Changes move reservation between warehouses.",
+          "relationTo": "stock-levels"
+        },
+        {
+          "type": "text",
+          "name": "productName",
+          "label": "Product Name",
+          "required": true,
+          "description": "Snapshot at time of purchase."
+        },
+        {
+          "type": "text",
+          "name": "productSlug",
+          "label": "Product Slug",
+          "description": "Product URL slug at checkout (immutable). Used for PDP links when the live product slug changes."
+        },
+        {
+          "type": "text",
+          "name": "itemLabel",
+          "label": "Item Label",
+          "description": "Display label for admin (e.g. \"Product Name × 2\"). Set automatically.",
+          "readOnly": true,
+          "hidden": true
+        },
+        {
+          "type": "text",
+          "name": "variantName",
+          "label": "Variant Name",
+          "description": "Snapshot at time of purchase."
+        },
+        {
+          "type": "text",
+          "name": "sku",
+          "label": "Sku",
+          "description": "Snapshot at time of purchase."
+        },
+        {
+          "type": "number",
+          "name": "quantity",
+          "label": "Quantity",
+          "required": true,
+          "min": 1
+        },
+        {
+          "type": "number",
+          "name": "unitPrice",
+          "label": "Unit Price",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "number",
+          "name": "totalPrice",
+          "label": "Total Price",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "text",
+          "name": "productImage",
+          "label": "Product Image",
+          "description": "Snapshot URL at time of purchase."
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "order-status-history",
+      "label": "Order Status History",
+      "group": "Orders",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "order",
+        "fromStatus",
+        "toStatus",
+        "changedBy",
+        "timestamp"
+      ],
+      "description": "Audit log of order status changes.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "order",
+          "label": "Order",
+          "required": true,
+          "relationTo": "orders"
+        },
+        {
+          "type": "text",
+          "name": "fromStatus",
+          "label": "From Status",
+          "description": "Previous status."
+        },
+        {
+          "type": "text",
+          "name": "toStatus",
+          "label": "To Status",
+          "required": true
+        },
+        {
+          "type": "relationship",
+          "name": "changedBy",
+          "label": "Changed By",
+          "description": "User who changed the status.",
+          "relationTo": "users"
+        },
+        {
+          "type": "textarea",
+          "name": "reason",
+          "label": "Reason"
+        },
+        {
+          "type": "date",
+          "name": "timestamp",
+          "label": "Timestamp",
+          "required": true
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "orders",
+      "label": "Order",
+      "group": "Orders",
+      "useAsTitle": "orderNumber",
+      "defaultColumns": [
+        "orderNumber",
+        "customer",
+        "checkoutPaymentChannel",
+        "status",
+        "paymentStatus",
+        "grandTotal",
+        "currency",
+        "placedAt"
+      ],
+      "description": "Customer orders. Use status=Cancelled to cancel (releases inventory). Orders are never deleted (audit/tax).",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "orderNumber",
+          "label": "Order Number",
+          "required": true,
+          "unique": true,
+          "description": "Auto-generated e.g. ORD-20260225-XXXX.",
+          "readOnly": true
+        },
+        {
+          "type": "relationship",
+          "name": "customer",
+          "label": "Customer",
+          "description": "Null for guest checkout.",
+          "relationTo": "users"
+        },
+        {
+          "type": "email",
+          "name": "guestEmail",
+          "label": "Guest Email",
+          "description": "For guest checkout."
+        },
+        {
+          "type": "text",
+          "name": "guestPhone",
+          "label": "Guest Phone",
+          "description": "For guest checkout with phone identity."
+        },
+        {
+          "type": "group",
+          "name": "buyerSnapshot",
+          "label": "Buyer Snapshot",
+          "description": "Immutable buyer identity at checkout (support/fulfillment). No payment credentials. Do not edit after create.",
+          "fields": [
+            {
+              "type": "email",
+              "name": "email",
+              "label": "Email",
+              "readOnly": true
+            },
+            {
+              "type": "text",
+              "name": "name",
+              "label": "Name",
+              "readOnly": true
+            },
+            {
+              "type": "text",
+              "name": "phone",
+              "label": "Phone",
+              "readOnly": true
+            },
+            {
+              "type": "text",
+              "name": "locale",
+              "label": "Locale",
+              "description": "Locale used for product title snapshots at checkout.",
+              "readOnly": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "idempotencyKey",
+          "label": "Idempotency Key",
+          "description": "Client-supplied UUID for idempotent checkout. If an order with this key already exists, the existing order is returned without creating a duplicate.",
+          "readOnly": true
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "pending",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "processing",
+              "value": "processing"
+            },
+            {
+              "label": "partially-shipped",
+              "value": "partially-shipped"
+            },
+            {
+              "label": "shipped",
+              "value": "shipped"
+            },
+            {
+              "label": "delivered",
+              "value": "delivered"
+            },
+            {
+              "label": "completed",
+              "value": "completed"
+            },
+            {
+              "label": "cancelled",
+              "value": "cancelled"
+            },
+            {
+              "label": "refunded",
+              "value": "refunded"
+            }
+          ]
+        },
+        {
+          "type": "relationship",
+          "name": "items",
+          "label": "Items",
+          "description": "Order line items.",
+          "relationTo": "order-items",
+          "hasMany": true
+        },
+        {
+          "type": "group",
+          "name": "shippingAddress",
+          "label": "Shipping Address",
+          "required": true,
+          "description": "Ship-to address captured at checkout. Admins may update this for fulfillment corrections (unit number, contact phone, re-ship). Independent of buyerSnapshot.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "firstName",
+              "label": "First Name",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "lastName",
+              "label": "Last Name",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "street1",
+              "label": "Street1",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "street2",
+              "label": "Street2"
+            },
+            {
+              "type": "text",
+              "name": "city",
+              "label": "City",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "state",
+              "label": "State"
+            },
+            {
+              "type": "text",
+              "name": "postalCode",
+              "label": "Postal Code"
+            },
+            {
+              "type": "text",
+              "name": "country",
+              "label": "Country",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "phone",
+              "label": "Phone"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "billingAddress",
+          "label": "Billing Address",
+          "required": true,
+          "description": "Billing address at checkout. Admins may update when billing details were entered incorrectly.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "firstName",
+              "label": "First Name",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "lastName",
+              "label": "Last Name",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "street1",
+              "label": "Street1",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "street2",
+              "label": "Street2"
+            },
+            {
+              "type": "text",
+              "name": "city",
+              "label": "City",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "state",
+              "label": "State"
+            },
+            {
+              "type": "text",
+              "name": "postalCode",
+              "label": "Postal Code"
+            },
+            {
+              "type": "text",
+              "name": "country",
+              "label": "Country",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "phone",
+              "label": "Phone"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "subtotal",
+          "label": "Subtotal",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "shippingTotal",
+          "label": "Shipping Total",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "taxTotal",
+          "label": "Tax Total",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "discountTotal",
+          "label": "Discount Total",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "relationship",
+          "name": "appliedCoupon",
+          "label": "Applied Coupon",
+          "description": "Coupon used at checkout (if any).",
+          "relationTo": "coupons"
+        },
+        {
+          "type": "text",
+          "name": "couponCodeSnapshot",
+          "label": "Coupon Code Snapshot",
+          "description": "Coupon code snapshot at checkout time.",
+          "readOnly": true
+        },
+        {
+          "type": "number",
+          "name": "grandTotal",
+          "label": "Grand Total",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "text",
+          "name": "currency",
+          "label": "Currency",
+          "required": true
+        },
+        {
+          "type": "select",
+          "name": "paymentStatus",
+          "label": "Payment Status",
+          "required": true,
+          "defaultValue": "unpaid",
+          "options": [
+            {
+              "label": "unpaid",
+              "value": "unpaid"
+            },
+            {
+              "label": "paid",
+              "value": "paid"
+            },
+            {
+              "label": "partially-refunded",
+              "value": "partially-refunded"
+            },
+            {
+              "label": "refunded",
+              "value": "refunded"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "checkoutPaymentChannel",
+          "label": "Checkout Payment Channel",
+          "required": true,
+          "defaultValue": "online",
+          "description": "Recorded at checkout: online gateway vs cash on delivery. Do not change (audit / fulfillment).",
+          "readOnly": true,
+          "options": [
+            {
+              "label": "online",
+              "value": "online"
+            },
+            {
+              "label": "cash_on_delivery",
+              "value": "cash_on_delivery"
+            }
+          ]
+        },
+        {
+          "type": "relationship",
+          "name": "transaction",
+          "label": "Transaction",
+          "description": "Primary payment transaction.",
+          "relationTo": "transactions"
+        },
+        {
+          "type": "relationship",
+          "name": "store",
+          "label": "Store",
+          "description": "Store/outlet for this order (checkout default: cart.store). Admins may reassign for routing, warehouse changes, or corrections.",
+          "relationTo": "stock-locations"
+        },
+        {
+          "type": "textarea",
+          "name": "notes",
+          "label": "Notes",
+          "description": "Customer notes."
+        },
+        {
+          "type": "date",
+          "name": "placedAt",
+          "label": "Placed At",
+          "description": "When order was placed."
+        },
+        {
+          "type": "group",
+          "name": "deviceTracking",
+          "label": "Device Tracking",
+          "description": "Client device, browser, OS, and IP address recorded at checkout.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "ipAddress",
+              "label": "Ip Address",
+              "readOnly": true
+            },
+            {
+              "type": "text",
+              "name": "userAgent",
+              "label": "User Agent",
+              "readOnly": true
+            },
+            {
+              "type": "select",
+              "name": "deviceType",
+              "label": "Device Type",
+              "readOnly": true,
+              "options": [
+                {
+                  "label": "desktop",
+                  "value": "desktop"
+                },
+                {
+                  "label": "mobile",
+                  "value": "mobile"
+                },
+                {
+                  "label": "tablet",
+                  "value": "tablet"
+                },
+                {
+                  "label": "bot",
+                  "value": "bot"
+                },
+                {
+                  "label": "unknown",
+                  "value": "unknown"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "browser",
+              "label": "Browser",
+              "readOnly": true
+            },
+            {
+              "type": "text",
+              "name": "os",
+              "label": "Os",
+              "readOnly": true
+            },
+            {
+              "type": "text",
+              "name": "referrer",
+              "label": "Referrer",
+              "readOnly": true
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "verification-codes",
+      "label": "Verification Code",
+      "group": "Platform",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "identifier",
+        "type",
+        "used",
+        "expiresAt",
+        "createdAt"
+      ],
+      "description": "Email/phone verification codes and tokens. Single-use, auto-expire.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "identifier",
+          "label": "Identifier",
+          "required": true,
+          "description": "Email address or phone number."
+        },
+        {
+          "type": "select",
+          "name": "type",
+          "label": "Type",
+          "required": true,
+          "options": [
+            {
+              "label": "email",
+              "value": "email"
+            },
+            {
+              "label": "phone",
+              "value": "phone"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "code",
+          "label": "Code",
+          "required": true,
+          "description": "OTP code or link token (hashed or plain per strategy)."
+        },
+        {
+          "type": "date",
+          "name": "expiresAt",
+          "label": "Expires At",
+          "required": true,
+          "description": "After this time the code is invalid."
+        },
+        {
+          "type": "checkbox",
+          "name": "used",
+          "label": "Used",
+          "defaultValue": false
+        },
+        {
+          "type": "date",
+          "name": "usedAt",
+          "label": "Used At",
+          "description": "When the code was consumed."
+        },
+        {
+          "type": "text",
+          "name": "ip",
+          "label": "Ip",
+          "description": "Origin IP address when the code was created (for rate limiting / audit)."
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "coupons",
+      "label": "Coupon",
+      "group": "Discounts",
+      "useAsTitle": "code",
+      "defaultColumns": [
+        "code",
+        "type",
+        "value",
+        "isActive",
+        "expiresAt",
+        "totalUses",
+        "updatedAt"
+      ],
+      "description": "Cart-level coupons. Validation always runs server-side.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "code",
+          "label": "Code",
+          "required": true,
+          "unique": true
+        },
+        {
+          "type": "select",
+          "name": "type",
+          "label": "Type",
+          "required": true,
+          "defaultValue": "percentage",
+          "options": [
+            {
+              "label": "percentage",
+              "value": "percentage"
+            },
+            {
+              "label": "fixed",
+              "value": "fixed"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "value",
+          "label": "Value",
+          "required": true,
+          "min": 0
+        },
+        {
+          "type": "number",
+          "name": "minOrderValue",
+          "label": "Min Order Value",
+          "defaultValue": 0,
+          "min": 0
+        },
+        {
+          "type": "date",
+          "name": "expiresAt",
+          "label": "Expires At"
+        },
+        {
+          "type": "number",
+          "name": "maxTotalUses",
+          "label": "Max Total Uses",
+          "min": 1
+        },
+        {
+          "type": "number",
+          "name": "maxUsesPerUser",
+          "label": "Max Uses Per User",
+          "min": 1
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        },
+        {
+          "type": "number",
+          "name": "totalUses",
+          "label": "Total Uses",
+          "defaultValue": 0,
+          "description": "Auto-incremented after successful checkout.",
+          "readOnly": true,
+          "min": 0
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "product-reviews",
+      "label": "Product Review",
+      "group": "Reviews",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "product",
+        "author",
+        "rating",
+        "status",
+        "createdAt"
+      ],
+      "description": "Customer product reviews. Public read (approved only if moderation enabled).",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "product",
+          "label": "Product",
+          "required": true,
+          "description": "Reviewed product.",
+          "relationTo": "products"
+        },
+        {
+          "type": "relationship",
+          "name": "author",
+          "label": "Author",
+          "required": true,
+          "description": "Review author (customer).",
+          "relationTo": "users"
+        },
+        {
+          "type": "number",
+          "name": "rating",
+          "label": "Rating",
+          "required": true,
+          "min": 1,
+          "max": 5
+        },
+        {
+          "type": "text",
+          "name": "title",
+          "label": "Title"
+        },
+        {
+          "type": "textarea",
+          "name": "comment",
+          "label": "Comment",
+          "localized": true
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "approved",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "approved",
+              "value": "approved"
+            },
+            {
+              "label": "rejected",
+              "value": "rejected"
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "tenants",
+      "label": "Tenants",
+      "group": "Multivendor",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "slug",
+        "type",
+        "createdAt"
+      ],
+      "description": "Platform stores and vendor tenants. Each tenant isolates products, orders, and inventory.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "name": "slug",
+          "label": "Slug",
+          "unique": true,
+          "description": "Auto-generated from name. Customize if needed."
+        },
+        {
+          "type": "select",
+          "name": "type",
+          "label": "Type",
+          "required": true,
+          "defaultValue": "vendor",
+          "description": "platform-store = internal outlet/branch. vendor = independent marketplace seller.",
+          "options": [
+            {
+              "label": "platform-store",
+              "value": "platform-store"
+            },
+            {
+              "label": "vendor",
+              "value": "vendor"
+            }
+          ]
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "vendor-profiles",
+      "label": "Vendor Profiles",
+      "group": "Multivendor",
+      "useAsTitle": "displayName",
+      "defaultColumns": [
+        "displayName",
+        "tenant",
+        "rating",
+        "totalSales",
+        "joinedAt"
+      ],
+      "description": "Public vendor store profiles. Shown at /store/[vendor-slug].",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "tenant",
+          "label": "Tenant",
+          "required": true,
+          "unique": true,
+          "description": "The vendor (tenant) this profile belongs to.",
+          "relationTo": "tenants"
+        },
+        {
+          "type": "text",
+          "name": "displayName",
+          "label": "Display Name",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "richText",
+          "name": "description",
+          "label": "Description",
+          "localized": true
+        },
+        {
+          "type": "upload",
+          "name": "logo",
+          "label": "Logo",
+          "relationTo": "media"
+        },
+        {
+          "type": "upload",
+          "name": "banner",
+          "label": "Banner",
+          "relationTo": "media"
+        },
+        {
+          "type": "email",
+          "name": "contactEmail",
+          "label": "Contact Email"
+        },
+        {
+          "type": "text",
+          "name": "contactPhone",
+          "label": "Contact Phone"
+        },
+        {
+          "type": "text",
+          "name": "website",
+          "label": "Website"
+        },
+        {
+          "type": "array",
+          "name": "socialLinks",
+          "label": "Social Links",
+          "fields": [
+            {
+              "type": "text",
+              "name": "platform",
+              "label": "Platform",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "url",
+              "label": "Url",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "address",
+          "label": "Address",
+          "fields": [
+            {
+              "type": "text",
+              "name": "street",
+              "label": "Street"
+            },
+            {
+              "type": "text",
+              "name": "city",
+              "label": "City"
+            },
+            {
+              "type": "text",
+              "name": "state",
+              "label": "State"
+            },
+            {
+              "type": "text",
+              "name": "country",
+              "label": "Country"
+            },
+            {
+              "type": "text",
+              "name": "zip",
+              "label": "Zip"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "rating",
+          "label": "Rating",
+          "defaultValue": 0,
+          "description": "Aggregated from approved vendor reviews.",
+          "readOnly": true
+        },
+        {
+          "type": "number",
+          "name": "totalSales",
+          "label": "Total Sales",
+          "defaultValue": 0,
+          "description": "Denormalized sales counter.",
+          "readOnly": true
+        },
+        {
+          "type": "date",
+          "name": "joinedAt",
+          "label": "Joined At"
+        },
+        {
+          "type": "group",
+          "name": "meta",
+          "label": "SEO",
+          "fields": [
+            {
+              "type": "text",
+              "name": "title",
+              "label": "Title",
+              "localized": true
+            },
+            {
+              "type": "textarea",
+              "name": "description",
+              "label": "Description",
+              "localized": true
+            },
+            {
+              "type": "upload",
+              "name": "image",
+              "label": "Image",
+              "relationTo": "media"
+            }
+          ]
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "vendor-settings",
+      "label": "Vendor Settings",
+      "group": "Multivendor",
+      "useAsTitle": "tenant",
+      "defaultColumns": [
+        "tenant",
+        "commissionRate",
+        "isActive",
+        "updatedAt"
+      ],
+      "description": "Per-vendor settings. One record per tenant.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "tenant",
+          "label": "Tenant",
+          "required": true,
+          "unique": true,
+          "description": "One settings record per vendor.",
+          "relationTo": "tenants"
+        },
+        {
+          "type": "number",
+          "name": "commissionRate",
+          "label": "Commission Rate",
+          "description": "Override default platform commission %.",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "type": "select",
+          "name": "commissionType",
+          "label": "Commission Type",
+          "description": "Override default strategy.",
+          "options": [
+            {
+              "label": "percentage",
+              "value": "percentage"
+            },
+            {
+              "label": "flat",
+              "value": "flat"
+            },
+            {
+              "label": "tiered",
+              "value": "tiered"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "payoutMethod",
+          "label": "Payout Method",
+          "options": [
+            {
+              "label": "stripe",
+              "value": "stripe"
+            },
+            {
+              "label": "bank-transfer",
+              "value": "bank-transfer"
+            },
+            {
+              "label": "manual",
+              "value": "manual"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "stripeConnectAccountId",
+          "label": "Stripe Connect Account Id"
+        },
+        {
+          "type": "group",
+          "name": "bankDetails",
+          "label": "Bank Details",
+          "fields": [
+            {
+              "type": "text",
+              "name": "bankName",
+              "label": "Bank Name"
+            },
+            {
+              "type": "text",
+              "name": "accountNumber",
+              "label": "Account Number"
+            },
+            {
+              "type": "text",
+              "name": "routingNumber",
+              "label": "Routing Number"
+            },
+            {
+              "type": "text",
+              "name": "iban",
+              "label": "Iban"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "shippingModel",
+          "label": "Shipping Model",
+          "description": "Override default shipping model.",
+          "options": [
+            {
+              "label": "platform",
+              "value": "platform"
+            },
+            {
+              "label": "vendor",
+              "value": "vendor"
+            },
+            {
+              "label": "hybrid",
+              "value": "hybrid"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "name": "autoPublishProducts",
+          "label": "Auto Publish Products",
+          "defaultValue": true,
+          "description": "If false, products start as draft."
+        },
+        {
+          "type": "number",
+          "name": "maxProducts",
+          "label": "Max Products",
+          "description": "0 = unlimited.",
+          "min": 0
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true,
+          "description": "Admin can deactivate vendor."
+        },
+        {
+          "type": "textarea",
+          "name": "suspensionReason",
+          "label": "Suspension Reason"
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "vendor-applications",
+      "label": "Vendor Applications",
+      "group": "Multivendor",
+      "useAsTitle": "businessName",
+      "defaultColumns": [
+        "businessName",
+        "applicant",
+        "status",
+        "submittedAt",
+        "reviewedAt"
+      ],
+      "description": "Vendor onboarding applications. Approve to create vendor tenant.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "applicant",
+          "label": "Applicant",
+          "required": true,
+          "description": "Auto-set when customer applies. Admin selects when creating on behalf of a customer.",
+          "relationTo": "users"
+        },
+        {
+          "type": "text",
+          "name": "businessName",
+          "label": "Business Name",
+          "required": true
+        },
+        {
+          "type": "select",
+          "name": "businessType",
+          "label": "Business Type",
+          "options": [
+            {
+              "label": "individual",
+              "value": "individual"
+            },
+            {
+              "label": "company",
+              "value": "company"
+            },
+            {
+              "label": "partnership",
+              "value": "partnership"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "taxId",
+          "label": "Tax Id"
+        },
+        {
+          "type": "array",
+          "name": "documents",
+          "label": "Documents",
+          "description": "KYC documents for verification.",
+          "fields": [
+            {
+              "type": "upload",
+              "name": "document",
+              "label": "Document",
+              "required": true,
+              "relationTo": "media"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "pending",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "under-review",
+              "value": "under-review"
+            },
+            {
+              "label": "approved",
+              "value": "approved"
+            },
+            {
+              "label": "rejected",
+              "value": "rejected"
+            }
+          ]
+        },
+        {
+          "type": "relationship",
+          "name": "reviewedBy",
+          "label": "Reviewed By",
+          "relationTo": "users"
+        },
+        {
+          "type": "textarea",
+          "name": "reviewNotes",
+          "label": "Review Notes"
+        },
+        {
+          "type": "text",
+          "name": "rejectionReason",
+          "label": "Rejection Reason"
+        },
+        {
+          "type": "date",
+          "name": "submittedAt",
+          "label": "Submitted At"
+        },
+        {
+          "type": "date",
+          "name": "reviewedAt",
+          "label": "Reviewed At"
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "geo-countries",
+      "label": "Geo Countries",
+      "group": "Geography",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "isoCode",
+        "isActive"
+      ],
+      "description": "Countries. Central reference data for storefront area selection.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "text",
+          "name": "isoCode",
+          "label": "Iso Code",
+          "required": true,
+          "description": "ISO 3166-1 alpha-2, e.g. BD"
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "geo-subdivisions",
+      "label": "Geo Subdivisions",
+      "group": "Geography",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "country",
+        "code",
+        "defaultServiceTier",
+        "isActive"
+      ],
+      "description": "Country subdivisions — first level below country. Examples: US state, BD zila, IN district.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "country",
+          "label": "Country",
+          "required": true,
+          "relationTo": "geo-countries"
+        },
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "array",
+          "name": "geocodeMatchAliases",
+          "label": "Geocoding match names",
+          "description": "Alternate names used only to match reverse geocoding (e.g. Nominatim/OSM) when they differ from the display name (e.g. Chittagong vs Chattogram). One entry per variant. Not localized.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "alias",
+              "label": "Alias",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "code",
+          "label": "Code",
+          "description": "Stable code for imports (e.g. ISO subdivision, national statistics code)."
+        },
+        {
+          "type": "select",
+          "name": "defaultServiceTier",
+          "label": "Default Service Tier",
+          "required": true,
+          "defaultValue": "standard",
+          "description": "Used when the customer has only selected this administrative level (e.g. state/zila), not a finer locality. Locality-level policy overrides when drill-down is used.",
+          "options": [
+            {
+              "label": "standard",
+              "value": "standard"
+            },
+            {
+              "label": "extended",
+              "value": "extended"
+            },
+            {
+              "label": "unserved",
+              "value": "unserved"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "name": "extendedFeeNote",
+          "label": "Extended Fee Note",
+          "description": "Shown for extended tier when only subdivision scope is selected."
+        },
+        {
+          "type": "textarea",
+          "name": "extendedLeadTimeNote",
+          "label": "Extended Lead Time Note",
+          "description": "Extra delivery time messaging (subdivision scope)."
+        },
+        {
+          "type": "textarea",
+          "name": "unservedCustomerMessage",
+          "label": "Unserved Customer Message",
+          "description": "When subdivision default tier is unserved."
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "geo-localities",
+      "label": "Geo Localities",
+      "group": "Geography",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "subdivision",
+        "code",
+        "serviceTier",
+        "isActive"
+      ],
+      "description": "Localities under a subdivision — used for precise service tier and store matching. Examples: US city, BD upazila.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "subdivision",
+          "label": "Subdivision",
+          "required": true,
+          "relationTo": "geo-subdivisions"
+        },
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "localized": true
+        },
+        {
+          "type": "array",
+          "name": "geocodeMatchAliases",
+          "label": "Geocoding match names",
+          "description": "Alternate names used only to match reverse geocoding (e.g. Nominatim/OSM) when they differ from the display name. Add one row per variant. Not localized — use the same language you configure for the geocoder (e.g. English). The title field above is still what shoppers see in the UI.",
+          "fields": [
+            {
+              "type": "text",
+              "name": "alias",
+              "label": "Alias",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "code",
+          "label": "Code",
+          "description": "Optional internal or national statistics code."
+        },
+        {
+          "type": "select",
+          "name": "serviceTier",
+          "label": "Service Tier",
+          "required": true,
+          "defaultValue": "standard",
+          "options": [
+            {
+              "label": "standard",
+              "value": "standard"
+            },
+            {
+              "label": "extended",
+              "value": "extended"
+            },
+            {
+              "label": "unserved",
+              "value": "unserved"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "name": "extendedFeeNote",
+          "label": "Extended Fee Note",
+          "description": "Extra cost disclosure for extended tier."
+        },
+        {
+          "type": "textarea",
+          "name": "extendedLeadTimeNote",
+          "label": "Extended Lead Time Note"
+        },
+        {
+          "type": "textarea",
+          "name": "unservedCustomerMessage",
+          "label": "Unserved Customer Message",
+          "description": "Shown when this locality is unserved."
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "stock-location-service-areas",
+      "label": "Stock Location Service Areas",
+      "group": "Geography",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "stockLocation",
+        "subdivision",
+        "locality",
+        "sortOrder"
+      ],
+      "description": "Maps a stock location to geographic areas it serves. Subdivision is denormalized for fast queries. Leave locality empty to cover the entire subdivision.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "stockLocation",
+          "label": "Stock Location",
+          "required": true,
+          "relationTo": "stock-locations"
+        },
+        {
+          "type": "relationship",
+          "name": "subdivision",
+          "label": "Subdivision",
+          "required": true,
+          "description": "Auto-filled from locality when a locality is selected. Must match the locality’s subdivision.",
+          "relationTo": "geo-subdivisions"
+        },
+        {
+          "type": "relationship",
+          "name": "locality",
+          "label": "Locality",
+          "description": "Optional. Empty = this row covers the whole subdivision. Set to restrict to one locality.",
+          "relationTo": "geo-localities"
+        },
+        {
+          "type": "number",
+          "name": "sortOrder",
+          "label": "Sort Order",
+          "defaultValue": 0,
+          "description": "Lower numbers list first within the same area."
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "sub-orders",
+      "label": "Sub Orders",
+      "group": "Orders",
+      "useAsTitle": "subOrderNumber",
+      "defaultColumns": [
+        "subOrderNumber",
+        "parentOrderNumber",
+        "tenant",
+        "status",
+        "subtotal",
+        "vendorEarnings",
+        "commissionAmount"
+      ],
+      "description": "Per-vendor order segments. Vendors fulfill their own sub-orders. Shipping method, tracking, dates, and store may be updated by admins or vendors during fulfillment; tenantNameSnapshot stays fixed.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "parentOrder",
+          "label": "Parent Order",
+          "required": true,
+          "description": "Parent customer order.",
+          "readOnly": true,
+          "relationTo": "orders"
+        },
+        {
+          "type": "text",
+          "name": "parentOrderNumber",
+          "label": "Parent Order Number",
+          "description": "Parent order number for display (e.g. ORD-20260302-ABCD). Auto-set on create.",
+          "readOnly": true
+        },
+        {
+          "type": "relationship",
+          "name": "tenant",
+          "label": "Tenant",
+          "required": true,
+          "description": "Vendor fulfilling this segment.",
+          "relationTo": "tenants"
+        },
+        {
+          "type": "text",
+          "name": "tenantNameSnapshot",
+          "label": "Tenant Name Snapshot",
+          "description": "Vendor display name at checkout. Immutable after create.",
+          "readOnly": true
+        },
+        {
+          "type": "text",
+          "name": "subOrderNumber",
+          "label": "Sub Order Number",
+          "required": true,
+          "unique": true,
+          "description": "e.g. ORD-20260217-XXXX-A"
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "pending",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "confirmed",
+              "value": "confirmed"
+            },
+            {
+              "label": "processing",
+              "value": "processing"
+            },
+            {
+              "label": "shipped",
+              "value": "shipped"
+            },
+            {
+              "label": "delivered",
+              "value": "delivered"
+            },
+            {
+              "label": "completed",
+              "value": "completed"
+            },
+            {
+              "label": "cancelled",
+              "value": "cancelled"
+            },
+            {
+              "label": "refunded",
+              "value": "refunded"
+            }
+          ]
+        },
+        {
+          "type": "relationship",
+          "name": "items",
+          "label": "Items",
+          "description": "Order items for this vendor.",
+          "relationTo": "order-items",
+          "hasMany": true
+        },
+        {
+          "type": "number",
+          "name": "subtotal",
+          "label": "Subtotal",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "shippingTotal",
+          "label": "Shipping Total",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "taxTotal",
+          "label": "Tax Total",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "commissionAmount",
+          "label": "Commission Amount",
+          "required": true,
+          "defaultValue": 0,
+          "description": "Platform fee for this sub-order."
+        },
+        {
+          "type": "number",
+          "name": "commissionRate",
+          "label": "Commission Rate",
+          "description": "Snapshot of rate at order time."
+        },
+        {
+          "type": "number",
+          "name": "vendorEarnings",
+          "label": "Vendor Earnings",
+          "required": true,
+          "defaultValue": 0,
+          "description": "subtotal - commissionAmount."
+        },
+        {
+          "type": "text",
+          "name": "shippingMethod",
+          "label": "Shipping Method",
+          "description": "Carrier or method label. Editable during fulfillment."
+        },
+        {
+          "type": "text",
+          "name": "trackingNumber",
+          "label": "Tracking Number",
+          "description": "Tracking ID. Editable when the carrier assigns or corrects it."
+        },
+        {
+          "type": "text",
+          "name": "trackingUrl",
+          "label": "Tracking Url",
+          "description": "Customer-facing tracking link."
+        },
+        {
+          "type": "date",
+          "name": "shippedAt",
+          "label": "Shipped At",
+          "description": "When the segment shipped."
+        },
+        {
+          "type": "date",
+          "name": "deliveredAt",
+          "label": "Delivered At",
+          "description": "When delivery was confirmed."
+        },
+        {
+          "type": "relationship",
+          "name": "fulfilledBy",
+          "label": "Fulfilled By",
+          "description": "Vendor user who processed shipment.",
+          "relationTo": "users"
+        },
+        {
+          "type": "relationship",
+          "name": "store",
+          "label": "Store",
+          "description": "Fulfilling store/outlet (checkout default from cart). Admins or vendors may reassign if fulfillment is routed differently.",
+          "relationTo": "stock-locations"
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "commission-rules",
+      "label": "Commission Rules",
+      "group": "Commissions",
+      "useAsTitle": "name",
+      "defaultColumns": [
+        "name",
+        "type",
+        "rate",
+        "priority",
+        "isActive"
+      ],
+      "description": "Platform commission rules. Higher priority wins when multiple rules apply.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "name",
+          "label": "Name",
+          "required": true,
+          "description": "Human-readable rule name."
+        },
+        {
+          "type": "select",
+          "name": "type",
+          "label": "Type",
+          "required": true,
+          "options": [
+            {
+              "label": "percentage",
+              "value": "percentage"
+            },
+            {
+              "label": "flat",
+              "value": "flat"
+            },
+            {
+              "label": "tiered",
+              "value": "tiered"
+            },
+            {
+              "label": "category-based",
+              "value": "category-based"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "name": "rate",
+          "label": "Rate",
+          "description": "For percentage: rate %. For flat: fixed amount.",
+          "min": 0
+        },
+        {
+          "type": "array",
+          "name": "tiers",
+          "label": "Tiers",
+          "description": "For tiered: minAmount, maxAmount, rate.",
+          "fields": [
+            {
+              "type": "number",
+              "name": "minAmount",
+              "label": "Min Amount",
+              "required": true
+            },
+            {
+              "type": "number",
+              "name": "maxAmount",
+              "label": "Max Amount"
+            },
+            {
+              "type": "number",
+              "name": "rate",
+              "label": "Rate",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": "relationship",
+          "name": "categories",
+          "label": "Categories",
+          "description": "For category-based: applies to these categories.",
+          "relationTo": "categories",
+          "hasMany": true
+        },
+        {
+          "type": "number",
+          "name": "categoryRate",
+          "label": "Category Rate",
+          "description": "Rate for category-based rule.",
+          "min": 0
+        },
+        {
+          "type": "relationship",
+          "name": "tenant",
+          "label": "Tenant",
+          "description": "Null = global default. Set for vendor override.",
+          "relationTo": "tenants"
+        },
+        {
+          "type": "number",
+          "name": "priority",
+          "label": "Priority",
+          "defaultValue": 0,
+          "description": "Higher priority wins. Default 0."
+        },
+        {
+          "type": "checkbox",
+          "name": "isActive",
+          "label": "Is Active",
+          "defaultValue": true
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "payout-items",
+      "label": "Payout Items",
+      "group": "Payouts",
+      "useAsTitle": "orderNumber",
+      "defaultColumns": [
+        "payout",
+        "subOrder",
+        "orderNumber",
+        "amount",
+        "commission",
+        "status"
+      ],
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "payout",
+          "label": "Payout",
+          "required": true,
+          "relationTo": "payouts"
+        },
+        {
+          "type": "relationship",
+          "name": "subOrder",
+          "label": "Sub Order",
+          "required": true,
+          "relationTo": "sub-orders"
+        },
+        {
+          "type": "text",
+          "name": "orderNumber",
+          "label": "Order Number",
+          "description": "For reference."
+        },
+        {
+          "type": "number",
+          "name": "amount",
+          "label": "Amount",
+          "required": true
+        },
+        {
+          "type": "number",
+          "name": "commission",
+          "label": "Commission",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "defaultValue": "included",
+          "options": [
+            {
+              "label": "included",
+              "value": "included"
+            },
+            {
+              "label": "held",
+              "value": "held"
+            },
+            {
+              "label": "disputed",
+              "value": "disputed"
+            }
+          ]
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "payouts",
+      "label": "Payouts",
+      "group": "Payouts",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "tenant",
+        "periodStart",
+        "periodEnd",
+        "netAmount",
+        "status",
+        "processedAt"
+      ],
+      "description": "Vendor payout records. Admin disburses manually or via bank transfer.",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "tenant",
+          "label": "Tenant",
+          "required": true,
+          "relationTo": "tenants"
+        },
+        {
+          "type": "date",
+          "name": "periodStart",
+          "label": "Period Start",
+          "required": true
+        },
+        {
+          "type": "date",
+          "name": "periodEnd",
+          "label": "Period End",
+          "required": true
+        },
+        {
+          "type": "number",
+          "name": "totalEarnings",
+          "label": "Total Earnings",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "totalCommission",
+          "label": "Total Commission",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "number",
+          "name": "netAmount",
+          "label": "Net Amount",
+          "required": true,
+          "defaultValue": 0
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "pending",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "processing",
+              "value": "processing"
+            },
+            {
+              "label": "completed",
+              "value": "completed"
+            },
+            {
+              "label": "failed",
+              "value": "failed"
+            },
+            {
+              "label": "on-hold",
+              "value": "on-hold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "method",
+          "label": "Method",
+          "description": "e.g. stripe-transfer, bank-transfer, manual"
+        },
+        {
+          "type": "text",
+          "name": "providerPayoutId",
+          "label": "Provider Payout Id"
+        },
+        {
+          "type": "relationship",
+          "name": "items",
+          "label": "Items",
+          "relationTo": "payout-items",
+          "hasMany": true
+        },
+        {
+          "type": "date",
+          "name": "processedAt",
+          "label": "Processed At"
+        },
+        {
+          "type": "textarea",
+          "name": "notes",
+          "label": "Notes"
+        }
+      ],
+      "conditional": true
+    },
+    {
+      "slug": "vendor-reviews",
+      "label": "Vendor Reviews",
+      "group": "Reviews",
+      "useAsTitle": "id",
+      "defaultColumns": [
+        "tenant",
+        "author",
+        "rating",
+        "status",
+        "createdAt"
+      ],
+      "description": "Customer vendor reviews (multivendor). Public read (approved only if moderation enabled).",
+      "auth": false,
+      "upload": false,
+      "versions": null,
+      "timestamps": true,
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "relationship",
+          "name": "tenant",
+          "label": "Tenant",
+          "required": true,
+          "description": "Vendor (tenant) being reviewed.",
+          "relationTo": "tenants"
+        },
+        {
+          "type": "relationship",
+          "name": "author",
+          "label": "Author",
+          "required": true,
+          "description": "Review author (customer).",
+          "relationTo": "users"
+        },
+        {
+          "type": "number",
+          "name": "rating",
+          "label": "Rating",
+          "required": true,
+          "min": 1,
+          "max": 5
+        },
+        {
+          "type": "text",
+          "name": "title",
+          "label": "Title"
+        },
+        {
+          "type": "textarea",
+          "name": "comment",
+          "label": "Comment",
+          "localized": true
+        },
+        {
+          "type": "select",
+          "name": "status",
+          "label": "Status",
+          "required": true,
+          "defaultValue": "approved",
+          "options": [
+            {
+              "label": "pending",
+              "value": "pending"
+            },
+            {
+              "label": "approved",
+              "value": "approved"
+            },
+            {
+              "label": "rejected",
+              "value": "rejected"
+            }
+          ]
+        }
+      ],
+      "conditional": true
+    }
+  ],
+  "globals": [
+    {
+      "slug": "header",
+      "label": "Header",
+      "group": "Globals",
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "upload",
+          "name": "logo",
+          "label": "Logo",
+          "relationTo": "media"
+        },
+        {
+          "type": "text",
+          "name": "siteName",
+          "label": "Site Name",
+          "localized": true,
+          "defaultValue": "BS-Commerce"
+        },
+        {
+          "type": "array",
+          "name": "navLinks",
+          "label": "Nav Link",
+          "localized": true,
+          "description": "Primary nav: same ordered list feeds the horizontal bar (tablet/desktop) and the mobile slide-out menu, unless you turn off visibility per row below.",
+          "fields": [
+            {
+              "type": "checkbox",
+              "name": "enabled",
+              "label": "Enabled",
+              "defaultValue": true,
+              "description": "Uncheck to hide this link on the storefront without deleting it."
+            },
+            {
+              "type": "text",
+              "name": "label",
+              "label": "Label",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "url",
+              "label": "Url",
+              "required": true
+            },
+            {
+              "type": "checkbox",
+              "name": "openInNewTab",
+              "label": "Open In New Tab",
+              "defaultValue": false
+            },
+            {
+              "type": "checkbox",
+              "name": "showInDesktopNav",
+              "label": "Show In Desktop Nav",
+              "defaultValue": true,
+              "description": "Horizontal primary nav (md breakpoint and up). Uncheck to show this link only in the mobile menu (e.g. long labels)."
+            },
+            {
+              "type": "checkbox",
+              "name": "showInMobileDrawer",
+              "label": "Show In Mobile Drawer",
+              "defaultValue": true,
+              "description": "Slide-out menu on small screens (below md). Uncheck to show only in the top bar on larger screens."
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "announcementBar",
+          "label": "Announcement Bar",
+          "fields": [
+            {
+              "type": "checkbox",
+              "name": "enabled",
+              "label": "Enabled",
+              "defaultValue": false
+            },
+            {
+              "type": "text",
+              "name": "message",
+              "label": "Message",
+              "localized": true
+            },
+            {
+              "type": "text",
+              "name": "backgroundColor",
+              "label": "Background Color",
+              "defaultValue": "#000000",
+              "description": "Hex color code, e.g. #000000"
+            },
+            {
+              "type": "text",
+              "name": "textColor",
+              "label": "Text Color",
+              "defaultValue": "#ffffff"
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "footer",
+      "label": "Footer",
+      "group": "Globals",
+      "hasLocalized": true,
+      "fields": [
+        {
+          "type": "text",
+          "name": "copyrightText",
+          "label": "Copyright Text",
+          "localized": true,
+          "defaultValue": "© 2026 BS-Commerce. All rights reserved."
+        },
+        {
+          "type": "array",
+          "name": "columns",
+          "label": "Column",
+          "localized": true,
+          "fields": [
+            {
+              "type": "text",
+              "name": "heading",
+              "label": "Heading",
+              "required": true
+            },
+            {
+              "type": "array",
+              "name": "links",
+              "label": "Link",
+              "fields": [
+                {
+                  "type": "text",
+                  "name": "label",
+                  "label": "Label",
+                  "required": true
+                },
+                {
+                  "type": "text",
+                  "name": "url",
+                  "label": "Url",
+                  "required": true
+                },
+                {
+                  "type": "checkbox",
+                  "name": "enabled",
+                  "label": "Enabled",
+                  "defaultValue": true,
+                  "description": "Uncheck to hide this link on the storefront without deleting it (same idea as header primary nav)."
+                },
+                {
+                  "type": "select",
+                  "name": "visibility",
+                  "label": "Visibility",
+                  "defaultValue": "public",
+                  "description": "Storefront footer: who should see this link. Default is everyone.",
+                  "options": [
+                    {
+                      "label": "public",
+                      "value": "public"
+                    },
+                    {
+                      "label": "guest",
+                      "value": "guest"
+                    },
+                    {
+                      "label": "authenticated",
+                      "value": "authenticated"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "name": "id",
+                  "label": "ID",
+                  "hidden": true
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "name": "socialLinks",
+          "label": "Social Link",
+          "fields": [
+            {
+              "type": "select",
+              "name": "platform",
+              "label": "Platform",
+              "required": true,
+              "options": [
+                {
+                  "label": "facebook",
+                  "value": "facebook"
+                },
+                {
+                  "label": "instagram",
+                  "value": "instagram"
+                },
+                {
+                  "label": "twitter",
+                  "value": "twitter"
+                },
+                {
+                  "label": "youtube",
+                  "value": "youtube"
+                },
+                {
+                  "label": "linkedin",
+                  "value": "linkedin"
+                },
+                {
+                  "label": "tiktok",
+                  "value": "tiktok"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "url",
+              "label": "Url",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "array",
+          "name": "bottomLinks",
+          "label": "Bottom Link",
+          "localized": true,
+          "fields": [
+            {
+              "type": "text",
+              "name": "label",
+              "label": "Label",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "url",
+              "label": "Url",
+              "required": true
+            },
+            {
+              "type": "text",
+              "name": "id",
+              "label": "ID",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "slug": "platform-settings",
+      "label": "Platform Settings",
+      "group": "Globals",
+      "hasLocalized": false,
+      "fields": [
+        {
+          "type": "text",
+          "name": "platformName",
+          "label": "Platform Name",
+          "defaultValue": "BS-Commerce"
+        },
+        {
+          "type": "email",
+          "name": "supportEmail",
+          "label": "Support Email"
+        },
+        {
+          "type": "text",
+          "name": "supportPhone",
+          "label": "Support Phone"
+        },
+        {
+          "type": "group",
+          "name": "adminBranding",
+          "label": "Admin panel branding",
+          "description": "Custom logo and favicon for the Payload admin (login screen and sidebar). Upload files in Media first, then select them here. Leave empty to use the built-in default marks.",
+          "fields": [
+            {
+              "type": "upload",
+              "name": "logo",
+              "label": "Logo",
+              "description": "Main logo or wordmark (PNG, WebP, or SVG).",
+              "relationTo": "media"
+            },
+            {
+              "type": "upload",
+              "name": "favicon",
+              "label": "Favicon",
+              "description": "Browser tab icon — square PNG or ICO, at least 32×32.",
+              "relationTo": "media"
+            },
+            {
+              "type": "text",
+              "name": "loginTagline",
+              "label": "Login Tagline",
+              "description": "Optional line under the logo on the login screen (e.g. \"My Store · Admin\"). Leave empty for the default tagline."
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "features",
+          "label": "Feature Flags",
+          "fields": [
+            {
+              "type": "checkbox",
+              "name": "multivendorEnabled",
+              "label": "Multivendor Enabled",
+              "defaultValue": false,
+              "description": "Enable marketplace mode. Also requires MULTIVENDOR_ENABLED env var. Env var takes precedence."
+            },
+            {
+              "type": "checkbox",
+              "name": "guestCheckoutEnabled",
+              "label": "Guest Checkout Enabled",
+              "defaultValue": true
+            },
+            {
+              "type": "checkbox",
+              "name": "reviewsEnabled",
+              "label": "Reviews Enabled",
+              "defaultValue": true
+            },
+            {
+              "type": "checkbox",
+              "name": "reviewRequiresApproval",
+              "label": "Review Requires Approval",
+              "defaultValue": false
+            },
+            {
+              "type": "checkbox",
+              "name": "inventoryTrackingEnabled",
+              "label": "Inventory Tracking Enabled",
+              "defaultValue": true
+            },
+            {
+              "type": "checkbox",
+              "name": "socialLoginEnabled",
+              "label": "Social Login Enabled",
+              "defaultValue": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "currency",
+          "label": "Currency Settings",
+          "fields": [
+            {
+              "type": "select",
+              "name": "defaultCurrency",
+              "label": "Default Currency",
+              "defaultValue": "USD",
+              "options": [
+                {
+                  "label": "USD",
+                  "value": "USD"
+                },
+                {
+                  "label": "BDT",
+                  "value": "BDT"
+                }
+              ]
+            },
+            {
+              "type": "select",
+              "name": "supportedCurrencies",
+              "label": "Supported Currencies",
+              "defaultValue": [
+                "USD",
+                "BDT"
+              ],
+              "options": [
+                {
+                  "label": "USD",
+                  "value": "USD"
+                },
+                {
+                  "label": "BDT",
+                  "value": "BDT"
+                }
+              ],
+              "hasMany": true
+            },
+            {
+              "type": "number",
+              "name": "usdToBdtRate",
+              "label": "Usd To Bdt Rate",
+              "defaultValue": 110,
+              "description": "Exchange rate: 1 USD = ? BDT. Update periodically."
+            },
+            {
+              "type": "date",
+              "name": "lastRateUpdated",
+              "label": "Last Rate Updated",
+              "readOnly": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "vendorDefaults",
+          "label": "Vendor Defaults",
+          "fields": [
+            {
+              "type": "number",
+              "name": "defaultCommissionRate",
+              "label": "Default Commission Rate",
+              "defaultValue": 0,
+              "description": "Default commission % applied to all vendors unless overridden. 0 = no commission (business sets their rate).",
+              "min": 0,
+              "max": 100
+            },
+            {
+              "type": "select",
+              "name": "defaultCommissionType",
+              "label": "Default Commission Type",
+              "defaultValue": "percentage",
+              "options": [
+                {
+                  "label": "percentage",
+                  "value": "percentage"
+                },
+                {
+                  "label": "flat",
+                  "value": "flat"
+                },
+                {
+                  "label": "tiered",
+                  "value": "tiered"
+                }
+              ]
+            },
+            {
+              "type": "checkbox",
+              "name": "autoApproveVendors",
+              "label": "Auto Approve Vendors",
+              "defaultValue": false
+            },
+            {
+              "type": "checkbox",
+              "name": "requireKYC",
+              "label": "Require K Y C",
+              "defaultValue": false
+            },
+            {
+              "type": "checkbox",
+              "name": "requireProductApproval",
+              "label": "Require Product Approval",
+              "defaultValue": false
+            },
+            {
+              "type": "select",
+              "name": "payoutSchedule",
+              "label": "Payout Schedule",
+              "defaultValue": "biweekly",
+              "options": [
+                {
+                  "label": "weekly",
+                  "value": "weekly"
+                },
+                {
+                  "label": "biweekly",
+                  "value": "biweekly"
+                },
+                {
+                  "label": "monthly",
+                  "value": "monthly"
+                }
+              ]
+            },
+            {
+              "type": "number",
+              "name": "payoutHoldDays",
+              "label": "Payout Hold Days",
+              "defaultValue": 7,
+              "description": "Days to hold vendor earnings after order delivery before releasing for payout.",
+              "min": 0
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "inventory",
+          "label": "Inventory Settings",
+          "fields": [
+            {
+              "type": "number",
+              "name": "lowStockThreshold",
+              "label": "Low Stock Threshold",
+              "defaultValue": 10,
+              "description": "Alert when stock falls below this number."
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "name": "shipping",
+          "label": "Shipping Settings",
+          "fields": [
+            {
+              "type": "select",
+              "name": "defaultModel",
+              "label": "Default Model",
+              "defaultValue": "platform",
+              "options": [
+                {
+                  "label": "platform",
+                  "value": "platform"
+                },
+                {
+                  "label": "vendor",
+                  "value": "vendor"
+                },
+                {
+                  "label": "hybrid",
+                  "value": "hybrid"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "date",
+          "name": "updatedAt",
+          "label": "Updated At",
+          "hidden": true
+        },
+        {
+          "type": "date",
+          "name": "createdAt",
+          "label": "Created At",
+          "hidden": true
+        }
+      ]
+    }
+  ]
+}

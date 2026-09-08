@@ -317,3 +317,42 @@ export async function fetchText(path: string): Promise<string> {
   }
   return res.text();
 }
+
+// ─── Access map (mirror of Payload's GET /api/access) ───────────────────────
+
+export interface FieldPermission {
+  permission: boolean;
+  [key: string]: unknown;
+}
+
+/** Payload may serialize permissions as booleans or {permission} objects. */
+export type OperationPermission = boolean | FieldPermission;
+
+export interface CollectionPermissions {
+  create?: OperationPermission;
+  read?: OperationPermission;
+  update?: OperationPermission;
+  delete?: OperationPermission;
+  readVersions?: OperationPermission;
+  fields?: Record<string, unknown>;
+}
+
+export interface AccessMap {
+  canAccessAdmin: boolean;
+  collections: Record<string, CollectionPermissions>;
+  globals: Record<string, CollectionPermissions>;
+}
+
+// ─── Versions ───────────────────────────────────────────────────────────────
+
+export interface VersionDoc {
+  id: string;
+  parent?: string;
+  version: Record<string, unknown>;
+  autosave?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  latest?: boolean;
+}
+
+export interface VersionListResult extends Paginated<VersionDoc> {}

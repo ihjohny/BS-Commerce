@@ -1,22 +1,37 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Boxes,
   Coins,
+  CreditCard,
   FileText,
+  Globe,
   Images,
   LayoutDashboard,
+  Layers,
   LogOut,
+  MapPin,
+  Megaphone,
   Moon,
+  Package,
   PanelTop,
+  Receipt,
   Settings,
+  ShoppingBag,
+  ShoppingCart,
+  Star,
   Sun,
   Truck,
   Users,
+  Store,
+  Warehouse,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { AccessProvider, useAccess } from "@/contexts/AccessContext";
+import { collections, globals } from "@/lib/schema";
+import type { NormCollection, NormGlobal } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,6 +57,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Spinner } from "@/components/ui/spinner";
 
 function useTheme() {
   const [dark, setDark] = useState(() =>
@@ -55,35 +71,59 @@ function useTheme() {
   return { dark, toggle };
 }
 
+type IconType = typeof LayoutDashboard;
+
+const COLLECTION_ICONS: Record<string, IconType> = {
+  users: Users,
+  media: Images,
+  pages: FileText,
+  categories: Boxes,
+  brands: Layers,
+  products: Package,
+  "product-variants": Layers,
+  orders: ShoppingCart,
+  "order-items": Receipt,
+  "sub-orders": Receipt,
+  carts: ShoppingBag,
+  "wishlist-items": Star,
+  "stock-locations": MapPin,
+  "stock-levels": Warehouse,
+  "shipping-zones": Truck,
+  "shipping-methods": Truck,
+  transactions: CreditCard,
+  coupons: Coins,
+  "product-reviews": Star,
+  "vendor-reviews": Star,
+  tenants: Store,
+  "vendor-profiles": Store,
+  "vendor-settings": Settings,
+  "vendor-applications": FileText,
+  "commission-rules": Coins,
+  payouts: CreditCard,
+  "payout-items": Receipt,
+  "geo-countries": Globe,
+  "geo-subdivisions": MapPin,
+  "geo-localities": MapPin,
+  "verification-codes": Megaphone,
+  addresses: MapPin,
+  attributes: Layers,
+  classes: Layers,
+  "order-status-history": Receipt,
+  "stock-location-service-areas": MapPin,
+};
+
+const GLOBAL_ICONS: Record<string, IconType> = {
+  header: PanelTop,
+  footer: PanelTop,
+  "platform-settings": Settings,
+};
+
 interface NavItem {
   title: string;
   to: string;
-  icon: typeof LayoutDashboard;
+  icon: IconType;
   end?: boolean;
 }
-
-const navMain: NavItem[] = [
-  { title: "Dashboard", to: "/", icon: LayoutDashboard, end: true },
-  { title: "Reports", to: "/reports", icon: BarChart3 },
-];
-
-const navPlatform: NavItem[] = [
-  { title: "Users", to: "/collections/users", icon: Users },
-  { title: "Media", to: "/collections/media", icon: Images },
-  { title: "Pages", to: "/collections/pages", icon: FileText },
-  { title: "Categories", to: "/collections/categories", icon: Boxes },
-];
-
-const navSettings: NavItem[] = [
-  { title: "Header & Footer", to: "/globals/header", icon: PanelTop },
-  {
-    title: "Platform Settings",
-    to: "/globals/platform-settings",
-    icon: Settings,
-  },
-  { title: "Shipping & Payouts", to: "/collections/shipping", icon: Truck },
-  { title: "Commissions", to: "/collections/commissions", icon: Coins },
-];
 
 function NavLinks({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation();
@@ -110,10 +150,52 @@ function NavLinks({ items }: { items: NavItem[] }) {
   );
 }
 
-export function AdminShell() {
+function navForCollection(c: NormCollection): NavItem {
+  return {
+    title: c.label,
+    to: `/collections/${c.slug}`,
+    icon: COLLECTION_ICONS[c.slug] ?? Boxes,
+  };
+}
+
+function navForGlobal(g: NormGlobal): NavItem {
+  return {
+    title: g.label,
+    to: `/globals/${g.slug}`,
+    icon: GLOBAL_ICONS[g.slug] ?? Settings,
+  };
+}
+
+function SidebarBody() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { dark, toggle } = useTheme();
+  const { canReadCollection, loading } = useAccess();
+
+  // Intersect generated schemas with what the live backend exposes to this user.
+  const visibleCollections = useMemo(
+    () => collections.filter((c) => canReadCollection(c.slug)),
+    [canReadCollection],
+  );
+  const visibleGlobals = useMemo(
+    () => globals.filter((g) => canReadCollection(g.slug)),
+    [canReadCollection],
+  );
+
+  const groups = useMemo(() => {
+    const map = new Map<string, NavItem[]>();
+    for (const c of visibleCollections) {
+      const key = c.group ?? "Collections";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(navForCollection(c));
+    }
+    for (const g of visibleGlobals) {
+      const key = g.group ?? "Globals";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(navForGlobal(g));
+    }
+    return Array.from(map.entries());
+  }, [visibleCollections, visibleGlobals]);
 
   const displayName =
     user?.displayName ||
@@ -144,26 +226,37 @@ export function AdminShell() {
             <SidebarGroupLabel>Overview</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <NavLinks items={navMain} />
+                <NavLinks
+                  items={[
+                    {
+                      title: "Dashboard",
+                      to: "/",
+                      icon: LayoutDashboard,
+                      end: true,
+                    },
+                    { title: "Reports", to: "/reports", icon: BarChart3 },
+                  ]}
+                />
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavLinks items={navPlatform} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>Settings</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavLinks items={navSettings} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+
+          {loading ? (
+            <div className="flex justify-center py-6">
+              <Spinner className="size-5" />
+            </div>
+          ) : (
+            groups.map(([groupLabel, items]) => (
+              <SidebarGroup key={groupLabel}>
+                <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <NavLinks items={items} />
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))
+          )}
         </SidebarContent>
         <SidebarFooter />
       </Sidebar>
@@ -209,5 +302,13 @@ export function AdminShell() {
         </main>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+export function AdminShell() {
+  return (
+    <AccessProvider>
+      <SidebarBody />
+    </AccessProvider>
   );
 }

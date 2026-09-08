@@ -1,157 +1,128 @@
-// Generic collection schemas driving the admin CRUD pages.
-// Mirrors the relevant Payload collection configs in packages/backend/src.
+// Types for the generated schema (packages/admin/src/generated/schema.json),
+// which is derived from packages/backend/src/payload.config.ts by
+// scripts/generate-schemas.ts.
 
-export type FieldType =
-  | 'text'
-  | 'textarea'
-  | 'number'
-  | 'email'
-  | 'password'
-  | 'select'
-  | 'checkbox'
-  | 'date'
-  | 'relationship'
-  | 'upload'
-  | 'richtext'
-  | 'group'
-
-export interface FieldSchema {
-  name: string
-  label: string
-  type: FieldType
-  required?: boolean
-  description?: string
-  /** select options */
-  options?: Array<{ label: string; value: string }>
-  /** relationship/upload target collection slug */
-  relationTo?: string
-  /** group sub-fields */
-  fields?: FieldSchema[]
-  /** only shown when creating (e.g. password) */
-  createOnly?: boolean
-  /** excluded from forms entirely */
-  hidden?: boolean
+export interface SelectOption {
+  label: string;
+  value: string;
 }
 
-export interface CollectionSchema {
-  slug: string
-  title: string
-  /** field used as the row title / search target */
-  titleField: string
-  columns: string[]
-  fields: FieldSchema[]
-  /** collection only supports read+delete in this UI */
-  readOnly?: boolean
+export interface NormField {
+  name?: string;
+  type:
+    | "text"
+    | "textarea"
+    | "email"
+    | "password"
+    | "number"
+    | "select"
+    | "radio"
+    | "checkbox"
+    | "date"
+    | "relationship"
+    | "upload"
+    | "array"
+    | "group"
+    | "blocks"
+    | "tabs"
+    | "collapsible"
+    | "json"
+    | "richtext"
+    // Payload may emit exotic types; the renderer falls back to JSON editing.
+    | string;
+  label?: string;
+  required?: boolean;
+  localized?: boolean;
+  defaultValue?: unknown;
+  description?: string;
+  readOnly?: boolean;
+  hidden?: boolean;
+  options?: SelectOption[];
+  relationTo?: string | string[];
+  hasMany?: boolean;
+  min?: number;
+  max?: number;
+  fields?: NormField[];
+  tabs?: Array<{ label?: string; name?: string; fields: NormField[] }>;
+  blocks?: Array<{ slug: string; label: string; fields: NormField[] }>;
 }
 
-const localeOptions = [
-  { label: 'English', value: 'en' },
-  { label: 'বাংলা', value: 'bn' },
-]
-
-export const userSchema: CollectionSchema = {
-  slug: 'users',
-  title: 'Users',
-  titleField: 'username',
-  columns: ['username', 'email', 'role', 'status', 'createdAt'],
-  fields: [
-    { name: 'email', label: 'Email', type: 'email' },
-    { name: 'phone', label: 'Phone', type: 'text', description: 'Required if email is empty.' },
-    {
-      name: 'password',
-      label: 'Password',
-      type: 'password',
-      createOnly: true,
-      description: 'Set on creation only. Password changes require the account owner or API.',
-    },
-    { name: 'firstName', label: 'First name', type: 'text' },
-    { name: 'lastName', label: 'Last name', type: 'text' },
-    { name: 'displayName', label: 'Display name', type: 'text' },
-    {
-      name: 'role',
-      label: 'Role',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'Vendor', value: 'vendor' },
-        { label: 'Customer', value: 'customer' },
-      ],
-    },
-    {
-      name: 'status',
-      label: 'Status',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Active', value: 'active' },
-        { label: 'Suspended', value: 'suspended' },
-        { label: 'Banned', value: 'banned' },
-      ],
-    },
-    { name: 'locale', label: 'Locale', type: 'select', options: localeOptions },
-    { name: 'username', label: 'Username', type: 'text', hidden: true },
-  ],
+export interface NormVersions {
+  drafts: boolean;
+  max?: number;
 }
 
-export const categorySchema: CollectionSchema = {
-  slug: 'categories',
-  title: 'Categories',
-  titleField: 'name',
-  columns: ['name', 'slug', 'displayOrder', 'isActive'],
-  fields: [
-    { name: 'name', label: 'Name', type: 'text', required: true },
-    { name: 'slug', label: 'Slug', type: 'text', description: 'Auto-generated from name when empty.' },
-    { name: 'description', label: 'Description', type: 'richtext' },
-    { name: 'image', label: 'Image', type: 'upload', relationTo: 'media' },
-    {
-      name: 'parent',
-      label: 'Parent category',
-      type: 'relationship',
-      relationTo: 'categories',
-      description: 'Leave empty for top-level categories.',
-    },
-    { name: 'displayOrder', label: 'Display order', type: 'number', description: 'Lower numbers appear first.' },
-    { name: 'isActive', label: 'Active', type: 'checkbox' },
-    {
-      name: 'commissionOverride',
-      label: 'Commission override (%)',
-      type: 'number',
-      description: 'Optional override of the platform commission % for this category.',
-    },
-    {
-      name: 'meta',
-      label: 'SEO',
-      type: 'group',
-      fields: [
-        { name: 'title', label: 'Meta title', type: 'text' },
-        { name: 'description', label: 'Meta description', type: 'textarea' },
-        { name: 'image', label: 'Meta image', type: 'upload', relationTo: 'media' },
-      ],
-    },
-  ],
+export interface NormCollection {
+  slug: string;
+  label: string;
+  group?: string;
+  useAsTitle: string;
+  defaultColumns?: string[];
+  description?: string;
+  auth: boolean;
+  upload: boolean;
+  versions: NormVersions | null;
+  timestamps: boolean;
+  hasLocalized: boolean;
+  /** True when the local env disables this plugin; rendered only if the live backend exposes it. */
+  conditional?: boolean;
+  fields: NormField[];
 }
 
-export const pageSchema: CollectionSchema = {
-  slug: 'pages',
-  title: 'Pages',
-  titleField: 'title',
-  columns: ['title', 'slug', 'createdAt'],
-  fields: [
-    { name: 'title', label: 'Title', type: 'text', required: true },
-    { name: 'slug', label: 'Slug', type: 'text' },
-    { name: 'content', label: 'Content', type: 'richtext' },
-  ],
-  // NOTE: pages collection config defines layout blocks; block editing lands with
-  // the storefront phase — the rich content stays intact unless edited here.
+export interface NormGlobal {
+  slug: string;
+  label: string;
+  group?: string;
+  hasLocalized: boolean;
+  conditional?: boolean;
+  fields: NormField[];
 }
 
-export const collectionSchemas: Record<string, CollectionSchema> = {
-  users: userSchema,
-  categories: categorySchema,
-  pages: pageSchema,
+export interface LocalizationConfig {
+  locales: Array<{ code: string; label: string }>;
+  defaultLocale: string;
+  fallback: boolean;
 }
 
-export function getCollectionSchema(slug: string): CollectionSchema | undefined {
-  return collectionSchemas[slug]
+import schemaJson from "@/generated/schema.json";
+
+const data = schemaJson as unknown as {
+  generatedAt: string;
+  localization: LocalizationConfig | null;
+  collections: NormCollection[];
+  globals: NormGlobal[];
+};
+
+export const localization: LocalizationConfig = data.localization ?? {
+  locales: [{ code: "en", label: "English" }],
+  defaultLocale: "en",
+  fallback: false,
+};
+
+export const collections: NormCollection[] = data.collections;
+export const globals: NormGlobal[] = data.globals;
+
+export function getCollectionSchema(slug: string): NormCollection | undefined {
+  return collections.find((c) => c.slug === slug);
+}
+
+export function getGlobalSchema(slug: string): NormGlobal | undefined {
+  return globals.find((g) => g.slug === slug);
+}
+
+/** Doc title helper mirroring Payload's useAsTitle behavior for plain data. */
+export function docTitle(
+  doc: Record<string, unknown>,
+  schema?: NormCollection,
+): string {
+  if (!doc) return "";
+  const candidates = schema
+    ? [schema.useAsTitle]
+    : ["name", "title", "username", "email", "id"];
+  for (const key of candidates) {
+    const v = doc[key];
+    if (typeof v === "string" && v.trim()) return v;
+    if (typeof v === "number") return String(v);
+  }
+  return String(doc.id ?? "");
 }

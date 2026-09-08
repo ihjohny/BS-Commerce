@@ -1,11 +1,15 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { AdminShell } from '@/components/layout/AdminShell'
-import { RequireAuth } from '@/components/RequireAuth'
-import { CreateFirstUser } from '@/pages/CreateFirstUser'
-import { Dashboard } from '@/pages/Dashboard'
-import { Login } from '@/pages/Login'
-import { Placeholder } from '@/pages/Placeholder'
+import { AdminShell } from "@/components/layout/AdminShell";
+import { RequireAuth } from "@/components/RequireAuth";
+import { CreateFirstUser } from "@/pages/CreateFirstUser";
+import { Dashboard } from "@/pages/Dashboard";
+import { Login } from "@/pages/Login";
+import { CollectionFormPage } from "@/pages/collections/CollectionFormPage";
+import { CollectionListPage } from "@/pages/collections/CollectionListPage";
+import { GlobalFormPage } from "@/pages/globals/GlobalFormPage";
+import { MediaLibrary } from "@/pages/MediaLibrary";
+import { Reports } from "@/pages/Reports";
 
 export default function App() {
   return (
@@ -15,29 +19,21 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AdminShell />}>
           <Route index element={<Dashboard />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="media" element={<MediaLibrary />} />
+          <Route path="collections/:slug" element={<CollectionListPage />} />
           <Route
-            path="reports"
-            element={<Placeholder title="Reports" description="Filters, charts and CSV export — Phase 3." />}
+            path="collections/:slug/new"
+            element={<CollectionFormPage />}
           />
-          {['users', 'media', 'pages', 'categories', 'shipping', 'commissions'].map((slug) => (
-            <Route
-              key={slug}
-              path={`collections/${slug}`}
-              element={
-                <Placeholder
-                  title={slug.charAt(0).toUpperCase() + slug.slice(1)}
-                  description="Collection CRUD — Phase 4."
-                />
-              }
-            />
-          ))}
           <Route
-            path="globals/:slug"
-            element={<Placeholder title="Globals" description="Global editing — Phase 4." />}
+            path="collections/:slug/:id"
+            element={<CollectionFormPage />}
           />
+          <Route path="globals/:slug" element={<GlobalFormPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
+  );
 }
