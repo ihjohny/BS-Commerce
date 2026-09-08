@@ -65,35 +65,67 @@ textarea {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* ─── Brand Logo on Nav Togglers ───────────────────────────────────────────── */
-button.nav-toggler.template-default__nav-toggler,
+/* ─── Top Left Brand Icon / Sidebar Toggler ───────────────────────────── */
+.template-default__nav-toggler-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: fixed !important;
+  top: 12px !important;
+  left: 16px !important;
+  z-index: 1000 !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.template-default__nav-toggler-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+button.nav-toggler.template-default__nav-toggler {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  background-color: var(--theme-elevation-50) !important;
+  background-image: var(--bs-admin-logo-url) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 18px 18px !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: var(--bs-radius-sm, 6px) !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+button.nav-toggler.template-default__nav-toggler:hover {
+  background-color: var(--theme-elevation-100) !important;
+  border-color: var(--theme-elevation-300) !important;
+  box-shadow: var(--bs-shadow-sm) !important;
+  transform: translateY(-1px) !important;
+}
+
+button.nav-toggler.template-default__nav-toggler:active {
+  transform: translateY(0) !important;
+}
+
+/* Hide default hamburger graphics inside toggler buttons */
+button.nav-toggler .hamburger,
+button.nav-toggler .nav-hamburger {
+  display: none !important;
+}
+
 button.nav-toggler.app-header__mobile-nav-toggler {
-  position: relative;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
-  background-color: transparent;
-  background-image: var(--bs-admin-logo-url);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  border-radius: var(--bs-radius-sm);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-button.nav-toggler.template-default__nav-toggler:hover,
-button.nav-toggler.app-header__mobile-nav-toggler:hover {
-  opacity: 0.85;
-}
-
-button.nav-toggler.template-default__nav-toggler .hamburger,
-button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .template-default__nav-toggler-wrapper {
-    display: none !important;
-  }
+  display: none !important;
 }
 
 /* ─── App Header & Top Navigation Bar ──────────────────────────────────────── */
@@ -101,11 +133,13 @@ button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
   border-bottom: 1px solid var(--theme-elevation-100) !important;
   background-color: var(--theme-bg) !important;
   backdrop-filter: blur(10px);
-  padding: 0 1.5rem !important;
+  padding: 0 1.5rem 0 4.5rem !important;
   height: 56px !important;
   display: flex !important;
   align-items: center !important;
-  position: relative;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 999 !important;
 }
 
 .app-header .step-nav {
@@ -113,6 +147,7 @@ button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
   align-items: center;
   gap: 0.5rem;
   font-size: 13.5px;
+  margin-left: 0.5rem !important;
 }
 
 .app-header .step-nav__link {
@@ -131,9 +166,19 @@ button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
   font-size: 11px;
 }
 
+.app-header .step-nav .step-nav__home {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
 /* App Header Controls & Actions Container */
 .app-header__content {
-  padding: 0 1.5rem !important;
+  padding: 0 !important;
+  width: 100% !important;
 }
 
 .app-header__wrapper {
@@ -147,10 +192,16 @@ button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
 .app-header__controls-wrapper {
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-end !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
   gap: 0.75rem !important;
-  margin-left: auto !important;
-  padding-right: 0 !important;
+}
+
+.app-header__step-nav-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
 }
 
 .app-header__actions-wrapper {
@@ -158,6 +209,8 @@ button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
   align-items: center !important;
   gap: 0.5rem !important;
   margin-right: 0 !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
 }
 
 .app-header__actions {
