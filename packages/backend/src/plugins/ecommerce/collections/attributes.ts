@@ -7,7 +7,7 @@ export const Attributes: CollectionConfig = {
   admin: {
     useAsTitle: 'label',
     defaultColumns: ['label', 'key', 'type', 'customType', 'slug', 'featured', 'displayOrder'],
-    group: 'Ecommerce',
+    group: 'Catalog',
     description: 'Manage product specifications, series, features, and dynamic filter facets.',
   },
   access: {

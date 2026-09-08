@@ -7,7 +7,7 @@ export const Brands: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'featured', 'displayOrder', 'website', 'updatedAt'],
-    group: 'Ecommerce',
+    group: 'Catalog',
     description: 'Manage product brands and manufacturers (logos, hero banners, websites, and official brand profiles).',
   },
   access: {

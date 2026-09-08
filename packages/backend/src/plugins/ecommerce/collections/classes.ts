@@ -7,7 +7,7 @@ export const Classes: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'updatedAt'],
-    group: 'Ecommerce',
+    group: 'Catalog',
     description: 'Manage dynamic Product Classes (Specification Templates / Attribute Sets) for catalog facet filtering and structured PDP specs.',
   },
   access: {
