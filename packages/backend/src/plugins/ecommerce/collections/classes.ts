@@ -6,9 +6,9 @@ export const Classes: CollectionConfig = {
   slug: 'classes',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'slug', 'icon', 'updatedAt'],
     group: 'Catalog',
-    description: 'Manage dynamic Product Classes (Specification Templates / Attribute Sets) for catalog facet filtering and structured PDP specs.',
+    description: 'Manage dynamic Product Classes (Specification Templates / Attribute Sets) composed of reusable Attributes organized into logical groups.',
   },
   access: {
     read: () => true,
@@ -23,7 +23,7 @@ export const Classes: CollectionConfig = {
       required: true,
       localized: true,
       admin: {
-        description: 'Class / Template name (e.g. "Power Bank", "Smartphone", "Headphones", "Laptop")',
+        description: 'Class / Template name (e.g. "Smartphone", "Laptop", "Power Bank", "Audio & Headphones")',
       },
     },
     slugField('name'),
@@ -36,100 +36,30 @@ export const Classes: CollectionConfig = {
       },
     },
     {
-      name: 'parameters',
+      name: 'icon',
+      type: 'text',
+      admin: {
+        description: 'Optional icon identifier (e.g. "smartphone", "laptop", "battery", "headphones", "camera").',
+      },
+    },
+    {
+      name: 'groups',
       type: 'array',
       labels: {
-        singular: 'Parameter',
-        plural: 'Parameters',
+        singular: 'Attribute Group',
+        plural: 'Attribute Groups',
       },
       admin: {
-        description: 'Defined specification parameters that products in this class will inherit.',
+        description: 'Curated specification sections (e.g. "Display & Screen", "Performance & Memory", "Battery & Charging").',
       },
       fields: [
         {
-          name: 'key',
-          type: 'text',
-          required: true,
-          admin: {
-            description: 'Unique parameter key (e.g. "capacity", "battery_type", "total_output", "ram", "storage").',
-          },
-        },
-        {
-          name: 'label',
+          name: 'name',
           type: 'text',
           required: true,
           localized: true,
           admin: {
-            description: 'Human-readable label (e.g. "Battery Capacity", "Total Output", "RAM").',
-          },
-        },
-        {
-          name: 'type',
-          type: 'select',
-          required: true,
-          defaultValue: 'text',
-          options: [
-            { label: 'Select (Predefined Options)', value: 'select' },
-            { label: 'Text', value: 'text' },
-            { label: 'Number', value: 'number' },
-            { label: 'Boolean (Yes / No)', value: 'boolean' },
-          ],
-          admin: {
-            description: 'Parameter data type. For Select, provide predefined options below for clean facet filters.',
-          },
-        },
-        {
-          name: 'options',
-          type: 'array',
-          labels: {
-            singular: 'Option',
-            plural: 'Options',
-          },
-          admin: {
-            description: 'Allowed predefined options when type is "Select" to avoid typos and standardize filters.',
-            condition: (_data, siblingData) => siblingData?.type === 'select',
-          },
-          fields: [
-            {
-              name: 'label',
-              type: 'text',
-              required: true,
-              localized: true,
-              admin: {
-                description: 'Display label for this option (e.g. "Lithium Polymer", "10,000 mAh").',
-              },
-            },
-            {
-              name: 'value',
-              type: 'text',
-              required: true,
-              admin: {
-                description: 'Stored value / filter key (e.g. "lithium-polymer", "10000mah").',
-              },
-            },
-          ],
-        },
-        {
-          name: 'unit',
-          type: 'text',
-          admin: {
-            description: 'Optional unit suffix (e.g. "mAh", "W", "V", "g", "GB", "inch").',
-          },
-        },
-        {
-          name: 'isFilterable',
-          type: 'checkbox',
-          defaultValue: true,
-          admin: {
-            description: 'Whether this parameter appears in storefront catalog sidebar facet filters.',
-          },
-        },
-        {
-          name: 'isRequired',
-          type: 'checkbox',
-          defaultValue: true,
-          admin: {
-            description: 'Whether this parameter is required when editing a product assigned to this class.',
+            description: 'Group header name (e.g. "Display & Screen", "Battery & Charging", "Connectivity").',
           },
         },
         {
@@ -137,8 +67,54 @@ export const Classes: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           admin: {
-            description: 'Display sort order (lower numbers appear first).',
+            description: 'Section display sort order (lower numbers appear first).',
           },
+        },
+        {
+          name: 'attributes',
+          type: 'array',
+          labels: {
+            singular: 'Attribute Item',
+            plural: 'Attribute Items',
+          },
+          admin: {
+            description: 'Reusable global attributes included in this template group.',
+          },
+          fields: [
+            {
+              name: 'attribute',
+              type: 'relationship',
+              relationTo: 'attributes',
+              required: true,
+              admin: {
+                description: 'Global attribute definition from the catalog.',
+              },
+            },
+            {
+              name: 'isRequired',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: {
+                description: 'Whether this attribute must be filled in for products in this class.',
+              },
+            },
+            {
+              name: 'displayOrder',
+              type: 'number',
+              defaultValue: 0,
+              admin: {
+                description: 'Sort order of this attribute within this group.',
+              },
+            },
+            {
+              name: 'helpText',
+              type: 'text',
+              localized: true,
+              admin: {
+                description: 'Optional guidance or tooltip for admin content managers.',
+              },
+            },
+          ],
         },
       ],
     },

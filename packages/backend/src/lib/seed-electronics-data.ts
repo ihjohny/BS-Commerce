@@ -216,98 +216,7 @@ export async function ensureClassesCatalogSchema(payload: Payload): Promise<void
           WHEN duplicate_table OR duplicate_object THEN null;
         END $$;
 
-        CREATE TABLE IF NOT EXISTS "classes_parameters" (
-          "_order" integer NOT NULL,
-          "_parent_id" uuid NOT NULL,
-          "id" character varying PRIMARY KEY NOT NULL,
-          "key" character varying NOT NULL,
-          "type" character varying DEFAULT 'text' NOT NULL,
-          "unit" character varying,
-          "is_filterable" boolean DEFAULT true,
-          "is_required" boolean DEFAULT true,
-          "display_order" numeric DEFAULT 0
-        );
 
-        DO $$ BEGIN
-          ALTER TABLE "classes_parameters" ADD CONSTRAINT "classes_parameters_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes"("id") ON DELETE cascade ON UPDATE no action;
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-
-        DO $$ BEGIN
-          CREATE INDEX "classes_parameters_order_idx" ON "classes_parameters" USING btree ("_order");
-        EXCEPTION
-          WHEN duplicate_table OR duplicate_object THEN null;
-        END $$;
-
-        DO $$ BEGIN
-          CREATE INDEX "classes_parameters_parent_id_idx" ON "classes_parameters" USING btree ("_parent_id");
-        EXCEPTION
-          WHEN duplicate_table OR duplicate_object THEN null;
-        END $$;
-
-        CREATE TABLE IF NOT EXISTS "classes_parameters_locales" (
-          "label" character varying NOT NULL,
-          "id" serial PRIMARY KEY NOT NULL,
-          "_locale" "_locales" NOT NULL,
-          "_parent_id" character varying NOT NULL
-        );
-
-        DO $$ BEGIN
-          ALTER TABLE "classes_parameters_locales" ADD CONSTRAINT "classes_parameters_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_parameters"("id") ON DELETE cascade ON UPDATE no action;
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-
-        DO $$ BEGIN
-          CREATE UNIQUE INDEX "classes_parameters_locales_locale_parent_id_unique" ON "classes_parameters_locales" USING btree ("_locale", "_parent_id");
-        EXCEPTION
-          WHEN duplicate_table OR duplicate_object THEN null;
-        END $$;
-
-        CREATE TABLE IF NOT EXISTS "classes_parameters_options" (
-          "_order" integer NOT NULL,
-          "_parent_id" character varying NOT NULL,
-          "id" character varying PRIMARY KEY NOT NULL,
-          "value" character varying NOT NULL
-        );
-
-        DO $$ BEGIN
-          ALTER TABLE "classes_parameters_options" ADD CONSTRAINT "classes_parameters_options_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_parameters"("id") ON DELETE cascade ON UPDATE no action;
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-
-        DO $$ BEGIN
-          CREATE INDEX "classes_parameters_options_order_idx" ON "classes_parameters_options" USING btree ("_order");
-        EXCEPTION
-          WHEN duplicate_table OR duplicate_object THEN null;
-        END $$;
-
-        DO $$ BEGIN
-          CREATE INDEX "classes_parameters_options_parent_id_idx" ON "classes_parameters_options" USING btree ("_parent_id");
-        EXCEPTION
-          WHEN duplicate_table OR duplicate_object THEN null;
-        END $$;
-
-        CREATE TABLE IF NOT EXISTS "classes_parameters_options_locales" (
-          "label" character varying NOT NULL,
-          "id" serial PRIMARY KEY NOT NULL,
-          "_locale" "_locales" NOT NULL,
-          "_parent_id" character varying NOT NULL
-        );
-
-        DO $$ BEGIN
-          ALTER TABLE "classes_parameters_options_locales" ADD CONSTRAINT "classes_parameters_options_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_parameters_options"("id") ON DELETE cascade ON UPDATE no action;
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-
-        DO $$ BEGIN
-          CREATE UNIQUE INDEX "classes_parameters_options_locales_locale_parent_id_unique" ON "classes_parameters_options_locales" USING btree ("_locale", "_parent_id");
-        EXCEPTION
-          WHEN duplicate_table OR duplicate_object THEN null;
-        END $$;
 
         ALTER TABLE "products" DROP CONSTRAINT IF EXISTS "products_product_class_id_product_classes_id_fk";
         ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "product_class_id" uuid;
@@ -324,6 +233,166 @@ export async function ensureClassesCatalogSchema(payload: Payload): Promise<void
           WHEN duplicate_table OR duplicate_object THEN null;
         END $$;
 
+        -- Ensure Attributes columns
+        ALTER TABLE "attributes" ADD COLUMN IF NOT EXISTS "data_type" character varying DEFAULT 'select';
+        ALTER TABLE "attributes" ADD COLUMN IF NOT EXISTS "category" character varying DEFAULT 'specification';
+        ALTER TABLE "attributes" ADD COLUMN IF NOT EXISTS "unit" character varying;
+        ALTER TABLE "attributes" ADD COLUMN IF NOT EXISTS "default_group" character varying;
+        ALTER TABLE "attributes" ADD COLUMN IF NOT EXISTS "is_filterable" boolean DEFAULT true;
+        ALTER TABLE "attributes" ADD COLUMN IF NOT EXISTS "is_comparable" boolean DEFAULT true;
+
+        -- Ensure Attributes Options tables
+        CREATE TABLE IF NOT EXISTS "attributes_options" (
+          "_order" integer NOT NULL,
+          "_parent_id" uuid NOT NULL,
+          "id" character varying PRIMARY KEY NOT NULL,
+          "value" character varying NOT NULL,
+          "hex_color" character varying
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "attributes_options" ADD CONSTRAINT "attributes_options_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "attributes"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "attributes_options_order_idx" ON "attributes_options" USING btree ("_order");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "attributes_options_parent_id_idx" ON "attributes_options" USING btree ("_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "attributes_options_locales" (
+          "label" character varying NOT NULL,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" character varying NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "attributes_options_locales" ADD CONSTRAINT "attributes_options_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "attributes_options"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "attributes_options_locales_locale_parent_id_unique" ON "attributes_options_locales" USING btree ("_locale", "_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        -- Ensure Classes columns & groups
+        ALTER TABLE "classes" ADD COLUMN IF NOT EXISTS "icon" character varying;
+
+        CREATE TABLE IF NOT EXISTS "classes_groups" (
+          "_order" integer NOT NULL,
+          "_parent_id" uuid NOT NULL,
+          "id" character varying PRIMARY KEY NOT NULL,
+          "display_order" numeric DEFAULT 0
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_groups" ADD CONSTRAINT "classes_groups_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_groups_order_idx" ON "classes_groups" USING btree ("_order");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_groups_parent_id_idx" ON "classes_groups" USING btree ("_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_groups_locales" (
+          "name" character varying NOT NULL,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" character varying NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_groups_locales" ADD CONSTRAINT "classes_groups_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_groups"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "classes_groups_locales_locale_parent_id_unique" ON "classes_groups_locales" USING btree ("_locale", "_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_groups_attributes" (
+          "_order" integer NOT NULL,
+          "_parent_id" character varying NOT NULL,
+          "id" character varying PRIMARY KEY NOT NULL,
+          "attribute_id" uuid NOT NULL,
+          "is_required" boolean DEFAULT false,
+          "display_order" numeric DEFAULT 0
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_groups_attributes" ADD CONSTRAINT "classes_groups_attributes_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_groups"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_groups_attributes" ADD CONSTRAINT "classes_groups_attributes_attribute_id_fk" FOREIGN KEY ("attribute_id") REFERENCES "attributes"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_groups_attributes_order_idx" ON "classes_groups_attributes" USING btree ("_order");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_groups_attributes_parent_id_idx" ON "classes_groups_attributes" USING btree ("_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "classes_groups_attributes_attribute_id_idx" ON "classes_groups_attributes" USING btree ("attribute_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS "classes_groups_attributes_locales" (
+          "help_text" character varying,
+          "id" serial PRIMARY KEY NOT NULL,
+          "_locale" "_locales" NOT NULL,
+          "_parent_id" character varying NOT NULL
+        );
+
+        DO $$ BEGIN
+          ALTER TABLE "classes_groups_attributes_locales" ADD CONSTRAINT "classes_groups_attributes_locales_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "classes_groups_attributes"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE UNIQUE INDEX "classes_groups_attributes_locales_locale_parent_id_unique" ON "classes_groups_attributes_locales" USING btree ("_locale", "_parent_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        -- Ensure Products Specifications table & unified columns
         CREATE TABLE IF NOT EXISTS "products_specifications" (
           "_order" integer NOT NULL,
           "_parent_id" uuid NOT NULL,
@@ -336,9 +405,21 @@ export async function ensureClassesCatalogSchema(payload: Payload): Promise<void
 
         ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "label" character varying;
         ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "unit" character varying;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "attribute_id" uuid;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "values" jsonb;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "group" character varying;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "is_custom" boolean DEFAULT false;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "is_ad_hoc" boolean DEFAULT false;
+        ALTER TABLE "products_specifications" ADD COLUMN IF NOT EXISTS "display_order" numeric DEFAULT 0;
 
         DO $$ BEGIN
           ALTER TABLE "products_specifications" ADD CONSTRAINT "products_specifications_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "products"("id") ON DELETE cascade ON UPDATE no action;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          ALTER TABLE "products_specifications" ADD CONSTRAINT "products_specifications_attribute_id_fk" FOREIGN KEY ("attribute_id") REFERENCES "attributes"("id") ON DELETE set null ON UPDATE no action;
         EXCEPTION
           WHEN duplicate_object THEN null;
         END $$;
@@ -361,6 +442,18 @@ export async function ensureClassesCatalogSchema(payload: Payload): Promise<void
           WHEN duplicate_table OR duplicate_object THEN null;
         END $$;
 
+        DO $$ BEGIN
+          CREATE INDEX "products_specifications_attribute_id_idx" ON "products_specifications" USING btree ("attribute_id");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+          CREATE INDEX "products_specifications_group_idx" ON "products_specifications" USING btree ("group");
+        EXCEPTION
+          WHEN duplicate_table OR duplicate_object THEN null;
+        END $$;
+
         ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "classes_id" uuid;
         DO $$ BEGIN
           ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_classes_fk" FOREIGN KEY ("classes_id") REFERENCES "classes"("id") ON DELETE CASCADE;
@@ -368,6 +461,14 @@ export async function ensureClassesCatalogSchema(payload: Payload): Promise<void
           WHEN duplicate_object THEN null;
         END $$;
         CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_classes_id_idx" ON "payload_locked_documents_rels" USING btree ("classes_id");
+
+        ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "attributes_id" uuid;
+        DO $$ BEGIN
+          ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_attributes_fk" FOREIGN KEY ("attributes_id") REFERENCES "attributes"("id") ON DELETE CASCADE;
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
+        CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_attributes_id_idx" ON "payload_locked_documents_rels" USING btree ("attributes_id");
       `)
       payload.logger.info('[Electronics Seeder] Verified Classes & Specifications schema readiness.')
     }
@@ -1307,28 +1408,408 @@ export async function seedElectronicsStore(
 
   // Specifications, Series, and Feature Attributes
   const attributesData = [
-    // Series
-    { label: 'Pro Max Series', key: 'series-pro-max', slug: 'pro-max-series', type: 'series', properties: [{ propertyKey: 'tier', propertyValue: 'Top Flagship', propertyType: 'text' }] },
-    { label: 'Ultra Series', key: 'series-ultra', slug: 'ultra-series', type: 'series', properties: [{ propertyKey: 'tier', propertyValue: 'Extreme Performance', propertyType: 'text' }] },
-    { label: 'M3 Silicon Series', key: 'series-m3-silicon', slug: 'm3-silicon-series', type: 'series', properties: [{ propertyKey: 'architecture', propertyValue: 'Apple ARM Silicon', propertyType: 'text' }] },
-    { label: 'GaNPrime Series', key: 'series-ganprime', slug: 'ganprime-series', type: 'series', properties: [{ propertyKey: 'chargingTech', propertyValue: 'Gallium Nitride 3.0', propertyType: 'text' }] },
-    { label: 'Bravia XR Series', key: 'series-bravia-xr', slug: 'bravia-xr-series', type: 'series', properties: [{ propertyKey: 'panelTech', propertyValue: 'Cognitive Processor XR OLED', propertyType: 'text' }] },
-    // Technical Specifications, Features & Connectivity
-    { label: '5G Cellular', key: 'conn-5g', slug: '5g-cellular', type: 'connectivity', properties: [{ propertyKey: 'standard', propertyValue: '5G NR Sub-6', propertyType: 'text' }] },
-    { label: '120Hz OLED Display', key: 'spec-120hz-oled', slug: '120hz-oled', type: 'specification', properties: [{ propertyKey: 'refreshRate', propertyValue: '120Hz', propertyType: 'text' }] },
-    { label: 'Active Noise Cancelling', key: 'feat-anc', slug: 'active-noise-cancelling', type: 'feature', properties: [{ propertyKey: 'feature', propertyValue: 'Adaptive ANC', propertyType: 'text' }] },
-    { label: 'Aerospace Titanium', key: 'mat-titanium', slug: 'aerospace-titanium', type: 'material', properties: [{ propertyKey: 'grade', propertyValue: 'Grade 5', propertyType: 'text' }] },
-    { label: 'IP68 Water Resistant', key: 'cert-ip68', slug: 'ip68-water-resistant', type: 'certification', properties: [{ propertyKey: 'depth', propertyValue: 'Up to 6 meters', propertyType: 'text' }] },
+    // Standard Catalog Specifications with Predefined Options
+    {
+      label: 'Display Screen Size',
+      key: 'screen_size',
+      slug: 'screen-size',
+      dataType: 'text',
+      category: 'specification',
+      unit: 'inch',
+      defaultGroup: 'Display',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 1,
+    },
+    {
+      label: 'Display Panel Type',
+      key: 'display_tech',
+      slug: 'display-tech',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'Display',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 2,
+      options: [
+        { label: 'LTPO Super Retina XDR OLED', value: 'ltpo-retina-xdr' },
+        { label: 'Dynamic AMOLED 2X', value: 'dynamic-amoled-2x' },
+        { label: 'Super AMOLED', value: 'super-amoled' },
+        { label: 'Liquid Retina IPS', value: 'liquid-retina-ips' },
+        { label: 'LTPO OLED Retina', value: 'ltpo-oled' },
+      ],
+    },
+    {
+      label: 'Screen Refresh Rate',
+      key: 'refresh_rate',
+      slug: 'refresh-rate',
+      dataType: 'select',
+      category: 'specification',
+      unit: 'Hz',
+      defaultGroup: 'Display',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 3,
+      options: [
+        { label: '120Hz ProMotion', value: '120hz' },
+        { label: '90Hz High Refresh', value: '90hz' },
+        { label: '60Hz Standard', value: '60hz' },
+      ],
+    },
+    {
+      label: 'Processor / Chipset',
+      key: 'processor',
+      slug: 'processor',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'Performance',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 4,
+      options: [
+        { label: 'Apple A18 Pro', value: 'apple-a18-pro' },
+        { label: 'Apple A18', value: 'apple-a18' },
+        { label: 'Snapdragon 8 Gen 3', value: 'snapdragon-8-gen-3' },
+        { label: 'Google Tensor G4', value: 'google-tensor-g4' },
+        { label: 'Apple M4', value: 'apple-m4' },
+        { label: 'Apple M3 Max', value: 'apple-m3-max' },
+        { label: 'Apple M3 Pro', value: 'apple-m3-pro' },
+        { label: 'Apple M3', value: 'apple-m3' },
+        { label: 'Apple M2', value: 'apple-m2' },
+        { label: 'Intel Core Ultra 9', value: 'intel-ultra-9' },
+      ],
+    },
+    {
+      label: 'Processor (CPU)',
+      key: 'cpu',
+      slug: 'cpu',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'Performance',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 5,
+      options: [
+        { label: 'Apple M3 Max', value: 'apple-m3-max' },
+        { label: 'Apple M3 Pro', value: 'apple-m3-pro' },
+        { label: 'Apple M3', value: 'apple-m3' },
+        { label: 'Intel Core Ultra 9', value: 'intel-ultra-9' },
+      ],
+    },
+    {
+      label: 'RAM Capacity',
+      key: 'ram',
+      slug: 'ram',
+      dataType: 'select',
+      category: 'specification',
+      unit: 'GB',
+      defaultGroup: 'Performance',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 6,
+      options: [
+        { label: '8 GB', value: '8gb' },
+        { label: '12 GB', value: '12gb' },
+        { label: '16 GB', value: '16gb' },
+        { label: '32 GB', value: '32gb' },
+        { label: '36 GB', value: '36gb' },
+        { label: '64 GB', value: '64gb' },
+      ],
+    },
+    {
+      label: 'Internal Storage',
+      key: 'storage',
+      slug: 'storage',
+      dataType: 'select',
+      category: 'specification',
+      unit: 'GB',
+      defaultGroup: 'Storage',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 7,
+      options: [
+        { label: '128 GB', value: '128gb' },
+        { label: '256 GB', value: '256gb' },
+        { label: '512 GB', value: '512gb' },
+        { label: '1 TB', value: '1tb' },
+        { label: '2 TB', value: '2tb' },
+        { label: '512 GB SSD', value: '512gb-ssd' },
+        { label: '1 TB SSD', value: '1tb-ssd' },
+        { label: '2 TB SSD', value: '2tb-ssd' },
+      ],
+    },
+    {
+      label: 'Battery Capacity',
+      key: 'battery_capacity',
+      slug: 'battery-capacity',
+      dataType: 'select',
+      category: 'specification',
+      unit: 'mAh',
+      defaultGroup: 'Battery & Charging',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 8,
+      options: [
+        { label: '3,561 mAh', value: '3561mah' },
+        { label: '4,685 mAh', value: '4685mah' },
+        { label: '5,000 mAh', value: '5000mah' },
+        { label: '5,060 mAh', value: '5060mah' },
+        { label: '10,000 mAh', value: '10000mah' },
+        { label: '20,000 mAh', value: '20000mah' },
+        { label: '24,000 mAh', value: '24000mah' },
+        { label: '30,000 mAh', value: '30000mah' },
+      ],
+    },
+    {
+      label: 'Battery Capacity',
+      key: 'capacity',
+      slug: 'capacity',
+      dataType: 'select',
+      category: 'specification',
+      unit: 'mAh',
+      defaultGroup: 'Battery & Charging',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 9,
+      options: [
+        { label: '10,000 mAh', value: '10000mah' },
+        { label: '20,000 mAh', value: '20000mah' },
+        { label: '24,000 mAh', value: '24000mah' },
+        { label: '30,000 mAh', value: '30000mah' },
+      ],
+    },
+    {
+      label: 'Battery Cell Type',
+      key: 'battery_type',
+      slug: 'battery-type',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'Battery & Charging',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 10,
+      options: [
+        { label: 'Lithium-Polymer', value: 'lithium-polymer' },
+        { label: 'Lithium-Ion', value: 'lithium-ion' },
+      ],
+    },
+    {
+      label: 'Total Output',
+      key: 'total_output',
+      slug: 'total-output',
+      dataType: 'text',
+      category: 'specification',
+      unit: 'W',
+      defaultGroup: 'Battery & Charging',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 11,
+    },
+    {
+      label: 'Fast Charging Standard',
+      key: 'fast_charging_tech',
+      slug: 'fast-charging-tech',
+      dataType: 'select',
+      category: 'feature',
+      defaultGroup: 'Battery & Charging',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 12,
+      options: [
+        { label: 'Power Delivery (PD)', value: 'power-delivery' },
+        { label: 'GaNFast / GaNPrime', value: 'gan-prime' },
+        { label: 'Quick Charge 4.0+', value: 'quick-charge' },
+        { label: 'Qi2 Wireless', value: 'qi2-wireless' },
+      ],
+    },
+    {
+      label: 'Fast Charging Wattage',
+      key: 'charging_wattage',
+      slug: 'charging-wattage',
+      dataType: 'text',
+      category: 'specification',
+      unit: 'W',
+      defaultGroup: 'Battery & Charging',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 13,
+    },
+    {
+      label: 'Cellular Connectivity',
+      key: 'cellular_network',
+      slug: 'cellular-network',
+      dataType: 'select',
+      category: 'connectivity',
+      defaultGroup: 'Connectivity',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 14,
+      options: [
+        { label: '5G Sub-6 / mmWave', value: '5g' },
+        { label: '4G LTE', value: '4g-lte' },
+        { label: 'Wi-Fi Only', value: 'wifi-only' },
+      ],
+    },
+    {
+      label: 'Operating System',
+      key: 'operating_system',
+      slug: 'operating-system',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'System',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 15,
+      options: [
+        { label: 'iOS 18', value: 'ios-18' },
+        { label: 'Android 14', value: 'android-14' },
+        { label: 'iPadOS 18', value: 'ipados-18' },
+        { label: 'macOS Sonoma', value: 'macos-sonoma' },
+        { label: 'Windows 11 Pro', value: 'win-11-pro' },
+      ],
+    },
+    {
+      label: 'Headphone Form Factor',
+      key: 'type',
+      slug: 'headphone-form-factor',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'Audio',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 16,
+      options: [
+        { label: 'In-Ear (TWS)', value: 'in-ear' },
+        { label: 'Over-Ear', value: 'over-ear' },
+        { label: 'On-Ear', value: 'on-ear' },
+      ],
+    },
+    {
+      label: 'Wireless Connectivity',
+      key: 'connectivity',
+      slug: 'wireless-connectivity',
+      dataType: 'select',
+      category: 'connectivity',
+      defaultGroup: 'Connectivity',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 17,
+      options: [
+        { label: 'Bluetooth 5.3', value: 'bluetooth-5-3' },
+        { label: 'Bluetooth 5.2', value: 'bluetooth-5-2' },
+        { label: 'Wired 3.5mm', value: 'wired-3-5mm' },
+      ],
+    },
+    {
+      label: 'Battery Playtime',
+      key: 'battery_life',
+      slug: 'battery-life',
+      dataType: 'text',
+      category: 'specification',
+      unit: 'hrs',
+      defaultGroup: 'Battery & Power',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 18,
+    },
+    {
+      label: 'Active Noise Cancellation',
+      key: 'noise_cancellation',
+      slug: 'noise-cancellation',
+      dataType: 'select',
+      category: 'feature',
+      defaultGroup: 'Audio',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 19,
+      options: [
+        { label: 'Active Noise Cancellation (ANC)', value: 'anc' },
+        { label: 'Adaptive ANC', value: 'adaptive-anc' },
+        { label: 'Environmental Noise Cancellation (ENC)', value: 'enc' },
+        { label: 'Passive Noise Isolation', value: 'none' },
+      ],
+    },
+    {
+      label: 'Water / Sweat Resistance',
+      key: 'water_resistance',
+      slug: 'water-resistance-spec',
+      dataType: 'select',
+      category: 'certification',
+      defaultGroup: 'Durability',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 20,
+      options: [
+        { label: 'IP68 Dust/Water Resistant (6m)', value: 'ip68' },
+        { label: 'IP54 Dust & Splash Resistant', value: 'ip54' },
+        { label: 'IPX4 Sweat Resistant', value: 'ipx4' },
+        { label: 'IPX5 Water Resistant', value: 'ipx5' },
+        { label: '100m / 10ATM (Diving)', value: '100m-dive' },
+        { label: '50m / 5ATM (Swimming)', value: '50m-swim' },
+        { label: 'Not Rated', value: 'none' },
+      ],
+    },
+    {
+      label: 'Display Panel Type',
+      key: 'display_type',
+      slug: 'smartwatch-display-type',
+      dataType: 'select',
+      category: 'specification',
+      defaultGroup: 'Display',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 21,
+      options: [
+        { label: 'LTPO OLED Retina', value: 'ltpo-oled' },
+        { label: 'Super AMOLED', value: 'super-amoled' },
+      ],
+    },
+    {
+      label: 'Case Enclosure Material',
+      key: 'case_material',
+      slug: 'case-material',
+      dataType: 'select',
+      category: 'material',
+      defaultGroup: 'Design',
+      isFilterable: true,
+      isComparable: true,
+      displayOrder: 22,
+      options: [
+        { label: 'Aerospace Grade Titanium', value: 'aerospace-titanium' },
+        { label: 'Recycled Aluminum', value: 'recycled-aluminum' },
+      ],
+    },
+    // Product Series and Strategic Tags
+    { label: 'Pro Max Series', key: 'series-pro-max', slug: 'pro-max-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
+    { label: 'Ultra Series', key: 'series-ultra', slug: 'ultra-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
+    { label: 'M3 Silicon Series', key: 'series-m3-silicon', slug: 'm3-silicon-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
+    { label: 'GaNPrime Series', key: 'series-ganprime', slug: 'ganprime-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
+    { label: 'Bravia XR Series', key: 'series-bravia-xr', slug: 'bravia-xr-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
+    // Technical Features & Connectivity Flags
+    { label: '5G Cellular', key: 'conn-5g', slug: '5g-cellular', dataType: 'boolean', category: 'connectivity', defaultGroup: 'Connectivity', isFilterable: true, isComparable: true },
+    { label: '120Hz OLED Display', key: 'spec-120hz-oled', slug: '120hz-oled', dataType: 'boolean', category: 'specification', defaultGroup: 'Display', isFilterable: true, isComparable: true },
+    { label: 'Active Noise Cancelling', key: 'feat-anc', slug: 'active-noise-cancelling', dataType: 'boolean', category: 'feature', defaultGroup: 'Audio', isFilterable: true, isComparable: true },
+    { label: 'Aerospace Titanium', key: 'mat-titanium', slug: 'aerospace-titanium', dataType: 'boolean', category: 'material', defaultGroup: 'Design', isFilterable: true, isComparable: true },
+    { label: 'IP68 Water Resistant', key: 'cert-ip68', slug: 'ip68-water-resistant', dataType: 'boolean', category: 'certification', defaultGroup: 'Durability', isFilterable: true, isComparable: true },
   ]
 
   const attributeMap: Record<string, string> = {}
+  const attrLabelMap: Record<string, string> = {}
+  const attrUnitMap: Record<string, string> = {}
+  const attrGroupMap: Record<string, string> = {}
   for (const a of attributesData) {
     const doc = await payload.create({
       collection: 'attributes',
       data: a as any,
       overrideAccess: true,
     })
-    attributeMap[a.slug] = String(doc.id)
+    const docId = String(doc.id)
+    attributeMap[a.slug] = docId
+    if (a.key) attributeMap[a.key] = docId
+    const labelStr = typeof a.label === 'string' ? a.label : (a.label as any)?.en || a.key || a.slug
+    attrLabelMap[a.key || a.slug] = labelStr
+    if (a.unit) attrUnitMap[a.key || a.slug] = a.unit
+    if (a.defaultGroup) attrGroupMap[a.key || a.slug] = a.defaultGroup
   }
 
   // ─── 6.5. PRODUCT CLASSES (Specification Templates / Attribute Sets) ──────
@@ -1336,344 +1817,149 @@ export async function seedElectronicsStore(
     {
       name: 'Power Bank',
       slug: 'power-bank',
+      icon: 'battery',
       description:
         'Portable external battery packs, MagSafe wireless chargers, and fast-charge power banks.',
-      parameters: [
+      groups: [
         {
-          key: 'capacity',
-          label: 'Battery Capacity',
-          type: 'select',
-          unit: 'mAh',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Battery & Capacity',
           displayOrder: 1,
-          options: [
-            { label: '10,000 mAh', value: '10000mah' },
-            { label: '20,000 mAh', value: '20000mah' },
-            { label: '24,000 mAh', value: '24000mah' },
-            { label: '30,000 mAh', value: '30000mah' },
-          ],
+          attributes: [
+            { attribute: attributeMap['capacity'] || attributeMap['battery_capacity'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['battery_type'], isRequired: true, displayOrder: 2 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'battery_type',
-          label: 'Battery Cell Type',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Power & Fast Charging',
           displayOrder: 2,
-          options: [
-            { label: 'Lithium-Polymer', value: 'lithium-polymer' },
-            { label: 'Lithium-Ion', value: 'lithium-ion' },
-          ],
-        },
-        {
-          key: 'total_output',
-          label: 'Total Output',
-          type: 'text',
-          unit: 'W',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 3,
-        },
-        {
-          key: 'fast_charging_tech',
-          label: 'Fast Charging Standard',
-          type: 'select',
-          isFilterable: true,
-          isRequired: false,
-          displayOrder: 4,
-          options: [
-            { label: 'Power Delivery (PD)', value: 'power-delivery' },
-            { label: 'GaNFast / GaNPrime', value: 'gan-prime' },
-            { label: 'Quick Charge 4.0+', value: 'quick-charge' },
-            { label: 'Qi2 Wireless', value: 'qi2-wireless' },
-          ],
+          attributes: [
+            { attribute: attributeMap['total_output'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['fast_charging_tech'], isRequired: false, displayOrder: 2 },
+          ].filter((it) => Boolean(it.attribute)),
         },
       ],
     },
     {
       name: 'Smartphone',
       slug: 'smartphone',
+      icon: 'smartphone',
       description: 'Flagship and premium smartphones, Android & iOS devices.',
-      parameters: [
+      groups: [
         {
-          key: 'screen_size',
-          label: 'Display Screen Size',
-          type: 'text',
-          unit: 'inch',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Display & Visuals',
           displayOrder: 1,
+          attributes: [
+            { attribute: attributeMap['screen_size'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['display_tech'], isRequired: false, displayOrder: 2 },
+            { attribute: attributeMap['refresh_rate'], isRequired: false, displayOrder: 3 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'processor',
-          label: 'Processor / Chipset',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Performance & Storage',
           displayOrder: 2,
-          options: [
-            { label: 'Apple A18 Pro', value: 'apple-a18-pro' },
-            { label: 'Apple A18', value: 'apple-a18' },
-            { label: 'Snapdragon 8 Gen 3', value: 'snapdragon-8-gen-3' },
-            { label: 'Google Tensor G4', value: 'google-tensor-g4' },
-          ],
+          attributes: [
+            { attribute: attributeMap['processor'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['ram'], isRequired: true, displayOrder: 2 },
+            { attribute: attributeMap['storage'], isRequired: true, displayOrder: 3 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'ram',
-          label: 'RAM Capacity',
-          type: 'select',
-          unit: 'GB',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Battery & Power',
           displayOrder: 3,
-          options: [
-            { label: '8 GB', value: '8gb' },
-            { label: '12 GB', value: '12gb' },
-            { label: '16 GB', value: '16gb' },
-          ],
+          attributes: [
+            { attribute: attributeMap['battery_capacity'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['charging_wattage'], isRequired: false, displayOrder: 2 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'storage',
-          label: 'Internal Storage',
-          type: 'select',
-          unit: 'GB',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Connectivity & System',
           displayOrder: 4,
-          options: [
-            { label: '128 GB', value: '128gb' },
-            { label: '256 GB', value: '256gb' },
-            { label: '512 GB', value: '512gb' },
-            { label: '1 TB', value: '1tb' },
-          ],
-        },
-        {
-          key: 'battery_capacity',
-          label: 'Battery Capacity',
-          type: 'select',
-          unit: 'mAh',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 5,
-          options: [
-            { label: '3,561 mAh', value: '3561mah' },
-            { label: '4,685 mAh', value: '4685mah' },
-            { label: '5,000 mAh', value: '5000mah' },
-            { label: '5,060 mAh', value: '5060mah' },
-          ],
-        },
-        {
-          key: 'cellular_network',
-          label: 'Cellular Connectivity',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 6,
-          options: [
-            { label: '5G Sub-6 / mmWave', value: '5g' },
-            { label: '4G LTE', value: '4g-lte' },
-          ],
-        },
-        {
-          key: 'operating_system',
-          label: 'Operating System',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 7,
-          options: [
-            { label: 'iOS 18', value: 'ios-18' },
-            { label: 'Android 14', value: 'android-14' },
-          ],
+          attributes: [
+            { attribute: attributeMap['cellular_network'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['operating_system'], isRequired: true, displayOrder: 2 },
+            { attribute: attributeMap['water_resistance'], isRequired: false, displayOrder: 3 },
+          ].filter((it) => Boolean(it.attribute)),
         },
       ],
     },
     {
       name: 'Headphones & Earbuds',
       slug: 'headphones',
+      icon: 'headphones',
       description:
         'Over-ear headphones, noise cancelling acoustics, and true wireless stereo (TWS) earbuds.',
-      parameters: [
+      groups: [
         {
-          key: 'type',
-          label: 'Headphone Form Factor',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Acoustics & Design',
           displayOrder: 1,
-          options: [
-            { label: 'In-Ear (TWS)', value: 'in-ear' },
-            { label: 'Over-Ear', value: 'over-ear' },
-            { label: 'On-Ear', value: 'on-ear' },
-          ],
+          attributes: [
+            { attribute: attributeMap['type'] || attributeMap['headphone-form-factor'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['noise_cancellation'], isRequired: true, displayOrder: 2 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'connectivity',
-          label: 'Wireless Connectivity',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Battery & Connectivity',
           displayOrder: 2,
-          options: [
-            { label: 'Bluetooth 5.3', value: 'bluetooth-5-3' },
-            { label: 'Bluetooth 5.2', value: 'bluetooth-5-2' },
-            { label: 'Wired 3.5mm', value: 'wired-3-5mm' },
-          ],
-        },
-        {
-          key: 'battery_life',
-          label: 'Battery Playtime',
-          type: 'text',
-          unit: 'hrs',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 3,
-        },
-        {
-          key: 'noise_cancellation',
-          label: 'Active Noise Cancellation',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 4,
-          options: [
-            { label: 'Active Noise Cancellation (ANC)', value: 'anc' },
-            { label: 'Adaptive ANC', value: 'adaptive-anc' },
-            { label: 'Environmental Noise Cancellation (ENC)', value: 'enc' },
-            { label: 'Passive Noise Isolation', value: 'none' },
-          ],
-        },
-        {
-          key: 'water_resistance',
-          label: 'Water / Sweat Resistance',
-          type: 'select',
-          isFilterable: true,
-          isRequired: false,
-          displayOrder: 5,
-          options: [
-            { label: 'IP54 Dust & Splash Resistant', value: 'ip54' },
-            { label: 'IPX4 Sweat Resistant', value: 'ipx4' },
-            { label: 'IPX5 Water Resistant', value: 'ipx5' },
-            { label: 'Not Rated', value: 'none' },
-          ],
+          attributes: [
+            { attribute: attributeMap['connectivity'] || attributeMap['wireless-connectivity'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['battery_life'], isRequired: true, displayOrder: 2 },
+            { attribute: attributeMap['water_resistance'], isRequired: false, displayOrder: 3 },
+          ].filter((it) => Boolean(it.attribute)),
         },
       ],
     },
     {
       name: 'Laptop & Computer',
       slug: 'laptop',
+      icon: 'laptop',
       description: 'Pro laptops, MacBooks, and creator workstations.',
-      parameters: [
+      groups: [
         {
-          key: 'screen_size',
-          label: 'Display Screen Size',
-          type: 'text',
-          unit: 'inch',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Display & Graphics',
           displayOrder: 1,
+          attributes: [
+            { attribute: attributeMap['screen_size'], isRequired: true, displayOrder: 1 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'cpu',
-          label: 'Processor (CPU)',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Processor & Memory',
           displayOrder: 2,
-          options: [
-            { label: 'Apple M3 Max', value: 'apple-m3-max' },
-            { label: 'Apple M3 Pro', value: 'apple-m3-pro' },
-            { label: 'Apple M3', value: 'apple-m3' },
-            { label: 'Intel Core Ultra 9', value: 'intel-ultra-9' },
-          ],
-        },
-        {
-          key: 'ram',
-          label: 'Unified RAM Memory',
-          type: 'select',
-          unit: 'GB',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 3,
-          options: [
-            { label: '16 GB', value: '16gb' },
-            { label: '32 GB', value: '32gb' },
-            { label: '36 GB', value: '36gb' },
-            { label: '64 GB', value: '64gb' },
-          ],
-        },
-        {
-          key: 'storage',
-          label: 'SSD Storage',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 4,
-          options: [
-            { label: '512 GB SSD', value: '512gb-ssd' },
-            { label: '1 TB SSD', value: '1tb-ssd' },
-            { label: '2 TB SSD', value: '2tb-ssd' },
-          ],
+          attributes: [
+            { attribute: attributeMap['cpu'] || attributeMap['processor'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['ram'], isRequired: true, displayOrder: 2 },
+            { attribute: attributeMap['storage'], isRequired: true, displayOrder: 3 },
+          ].filter((it) => Boolean(it.attribute)),
         },
       ],
     },
     {
       name: 'Smartwatch',
       slug: 'smartwatch',
+      icon: 'watch',
       description: 'Adventure smartwatches, health trackers, and wearable tech.',
-      parameters: [
+      groups: [
         {
-          key: 'display_type',
-          label: 'Display Panel Type',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Display & Enclosure',
           displayOrder: 1,
-          options: [
-            { label: 'LTPO OLED Retina', value: 'ltpo-oled' },
-            { label: 'Super AMOLED', value: 'super-amoled' },
-          ],
+          attributes: [
+            { attribute: attributeMap['display_type'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['case_material'], isRequired: false, displayOrder: 2 },
+          ].filter((it) => Boolean(it.attribute)),
         },
         {
-          key: 'battery_life',
-          label: 'Battery Life',
-          type: 'text',
-          unit: 'hrs',
-          isFilterable: true,
-          isRequired: true,
+          name: 'Battery & Durability',
           displayOrder: 2,
-        },
-        {
-          key: 'water_resistance',
-          label: 'Water Resistance Depth',
-          type: 'select',
-          isFilterable: true,
-          isRequired: true,
-          displayOrder: 3,
-          options: [
-            { label: '100m / 10ATM (Diving)', value: '100m-dive' },
-            { label: '50m / 5ATM (Swimming)', value: '50m-swim' },
-          ],
-        },
-        {
-          key: 'case_material',
-          label: 'Case Enclosure Material',
-          type: 'select',
-          isFilterable: true,
-          isRequired: false,
-          displayOrder: 4,
-          options: [
-            { label: 'Aerospace Grade Titanium', value: 'aerospace-titanium' },
-            { label: 'Recycled Aluminum', value: 'recycled-aluminum' },
-          ],
+          attributes: [
+            { attribute: attributeMap['battery_life'], isRequired: true, displayOrder: 1 },
+            { attribute: attributeMap['water_resistance'], isRequired: true, displayOrder: 2 },
+          ].filter((it) => Boolean(it.attribute)),
         },
       ],
     },
   ]
 
   const classMap: Record<string, string> = {}
-  const classParamsMap: Record<string, Record<string, { label: string; unit: string }>> = {}
+  const classParamsMap: Record<string, Record<string, { label: string; unit: string; group: string }>> = {}
   for (const c of classesData) {
     const doc = await payload.create({
       collection: 'classes',
@@ -1682,15 +1968,20 @@ export async function seedElectronicsStore(
     })
     classMap[c.slug] = String(doc.id)
     classParamsMap[c.slug] = {}
-    if (Array.isArray(c.parameters)) {
-      for (const p of c.parameters) {
-        const paramLabel =
-          typeof p.label === 'object' && p.label !== null
-            ? (p.label as any).en || Object.values(p.label)[0] || p.key
-            : String(p.label || p.key)
-        classParamsMap[c.slug][p.key] = {
-          label: paramLabel,
-          unit: p.unit || '',
+    if (Array.isArray(c.groups)) {
+      for (const g of c.groups) {
+        if (Array.isArray(g.attributes)) {
+          for (const item of g.attributes) {
+            for (const [key, id] of Object.entries(attributeMap)) {
+              if (id === item.attribute) {
+                classParamsMap[c.slug][key] = {
+                  label: attrLabelMap[key] || key,
+                  unit: attrUnitMap[key] || '',
+                  group: typeof g.name === 'string' ? g.name : ((g.name as any)?.en || 'General'),
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -1703,7 +1994,15 @@ export async function seedElectronicsStore(
     categorySlug: string
     brandSlug: string
     classSlug?: string
-    specifications?: Array<{ key: string; value: string; label?: string; unit?: string }>
+    specifications?: Array<{
+      key: string
+      value: string
+      label?: string
+      unit?: string
+      group?: string
+      isCustom?: boolean
+      isAdHoc?: boolean
+    }>
     basePrice: number
     compareAtPrice?: number
     saleDisplayMode?: string
@@ -1730,12 +2029,20 @@ export async function seedElectronicsStore(
       classSlug: 'smartphone',
       specifications: [
         { key: 'screen_size', value: '6.9' },
+        { key: 'display_tech', value: 'ltpo-retina-xdr' },
+        { key: 'refresh_rate', value: '120hz' },
         { key: 'processor', value: 'apple-a18-pro' },
         { key: 'ram', value: '8gb' },
         { key: 'storage', value: '256gb' },
         { key: 'battery_capacity', value: '4685mah' },
+        { key: 'charging_wattage', value: '30' },
         { key: 'cellular_network', value: '5g' },
         { key: 'operating_system', value: 'ios-18' },
+        { key: 'water_resistance', value: 'ip68' },
+        // Ad-hoc Custom Specification
+        { key: 'camera_control_btn', label: 'Camera Control Sensor', value: 'Sapphire Crystal Capacitive Switch with Force Sensor', group: 'Advanced Controls', isCustom: true },
+        // Ad-hoc Global Attribute
+        { key: 'case_material', value: 'aerospace-titanium', group: 'Build & Material', isAdHoc: true },
       ],
       basePrice: 172000,
       compareAtPrice: 185000,
@@ -1766,6 +2073,7 @@ export async function seedElectronicsStore(
         { key: 'battery_capacity', value: '3561mah' },
         { key: 'cellular_network', value: '5g' },
         { key: 'operating_system', value: 'ios-18' },
+        { key: 'case_material', value: 'recycled-aluminum', group: 'Build & Material', isAdHoc: true },
       ],
       basePrice: 112000,
       compareAtPrice: 120000,
@@ -1787,12 +2095,19 @@ export async function seedElectronicsStore(
       classSlug: 'smartphone',
       specifications: [
         { key: 'screen_size', value: '6.8' },
+        { key: 'display_tech', value: 'dynamic-amoled-2x' },
+        { key: 'refresh_rate', value: '120hz' },
         { key: 'processor', value: 'snapdragon-8-gen-3' },
         { key: 'ram', value: '12gb' },
         { key: 'storage', value: '256gb' },
         { key: 'battery_capacity', value: '5000mah' },
         { key: 'cellular_network', value: '5g' },
         { key: 'operating_system', value: 'android-14' },
+        { key: 'water_resistance', value: 'ip68' },
+        // Ad-hoc Custom Specification
+        { key: 'spen_latency', label: 'S-Pen Digitizer Latency', value: '2.8ms Ultra-Low Latency', unit: 'ms', group: 'Productivity & Pen', isCustom: true },
+        // Ad-hoc Global Attribute
+        { key: 'case_material', value: 'aerospace-titanium', group: 'Build & Material', isAdHoc: true },
       ],
       basePrice: 148000,
       compareAtPrice: 162000,
@@ -1814,12 +2129,17 @@ export async function seedElectronicsStore(
       classSlug: 'smartphone',
       specifications: [
         { key: 'screen_size', value: '6.8' },
+        { key: 'display_tech', value: 'ltpo-oled' },
+        { key: 'refresh_rate', value: '120hz' },
         { key: 'processor', value: 'google-tensor-g4' },
         { key: 'ram', value: '16gb' },
         { key: 'storage', value: '128gb' },
         { key: 'battery_capacity', value: '5060mah' },
         { key: 'cellular_network', value: '5g' },
         { key: 'operating_system', value: 'android-14' },
+        { key: 'water_resistance', value: 'ip68' },
+        // Ad-hoc Custom Specification
+        { key: 'ai_coprocessor', label: 'AI Tensor Processing', value: 'Gemini Nano On-Device Multimodal Engine', group: 'AI & Intelligence', isCustom: true },
       ],
       basePrice: 135000,
       compareAtPrice: 145000,
@@ -2552,18 +2872,6 @@ export async function seedElectronicsStore(
   for (const p of productsToSeed) {
     const catId = categoryMap[p.categorySlug]
     const brandId = brandMap[p.brandSlug]
-    const attributesList: string[] = []
-    if (p.name.includes('Pro Max') && attributeMap['pro-max-series']) attributesList.push(attributeMap['pro-max-series'])
-    if (p.name.includes('Ultra') && attributeMap['ultra-series']) attributesList.push(attributeMap['ultra-series'])
-    if (p.name.includes('M3') && attributeMap['m3-silicon-series']) attributesList.push(attributeMap['m3-silicon-series'])
-    if (p.name.includes('Prime') && attributeMap['ganprime-series']) attributesList.push(attributeMap['ganprime-series'])
-    if (p.name.includes('BRAVIA') && attributeMap['bravia-xr-series']) attributesList.push(attributeMap['bravia-xr-series'])
-    if ((p.name.includes('Pro') || p.name.includes('Ultra')) && attributeMap['120hz-oled']) attributesList.push(attributeMap['120hz-oled'])
-    if ((p.name.includes('Pro') || p.name.includes('Ultra') || p.name.includes('Pixel')) && attributeMap['5g-cellular']) attributesList.push(attributeMap['5g-cellular'])
-    if ((p.name.includes('Headphones') || p.name.includes('Buds') || p.name.includes('Earbuds') || p.name.includes('QuietComfort')) && attributeMap['active-noise-cancelling']) attributesList.push(attributeMap['active-noise-cancelling'])
-    if ((p.name.includes('Titanium') || p.name.includes('Pro Max')) && attributeMap['aerospace-titanium']) attributesList.push(attributeMap['aerospace-titanium'])
-    if ((p.name.includes('Pro Max') || p.name.includes('Ultra') || p.name.includes('Action') || p.name.includes('Osmo')) && attributeMap['ip68-water-resistant']) attributesList.push(attributeMap['ip68-water-resistant'])
-
     const imgId = findMediaId(p.imageKey)
     const productDoc = await payload.create({
       collection: 'products',
@@ -2574,18 +2882,32 @@ export async function seedElectronicsStore(
         featured: Boolean(p.featured),
         brand: brandId || null,
         categories: catId ? [catId] : [],
-        attributes: attributesList,
         productClass: p.classSlug && classMap[p.classSlug] ? classMap[p.classSlug] : null,
-        specifications: (p.specifications || []).map((spec) => {
+        description: makeLexicalDoc([
+          p.description,
+          '100% authentic product with official manufacturer warranty, genuine retail packaging, and verified serial registration.',
+        ]),
+        shortDescription: p.description,
+        rating: 4.8,
+        totalReviews: Math.floor(Math.random() * 15) + 6,
+        specifications: (p.specifications || []).map((spec: any, idx: number) => {
           const paramInfo =
             p.classSlug && classParamsMap[p.classSlug]
               ? classParamsMap[p.classSlug][spec.key]
               : null
+          const attrId = attributeMap[spec.key] || null
+          const isCustom = Boolean(spec.isCustom)
+          const isAdHoc = Boolean(spec.isAdHoc) || (!paramInfo && !isCustom && Boolean(attrId))
           return {
+            attribute: attrId,
             key: spec.key,
             value: spec.value,
-            label: spec.label || paramInfo?.label || spec.key,
-            unit: spec.unit !== undefined ? spec.unit : (paramInfo?.unit || ''),
+            label: spec.label || paramInfo?.label || attrLabelMap[spec.key] || spec.key,
+            unit: spec.unit !== undefined ? spec.unit : (paramInfo?.unit || attrUnitMap[spec.key] || ''),
+            group: spec.group || attrGroupMap[spec.key] || (isCustom ? 'Additional Specifications' : 'General'),
+            isCustom,
+            isAdHoc,
+            displayOrder: idx + 1,
           }
         }),
         images: imgId ? [{ image: imgId }] : [],

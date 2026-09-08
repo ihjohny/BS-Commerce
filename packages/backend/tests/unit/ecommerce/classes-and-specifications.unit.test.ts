@@ -32,17 +32,21 @@ test('parseSpecsFromSearchParams parses single and multi-value specs', () => {
   assert.deepEqual(emptyResult.specs, {})
 })
 
-test('validateClassSpecifications allows product without class', async () => {
+test('validateClassSpecifications allows product without class and preserves custom specs', async () => {
   const data = {
     name: 'Unclassed Item',
     productClass: null,
-    specifications: [],
+    specifications: [
+      { key: 'custom_feature', value: 'Special Edition', isCustom: true },
+    ],
   }
   const result = await validateClassSpecifications({
     data,
-    req: { payload: {} as any },
+    req: { payload: {} as any } as any,
   })
   assert.equal(result.name, 'Unclassed Item')
+  assert.equal(result.specifications.length, 1)
+  assert.equal(result.specifications[0].isCustom, true)
 })
 
 test('validateClassSpecifications passes when required specs are present and valid', async () => {
@@ -89,7 +93,7 @@ test('validateClassSpecifications passes when required specs are present and val
 
   const result = await validateClassSpecifications({
     data,
-    req: { payload: mockPayload as any },
+    req: { payload: mockPayload as any } as any,
   })
   assert.equal(result.name, 'Anker PowerBank')
   // Verify label and unit were auto-populated
@@ -97,7 +101,7 @@ test('validateClassSpecifications passes when required specs are present and val
   assert.equal(result.specifications[1].label, 'Total Output')
 })
 
-test('validateClassSpecifications purges old class parameters when class changes', async () => {
+test('validateClassSpecifications marks non-template specs as ad-hoc when class changes', async () => {
   const mockPayload = {
     findByID: async ({ collection, id }: any) => {
       if (collection === 'classes' && id === 'class-powerbank') {
@@ -121,47 +125,30 @@ test('validateClassSpecifications purges old class parameters when class changes
     },
   }
 
-  // Product previously had smartphone specs (screen_size, processor), now class is powerbank
   const data = {
     name: 'Converted Device',
     status: 'published',
     productClass: 'class-powerbank',
     specifications: [
       { key: 'screen_size', value: '6.8' },
-      { key: 'processor', value: 'snapdragon' },
       { key: 'capacity', value: '20000mah' },
     ],
   }
 
   const result = await validateClassSpecifications({
     data,
-    req: { payload: mockPayload as any },
+    req: { payload: mockPayload as any } as any,
   })
 
-  // Should keep ONLY 'capacity' and purge 'screen_size' & 'processor'
-  assert.equal(result.specifications.length, 1)
-  assert.equal(result.specifications[0].key, 'capacity')
-  assert.equal(result.specifications[0].value, '20000mah')
-  assert.equal(result.specifications[0].label, 'Battery Capacity')
-  assert.equal(result.specifications[0].unit, 'mAh')
-})
-
-test('validateClassSpecifications clears specifications when productClass is removed', async () => {
-  const data = {
-    name: 'Classless Device',
-    status: 'draft',
-    productClass: null,
-    specifications: [
-      { key: 'capacity', value: '20000mah' },
-    ],
-  }
-
-  const result = await validateClassSpecifications({
-    data,
-    req: { payload: {} as any },
-  })
-
-  assert.deepEqual(result.specifications, [])
+  // Template spec is matched, non-template is preserved as isAdHoc
+  assert.equal(result.specifications.length, 2)
+  const capacitySpec = result.specifications.find((s: any) => s.key === 'capacity')
+  const screenSpec = result.specifications.find((s: any) => s.key === 'screen_size')
+  assert.equal(capacitySpec.value, '20000mah')
+  assert.equal(capacitySpec.label, 'Battery Capacity')
+  assert.equal(capacitySpec.unit, 'mAh')
+  assert.equal(capacitySpec.isAdHoc, false)
+  assert.equal(screenSpec.isAdHoc, true)
 })
 
 test('validateClassSpecifications rejects when required spec is missing on published product', async () => {
@@ -193,7 +180,7 @@ test('validateClassSpecifications rejects when required spec is missing on publi
     () =>
       validateClassSpecifications({
         data,
-        req: { payload: mockPayload as any },
+        req: { payload: mockPayload as any } as any,
       }),
     /required specification "Battery Capacity"/i,
   )
@@ -231,7 +218,7 @@ test('validateClassSpecifications rejects when select spec value is not in allow
     () =>
       validateClassSpecifications({
         data,
-        req: { payload: mockPayload as any },
+        req: { payload: mockPayload as any } as any,
       }),
     /invalid value "99999mah" for specification "Battery Capacity"/i,
   )

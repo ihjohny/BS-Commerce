@@ -6,9 +6,9 @@ export const Attributes: CollectionConfig = {
   slug: 'attributes',
   admin: {
     useAsTitle: 'label',
-    defaultColumns: ['label', 'key', 'type', 'customType', 'slug', 'featured', 'displayOrder'],
+    defaultColumns: ['label', 'key', 'dataType', 'category', 'unit', 'defaultGroup', 'isFilterable', 'displayOrder'],
     group: 'Catalog',
-    description: 'Manage product specifications, series, features, and dynamic filter facets.',
+    description: 'Manage reusable product specifications, series, features, and dynamic filter facets with predefined standardized values.',
   },
   access: {
     read: () => true,
@@ -23,7 +23,7 @@ export const Attributes: CollectionConfig = {
       required: true,
       localized: true,
       admin: {
-        description: 'Display name (e.g. "Galaxy S24 Series", "120Hz OLED", "Active Noise Cancelling", "Titanium")',
+        description: 'Display name (e.g. "Screen Refresh Rate", "Battery Capacity", "RAM", "Water Resistance", "Series")',
       },
     },
     {
@@ -33,44 +33,115 @@ export const Attributes: CollectionConfig = {
       unique: true,
       index: true,
       admin: {
-        description: 'Unique internal code (e.g. "series-galaxy-s24", "spec-120hz-oled", "feature-anc")',
+        description: 'Unique internal code (e.g. "refresh_rate", "battery_capacity", "ram", "water_resistance", "series")',
+      },
+    },
+    slugField('label'),
+    {
+      name: 'dataType',
+      type: 'select',
+      required: true,
+      defaultValue: 'select',
+      index: true,
+      options: [
+        { label: 'Select (Predefined Options - Single Choice)', value: 'select' },
+        { label: 'Multi-Select (Predefined Options - Multiple Choices)', value: 'multiselect' },
+        { label: 'Text (Freeform Text)', value: 'text' },
+        { label: 'Number (Numeric Value with Unit)', value: 'number' },
+        { label: 'Boolean (Yes / No Toggle)', value: 'boolean' },
+        { label: 'Color Swatch', value: 'color' },
+      ],
+      admin: {
+        description: 'Data input type. Use Select or Multi-Select to provide standardized predefined values for fast one-click assignment and clean facet filters.',
       },
     },
     {
-      name: 'type',
+      name: 'category',
       type: 'select',
       required: true,
       defaultValue: 'specification',
       index: true,
       options: [
         { label: 'Technical Specification', value: 'specification' },
-        { label: 'Product Series', value: 'series' },
+        { label: 'Product Series / Line', value: 'series' },
         { label: 'Feature', value: 'feature' },
-        { label: 'Material', value: 'material' },
-        { label: 'Connectivity', value: 'connectivity' },
+        { label: 'Material & Build', value: 'material' },
+        { label: 'Connectivity & Network', value: 'connectivity' },
         { label: 'Compatibility', value: 'compatibility' },
-        { label: 'Certification', value: 'certification' },
-        { label: 'Custom', value: 'custom' },
+        { label: 'Certification & Durability', value: 'certification' },
+        { label: 'Dimensions & Weight', value: 'dimensions' },
+        { label: 'General / Miscellaneous', value: 'general' },
       ],
       admin: {
-        description: 'Attribute category type for filtering and grouping.',
+        description: 'High-level attribute category for grouping and facet classification.',
       },
     },
     {
-      name: 'customType',
+      name: 'unit',
       type: 'text',
       admin: {
-        description: 'Dynamic custom type identifier (e.g. "lens-mount", "fabric-weight") when type is custom.',
-        condition: (data) => data?.type === 'custom',
+        description: 'Measurement unit suffix (e.g. "mAh", "W", "GB", "inch", "Hz", "kg", "V").',
       },
     },
-    slugField('label'),
     {
-      name: 'description',
-      type: 'textarea',
-      localized: true,
+      name: 'defaultGroup',
+      type: 'text',
       admin: {
-        description: 'Brief description shown on attribute or facet landing pages.',
+        description: 'Default specification section group on PDP (e.g. "Display", "Performance", "Battery & Charging", "Connectivity", "General").',
+      },
+    },
+    {
+      name: 'options',
+      type: 'array',
+      labels: {
+        singular: 'Predefined Option / Value',
+        plural: 'Predefined Options / Values',
+      },
+      admin: {
+        description: 'Standardized predefined values for one-click assignment to any product without manual typing.',
+        condition: (data) => data?.dataType === 'select' || data?.dataType === 'multiselect' || data?.dataType === 'color',
+      },
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          required: true,
+          localized: true,
+          admin: {
+            description: 'Option label (e.g. "120Hz LTPO OLED", "IP68 Water Resistant", "16 GB", "Natural Titanium")',
+          },
+        },
+        {
+          name: 'value',
+          type: 'text',
+          required: true,
+          admin: {
+            description: 'Stored filter key/value (e.g. "120hz-ltpo-oled", "ip68", "16gb", "natural-titanium")',
+          },
+        },
+        {
+          name: 'hexColor',
+          type: 'text',
+          admin: {
+            description: 'Optional hex color code for visual swatches (e.g. "#A2AAAD" for Silver).',
+          },
+        },
+      ],
+    },
+    {
+      name: 'isFilterable',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        description: 'Enable catalog facet filtering for this attribute.',
+      },
+    },
+    {
+      name: 'isComparable',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        description: 'Include this attribute in product comparison tables.',
       },
     },
     {
@@ -90,44 +161,12 @@ export const Attributes: CollectionConfig = {
       },
     },
     {
-      name: 'properties',
-      type: 'array',
-      labels: {
-        singular: 'Dynamic Property',
-        plural: 'Dynamic Properties',
-      },
+      name: 'description',
+      type: 'textarea',
+      localized: true,
       admin: {
-        description: 'Dynamic extensible key-value properties (e.g., unit, hexColor, wattage).',
+        description: 'Brief description shown on attribute or facet landing pages.',
       },
-      fields: [
-        {
-          name: 'propertyKey',
-          type: 'text',
-          required: true,
-          admin: {
-            description: 'Property identifier (e.g. "wattage", "refreshRate", "panelType")',
-          },
-        },
-        {
-          name: 'propertyValue',
-          type: 'text',
-          required: true,
-          admin: {
-            description: 'Property value (e.g. "65W", "120Hz", "LTPO OLED")',
-          },
-        },
-        {
-          name: 'propertyType',
-          type: 'select',
-          defaultValue: 'text',
-          options: [
-            { label: 'Text', value: 'text' },
-            { label: 'Number', value: 'number' },
-            { label: 'Boolean', value: 'boolean' },
-            { label: 'Color Hex', value: 'color' },
-          ],
-        },
-      ],
     },
   ],
   timestamps: true,

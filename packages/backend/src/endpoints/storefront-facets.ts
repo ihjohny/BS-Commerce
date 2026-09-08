@@ -155,7 +155,7 @@ export async function aggregateCatalogFacets(
     collection: 'classes',
     where: { id: { in: Array.from(classIdsInScope) } },
     limit: 100,
-    depth: 1,
+    depth: 2,
     overrideAccess: true,
     locale,
   })
@@ -203,8 +203,41 @@ export async function aggregateCatalogFacets(
   for (const c of classesDocs) {
     const cid = String(c.id)
     const classCounts = countsMap.get(cid) || new Map()
-    const rawParams = Array.isArray(c.parameters) ? c.parameters : []
 
+    // Consolidate parameters from groups.attributes AND legacy parameters
+    const rawParamsMap = new Map<string, any>()
+
+    if (Array.isArray(c.groups)) {
+      for (const grp of c.groups) {
+        if (Array.isArray(grp.attributes)) {
+          for (const item of grp.attributes) {
+            const a = typeof item.attribute === 'object' && item.attribute !== null ? item.attribute : null
+            if (a && a.key && !rawParamsMap.has(a.key)) {
+              rawParamsMap.set(a.key, {
+                key: a.key,
+                label: a.label,
+                type: a.dataType || 'select',
+                options: a.options,
+                unit: a.unit,
+                isFilterable: a.isFilterable !== false,
+                isRequired: Boolean(item.isRequired),
+                displayOrder: Number(item.displayOrder) || Number(a.displayOrder) || 0,
+              })
+            }
+          }
+        }
+      }
+    }
+
+    if (Array.isArray(c.parameters)) {
+      for (const param of c.parameters) {
+        if (param && param.key && !rawParamsMap.has(param.key)) {
+          rawParamsMap.set(param.key, param)
+        }
+      }
+    }
+
+    const rawParams = Array.from(rawParamsMap.values())
     const formattedParams: ClassFacetsResult['parameters'] = []
 
     for (const param of rawParams) {
@@ -215,7 +248,7 @@ export async function aggregateCatalogFacets(
 
       let optionsList: FacetOptionResult[] = []
 
-      if (param.type === 'select' && Array.isArray(param.options)) {
+      if ((param.type === 'select' || param.type === 'multiselect') && Array.isArray(param.options)) {
         // Predefined options
         for (const opt of param.options) {
           const optVal = String(opt.value)

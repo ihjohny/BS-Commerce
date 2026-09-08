@@ -256,104 +256,174 @@ export const validateClassSpecifications: CollectionBeforeValidateHook = async (
   const d = data as Record<string, unknown>
   const productClassId = toId(d.productClass)
 
-  // If productClass is explicitly cleared or missing, remove specifications
-  if (!productClassId) {
-    if (d.productClass === null || d.productClass === '') {
-      d.specifications = []
-    }
-    return data
-  }
+  const specs = Array.isArray(d.specifications)
+    ? (d.specifications as Array<Record<string, unknown>>)
+    : []
 
   if (!req?.payload) return data
 
   try {
-    const classDoc = (await req.payload.findByID({
-      collection: 'classes',
-      id: productClassId,
-      depth: 1,
-      overrideAccess: true,
-    })) as Record<string, unknown> | null
+    let templateAttrMap = new Map<string, Record<string, unknown>>()
 
-    if (!classDoc || !Array.isArray(classDoc.parameters)) return data
+    if (productClassId) {
+      const classDoc = (await req.payload.findByID({
+        collection: 'classes',
+        id: productClassId,
+        depth: 2,
+        overrideAccess: true,
+      })) as Record<string, unknown> | null
 
-    const allowedParamMap = new Map<string, Record<string, unknown>>()
-    for (const param of classDoc.parameters as Array<Record<string, unknown>>) {
-      if (param && param.key) {
-        allowedParamMap.set(String(param.key), param)
+      if (classDoc) {
+        // Collect from groups.attributes
+        if (Array.isArray(classDoc.groups)) {
+          for (const group of classDoc.groups as Array<Record<string, unknown>>) {
+            const groupName =
+              typeof group.name === 'object' && group.name !== null
+                ? (group.name as Record<string, string>).en || Object.values(group.name)[0] || 'General'
+                : String(group.name || 'General')
+
+            if (Array.isArray(group.attributes)) {
+              for (const item of group.attributes as Array<Record<string, unknown>>) {
+                const attrObj =
+                  typeof item.attribute === 'object' && item.attribute !== null
+                    ? (item.attribute as Record<string, unknown>)
+                    : null
+                const attrKey = attrObj ? String(attrObj.key || '') : ''
+                if (attrKey) {
+                  templateAttrMap.set(attrKey, {
+                    ...attrObj,
+                    group: groupName,
+                    isRequired: item.isRequired,
+                    displayOrder: item.displayOrder,
+                  })
+                }
+              }
+            }
+          }
+        }
+
+        // Backward-compatibility: also check legacy parameters
+        if (Array.isArray(classDoc.parameters)) {
+          for (const param of classDoc.parameters as Array<Record<string, unknown>>) {
+            if (param && param.key && !templateAttrMap.has(String(param.key))) {
+              templateAttrMap.set(String(param.key), {
+                ...param,
+                group: 'General',
+              })
+            }
+          }
+        }
       }
     }
 
-    const specs = Array.isArray(d.specifications)
-      ? (d.specifications as Array<Record<string, unknown>>)
-      : []
-
-    // Clean up specifications:
-    // 1. Remove old parameters that do not belong to the current product class
-    // 2. Auto-sync label and unit from parameter definitions
+    // Process and clean specifications:
+    // 1. Preserve ad-hoc custom specifications (isCustom: true)
+    // 2. Preserve attached global attributes (isAdHoc: true or matched attribute)
+    // 3. Auto-sync label, unit, and group from template definitions
     const cleanedSpecs: Array<Record<string, unknown>> = []
-    const specMap = new Map<string, string>()
+    const linkedAttrIds = new Set<string>()
 
     for (const s of specs) {
       if (!s || typeof s !== 'object') continue
-      const k = String(s.key || '')
-      if (allowedParamMap.has(k)) {
-        const paramDef = allowedParamMap.get(k)!
-        const paramLabel =
-          typeof paramDef.label === 'object' && paramDef.label !== null
-            ? (paramDef.label as Record<string, string>).en ||
-              Object.values(paramDef.label)[0] ||
-              k
-            : String(paramDef.label || k)
-        const unitVal =
-          s.unit !== undefined && s.unit !== null && String(s.unit).trim() !== ''
-            ? String(s.unit)
-            : String(paramDef.unit || '')
-        const val =
-          s.value !== undefined && s.value !== null ? String(s.value).trim() : ''
+      const k = String(s.key || '').trim()
+      const val = s.value !== undefined && s.value !== null ? String(s.value).trim() : ''
+      if (!k || val === '') continue
+
+      const isCustom = Boolean(s.isCustom)
+      const attrId = toId(s.attribute)
+
+      if (attrId) {
+        linkedAttrIds.add(String(attrId))
+      }
+
+      if (isCustom) {
+        // Freeform custom specification
+        cleanedSpecs.push({
+          ...s,
+          key: k,
+          label: s.label ? String(s.label) : k,
+          value: val,
+          unit: s.unit ? String(s.unit) : '',
+          group: s.group ? String(s.group) : 'Additional Specifications',
+          isCustom: true,
+          isAdHoc: false,
+        })
+      } else if (templateAttrMap.has(k)) {
+        // Inherited from Class Template
+        const tDef = templateAttrMap.get(k)!
+        const tLabel =
+          typeof tDef.label === 'object' && tDef.label !== null
+            ? (tDef.label as Record<string, string>).en || Object.values(tDef.label)[0] || k
+            : String(tDef.label || k)
+        const tUnit = s.unit !== undefined && s.unit !== null && String(s.unit).trim() !== ''
+          ? String(s.unit)
+          : String(tDef.unit || '')
+        const tGroup = s.group ? String(s.group) : String(tDef.group || 'General')
 
         cleanedSpecs.push({
           ...s,
           key: k,
+          label: s.label ? String(s.label) : tLabel,
           value: val,
-          label: s.label ? String(s.label) : paramLabel,
-          unit: unitVal,
+          unit: tUnit,
+          group: tGroup,
+          isCustom: false,
+          isAdHoc: false,
         })
-        specMap.set(k, val)
+      } else {
+        // Attached ad-hoc global attribute
+        cleanedSpecs.push({
+          ...s,
+          key: k,
+          label: s.label ? String(s.label) : k,
+          value: val,
+          unit: s.unit ? String(s.unit) : '',
+          group: s.group ? String(s.group) : 'Additional Specifications',
+          isCustom: false,
+          isAdHoc: true,
+        })
       }
     }
 
     d.specifications = cleanedSpecs
 
+    // Validate required specs and select option constraints for published products
     const status = String(d.status ?? 'draft')
-    for (const [paramKey, param] of allowedParamMap.entries()) {
-      const val = specMap.get(paramKey) || ''
+    const specValueMap = new Map<string, string>()
+    for (const s of cleanedSpecs) {
+      if (s.key) specValueMap.set(String(s.key), String(s.value || ''))
+    }
 
-      if (status === 'published' && param.isRequired && !val) {
+    for (const [attrKey, attrDef] of templateAttrMap.entries()) {
+      const val = specValueMap.get(attrKey) || ''
+
+      if (status === 'published' && attrDef.isRequired && !val) {
         const paramLabel =
-          typeof param.label === 'object' && param.label !== null
-            ? (param.label as Record<string, string>).en ||
-              Object.values(param.label)[0] ||
-              paramKey
-            : String(param.label || paramKey)
+          typeof attrDef.label === 'object' && attrDef.label !== null
+            ? (attrDef.label as Record<string, string>).en ||
+              Object.values(attrDef.label)[0] ||
+              attrKey
+            : String(attrDef.label || attrKey)
         throw new APIError(`Required specification "${paramLabel}" is missing.`, 400)
       }
 
+      const isSelect = attrDef.type === 'select' || attrDef.dataType === 'select'
       if (
         val &&
-        param.type === 'select' &&
-        Array.isArray(param.options) &&
-        param.options.length > 0
+        isSelect &&
+        Array.isArray(attrDef.options) &&
+        attrDef.options.length > 0
       ) {
-        const allowed = param.options.map((o: Record<string, unknown>) =>
+        const allowed = attrDef.options.map((o: Record<string, unknown>) =>
           String(o.value).toLowerCase()
         )
         if (!allowed.includes(val.toLowerCase())) {
           const paramLabel =
-            typeof param.label === 'object' && param.label !== null
-              ? (param.label as Record<string, string>).en ||
-                Object.values(param.label)[0] ||
-                paramKey
-              : String(param.label || paramKey)
+            typeof attrDef.label === 'object' && attrDef.label !== null
+              ? (attrDef.label as Record<string, string>).en ||
+                Object.values(attrDef.label)[0] ||
+                attrKey
+              : String(attrDef.label || attrKey)
           throw new APIError(
             `Invalid value "${val}" for specification "${paramLabel}". Allowed: ${allowed.join(', ')}`,
             400
@@ -365,6 +435,7 @@ export const validateClassSpecifications: CollectionBeforeValidateHook = async (
     if (err instanceof APIError || (err?.message && err.message.includes('specification'))) {
       throw err
     }
+    req.payload.logger?.warn?.(`[Products beforeValidate] Notice validating specifications: ${err?.message || err}`)
   }
 
   return data
@@ -461,15 +532,6 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       hasMany: true,
     },
     {
-      name: 'attributes',
-      type: 'relationship',
-      relationTo: 'attributes',
-      hasMany: true,
-      admin: {
-        description: 'Series, technical specifications, and feature facets tagged to this product.',
-      },
-    },
-    {
       name: 'productClass',
       type: 'relationship',
       relationTo: 'classes',
@@ -494,10 +556,24 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
         },
       },
       fields: [
+        {
+          name: 'attribute',
+          type: 'relationship',
+          relationTo: 'attributes',
+          hasMany: false,
+          admin: {
+            description: 'Associated global attribute definition if linked.',
+          },
+        },
         { name: 'key', type: 'text', required: true },
+        { name: 'label', type: 'text', required: true },
         { name: 'value', type: 'text', required: true },
-        { name: 'label', type: 'text' },
+        { name: 'values', type: 'json' },
         { name: 'unit', type: 'text' },
+        { name: 'group', type: 'text' },
+        { name: 'isCustom', type: 'checkbox', defaultValue: false },
+        { name: 'isAdHoc', type: 'checkbox', defaultValue: false },
+        { name: 'displayOrder', type: 'number', defaultValue: 0 },
       ],
     },
     {
