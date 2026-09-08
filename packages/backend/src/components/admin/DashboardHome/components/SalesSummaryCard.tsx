@@ -26,23 +26,24 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
   return (
     <div
       style={{
-        borderRadius: 8,
-        border: '1px solid var(--theme-elevation-200)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
+        border: '1px solid var(--theme-elevation-150)',
         background: 'var(--theme-elevation-50)',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)', marginBottom: '0.25rem' }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em', marginBottom: '0.25rem' }}>
         Sales Breakdown
       </div>
-      <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginBottom: '1rem' }}>
+      <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', marginBottom: '1.25rem' }}>
         Financial breakdown for active range
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', flex: 1 }}>
         {rows.map((row) => (
           <div
             key={row.label}
@@ -50,14 +51,14 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              paddingBottom: '0.55rem',
-              borderBottom: '1px solid var(--theme-elevation-150, rgba(120, 120, 120, 0.1))',
+              paddingBottom: '0.65rem',
+              borderBottom: '1px solid var(--theme-elevation-150)',
             }}
           >
             <span
               style={{
                 fontSize: 13,
-                color: row.bold ? 'var(--theme-text)' : 'var(--theme-elevation-600, #555)',
+                color: row.bold ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
                 fontWeight: row.bold ? 700 : 500,
               }}
             >
@@ -67,7 +68,7 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
               style={{
                 fontSize: 13,
                 fontWeight: row.bold ? 700 : 600,
-                color: row.isError ? 'var(--theme-error-500, #dc2626)' : 'var(--theme-text)',
+                color: row.isError ? 'var(--bs-error, #dc2626)' : 'var(--theme-text)',
               }}
             >
               {row.isNegative && row.value > 0
@@ -80,19 +81,29 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
 
       <div
         style={{
-          marginTop: '1rem',
-          padding: '0.75rem 0.85rem',
-          borderRadius: 6,
+          marginTop: '1.25rem',
+          padding: '0.85rem 1rem',
+          borderRadius: 'var(--bs-radius-sm, 6px)',
           background: 'var(--theme-elevation-100)',
+          border: '1px solid var(--theme-elevation-150)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}
       >
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-elevation-600, #555)' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-elevation-600)' }}>
           Merchandise Margin Ratio
         </span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--theme-text)' }}>
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: 'var(--bs-primary, #2563eb)',
+            background: 'var(--bs-primary-subtle)',
+            padding: '2px 8px',
+            borderRadius: 'var(--bs-radius-full)',
+          }}
+        >
           {summary.revenue > 0 ? `${((summary.subtotal / summary.revenue) * 100).toFixed(1)}%` : '100%'}
         </span>
       </div>

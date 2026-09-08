@@ -263,7 +263,7 @@ export const validateClassSpecifications: CollectionBeforeValidateHook = async (
   if (!req?.payload) return data
 
   try {
-    let templateAttrMap = new Map<string, Record<string, unknown>>()
+    const templateAttrMap = new Map<string, Record<string, unknown>>()
 
     if (productClassId) {
       const classDoc = (await req.payload.findByID({

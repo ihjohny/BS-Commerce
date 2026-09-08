@@ -78,6 +78,7 @@ export default buildConfig({
       icons: [{ url: '/branding/brainstation-23-symbol.png', type: 'image/png' }],
     },
     components: {
+      actions: ['/components/admin/AdminControlsCluster'],
       providers: [
         {
           path: '/components/admin/AdminBrandingCssVarsProvider',

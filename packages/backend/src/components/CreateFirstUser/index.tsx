@@ -88,106 +88,157 @@ function CreateFirstUser(_props: AdminViewClientProps) {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
+    <div style={{ padding: '3rem 1.5rem', maxWidth: 440, margin: '0 auto' }}>
       <style>{`
-        .create-first-user-form button[type="submit"] { width: 100%; }
+        .create-first-user-form button[type="submit"] {
+          width: 100%;
+          height: 40px;
+          border-radius: var(--bs-radius-sm, 6px);
+          font-weight: 600;
+          font-size: 14px;
+        }
       `}</style>
-      <h1 style={{ marginBottom: '0.5rem' }}>Welcome</h1>
-      <p style={{ color: 'var(--theme-elevation-500)', marginBottom: '1.5rem' }}>
-        To begin, create your first user. This will be an admin account.
-      </p>
-      <form className="create-first-user-form" onSubmit={handleSubmit}>
-        {!showPhoneOnly && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.25rem' }}>
-              Email{showEmailOnly ? ' *' : ''}
+      <div
+        style={{
+          background: 'var(--theme-elevation-50)',
+          border: '1px solid var(--theme-elevation-150)',
+          borderRadius: 'var(--bs-radius-lg, 12px)',
+          boxShadow: 'var(--bs-shadow-md)',
+          padding: '2rem 2.25rem',
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: '0.4rem', color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
+            Welcome to BS-Commerce
+          </h1>
+          <p style={{ color: 'var(--theme-elevation-500)', fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+            Create your primary administrative credentials to access and initialize your store.
+          </p>
+        </div>
+
+        <form className="create-first-user-form" onSubmit={handleSubmit}>
+          {!showPhoneOnly && (
+            <div style={{ marginBottom: '1.1rem' }}>
+              <label htmlFor="email" style={{ display: 'block', marginBottom: '0.35rem', fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
+                Email Address{showEmailOnly ? ' *' : ''}
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required={showEmailOnly}
+                placeholder="admin@example.com"
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: 'var(--bs-radius-sm, 6px)',
+                  border: '1px solid var(--theme-elevation-200)',
+                  background: 'var(--theme-elevation-0, #fff)',
+                  color: 'var(--theme-text)',
+                  fontSize: 13.5,
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          )}
+          {!showEmailOnly && (
+            <div style={{ marginBottom: '1.1rem' }}>
+              <label htmlFor="phone" style={{ display: 'block', marginBottom: '0.35rem', fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
+                Phone Number{showPhoneOnly ? ' *' : ''}
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required={showPhoneOnly}
+                placeholder="+8801712345678"
+                style={{
+                  width: '100%',
+                  padding: '0.6rem 0.85rem',
+                  borderRadius: 'var(--bs-radius-sm, 6px)',
+                  border: '1px solid var(--theme-elevation-200)',
+                  background: 'var(--theme-elevation-0, #fff)',
+                  color: 'var(--theme-text)',
+                  fontSize: 13.5,
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          )}
+          <div style={{ marginBottom: '1.1rem' }}>
+            <label htmlFor="password" style={{ display: 'block', marginBottom: '0.35rem', fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
+              Password *
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required={showEmailOnly}
-              placeholder="admin@example.com"
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              placeholder="Minimum 8 characters"
               style={{
                 width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: 4,
-                border: '1px solid var(--theme-elevation-400)',
-                background: 'var(--theme-elevation-100)',
+                padding: '0.6rem 0.85rem',
+                borderRadius: 'var(--bs-radius-sm, 6px)',
+                border: '1px solid var(--theme-elevation-200)',
+                background: 'var(--theme-elevation-0, #fff)',
+                color: 'var(--theme-text)',
+                fontSize: 13.5,
+                boxSizing: 'border-box',
+                outline: 'none',
               }}
             />
           </div>
-        )}
-        {!showEmailOnly && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="phone" style={{ display: 'block', marginBottom: '0.25rem' }}>
-              Phone{showPhoneOnly ? ' *' : ''}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: '0.35rem', fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
+              Confirm Password *
             </label>
             <input
-              id="phone"
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              required={showPhoneOnly}
-              placeholder="+8801712345678"
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              placeholder="Re-type password"
               style={{
                 width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: 4,
-                border: '1px solid var(--theme-elevation-400)',
-                background: 'var(--theme-elevation-100)',
+                padding: '0.6rem 0.85rem',
+                borderRadius: 'var(--bs-radius-sm, 6px)',
+                border: '1px solid var(--theme-elevation-200)',
+                background: 'var(--theme-elevation-0, #fff)',
+                color: 'var(--theme-text)',
+                fontSize: 13.5,
+                boxSizing: 'border-box',
+                outline: 'none',
               }}
             />
           </div>
-        )}
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: '0.25rem' }}>
-            New Password *
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: 4,
-              border: '1px solid var(--theme-elevation-400)',
-              background: 'var(--theme-elevation-100)',
-            }}
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: '0.25rem' }}>
-            Confirm Password *
-          </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            required
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: 4,
-              border: '1px solid var(--theme-elevation-400)',
-              background: 'var(--theme-elevation-100)',
-            }}
-          />
-        </div>
-        {error && (
-          <p style={{ color: 'var(--theme-error-500)', marginBottom: '1rem', fontSize: 14 }}>{error}</p>
-        )}
-        <div style={{ marginTop: '0.5rem' }}>
-          <Button buttonStyle="primary" type="submit" disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create'}
-          </Button>
-        </div>
-      </form>
+          {error && (
+            <div
+              style={{
+                color: 'var(--bs-error, #dc2626)',
+                background: 'rgba(220, 38, 38, 0.08)',
+                border: '1px solid rgba(220, 38, 38, 0.2)',
+                borderRadius: 'var(--bs-radius-sm, 6px)',
+                padding: '0.5rem 0.75rem',
+                marginBottom: '1rem',
+                fontSize: 12.5,
+              }}
+            >
+              {error}
+            </div>
+          )}
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button buttonStyle="primary" type="submit" disabled={submitting}>
+              {submitting ? 'Creating Administrator...' : 'Create Admin Account'}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

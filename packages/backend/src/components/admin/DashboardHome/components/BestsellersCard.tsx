@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import type { BestsellingProduct, TopEngagedProduct } from '../../../lib/admin-dashboard-stats'
 
 type BestsellersCardProps = {
@@ -20,12 +21,13 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
   return (
     <div
       style={{
-        borderRadius: 8,
-        border: '1px solid var(--theme-elevation-200)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
+        border: '1px solid var(--theme-elevation-150)',
         background: 'var(--theme-elevation-50)',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
       {/* Header Tabs */}
@@ -34,24 +36,33 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: '1px solid var(--theme-elevation-200)',
-          paddingBottom: 8,
+          borderBottom: '1px solid var(--theme-elevation-150)',
+          paddingBottom: '0.75rem',
           marginBottom: '1rem',
         }}
       >
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            padding: 2,
+            borderRadius: 'var(--bs-radius-sm, 6px)',
+            background: 'var(--theme-elevation-100)',
+            border: '1px solid var(--theme-elevation-200)',
+            gap: 2,
+          }}
+        >
           <button
             onClick={() => setTab('bestsellers')}
             style={{
-              background: 'none',
               border: 'none',
-              fontSize: 13,
-              fontWeight: tab === 'bestsellers' ? 700 : 500,
-              color: tab === 'bestsellers' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: tab === 'bestsellers' ? 600 : 500,
+              color: tab === 'bestsellers' ? '#ffffff' : 'var(--theme-elevation-600)',
+              background: tab === 'bestsellers' ? 'var(--bs-primary, #2563eb)' : 'transparent',
               cursor: 'pointer',
-              padding: '4px 6px',
-              borderBottom: tab === 'bestsellers' ? '2px solid var(--theme-text)' : '2px solid transparent',
-              marginBottom: -9,
+              padding: '3px 9px',
+              transition: 'all 0.12s ease',
             }}
           >
             Bestsellers ({bestsellers.length})
@@ -59,37 +70,37 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
           <button
             onClick={() => setTab('engaged')}
             style={{
-              background: 'none',
               border: 'none',
-              fontSize: 13,
-              fontWeight: tab === 'engaged' ? 700 : 500,
-              color: tab === 'engaged' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: tab === 'engaged' ? 600 : 500,
+              color: tab === 'engaged' ? '#ffffff' : 'var(--theme-elevation-600)',
+              background: tab === 'engaged' ? 'var(--bs-primary, #2563eb)' : 'transparent',
               cursor: 'pointer',
-              padding: '4px 6px',
-              borderBottom: tab === 'engaged' ? '2px solid var(--theme-text)' : '2px solid transparent',
-              marginBottom: -9,
+              padding: '3px 9px',
+              transition: 'all 0.12s ease',
             }}
           >
             Wishlisted & Rated ({topEngaged.length})
           </button>
         </div>
 
-        <a
+        <Link
           href="/admin/collections/products"
-          style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)', textDecoration: 'none' }}
+          style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--bs-primary, #2563eb)', textDecoration: 'none' }}
         >
           Catalog &rarr;
-        </a>
+        </Link>
       </div>
 
       {tab === 'bestsellers' && (
         <>
           {bestsellers.length === 0 ? (
-            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
-              No product sales in this period.
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+              No product sales recorded in this period.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {bestsellers.map((item, idx) => (
                 <a
                   key={item.id + idx}
@@ -102,18 +113,28 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                     textDecoration: 'none',
                     color: 'inherit',
                     padding: '8px 10px',
-                    borderRadius: 6,
+                    borderRadius: 'var(--bs-radius-sm, 6px)',
                     background: 'var(--theme-elevation-100)',
-                    border: '1px solid var(--theme-elevation-150, rgba(120,120,120,0.08))',
+                    border: '1px solid var(--theme-elevation-150)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-100)'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     <div
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 4,
-                        background: 'var(--theme-elevation-200)',
+                        width: 36,
+                        height: 36,
+                        borderRadius: 6,
+                        background: idx === 0 ? '#fef3c7' : idx === 1 ? '#f1f5f9' : idx === 2 ? '#ffedd5' : 'var(--theme-elevation-200)',
+                        border: idx < 3 ? `1px solid ${idx === 0 ? '#fde68a' : idx === 1 ? '#e2e8f0' : '#fed7aa'}` : 'none',
                         overflow: 'hidden',
                         flexShrink: 0,
                         display: 'flex',
@@ -121,7 +142,7 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                         justifyContent: 'center',
                         fontSize: 11,
                         fontWeight: 700,
-                        color: 'var(--theme-elevation-500)',
+                        color: idx === 0 ? '#b45309' : idx === 1 ? '#475569' : idx === 2 ? '#c2410c' : 'var(--theme-elevation-500)',
                       }}
                     >
                       {item.imageUrl ? (
@@ -143,17 +164,17 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                       >
                         {item.name}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
-                        SKU: {item.sku || 'N/A'} &bull; {formatCurrency(item.price, currency)}
+                      <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+                        {item.sku ? <span style={{ fontFamily: 'monospace' }}>{item.sku}</span> : 'No SKU'} &bull; {formatCurrency(item.price, currency)}
                       </div>
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text)' }}>
-                      {item.unitsSold} sold
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--theme-text)' }}>
+                      {item.unitsSold} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--theme-elevation-500)' }}>sold</span>
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--bs-primary, #2563eb)', marginTop: 2 }}>
                       {formatCurrency(item.revenue, currency)}
                     </div>
                   </div>
@@ -167,11 +188,11 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
       {tab === 'engaged' && (
         <>
           {topEngaged.length === 0 ? (
-            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
               No product engagement records yet.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {topEngaged.map((item, idx) => (
                 <a
                   key={item.id + idx}
@@ -184,17 +205,26 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                     textDecoration: 'none',
                     color: 'inherit',
                     padding: '8px 10px',
-                    borderRadius: 6,
+                    borderRadius: 'var(--bs-radius-sm, 6px)',
                     background: 'var(--theme-elevation-100)',
-                    border: '1px solid var(--theme-elevation-150, rgba(120,120,120,0.08))',
+                    border: '1px solid var(--theme-elevation-150)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-100)'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     <div
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 4,
+                        width: 36,
+                        height: 36,
+                        borderRadius: 6,
                         background: 'var(--theme-elevation-200)',
                         overflow: 'hidden',
                         flexShrink: 0,
@@ -225,19 +255,19 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
                       >
                         {item.name}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
-                        SKU: {item.sku || 'N/A'} &bull; {formatCurrency(item.price, currency)}
+                      <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+                        {item.sku ? <span style={{ fontFamily: 'monospace' }}>{item.sku}</span> : 'No SKU'} &bull; {formatCurrency(item.price, currency)}
                       </div>
                     </div>
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)' }}>
-                      {item.wishlistCount} saves
+                      {item.wishlistCount} <span style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>saves</span>
                     </div>
                     {item.rating > 0 && (
-                      <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
-                        ★ {item.rating.toFixed(1)} ({item.totalReviews})
+                      <div style={{ fontSize: 11.5, fontWeight: 600, color: '#f59e0b', marginTop: 2 }}>
+                        ★ {item.rating.toFixed(1)} <span style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)' }}>({item.totalReviews})</span>
                       </div>
                     )}
                   </div>

@@ -593,18 +593,20 @@ export function ReportHeader({
   const categoryReports = Object.values(REPORT_DEFINITIONS).filter((r) => r.category === category)
 
   const inputStyle: React.CSSProperties = {
-    padding: '0.45rem 0.75rem',
-    borderRadius: 6,
+    padding: '0.45rem 0.8rem',
+    borderRadius: 'var(--bs-radius-sm, 6px)',
     border: '1px solid var(--theme-elevation-200)',
-    background: 'var(--theme-elevation-0, #fff)',
+    background: 'var(--theme-elevation-50)',
     color: 'var(--theme-text)',
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: 500,
     outline: 'none',
     cursor: 'pointer',
     fontFamily: 'inherit',
     height: 34,
     boxSizing: 'border-box',
+    boxShadow: 'var(--bs-shadow-xs)',
+    transition: 'all 0.15s ease',
   }
 
   return (
@@ -777,10 +779,11 @@ export function ReportHeader({
           display: 'flex',
           flexDirection: 'column',
           gap: '0.85rem',
-          padding: '0.85rem 1.15rem',
-          borderRadius: 8,
+          padding: '0.9rem 1.25rem',
+          borderRadius: 'var(--bs-radius-md, 8px)',
           background: 'var(--theme-elevation-50)',
-          border: '1px solid var(--theme-elevation-200)',
+          border: '1px solid var(--theme-elevation-150)',
+          boxShadow: 'var(--bs-shadow-xs)',
         }}
       >
         {/* Active Report Title & Description */}

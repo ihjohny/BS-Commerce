@@ -4,13 +4,13 @@ import React from 'react'
 
 export function ReportsSkeleton() {
   const pulseStyle: React.CSSProperties = {
-    background: 'var(--theme-elevation-150, #e2e8f0)',
-    borderRadius: 6,
+    background: 'var(--theme-elevation-150)',
+    borderRadius: 'var(--bs-radius-sm, 6px)',
     animation: 'pulse 1.5s ease-in-out infinite',
   }
 
   return (
-    <div style={{ padding: '1.5rem 2rem', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: '1.75rem 2rem 3rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
       {/* Title & Controls Skeleton */}
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ ...pulseStyle, width: 280, height: 40 }} />

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import type { NewCustomer } from '../../../lib/admin-dashboard-stats'
 
 type NewCustomersCardProps = {
@@ -20,12 +21,13 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
   return (
     <div
       style={{
-        borderRadius: 8,
-        border: '1px solid var(--theme-elevation-200)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
+        border: '1px solid var(--theme-elevation-150)',
         background: 'var(--theme-elevation-50)',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
       <div
@@ -33,37 +35,39 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '0.85rem',
+          marginBottom: '1rem',
+          paddingBottom: '0.75rem',
+          borderBottom: '1px solid var(--theme-elevation-150)',
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
             New Customers
           </div>
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
-            Recent user registrations
+          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+            Recent user registrations and activity
           </div>
         </div>
 
-        <a
+        <Link
           href="/admin/collections/users"
           style={{
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: 600,
-            color: 'var(--theme-text)',
+            color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
           }}
         >
-          View All &rarr;
-        </a>
+          Users &rarr;
+        </Link>
       </div>
 
       {customers.length === 0 ? (
-        <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
           No customer accounts found.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {customers.map((c) => {
             const initials = c.name
               .split(' ')
@@ -85,25 +89,35 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                   textDecoration: 'none',
                   color: 'inherit',
                   padding: '8px 10px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--bs-radius-sm, 6px)',
                   background: 'var(--theme-elevation-100)',
-                  border: '1px solid var(--theme-elevation-150, rgba(120,120,120,0.08))',
+                  border: '1px solid var(--theme-elevation-150)',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+                  e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
+                  e.currentTarget.style.background = 'var(--theme-elevation-100)'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 34,
+                      height: 34,
                       borderRadius: '50%',
-                      background: 'var(--theme-elevation-200)',
-                      color: 'var(--theme-text)',
-                      fontWeight: 600,
-                      fontSize: 11,
+                      background: 'rgba(37, 99, 235, 0.1)',
+                      color: 'var(--bs-primary, #2563eb)',
+                      fontWeight: 700,
+                      fontSize: 11.5,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
+                      border: '1px solid rgba(37, 99, 235, 0.2)',
                     }}
                   >
                     {initials}
@@ -128,6 +142,7 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
+                        marginTop: 2,
                       }}
                     >
                       {c.email || c.phone || 'No contact info'}
@@ -141,15 +156,16 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                       fontSize: 10,
                       fontWeight: 600,
                       textTransform: 'uppercase',
-                      padding: '2px 6px',
-                      borderRadius: 4,
+                      padding: '2px 7px',
+                      borderRadius: 999,
+                      letterSpacing: '0.04em',
                       background: c.status === 'active' ? 'rgba(22, 163, 74, 0.12)' : 'rgba(220, 38, 38, 0.12)',
-                      color: c.status === 'active' ? 'var(--theme-success-500, #16a34a)' : 'var(--theme-error-500, #dc2626)',
+                      color: c.status === 'active' ? 'var(--bs-success, #16a34a)' : 'var(--bs-error, #dc2626)',
                     }}
                   >
                     {c.status}
                   </span>
-                  <div style={{ fontSize: 10, color: 'var(--theme-elevation-450, #888)', marginTop: 2 }}>
+                  <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 3 }}>
                     {formatDate(c.createdAt)}
                   </div>
                 </div>

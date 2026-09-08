@@ -158,7 +158,7 @@ function ReportsHomeContent() {
   }
 
   return (
-    <div style={{ paddingTop: '1.5rem', paddingBottom: '3rem' }}>
+    <div style={{ padding: '1.75rem 2rem 3rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
       {/* 1. Header & Filter Controls */}
       <ReportHeader
         category={category}

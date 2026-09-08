@@ -108,7 +108,7 @@ export function DashboardHomeClient() {
   }
 
   return (
-    <div style={{ padding: '1.5rem 2rem', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: '1.75rem 2rem 3rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
       {/* 1. Enhanced Filter Header */}
       <DashboardHeader
         role={stats.role}

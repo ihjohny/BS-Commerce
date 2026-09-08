@@ -490,7 +490,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
       </div>
 
       {loading && (
-        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
+        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--theme-elevation-500)' }}>
           Loading template specifications...
         </div>
       )}
@@ -499,9 +499,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
         <div
           style={{
             padding: '0.75rem 1rem',
-            backgroundColor: '#fef2f2',
-            color: '#dc2626',
-            borderRadius: '6px',
+            backgroundColor: 'rgba(220, 38, 38, 0.08)',
+            color: 'var(--bs-error, #dc2626)',
+            border: '1px solid rgba(220, 38, 38, 0.2)',
+            borderRadius: 'var(--bs-radius-sm, 6px)',
             fontSize: '0.85rem',
             marginBottom: '1rem',
           }}

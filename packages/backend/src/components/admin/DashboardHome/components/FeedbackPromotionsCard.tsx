@@ -24,12 +24,13 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
   return (
     <div
       style={{
-        borderRadius: 8,
-        border: '1px solid var(--theme-elevation-200)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
+        border: '1px solid var(--theme-elevation-150)',
         background: 'var(--theme-elevation-50)',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
       {/* Header with Tabs */}
@@ -38,24 +39,33 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: '1px solid var(--theme-elevation-200)',
-          paddingBottom: 8,
+          borderBottom: '1px solid var(--theme-elevation-150)',
+          paddingBottom: '0.75rem',
           marginBottom: '1rem',
         }}
       >
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            padding: 2,
+            borderRadius: 'var(--bs-radius-sm, 6px)',
+            background: 'var(--theme-elevation-100)',
+            border: '1px solid var(--theme-elevation-200)',
+            gap: 2,
+          }}
+        >
           <button
             onClick={() => setTab('reviews')}
             style={{
-              background: 'none',
               border: 'none',
-              fontSize: 13,
-              fontWeight: tab === 'reviews' ? 700 : 500,
-              color: tab === 'reviews' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: tab === 'reviews' ? 600 : 500,
+              color: tab === 'reviews' ? '#ffffff' : 'var(--theme-elevation-600)',
+              background: tab === 'reviews' ? 'var(--bs-primary, #2563eb)' : 'transparent',
               cursor: 'pointer',
-              padding: '4px 6px',
-              borderBottom: tab === 'reviews' ? '2px solid var(--theme-text)' : '2px solid transparent',
-              marginBottom: -9,
+              padding: '3px 9px',
+              transition: 'all 0.12s ease',
             }}
           >
             Customer Reviews ({reviews.length})
@@ -63,15 +73,15 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           <button
             onClick={() => setTab('coupons')}
             style={{
-              background: 'none',
               border: 'none',
-              fontSize: 13,
-              fontWeight: tab === 'coupons' ? 700 : 500,
-              color: tab === 'coupons' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: tab === 'coupons' ? 600 : 500,
+              color: tab === 'coupons' ? '#ffffff' : 'var(--theme-elevation-600)',
+              background: tab === 'coupons' ? 'var(--bs-primary, #2563eb)' : 'transparent',
               cursor: 'pointer',
-              padding: '4px 6px',
-              borderBottom: tab === 'coupons' ? '2px solid var(--theme-text)' : '2px solid transparent',
-              marginBottom: -9,
+              padding: '3px 9px',
+              transition: 'all 0.12s ease',
             }}
           >
             Active Promotions ({coupons.length})
@@ -80,7 +90,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
 
         <a
           href={tab === 'reviews' ? '/admin/collections/product-reviews' : '/admin/collections/coupons'}
-          style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)', textDecoration: 'none' }}
+          style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--bs-primary, #2563eb)', textDecoration: 'none' }}
         >
           {tab === 'reviews' ? 'All Reviews' : 'All Coupons'} &rarr;
         </a>
@@ -90,11 +100,11 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
       {tab === 'reviews' && (
         <>
           {reviews.length === 0 ? (
-            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
               No recent customer reviews submitted.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {reviews.map((r) => {
                 const isPending = r.status === 'pending'
                 const isApproved = r.status === 'approved'
@@ -111,20 +121,29 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                       textDecoration: 'none',
                       color: 'inherit',
                       padding: '8px 10px',
-                      borderRadius: 6,
+                      borderRadius: 'var(--bs-radius-sm, 6px)',
                       background: 'var(--theme-elevation-100)',
-                      border: '1px solid var(--theme-elevation-150, rgba(120,120,120,0.08))',
+                      border: '1px solid var(--theme-elevation-150)',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+                      e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
+                      e.currentTarget.style.background = 'var(--theme-elevation-100)'
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                        <span style={{ fontSize: 12, color: 'var(--theme-warning-500, #d97706)', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700, letterSpacing: '0.05em' }}>
                           {'★'.repeat(Math.max(1, Math.min(5, r.rating)))}
                         </span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)' }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
                           {r.authorName}
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
+                        <span style={{ fontSize: 11, color: 'var(--theme-elevation-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           on {r.productName}
                         </span>
                       </div>
@@ -132,7 +151,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                         <div
                           style={{
                             fontSize: 12,
-                            color: 'var(--theme-elevation-600, #555)',
+                            color: 'var(--theme-elevation-600)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -149,23 +168,24 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                           fontSize: 10,
                           fontWeight: 600,
                           textTransform: 'uppercase',
-                          padding: '2px 6px',
-                          borderRadius: 4,
+                          padding: '2px 7px',
+                          borderRadius: 999,
+                          letterSpacing: '0.04em',
                           background: isPending
                             ? 'rgba(217, 119, 6, 0.12)'
                             : isApproved
                             ? 'rgba(22, 163, 74, 0.12)'
                             : 'rgba(220, 38, 38, 0.12)',
                           color: isPending
-                            ? 'var(--theme-warning-500, #d97706)'
+                            ? 'var(--bs-warning, #d97706)'
                             : isApproved
-                            ? 'var(--theme-success-500, #16a34a)'
-                            : 'var(--theme-error-500, #dc2626)',
+                            ? 'var(--bs-success, #16a34a)'
+                            : 'var(--bs-error, #dc2626)',
                         }}
                       >
                         {r.status}
                       </span>
-                      <div style={{ fontSize: 10, color: 'var(--theme-elevation-450, #888)', marginTop: 2 }}>
+                      <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 3 }}>
                         {formatDate(r.createdAt)}
                       </div>
                     </div>
@@ -181,11 +201,11 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
       {tab === 'coupons' && (
         <>
           {coupons.length === 0 ? (
-            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
               No active coupons found.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {coupons.map((c) => (
                 <a
                   key={c.id}
@@ -198,28 +218,38 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                     textDecoration: 'none',
                     color: 'inherit',
                     padding: '8px 10px',
-                    borderRadius: 6,
+                    borderRadius: 'var(--bs-radius-sm, 6px)',
                     background: 'var(--theme-elevation-100)',
-                    border: '1px solid var(--theme-elevation-150, rgba(120,120,120,0.08))',
+                    border: '1px solid var(--theme-elevation-150)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-100)'
                   }}
                 >
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span
                         style={{
-                          fontSize: 12,
+                          fontSize: 11.5,
                           fontWeight: 700,
                           fontFamily: 'monospace',
-                          letterSpacing: '0.05em',
-                          color: 'var(--theme-text)',
-                          background: 'var(--theme-elevation-200)',
-                          padding: '2px 6px',
+                          letterSpacing: '0.06em',
+                          color: 'var(--bs-primary, #2563eb)',
+                          background: 'rgba(37, 99, 235, 0.08)',
+                          border: '1px dashed rgba(37, 99, 235, 0.3)',
+                          padding: '2px 7px',
                           borderRadius: 4,
                         }}
                       >
                         {c.code}
                       </span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)' }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
                         {c.type === 'percentage' ? `${c.value}% OFF` : `${currency === 'BDT' ? '৳' : '$'}${c.value} OFF`}
                       </span>
                     </div>
@@ -234,7 +264,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text)' }}>
                       {c.totalUses} used
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--theme-elevation-450, #888)' }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-450)', marginTop: 2 }}>
                       {c.expiresAt ? `Exp: ${formatDate(c.expiresAt)}` : 'No Expiry'}
                     </div>
                   </div>

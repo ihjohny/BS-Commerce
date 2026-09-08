@@ -81,12 +81,13 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
     <div
       style={{
         background: 'var(--theme-elevation-50)',
-        border: '1px solid var(--theme-elevation-200)',
-        borderRadius: 8,
+        border: '1px solid var(--theme-elevation-150)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
         padding: '1.25rem 1.5rem',
         marginBottom: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
       {/* Header & Legend */}

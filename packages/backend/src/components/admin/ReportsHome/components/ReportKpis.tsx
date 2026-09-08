@@ -73,13 +73,24 @@ export function ReportKpis({ kpis }: ReportKpisProps) {
           key={kpi.key}
           style={{
             background: 'var(--theme-elevation-50)',
-            border: '1px solid var(--theme-elevation-200)',
-            borderRadius: 8,
-            padding: '1.15rem 1.25rem',
+            border: '1px solid var(--theme-elevation-150)',
+            borderRadius: 'var(--bs-radius-md, 8px)',
+            boxShadow: 'var(--bs-shadow-xs)',
+            padding: '1.25rem 1.35rem',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            transition: 'border-color 0.15s ease',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)'
+            e.currentTarget.style.boxShadow = 'var(--bs-shadow-sm)'
+            e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
+            e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
           }}
         >
           <div
@@ -87,12 +98,12 @@ export function ReportKpis({ kpis }: ReportKpisProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: 8,
+              marginBottom: 10,
             }}
           >
             <span
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
@@ -103,11 +114,11 @@ export function ReportKpis({ kpis }: ReportKpisProps) {
             </span>
             <div
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                background: 'var(--theme-elevation-100)',
-                color: 'var(--theme-elevation-600)',
+                width: 32,
+                height: 32,
+                borderRadius: 'var(--bs-radius-sm, 6px)',
+                background: 'rgba(37, 99, 235, 0.08)',
+                color: 'var(--bs-primary, #2563eb)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -124,6 +135,7 @@ export function ReportKpis({ kpis }: ReportKpisProps) {
               color: 'var(--theme-text)',
               lineHeight: 1.2,
               marginBottom: 4,
+              letterSpacing: '-0.02em',
             }}
           >
             {kpi.formattedValue}
@@ -132,7 +144,7 @@ export function ReportKpis({ kpis }: ReportKpisProps) {
           {kpi.subtext && (
             <div
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 color: 'var(--theme-elevation-500)',
               }}
             >

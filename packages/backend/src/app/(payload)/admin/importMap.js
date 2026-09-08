@@ -24,6 +24,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { default as default_8bcaf0c382bcbd9ca4c3d130c18c1bf5 } from '../../../components/admin/ProductSpecificationsField'
 import { default as default_7be396d0766c6c490887ef074dd0ced4 } from '../../../components/admin/AdminIcon'
 import { default as default_27eed1898e8caadb2fd2266b54bb4509 } from '../../../components/admin/AdminLogo'
+import { default as default_88b3c7b2d0bb6c8a548e0c7a91272838 } from '../../../components/admin/AdminControlsCluster'
 import { default as default_c86b84327b33bc42c769fcc4286af7e5 } from '../../../components/admin/ReportsNavLink'
 import { default as default_55ec1d976c5dcd4e3cfd7b939f831e0c } from '../../../components/admin/AdminBrandingCssVarsProvider'
 import { default as default_84cd845a8766cfd3c2cceae49d5dee3d } from '../../../components/admin/DashboardHome'
@@ -58,6 +59,7 @@ export const importMap = {
   "/components/admin/ProductSpecificationsField#default": default_8bcaf0c382bcbd9ca4c3d130c18c1bf5,
   "/components/admin/AdminIcon#default": default_7be396d0766c6c490887ef074dd0ced4,
   "/components/admin/AdminLogo#default": default_27eed1898e8caadb2fd2266b54bb4509,
+  "/components/admin/AdminControlsCluster#default": default_88b3c7b2d0bb6c8a548e0c7a91272838,
   "/components/admin/ReportsNavLink#default": default_c86b84327b33bc42c769fcc4286af7e5,
   "/components/admin/AdminBrandingCssVarsProvider#default": default_55ec1d976c5dcd4e3cfd7b939f831e0c,
   "/components/admin/DashboardHome#default": default_84cd845a8766cfd3c2cceae49d5dee3d,

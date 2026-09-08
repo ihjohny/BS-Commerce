@@ -48,13 +48,15 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
       ? `${pathD} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`
       : ''
 
+  const sym = currency === 'BDT' ? '৳' : currency === 'USD' ? '$' : `${currency} `
+
   const yTicks = [0, 0.5, 1].map((pct) => {
     const val = maxValue * pct
     const y = height - paddingY - pct * chartHeight
     const label = isRevenue
       ? val >= 1000
-        ? `$${(val / 1000).toFixed(1)}k`
-        : `$${Math.round(val)}`
+        ? `${sym}${(val / 1000).toFixed(1)}k`
+        : `${sym}${Math.round(val)}`
       : Math.round(val).toString()
     return { y, label }
   })
@@ -65,13 +67,14 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
   return (
     <div
       style={{
-        borderRadius: 8,
-        border: '1px solid var(--theme-elevation-200)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
+        border: '1px solid var(--theme-elevation-150)',
         background: 'var(--theme-elevation-50)',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
       <div
@@ -81,16 +84,16 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: 12,
-          marginBottom: '1rem',
+          marginBottom: '1.25rem',
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
             Sales Activity
           </div>
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
             Total {isRevenue ? 'Revenue' : 'Orders'}:{' '}
-            <strong style={{ color: 'var(--theme-text)' }}>
+            <strong style={{ color: 'var(--theme-text)', fontWeight: 700 }}>
               {isRevenue ? formatCurrency(totalValue, currency) : `${totalValue.toLocaleString()} orders`}
             </strong>
           </div>
@@ -101,8 +104,9 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           style={{
             display: 'inline-flex',
             padding: 2,
-            borderRadius: 6,
-            background: 'var(--theme-elevation-150, rgba(120,120,120,0.15))',
+            borderRadius: 'var(--bs-radius-sm, 6px)',
+            background: 'var(--theme-elevation-100)',
+            border: '1px solid var(--theme-elevation-200)',
           }}
         >
           <button
@@ -111,12 +115,13 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
               padding: '0.35rem 0.75rem',
               borderRadius: 4,
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: isRevenue ? 600 : 500,
               border: 'none',
               cursor: 'pointer',
-              background: isRevenue ? 'var(--theme-elevation-0, #fff)' : 'transparent',
-              color: isRevenue ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
-              boxShadow: isRevenue ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              background: isRevenue ? 'var(--bs-primary, #2563eb)' : 'transparent',
+              color: isRevenue ? '#ffffff' : 'var(--theme-elevation-600)',
+              boxShadow: isRevenue ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.12s ease',
             }}
           >
             Revenue
@@ -127,12 +132,13 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
               padding: '0.35rem 0.75rem',
               borderRadius: 4,
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: !isRevenue ? 600 : 500,
               border: 'none',
               cursor: 'pointer',
-              background: !isRevenue ? 'var(--theme-elevation-0, #fff)' : 'transparent',
-              color: !isRevenue ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
-              boxShadow: !isRevenue ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              background: !isRevenue ? 'var(--bs-primary, #2563eb)' : 'transparent',
+              color: !isRevenue ? '#ffffff' : 'var(--theme-elevation-600)',
+              boxShadow: !isRevenue ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.12s ease',
             }}
           >
             Orders
@@ -158,9 +164,9 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
         <div style={{ position: 'relative', width: '100%', flex: 1 }}>
           <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
             <defs>
-              <linearGradient id="chartGradientNeutral" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--theme-text)" stopOpacity="0.12" />
-                <stop offset="100%" stopColor="var(--theme-text)" stopOpacity="0.0" />
+              <linearGradient id="chartGradientAccent" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--bs-primary, #2563eb)" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="var(--bs-primary, #2563eb)" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
@@ -172,16 +178,17 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
                   y1={tick.y}
                   x2={width - paddingX}
                   y2={tick.y}
-                  stroke="var(--theme-elevation-200, rgba(120,120,120,0.15))"
-                  strokeDasharray="2 2"
+                  stroke="var(--theme-elevation-200)"
+                  strokeDasharray="3 3"
                   strokeWidth="1"
                 />
                 <text
                   x={paddingX - 8}
                   y={tick.y + 4}
                   textAnchor="end"
-                  fontSize="10"
-                  fill="var(--theme-elevation-400, #888)"
+                  fontSize="10.5"
+                  fontWeight="500"
+                  fill="var(--theme-elevation-450, #888)"
                 >
                   {tick.label}
                 </text>
@@ -189,15 +196,15 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
             ))}
 
             {/* Area */}
-            {areaD && <path d={areaD} fill="url(#chartGradientNeutral)" />}
+            {areaD && <path d={areaD} fill="url(#chartGradientAccent)" />}
 
             {/* Line */}
             {pathD && (
               <path
                 d={pathD}
                 fill="none"
-                stroke="var(--theme-text)"
-                strokeWidth="2"
+                stroke="var(--bs-primary, #2563eb)"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -210,7 +217,7 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
                   cx={p.x}
                   cy={p.y}
                   r={hoverIndex === idx ? 5 : 2.5}
-                  fill="var(--theme-text)"
+                  fill="var(--bs-primary, #2563eb)"
                   stroke="var(--theme-elevation-50, #fff)"
                   strokeWidth="2"
                   style={{ cursor: 'pointer', transition: 'r 0.15s ease' }}
@@ -226,7 +233,8 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
                 x={p.x}
                 y={height - 8}
                 textAnchor="middle"
-                fontSize="10"
+                fontSize="10.5"
+                fontWeight="500"
                 fill="var(--theme-elevation-500, #888)"
               >
                 {p.data.date}
@@ -244,18 +252,18 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
                 transform: 'translateX(-50%)',
                 background: 'var(--theme-elevation-900, #1e293b)',
                 color: '#fff',
-                padding: '5px 10px',
-                borderRadius: 6,
+                padding: '6px 12px',
+                borderRadius: 'var(--bs-radius-sm, 6px)',
                 fontSize: 12,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                boxShadow: 'var(--bs-shadow-md)',
                 pointerEvents: 'none',
                 zIndex: 10,
                 whiteSpace: 'nowrap',
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: 2 }}>{points[hoverIndex].data.date}</div>
-              <div>Revenue: {formatCurrency(points[hoverIndex].data.revenue, currency)}</div>
-              <div>Orders: {points[hoverIndex].data.orders}</div>
+              <div style={{ fontWeight: 600, marginBottom: 2, color: '#93c5fd' }}>{points[hoverIndex].data.date}</div>
+              <div>Revenue: <strong>{formatCurrency(points[hoverIndex].data.revenue, currency)}</strong></div>
+              <div>Orders: <strong>{points[hoverIndex].data.orders}</strong></div>
             </div>
           )}
         </div>

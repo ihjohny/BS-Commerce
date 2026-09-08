@@ -120,8 +120,8 @@ export async function customerRecommendationsHandler(req: PayloadRequest): Promi
   const locale = url.searchParams.get('locale') || 'en'
 
   try {
-    let preferredCategoryIds: string[] = []
-    let preferredBrandIds: string[] = []
+    const preferredCategoryIds: string[] = []
+    const preferredBrandIds: string[] = []
 
     if (user?.id) {
       const pastOrders = await payload.find({

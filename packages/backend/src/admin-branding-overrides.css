@@ -1,22 +1,88 @@
 /**
- * Show Platform Settings / default logo on menu toggler buttons (Payload does not expose a component slot).
- * --bs-admin-logo-url is set in AdminBrandingCssVarsProvider (see src/lib/admin-branding-chrome.ts).
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BS-Commerce Admin — Modern Production Design System
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * Comprehensive UI/UX refinement across typography, surfaces, navigation,
+ * collection data tables, forms, buttons, pills, modals, and responsive views.
  */
+
 :root {
   --bs-admin-logo-url: url('/branding/brainstation-23-symbol.png');
+
+  /* Brand Accent Tokens */
+  --bs-primary: #2563eb;
+  --bs-primary-hover: #1d4ed8;
+  --bs-primary-subtle: rgba(37, 99, 235, 0.08);
+  --bs-primary-border: rgba(37, 99, 235, 0.25);
+
+  /* Status Tokens */
+  --bs-success: #16a34a;
+  --bs-success-subtle: rgba(22, 163, 74, 0.1);
+  --bs-warning: #d97706;
+  --bs-warning-subtle: rgba(217, 119, 6, 0.1);
+  --bs-error: #dc2626;
+  --bs-error-subtle: rgba(220, 38, 38, 0.1);
+  --bs-info: #0284c7;
+  --bs-info-subtle: rgba(2, 132, 199, 0.1);
+
+  /* Elevation Shadows */
+  --bs-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --bs-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --bs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --bs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+
+  /* Radius Tokens */
+  --bs-radius-sm: 6px;
+  --bs-radius-md: 8px;
+  --bs-radius-lg: 12px;
+  --bs-radius-full: 9999px;
 }
 
-/* Outer sidebar toggler + in-header mobile toggler: same hit target, logo instead of hamburger */
+/* Dark Mode Overrides */
+html[data-theme='dark'] {
+  --bs-primary: #3b82f6;
+  --bs-primary-hover: #60a5fa;
+  --bs-primary-subtle: rgba(59, 130, 246, 0.15);
+  --bs-primary-border: rgba(59, 130, 246, 0.35);
+
+  --bs-success: #22c55e;
+  --bs-success-subtle: rgba(34, 197, 94, 0.15);
+  --bs-warning: #f59e0b;
+  --bs-warning-subtle: rgba(245, 158, 11, 0.15);
+  --bs-error: #ef4444;
+  --bs-error-subtle: rgba(239, 68, 68, 0.15);
+}
+
+/* ─── Global Font Smoothing & Base Improvements ────────────────────────────── */
+body,
+input,
+button,
+select,
+textarea {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ─── Brand Logo on Nav Togglers ───────────────────────────────────────────── */
 button.nav-toggler.template-default__nav-toggler,
 button.nav-toggler.app-header__mobile-nav-toggler {
   position: relative;
-  min-width: 2.5rem;
-  min-height: 2.5rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
   background-color: transparent;
   background-image: var(--bs-admin-logo-url);
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
+  border-radius: var(--bs-radius-sm);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+button.nav-toggler.template-default__nav-toggler:hover,
+button.nav-toggler.app-header__mobile-nav-toggler:hover {
+  opacity: 0.85;
 }
 
 button.nav-toggler.template-default__nav-toggler .hamburger,
@@ -24,12 +90,764 @@ button.nav-toggler.app-header__mobile-nav-toggler .hamburger {
   display: none;
 }
 
-/**
- * ≤768px: Payload hides the outer slot’s hamburger and shows `app-header__mobile-nav-toggler`.
- * Without this, both buttons still get our background logo → double mark on small screens.
- */
 @media (max-width: 768px) {
   .template-default__nav-toggler-wrapper {
     display: none !important;
   }
+}
+
+/* ─── App Header & Top Navigation Bar ──────────────────────────────────────── */
+.app-header {
+  border-bottom: 1px solid var(--theme-elevation-100) !important;
+  background-color: var(--theme-bg) !important;
+  backdrop-filter: blur(10px);
+  padding: 0 1.5rem !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  position: relative;
+}
+
+.app-header .step-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13.5px;
+}
+
+.app-header .step-nav__link {
+  color: var(--theme-elevation-600);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.app-header .step-nav__link:hover {
+  color: var(--theme-text);
+}
+
+.app-header .step-nav__separator {
+  color: var(--theme-elevation-400);
+  font-size: 11px;
+}
+
+/* App Header Controls & Actions Container */
+.app-header__content {
+  padding: 0 1.5rem !important;
+}
+
+.app-header__wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  gap: 1rem !important;
+}
+
+.app-header__controls-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+  margin-left: auto !important;
+  padding-right: 0 !important;
+}
+
+.app-header__actions-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+.app-header__actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.app-header__last-action {
+  margin-right: 0 !important;
+}
+
+/* ─── Admin Controls Cluster (Language + Theme Together) ─────────── */
+.admin-controls-cluster {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* 1. Language Dropdown in Cluster */
+.admin-cluster-locale {
+  position: relative !important;
+  display: inline-flex !important;
+}
+
+.admin-cluster-locale__btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  background-color: var(--theme-elevation-50) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: var(--bs-radius-sm, 8px) !important;
+  color: var(--theme-text) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+  white-space: nowrap !important;
+}
+
+.admin-cluster-locale__btn:hover {
+  background-color: var(--theme-elevation-100) !important;
+  border-color: var(--theme-elevation-300) !important;
+}
+
+.admin-cluster-locale__globe {
+  color: var(--theme-elevation-500) !important;
+  flex-shrink: 0;
+}
+
+.admin-cluster-locale__name {
+  font-weight: 600 !important;
+  color: var(--theme-text) !important;
+  font-size: 12.5px !important;
+}
+
+.admin-cluster-locale__arrow {
+  color: var(--theme-elevation-500) !important;
+  transition: transform 0.2s ease !important;
+  flex-shrink: 0;
+}
+
+.admin-cluster-locale__arrow--open {
+  transform: rotate(180deg) !important;
+}
+
+.admin-cluster-locale__dropdown {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  right: 0 !important;
+  min-width: 140px !important;
+  background: var(--theme-elevation-0, var(--theme-bg)) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: var(--bs-radius-sm, 8px) !important;
+  box-shadow: var(--bs-shadow-lg) !important;
+  padding: 4px !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.admin-cluster-locale__item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  width: 100% !important;
+  padding: 6px 10px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: var(--bs-radius-sm, 6px) !important;
+  color: var(--theme-text) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: background 0.12s ease !important;
+}
+
+.admin-cluster-locale__item:hover {
+  background-color: var(--theme-elevation-100) !important;
+}
+
+.admin-cluster-locale__item--active {
+  background-color: var(--theme-elevation-100) !important;
+  font-weight: 600 !important;
+  color: var(--bs-primary) !important;
+}
+
+.admin-cluster-locale__code {
+  font-size: 11px !important;
+  color: var(--theme-elevation-500) !important;
+}
+
+.admin-cluster-locale__check {
+  margin-left: auto !important;
+  color: var(--bs-primary) !important;
+}
+
+/* 2. Theme Toggle Switch in Cluster */
+.admin-cluster-theme {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  padding: 0 !important;
+  border-radius: var(--bs-radius-sm, 8px) !important;
+  background-color: var(--theme-elevation-50) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  color: var(--theme-elevation-700) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+}
+
+.admin-cluster-theme:hover {
+  background-color: var(--theme-elevation-150) !important;
+  border-color: var(--theme-elevation-300) !important;
+  color: var(--theme-text) !important;
+  transform: translateY(-1px);
+}
+
+.admin-cluster-theme:active {
+  transform: translateY(0);
+}
+
+.admin-cluster-theme__icon {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+}
+
+/* 3. Hide Default Payload Absolute Localizer (Since it's in our cluster) */
+.app-header__localizer.localizer {
+  display: none !important;
+}
+
+.app-header__localizer-spacing {
+  display: none !important;
+}
+
+/* User Account Icon in Header */
+.app-header__account {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: var(--bs-radius-sm, 8px) !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  background-color: var(--theme-elevation-50) !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+  position: static !important;
+  transform: none !important;
+}
+
+.app-header__account:hover {
+  background-color: var(--theme-elevation-150) !important;
+  border-color: var(--theme-elevation-300) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ─── Sidebar Navigation ───────────────────────────────────────────────────── */
+.template-default__nav {
+  border-right: 1px solid var(--theme-elevation-150) !important;
+  background-color: var(--theme-bg) !important;
+}
+
+.nav {
+  padding: 1.25rem 0.75rem !important;
+}
+
+/* Custom Slim Scrollbar for Navigation */
+.nav::-webkit-scrollbar {
+  width: 4px;
+}
+.nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nav::-webkit-scrollbar-thumb {
+  background: var(--theme-elevation-250);
+  border-radius: var(--bs-radius-full);
+}
+
+/* Nav Group Header */
+.nav-group__toggle {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: var(--theme-elevation-500) !important;
+  padding: 0.5rem 0.6rem !important;
+  margin-top: 0.75rem !important;
+  border-radius: var(--bs-radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.nav-group__toggle:hover {
+  color: var(--theme-text) !important;
+  background-color: var(--theme-elevation-50);
+}
+
+/* Nav Link Items */
+.nav__link {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--theme-elevation-700) !important;
+  border-radius: var(--bs-radius-sm) !important;
+  padding: 0.45rem 0.65rem !important;
+  margin: 1px 0 !important;
+  transition: all 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  text-decoration: none !important;
+}
+
+.nav__link:hover {
+  color: var(--theme-text) !important;
+  background-color: var(--theme-elevation-100) !important;
+}
+
+.nav__link.active {
+  color: var(--bs-primary) !important;
+  background-color: var(--bs-primary-subtle) !important;
+  font-weight: 600 !important;
+}
+
+.nav__link-indicator {
+  width: 3px !important;
+  height: 16px !important;
+  border-radius: var(--bs-radius-full) !important;
+  background-color: var(--bs-primary) !important;
+  margin-right: 8px !important;
+}
+
+/* ─── Collection Data Tables & Lists ───────────────────────────────────────── */
+.collection-list {
+  padding-top: 1.5rem !important;
+}
+
+.collection-list .list-header {
+  margin-bottom: 1.25rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.list-header__title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--theme-text) !important;
+}
+
+.list-header__content {
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.list-header__title-and-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.list-header__title-actions {
+  margin-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.table__wrapper {
+  border: 1px solid var(--theme-elevation-150) !important;
+  border-radius: var(--bs-radius-md) !important;
+  overflow: hidden !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+  background-color: var(--theme-elevation-0, var(--theme-bg)) !important;
+}
+
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+}
+
+.table thead th {
+  background-color: var(--theme-elevation-50) !important;
+  color: var(--theme-elevation-600) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid var(--theme-elevation-150) !important;
+  white-space: nowrap !important;
+}
+
+.table tbody tr {
+  transition: background-color 0.12s ease !important;
+}
+
+.table tbody tr:hover {
+  background-color: var(--theme-elevation-50) !important;
+}
+
+.table tbody td {
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid var(--theme-elevation-100) !important;
+  font-size: 13.5px !important;
+  vertical-align: middle !important;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Table sort buttons */
+.sort-column__button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+/* ─── Form Controls, Inputs & Document Editing ─────────────────────────────── */
+.field-type input:not(.rs__input):not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']),
+.field-type select,
+.field-type textarea {
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: var(--bs-radius-sm) !important;
+  background-color: var(--theme-input-bg) !important;
+  color: var(--theme-text) !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  padding: 0.5rem 0.75rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+}
+
+.field-type input:not(.rs__input):focus,
+.field-type select:focus,
+.field-type textarea:focus {
+  border-color: var(--bs-primary) !important;
+  box-shadow: 0 0 0 3px var(--bs-primary-subtle) !important;
+  outline: none !important;
+}
+
+/* React Select Controls (Fix: Remove any background/borders from the dummy input) */
+.rs__input-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.rs__input-container input,
+.react-select input,
+input.rs__input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  min-height: unset !important;
+  height: auto !important;
+}
+
+.react-select .rs__control {
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: var(--bs-radius-sm) !important;
+  background-color: var(--theme-input-bg) !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  min-height: 38px !important;
+}
+
+.react-select .rs__control--is-focused {
+  border-color: var(--bs-primary) !important;
+  box-shadow: 0 0 0 3px var(--bs-primary-subtle) !important;
+}
+
+.react-select .rs__menu {
+  background: var(--theme-elevation-0, var(--theme-bg)) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: var(--bs-radius-sm) !important;
+  box-shadow: var(--bs-shadow-lg) !important;
+  overflow: hidden !important;
+}
+
+.react-select .rs__option {
+  font-size: 13.5px !important;
+  padding: 0.5rem 0.75rem !important;
+  color: var(--theme-text) !important;
+  transition: background-color 0.12s ease !important;
+}
+
+.react-select .rs__option--is-focused {
+  background-color: var(--theme-elevation-100) !important;
+}
+
+.react-select .rs__option--is-selected {
+  background-color: var(--bs-primary-subtle) !important;
+  color: var(--bs-primary) !important;
+  font-weight: 600 !important;
+}
+
+.field-type label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--theme-elevation-800) !important;
+  margin-bottom: 0.35rem !important;
+  display: block !important;
+}
+
+.field-description {
+  font-size: 12px !important;
+  color: var(--theme-elevation-500) !important;
+  margin-top: 0.35rem !important;
+}
+
+/* ─── Relationship Add-New (+) Button Beside Dropdown ───────────────────────── */
+.relationship__wrap {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.relationship--allow-create .react-select .rs__control {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+}
+
+.relationship-add-new {
+  display: flex !important;
+  align-items: stretch !important;
+}
+
+.relationship-add-new__add-button,
+.relationship-add-new__add-button.doc-drawer__toggler,
+button.relationship-add-new__add-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 40px !important;
+  height: 100% !important;
+  min-height: 38px !important;
+  padding: 0 10px !important;
+  margin: 0 !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-left: 1px solid var(--theme-elevation-150) !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-top-right-radius: var(--bs-radius-sm, 6px) !important;
+  border-bottom-right-radius: var(--bs-radius-sm, 6px) !important;
+  background-color: var(--theme-elevation-50) !important;
+  color: var(--theme-elevation-700) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: var(--bs-shadow-xs) !important;
+}
+
+.relationship-add-new__add-button:hover,
+button.relationship-add-new__add-button:hover {
+  background-color: var(--theme-elevation-150) !important;
+  border-color: var(--theme-elevation-300) !important;
+  color: var(--bs-primary) !important;
+}
+
+.relationship-add-new__add-button .icon--plus,
+.relationship-add-new__add-button svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: currentColor !important;
+  transition: transform 0.15s ease !important;
+}
+
+.relationship-add-new__add-button:hover .icon--plus,
+.relationship-add-new__add-button:hover svg {
+  transform: scale(1.12);
+}
+
+/* Document Header, Title & Controls */
+.render-title,
+h1.render-title,
+.doc-header__title,
+.collection-edit h1,
+.doc-header h1 {
+  font-size: 1.5rem !important; /* ~24px, balanced and sleek */
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+  color: var(--theme-text) !important;
+}
+
+.doc-header {
+  padding-bottom: 0.5rem !important;
+}
+
+.doc-controls {
+  border-bottom: 1px solid var(--theme-elevation-150) !important;
+  background-color: var(--theme-bg) !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+  padding-left: var(--gutter-h) !important;
+  padding-right: var(--gutter-h) !important;
+}
+
+.doc-controls__meta {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 1.25rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.doc-controls__list-item {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  font-size: 12.5px !important;
+  line-height: 1.4 !important;
+  gap: 4px !important;
+  margin: 0 !important;
+}
+
+.doc-controls__label {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--theme-elevation-500) !important;
+  margin: 0 !important;
+}
+
+.doc-controls__value {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--theme-elevation-800) !important;
+  margin: 0 !important;
+}
+
+/* ─── Buttons & Actions ────────────────────────────────────────────────────── */
+.btn {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border-radius: var(--bs-radius-sm) !important;
+  padding: 0.45rem 0.85rem !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  cursor: pointer !important;
+  line-height: 1.3 !important;
+}
+
+.btn--size-small {
+  font-size: 12px !important;
+  padding: 0.25rem 0.65rem !important;
+  border-radius: var(--bs-radius-sm) !important;
+  min-height: 28px !important;
+}
+
+.btn--size-xsmall {
+  font-size: 11px !important;
+  padding: 0.2rem 0.5rem !important;
+  border-radius: var(--bs-radius-sm) !important;
+  min-height: 24px !important;
+}
+
+.btn--size-medium {
+  font-size: 13px !important;
+  padding: 0.45rem 0.85rem !important;
+  min-height: 36px !important;
+}
+
+.btn--size-large {
+  font-size: 14px !important;
+  padding: 0.6rem 1.15rem !important;
+  min-height: 42px !important;
+}
+
+/* Specific Pill-Style Buttons (e.g., "Create New" on collection list headers) */
+.btn--style-pill {
+  border-radius: var(--bs-radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 0.25rem 0.75rem !important;
+  background-color: var(--bs-primary-subtle) !important;
+  color: var(--bs-primary) !important;
+  border: 1px solid rgba(37, 99, 235, 0.2) !important;
+  line-height: 1.3 !important;
+  min-height: 28px !important;
+  box-shadow: none !important;
+}
+
+.btn--style-pill:hover:not(:disabled) {
+  background-color: var(--bs-primary) !important;
+  color: #ffffff !important;
+  border-color: var(--bs-primary) !important;
+}
+
+/* List header title actions ("Create New", etc.) */
+.list-header__title-actions .btn,
+.list-header__create-new-button {
+  border-radius: var(--bs-radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 0.25rem 0.75rem !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: 28px !important;
+  line-height: 1.3 !important;
+}
+
+.btn--style-primary {
+  background-color: var(--bs-primary) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--bs-primary) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn--style-primary:hover:not(:disabled) {
+  background-color: var(--bs-primary-hover) !important;
+  border-color: var(--bs-primary-hover) !important;
+}
+
+.btn--style-secondary {
+  background-color: var(--theme-elevation-50) !important;
+  color: var(--theme-text) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+}
+
+.btn--style-secondary:hover:not(:disabled) {
+  background-color: var(--theme-elevation-100) !important;
+  border-color: var(--theme-elevation-300) !important;
+}
+
+/* ─── Status Pills & Badges ────────────────────────────────────────────────── */
+.pill {
+  border-radius: var(--bs-radius-full) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 2px 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1.4 !important;
+  text-transform: capitalize !important;
+}
+
+/* ─── Modals, Drawers & Popups ─────────────────────────────────────────────── */
+.modal__wrapper,
+.drawer__wrapper {
+  backdrop-filter: blur(6px) !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+.drawer__content,
+.modal__content {
+  border-radius: var(--bs-radius-lg) !important;
+  box-shadow: var(--bs-shadow-lg) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
 }

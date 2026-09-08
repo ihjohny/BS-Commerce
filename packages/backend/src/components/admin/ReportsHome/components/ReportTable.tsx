@@ -8,7 +8,7 @@ type ReportTableProps = {
   currency: string
 }
 
-export function ReportTable({ table, currency }: ReportTableProps) {
+export function ReportTable({ table, currency: _currency }: ReportTableProps) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState<number>(1)
@@ -98,9 +98,10 @@ export function ReportTable({ table, currency }: ReportTableProps) {
     <div
       style={{
         background: 'var(--theme-elevation-50)',
-        border: '1px solid var(--theme-elevation-200)',
-        borderRadius: 8,
+        border: '1px solid var(--theme-elevation-150)',
+        borderRadius: 'var(--bs-radius-md, 8px)',
         overflow: 'hidden',
+        boxShadow: 'var(--bs-shadow-xs)',
       }}
     >
       <div style={{ overflowX: 'auto' }}>
