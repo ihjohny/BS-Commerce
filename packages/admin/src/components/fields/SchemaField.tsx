@@ -46,6 +46,8 @@ interface FieldProps {
   error?: string | null;
   /** Context-aware message shown when an array field has no rows. */
   emptyHint?: string;
+  /** Subfield names hidden from array rows (UI-only; row data is preserved). */
+  hideSubNames?: string[];
 }
 
 function Description({ text }: { text?: string }) {
@@ -348,7 +350,13 @@ function CollapsibleField(props: FieldProps) {
   return (
     <Collapsible className="rounded-lg border">
       <CollapsibleTrigger
-        render={<Button variant="ghost" className="w-full justify-between" />}
+        render={
+          <Button
+            id={field.name ? `${field.name}-toggle` : undefined}
+            variant="ghost"
+            className="w-full justify-between"
+          />
+        }
       >
         <span>{field.label ?? "More"}</span>
         <span className="text-xs text-muted-foreground">toggle</span>
@@ -379,6 +387,7 @@ function ArrayField({
   disabled,
   error,
   emptyHint,
+  hideSubNames,
 }: FieldProps) {
   const items: FieldValues[] = Array.isArray(value)
     ? (value as FieldValues[])
@@ -501,6 +510,7 @@ function ArrayField({
                   render={
                     <button
                       type="button"
+                      id={`${field.name}-row-${idx}`}
                       className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 text-left"
                     />
                   }
@@ -580,7 +590,11 @@ function ArrayField({
               <CollapsibleContent>
                 <div className="grid gap-3 border-t px-3 py-3 sm:grid-cols-2">
                   {(field.fields ?? [])
-                    .filter((f) => !f.hidden)
+                    .filter(
+                      (f) =>
+                        !f.hidden &&
+                        !(hideSubNames ?? []).includes(f.name ?? ""),
+                    )
                     .map((sub) => (
                       <SchemaField
                         key={sub.name}

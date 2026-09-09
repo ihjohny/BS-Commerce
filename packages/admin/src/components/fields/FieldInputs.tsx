@@ -113,6 +113,8 @@ export function RelationInput(props: {
   disabled?: boolean;
 }) {
   const { field, relationTo, value, onChange, disabled } = props;
+  // Deterministic trigger id (avoids Base UI's regenerated aria ids).
+  const comboId = field.name ? `f-${field.name}` : undefined;
 
   if (Array.isArray(relationTo)) {
     return <PolymorphicRelation {...props} relationTo={relationTo} />;
@@ -148,6 +150,7 @@ export function RelationInput(props: {
           ))}
           <RelationCombobox
             relationTo={relationTo}
+            id={comboId}
             exclude={selectedIds}
             onSelect={(id) => onChange([...selectedIds, id])}
             placeholder="Select…"
@@ -158,6 +161,7 @@ export function RelationInput(props: {
         <div className="flex items-center gap-2">
           <RelationCombobox
             relationTo={relationTo}
+            id={comboId}
             exclude={[]}
             value={
               typeof value === "object" && value
@@ -216,6 +220,7 @@ function RelationCombobox({
   onClear,
   placeholder,
   disabled,
+  id,
 }: {
   relationTo: string;
   value?: string | null;
@@ -224,6 +229,7 @@ function RelationCombobox({
   onClear?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  id?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -240,6 +246,7 @@ function RelationCombobox({
         disabled={disabled}
         render={
           <Button
+            id={id}
             variant="outline"
             role="combobox"
             className="w-full justify-between font-normal"
@@ -839,6 +846,7 @@ export function ImagesArrayField({
                       render={
                         <button
                           type="button"
+                          id={`${field.name}-row-${idx}`}
                           className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1.5 text-left"
                         />
                       }

@@ -653,6 +653,13 @@ export function CollectionFormPage() {
         onChange={(v) => setValue(f.name!, v)}
         disabled={saveMutation.isPending || !canSave}
         emptyHint={emptyHint}
+        hideSubNames={
+          slug === "products" && f.name === "bundleItems"
+            ? values.hasVariants
+              ? []
+              : ["variant"]
+            : undefined
+        }
       />
     );
   };
