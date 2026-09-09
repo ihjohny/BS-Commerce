@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Boxes,
+  ChevronDown,
   Coins,
   CreditCard,
   FileText,
@@ -25,6 +26,7 @@ import {
   Truck,
   Users,
   Store,
+  UserRound,
   Warehouse,
 } from "lucide-react";
 
@@ -32,6 +34,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AccessProvider, useAccess } from "@/contexts/AccessContext";
 import { collections, globals } from "@/lib/schema";
 import type { NormCollection, NormGlobal } from "@/lib/schema";
+import { cn } from "cn";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,6 +46,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sidebar,
   SidebarContent,
@@ -69,6 +80,23 @@ function useTheme() {
     setDark(next);
   };
   return { dark, toggle };
+}
+
+const NAV_GROUPS_KEY = "admin.navGroups";
+
+type CollapsedGroups = Record<string, boolean>;
+
+function loadCollapsedGroups(): CollapsedGroups {
+  try {
+    const raw = localStorage.getItem(NAV_GROUPS_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as CollapsedGroups;
+    }
+  } catch {
+    // Corrupted storage falls back to all groups expanded.
+  }
+  return {};
 }
 
 type IconType = typeof LayoutDashboard;
@@ -166,11 +194,54 @@ function navForGlobal(g: NormGlobal): NavItem {
   };
 }
 
+function CollapsibleNavGroup({
+  label,
+  collapsed,
+  onToggle,
+  items,
+}: {
+  label: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  items: NavItem[];
+}) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel
+        render={
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            className="w-full cursor-pointer text-left hover:text-sidebar-foreground"
+          />
+        }
+      >
+        <span>{label}</span>
+        <ChevronDown
+          className={cn(
+            "ml-auto transition-transform duration-200",
+            collapsed && "-rotate-90",
+          )}
+        />
+      </SidebarGroupLabel>
+      {!collapsed && (
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <NavLinks items={items} />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      )}
+    </SidebarGroup>
+  );
+}
+
 function SidebarBody() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { dark, toggle } = useTheme();
-  const { canReadCollection, loading } = useAccess();
+  const { canReadCollection, loading, locale, setLocale, locales } =
+    useAccess();
 
   // Intersect generated schemas with what the live backend exposes to this user.
   const visibleCollections = useMemo(
@@ -197,11 +268,34 @@ function SidebarBody() {
     return Array.from(map.entries());
   }, [visibleCollections, visibleGlobals]);
 
+  const [collapsedGroups, setCollapsedGroups] =
+    useState<CollapsedGroups>(loadCollapsedGroups);
+
+  const toggleNavGroup = (label: string) => {
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(NAV_GROUPS_KEY, JSON.stringify(next));
+      } catch {
+        // Persistence is best-effort; the toggle still applies for this session.
+      }
+      return next;
+    });
+  };
+
   const displayName =
     user?.displayName ||
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     user?.username ||
     "Account";
+
+  const initials =
+    displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "A";
 
   const handleLogout = async () => {
     await logout();
@@ -222,24 +316,39 @@ function SidebarBody() {
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Overview</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavLinks
-                  items={[
-                    {
-                      title: "Dashboard",
-                      to: "/",
-                      icon: LayoutDashboard,
-                      end: true,
-                    },
-                    { title: "Reports", to: "/reports", icon: BarChart3 },
-                  ]}
-                />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <CollapsibleNavGroup
+            label="Overview"
+            collapsed={Boolean(collapsedGroups.Overview)}
+            onToggle={() => toggleNavGroup("Overview")}
+            items={[
+              {
+                title: "Dashboard",
+                to: "/",
+                icon: LayoutDashboard,
+                end: true,
+              },
+              {
+                title: "Sales Analytics",
+                to: "/reports/sales",
+                icon: BarChart3,
+              },
+              {
+                title: "Product & Catalog",
+                to: "/reports/products",
+                icon: Package,
+              },
+              {
+                title: "Customer Engagement",
+                to: "/reports/engagement",
+                icon: Users,
+              },
+              {
+                title: "Inventory & Operations",
+                to: "/reports/inventory",
+                icon: Warehouse,
+              },
+            ]}
+          />
 
           {loading ? (
             <div className="flex justify-center py-6">
@@ -247,14 +356,13 @@ function SidebarBody() {
             </div>
           ) : (
             groups.map(([groupLabel, items]) => (
-              <SidebarGroup key={groupLabel}>
-                <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    <NavLinks items={items} />
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+              <CollapsibleNavGroup
+                key={groupLabel}
+                label={groupLabel}
+                collapsed={Boolean(collapsedGroups[groupLabel])}
+                onToggle={() => toggleNavGroup(groupLabel)}
+                items={items}
+              />
             ))
           )}
         </SidebarContent>
@@ -266,6 +374,20 @@ function SidebarBody() {
           <Separator orientation="vertical" className="mr-2 h-4" />
           <span className="text-sm text-muted-foreground">Admin</span>
           <div className="ml-auto flex items-center gap-1">
+            {locales.length > 1 && (
+              <Select value={locale} onValueChange={(v) => v && setLocale(v)}>
+                <SelectTrigger className="w-28" aria-label="Locale">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {locales.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>
+                      {l.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -277,10 +399,17 @@ function SidebarBody() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="ghost" className="px-2">
-                    <span className="max-w-32 truncate text-sm">
-                      {displayName}
-                    </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    aria-label="Account menu"
+                  >
+                    <Avatar className="size-7">
+                      <AvatarFallback className="text-xs">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
                 }
               />
@@ -288,6 +417,11 @@ function SidebarBody() {
                 <DropdownMenuLabel className="truncate">
                   {user?.email || user?.username}
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link to="/account" />}>
+                  <UserRound />
+                  Account
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={handleLogout}>
                   <LogOut />

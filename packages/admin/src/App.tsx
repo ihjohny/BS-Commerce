@@ -10,6 +10,11 @@ import { CollectionListPage } from "@/pages/collections/CollectionListPage";
 import { GlobalFormPage } from "@/pages/globals/GlobalFormPage";
 import { MediaLibrary } from "@/pages/MediaLibrary";
 import { Reports } from "@/pages/Reports";
+import { SalesAnalytics } from "@/pages/reports/SalesAnalytics";
+import { ProductCatalog } from "@/pages/reports/ProductCatalog";
+import { CustomerEngagement } from "@/pages/reports/CustomerEngagement";
+import { InventoryOperations } from "@/pages/reports/InventoryOperations";
+import { AccountPage } from "@/pages/AccountPage";
 
 export default function App() {
   return (
@@ -20,6 +25,11 @@ export default function App() {
         <Route element={<AdminShell />}>
           <Route index element={<Dashboard />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="reports/sales" element={<SalesAnalytics />} />
+          <Route path="reports/products" element={<ProductCatalog />} />
+          <Route path="reports/engagement" element={<CustomerEngagement />} />
+          <Route path="reports/inventory" element={<InventoryOperations />} />
+          <Route path="account" element={<AccountPage />} />
           <Route path="media" element={<MediaLibrary />} />
           <Route path="collections/:slug" element={<CollectionListPage />} />
           <Route

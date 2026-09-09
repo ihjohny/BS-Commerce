@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
@@ -17,8 +22,8 @@ import {
 
 import { api, assetUrl } from "@/lib/api";
 import type { Paginated } from "@/lib/api";
-import { getCollectionSchema } from "@/lib/schema";
-import type { NormField } from "@/lib/schema";
+import { docTitle, getCollectionSchema } from "@/lib/schema";
+import type { NormCollection, NormField } from "@/lib/schema";
 import { useAccess } from "@/contexts/AccessContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -121,11 +126,17 @@ function CellValue({
   col,
   field,
   docThumb,
+  selfHref,
+  relation,
 }: {
   value: unknown;
   col: string;
   field?: NormField;
   docThumb?: string | null;
+  /** Link target of the row's own edit page (primary title column). */
+  selfHref?: string;
+  /** Set for scalar relationship/upload columns: target slug + its schema. */
+  relation?: { relationTo: string; schema?: NormCollection };
 }) {
   if (value === null || value === undefined || value === "")
     return <span className="text-muted-foreground">—</span>;
@@ -136,27 +147,63 @@ function CellValue({
       <Badge variant={s === "published" ? "secondary" : "outline"}>{s}</Badge>
     );
   }
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (
+
+  // Scalar relationship / upload → link to the related doc's edit page.
+  if (relation) {
+    if (value && typeof value === "object") {
+      const relDoc = value as Record<string, unknown>;
+      const relId =
+        relDoc.id !== undefined && relDoc.id !== null ? String(relDoc.id) : "";
+      const thumb = thumbUrl(value);
+      const content = thumb ? (
+        <span className="flex items-center gap-2">
+          <img
+            src={assetUrl(thumb)}
+            alt=""
+            loading="lazy"
+            className="size-8 shrink-0 rounded border object-cover"
+          />
+          <span className="truncate">{docTitle(relDoc, relation.schema)}</span>
+        </span>
+      ) : (
+        <span className="truncate">{docTitle(relDoc, relation.schema)}</span>
+      );
+      if (!relId) return content;
+      return (
+        <Link
+          to={`/collections/${relation.relationTo}/${relId}`}
+          className="block max-w-full hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {content}
+        </Link>
+      );
+    }
+    // Depth data missing → fall back to the raw id string.
+    return <span className="truncate">{cellText(value)}</span>;
+  }
+
+  let inner: React.ReactNode;
+  if (typeof value === "boolean") {
+    inner = value ? "Yes" : "No";
+  } else if (
     typeof value === "string" &&
     (field?.type === "select" || field?.type === "radio")
   ) {
-    return <Badge variant="secondary">{optionLabel(field, value)}</Badge>;
-  }
-  if (Array.isArray(value)) {
+    inner = <Badge variant="secondary">{optionLabel(field, value)}</Badge>;
+  } else if (Array.isArray(value)) {
     if (value.length === 0)
       return <span className="text-muted-foreground">—</span>;
-    return (
+    inner = (
       <span>
         {value.length === 1 ? cellText(value[0]) : `${value.length} items`}
       </span>
     );
-  }
-  if (typeof value === "object") {
+  } else if (typeof value === "object") {
     // Populated relationship / upload (depth=1) → thumbnail when it is an image.
     const thumb = docThumb ?? thumbUrl(value);
     if (thumb) {
-      return (
+      inner = (
         <span className="flex items-center gap-2">
           <img
             src={assetUrl(thumb)}
@@ -167,21 +214,38 @@ function CellValue({
           <span className="truncate">{cellText(value)}</span>
         </span>
       );
+    } else {
+      inner = <span className="truncate">{cellText(value)}</span>;
     }
-    return <span className="truncate">{cellText(value)}</span>;
+  } else {
+    const s = String(value);
+    if (isIsoDate(s)) {
+      inner = (
+        <span>
+          {new Intl.DateTimeFormat("en-US", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          }).format(new Date(s))}
+        </span>
+      );
+    } else {
+      inner = <span className="truncate">{s}</span>;
+    }
   }
-  const s = String(value);
-  if (isIsoDate(s)) {
+
+  // Primary title column → link to the row's own edit page.
+  if (selfHref) {
     return (
-      <span>
-        {new Intl.DateTimeFormat("en-US", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(s))}
-      </span>
+      <Link
+        to={selfHref}
+        className="block max-w-full hover:underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {inner}
+      </Link>
     );
   }
-  return <span className="truncate">{s}</span>;
+  return inner;
 }
 
 // ─── Filter operators (Payload REST where operators) ───────────────────────────
@@ -282,19 +346,26 @@ const STATUS_OPTIONS = [
 
 const COLS_KEY_PREFIX = "admin-list-cols-";
 
+const PAGE_LIMITS = [10, 20, 50];
+
 export function CollectionListPage() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const schema = getCollectionSchema(slug);
   const { locale, can } = useAccess();
 
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [sort, setSort] = useState<string>("-createdAt");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  // ── List state lives in the URL so it survives reloads and back-nav ────────
+  const search = searchParams.get("q") ?? "";
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const rawLimit = Number(searchParams.get("limit"));
+  const perPage = PAGE_LIMITS.includes(rawLimit) ? rawLimit : 10;
+  const sort = searchParams.get("sort") || "-createdAt";
+  const statusFilter = searchParams.get("status") ?? "all";
+  const [searchInput, setSearchInput] = useState(
+    () => searchParams.get("q") ?? "",
+  );
   const [filters, setFilters] = useState<FilterRule[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkConfirm, setBulkConfirm] = useState(false);
@@ -350,16 +421,15 @@ export function CollectionListPage() {
     return new Set(defaultVisible);
   });
 
-  // Reset view state when switching collections (same route component).
+  // Reset per-collection local state when switching collections (same route).
   useEffect(() => {
-    setPage(1);
-    setPerPage(10);
-    setSearch("");
-    setSearchInput("");
-    setSort("-createdAt");
-    setStatusFilter("all");
     setFilters([]);
     setSelected(new Set());
+    setBulkConfirm(false);
+    setAddFilterOpen(false);
+    setFilterField("");
+    setFilterOp("equals");
+    setFilterValue("");
     let next = new Set(defaultVisible);
     try {
       const raw = localStorage.getItem(`${COLS_KEY_PREFIX}${slug}`);
@@ -370,6 +440,11 @@ export function CollectionListPage() {
     setVisibleCols(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
+
+  // Keep the search input in sync with ?q= (deep links, back-nav).
+  useEffect(() => {
+    setSearchInput(searchParams.get("q") ?? "");
+  }, [searchParams]);
 
   const toggleColumn = (col: string, on: boolean) => {
     setVisibleCols((prev) => {
@@ -407,6 +482,26 @@ export function CollectionListPage() {
     [candidateColumns, fieldMap],
   );
 
+  // ── Status field that ?status= targets: `_status` for drafts collections,
+  // else a dedicated `status` select field when the collection has one ────────
+  const statusFieldName = useMemo(() => {
+    if (!schema) return null;
+    if (isDrafts) return "_status";
+    return schema.fields.some((f) => f.name === "status" && f.type === "select")
+      ? "status"
+      : null;
+  }, [schema, isDrafts]);
+
+  /** Validated ?status= value (null when absent or not a known option). */
+  const statusValue = useMemo(() => {
+    if (statusFilter === "all" || !statusFieldName) return null;
+    const opts =
+      statusFieldName === "_status"
+        ? STATUS_OPTIONS
+        : (fieldMap.get("status")?.options ?? []);
+    return opts.some((o) => o.value === statusFilter) ? statusFilter : null;
+  }, [statusFilter, statusFieldName, fieldMap]);
+
   // ── Payload-style where clause from search + status + filters ────────────────
   const whereParam = useMemo(() => {
     const and: Array<Record<string, unknown>> = [];
@@ -417,8 +512,8 @@ export function CollectionListPage() {
       or.push({ id: { like: search } });
       and.push({ or });
     }
-    if (isDrafts && statusFilter !== "all")
-      and.push({ _status: { equals: statusFilter } });
+    if (statusValue && statusFieldName)
+      and.push({ [statusFieldName]: { equals: statusValue } });
     for (const f of filters) {
       and.push({
         [f.field]: {
@@ -429,7 +524,7 @@ export function CollectionListPage() {
     if (and.length === 0) return "";
     return `&where=${encodeURIComponent(JSON.stringify({ and }))}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter, filters, isDrafts, schema, fieldMap]);
+  }, [search, statusValue, statusFieldName, filters, schema, fieldMap]);
 
   const listQuery = useQuery({
     queryKey: ["collection", slug, page, perPage, sort, locale, whereParam],
@@ -442,7 +537,7 @@ export function CollectionListPage() {
       params.set("sort", sort);
       params.set("locale", locale);
       if (schema?.hasLocalized) params.set("fallback-locale", "null");
-      if (isDrafts && statusFilter === "all") params.set("draft", "true");
+      if (isDrafts && !statusValue) params.set("draft", "true");
       return api.get<Paginated<Record<string, unknown>>>(
         `/api/${slug}?${params.toString()}${whereParam}`,
       );
@@ -534,15 +629,28 @@ export function CollectionListPage() {
     }
   };
 
+  /** Merge updates into the URL search params; a null value removes the key. */
+  const updateParams = (updates: Record<string, string | null>) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === null) next.delete(key);
+        else next.set(key, value);
+      }
+      return next;
+    });
+  };
+
+  const goToPage = (p: number) =>
+    updateParams({ page: p > 1 ? String(p) : null });
+
   const toggleSort = (col: string) => {
-    setSort((prev) => (prev === col ? `-${col}` : col));
-    setPage(1);
+    updateParams({ sort: sort === col ? `-${col}` : col, page: null });
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
+    updateParams({ q: searchInput.trim() || null, page: null });
   };
 
   const pickFilterField = (col: string) => {
@@ -574,7 +682,7 @@ export function CollectionListPage() {
     ]);
     setFilterValue("");
     setAddFilterOpen(false);
-    setPage(1);
+    updateParams({ page: null });
   };
 
   const mutationError =
@@ -825,10 +933,12 @@ export function CollectionListPage() {
 
             {isDrafts && (
               <Select
-                value={statusFilter}
+                value={statusValue ?? "all"}
                 onValueChange={(v) => {
-                  setStatusFilter(v ?? "all");
-                  setPage(1);
+                  updateParams({
+                    status: !v || v === "all" ? null : v,
+                    page: null,
+                  });
                 }}
               >
                 <SelectTrigger className="w-36">
@@ -855,7 +965,7 @@ export function CollectionListPage() {
                     className="ml-1 rounded hover:text-destructive"
                     onClick={() => {
                       setFilters((prev) => prev.filter((_, j) => j !== i));
-                      setPage(1);
+                      updateParams({ page: null });
                     }}
                   >
                     <X className="size-3" />
@@ -868,11 +978,27 @@ export function CollectionListPage() {
                 className="h-6 px-2 text-xs"
                 onClick={() => {
                   setFilters([]);
-                  setPage(1);
+                  updateParams({ page: null });
                 }}
               >
                 Clear all
               </Button>
+            </div>
+          )}
+          {!isDrafts && statusValue && (
+            <div className="flex flex-wrap items-center gap-1">
+              <Badge variant="outline">
+                Filtered by status:{" "}
+                {optionLabel(fieldMap.get("status"), statusValue)}
+                <button
+                  type="button"
+                  aria-label="Remove status filter"
+                  className="ml-1 rounded hover:text-destructive"
+                  onClick={() => updateParams({ status: null, page: null })}
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
             </div>
           )}
 
@@ -893,7 +1019,7 @@ export function CollectionListPage() {
             </Alert>
           ) : docs.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              {search || filters.length > 0 || statusFilter !== "all"
+              {search || filters.length > 0 || statusValue
                 ? "No results for this search or filters."
                 : `No ${label.toLowerCase()} yet.`}
             </p>
@@ -950,18 +1076,41 @@ export function CollectionListPage() {
                             />
                           </TableCell>
                         )}
-                        {activeColumns.map((col) => (
-                          <TableCell key={col} className="max-w-56 truncate">
-                            <CellValue
-                              value={doc[col]}
-                              col={col}
-                              field={fieldMap.get(col)}
-                              docThumb={
-                                col === "filename" ? docThumb : undefined
-                              }
-                            />
-                          </TableCell>
-                        ))}
+                        {activeColumns.map((col) => {
+                          const field = fieldMap.get(col);
+                          let selfHref: string | undefined;
+                          let relation:
+                            | { relationTo: string; schema?: NormCollection }
+                            | undefined;
+                          if (col === (schema.useAsTitle || "id")) {
+                            selfHref = `/collections/${slug}/${id}`;
+                          } else if (
+                            field &&
+                            !field.hasMany &&
+                            typeof field.relationTo === "string" &&
+                            (field.type === "relationship" ||
+                              field.type === "upload")
+                          ) {
+                            relation = {
+                              relationTo: field.relationTo,
+                              schema: getCollectionSchema(field.relationTo),
+                            };
+                          }
+                          return (
+                            <TableCell key={col} className="max-w-56 truncate">
+                              <CellValue
+                                value={doc[col]}
+                                col={col}
+                                field={field}
+                                docThumb={
+                                  col === "filename" ? docThumb : undefined
+                                }
+                                selfHref={selfHref}
+                                relation={relation}
+                              />
+                            </TableCell>
+                          );
+                        })}
                         <TableCell
                           className="text-right"
                           onClick={(e) => e.stopPropagation()}
@@ -1011,8 +1160,7 @@ export function CollectionListPage() {
                       value={String(perPage)}
                       onValueChange={(v) => {
                         if (!v) return;
-                        setPerPage(Number(v));
-                        setPage(1);
+                        updateParams({ limit: v, page: null });
                       }}
                     >
                       <SelectTrigger className="w-28">
@@ -1028,7 +1176,7 @@ export function CollectionListPage() {
                       variant="outline"
                       size="sm"
                       disabled={!listQuery.data.hasPrevPage}
-                      onClick={() => setPage(page - 1)}
+                      onClick={() => goToPage(page - 1)}
                     >
                       <ChevronLeft />
                       Prev
@@ -1040,7 +1188,7 @@ export function CollectionListPage() {
                       variant="outline"
                       size="sm"
                       disabled={!listQuery.data.hasNextPage}
-                      onClick={() => setPage(page + 1)}
+                      onClick={() => goToPage(page + 1)}
                     >
                       Next
                       <ChevronRight />

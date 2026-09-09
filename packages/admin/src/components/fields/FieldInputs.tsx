@@ -9,6 +9,8 @@ import {
   ChevronUp,
   Eye,
   ImagePlus,
+  Plus,
+  SquarePen,
   Trash2,
   Upload,
   X,
@@ -155,27 +157,27 @@ export function RelationInput(props: {
             onSelect={(id) => onChange([...selectedIds, id])}
             placeholder="Select…"
             disabled={disabled}
+            fieldLabel={field.label}
           />
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <RelationCombobox
-            relationTo={relationTo}
-            id={comboId}
-            exclude={[]}
-            value={
-              typeof value === "object" && value
-                ? String((value as Record<string, unknown>).id)
-                : value
-                  ? String(value)
-                  : null
-            }
-            onSelect={(id) => onChange(id)}
-            onClear={() => onChange(null)}
-            placeholder="Select…"
-            disabled={disabled}
-          />
-        </div>
+        <RelationCombobox
+          relationTo={relationTo}
+          id={comboId}
+          exclude={[]}
+          value={
+            typeof value === "object" && value
+              ? String((value as Record<string, unknown>).id)
+              : value
+                ? String(value)
+                : null
+          }
+          onSelect={(id) => onChange(id)}
+          onClear={() => onChange(null)}
+          placeholder="Select…"
+          disabled={disabled}
+          fieldLabel={field.label}
+        />
       )}
       {field.description && (
         <FieldDescription>{field.description}</FieldDescription>
@@ -221,6 +223,7 @@ function RelationCombobox({
   placeholder,
   disabled,
   id,
+  fieldLabel,
 }: {
   relationTo: string;
   value?: string | null;
@@ -230,6 +233,7 @@ function RelationCombobox({
   placeholder?: string;
   disabled?: boolean;
   id?: string;
+  fieldLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -240,76 +244,104 @@ function RelationCombobox({
   );
   const { data: label } = useRelationLabel(relationTo, value ?? null, true);
 
+  const collectionLabel = getCollectionSchema(relationTo)?.label ?? relationTo;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        disabled={disabled}
-        render={
-          <Button
-            id={id}
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between font-normal"
-          >
-            <span className="truncate">
-              {value ? (label ?? value) : (placeholder ?? "Select…")}
-            </span>
-            <ChevronRight className="size-4 shrink-0 opacity-50" />
-          </Button>
-        }
-      />
-      <PopoverContent className="w-80 p-0">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search…"
-            value={search}
-            onValueChange={setSearch}
-          />
-          <CommandList>
-            {isLoading ? (
-              <div className="flex justify-center py-4">
-                <Spinner className="size-4" />
-              </div>
-            ) : (
-              <>
-                <CommandEmpty>Nothing found.</CommandEmpty>
-                <CommandGroup>
-                  {onClear && value && (
-                    <CommandItem
-                      onSelect={() => {
-                        onClear();
-                        setOpen(false);
-                      }}
-                    >
-                      — None —
-                    </CommandItem>
-                  )}
-                  {(options ?? [])
-                    .filter((o) => !exclude.includes(o.value))
-                    .map((o) => (
+    <div className="flex w-full items-center gap-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          disabled={disabled}
+          render={
+            <Button
+              id={id}
+              variant="outline"
+              role="combobox"
+              className="min-w-0 flex-1 justify-between font-normal"
+            >
+              <span className="truncate">
+                {value ? (label ?? value) : (placeholder ?? "Select…")}
+              </span>
+              <ChevronRight className="size-4 shrink-0 opacity-50" />
+            </Button>
+          }
+        />
+        <PopoverContent className="w-80 p-0">
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Search…"
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              {isLoading ? (
+                <div className="flex justify-center py-4">
+                  <Spinner className="size-4" />
+                </div>
+              ) : (
+                <>
+                  <CommandEmpty>Nothing found.</CommandEmpty>
+                  <CommandGroup>
+                    {onClear && value && (
                       <CommandItem
-                        key={o.value}
-                        value={o.value}
                         onSelect={() => {
-                          onSelect(o.value);
+                          onClear();
                           setOpen(false);
                         }}
                       >
-                        <Check
-                          className={
-                            value === o.value ? "opacity-100" : "opacity-0"
-                          }
-                        />
-                        {o.label}
+                        — None —
                       </CommandItem>
-                    ))}
-                </CommandGroup>
-              </>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                    )}
+                    {(options ?? [])
+                      .filter((o) => !exclude.includes(o.value))
+                      .map((o) => (
+                        <CommandItem
+                          key={o.value}
+                          value={o.value}
+                          onSelect={() => {
+                            onSelect(o.value);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={
+                              value === o.value ? "opacity-100" : "opacity-0"
+                            }
+                          />
+                          {o.label}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {value && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={disabled}
+          aria-label={`Edit ${fieldLabel ?? collectionLabel}`}
+          onClick={() =>
+            window.open(`/collections/${relationTo}/${value}`, "_blank")
+          }
+        >
+          <SquarePen className="size-4" />
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        disabled={disabled}
+        aria-label={`Add new ${collectionLabel}`}
+        onClick={() => window.open(`/collections/${relationTo}/new`, "_blank")}
+      >
+        <Plus className="size-4" />
+      </Button>
+    </div>
   );
 }
 
@@ -347,6 +379,7 @@ function PolymorphicRelation({
           onSelect={(id) => onChange({ relationTo: collection, value: id })}
           onClear={() => onChange(null)}
           disabled={disabled}
+          fieldLabel={field.label}
         />
         <div className="flex flex-wrap gap-1">
           {relationTo.map((c) => (
