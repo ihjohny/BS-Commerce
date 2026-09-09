@@ -40,10 +40,10 @@ test('validateClassSpecifications allows product without class and preserves cus
       { key: 'custom_feature', value: 'Special Edition', isCustom: true },
     ],
   }
-  const result = await validateClassSpecifications({
+  const result: any = await validateClassSpecifications({
     data,
     req: { payload: {} as any } as any,
-  })
+  } as any)
   assert.equal(result.name, 'Unclassed Item')
   assert.equal(result.specifications.length, 1)
   assert.equal(result.specifications[0].isCustom, true)
@@ -91,10 +91,10 @@ test('validateClassSpecifications passes when required specs are present and val
     ],
   }
 
-  const result = await validateClassSpecifications({
+  const result: any = await validateClassSpecifications({
     data,
     req: { payload: mockPayload as any } as any,
-  })
+  } as any)
   assert.equal(result.name, 'Anker PowerBank')
   // Verify label and unit were auto-populated
   assert.equal(result.specifications[0].label, 'Battery Capacity')
@@ -135,10 +135,10 @@ test('validateClassSpecifications marks non-template specs as ad-hoc when class 
     ],
   }
 
-  const result = await validateClassSpecifications({
+  const result: any = await validateClassSpecifications({
     data,
     req: { payload: mockPayload as any } as any,
-  })
+  } as any)
 
   // Template spec is matched, non-template is preserved as isAdHoc
   assert.equal(result.specifications.length, 2)
@@ -181,7 +181,7 @@ test('validateClassSpecifications rejects when required spec is missing on publi
       validateClassSpecifications({
         data,
         req: { payload: mockPayload as any } as any,
-      }),
+      } as any),
     /required specification "Battery Capacity"/i,
   )
 })
@@ -219,7 +219,7 @@ test('validateClassSpecifications rejects when select spec value is not in allow
       validateClassSpecifications({
         data,
         req: { payload: mockPayload as any } as any,
-      }),
+      } as any),
     /invalid value "99999mah" for specification "Battery Capacity"/i,
   )
 })

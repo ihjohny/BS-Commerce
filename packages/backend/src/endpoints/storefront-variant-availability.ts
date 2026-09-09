@@ -30,17 +30,26 @@ export const storefrontVariantAvailabilityEndpoint: Endpoint = {
       return Response.json({ error: 'product query parameter is required' }, { status: 400 })
     }
 
+    let product: any = null
     try {
-      const product = await req.payload.findByID({
+      product = await req.payload.findByID({
         collection: 'products',
         id: productId,
         depth: 0,
         overrideAccess: true,
       })
-
-      if (!product || (product as { status?: string }).status !== 'published') {
+    } catch (err: any) {
+      if (err?.status === 404 || err?.name === 'NotFound') {
         return Response.json({ error: 'Product not found' }, { status: 404 })
       }
+      throw err
+    }
+
+    if (!product || product.status !== 'published') {
+      return Response.json({ error: 'Product not found' }, { status: 404 })
+    }
+
+    try {
 
       const multivendor = process.env.MULTIVENDOR_ENABLED === 'true'
       const tenantRaw = (product as { tenant?: { id: string } | string | null }).tenant

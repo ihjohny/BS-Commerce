@@ -50,7 +50,7 @@ async function run() {
     console.log('------------------------------------------------------------------')
     console.log(`Categories Created:   ${data.seeded?.categoriesCount || 9}`)
     console.log(`Brands Created:       ${data.seeded?.brandsCount || 13}`)
-    console.log(`Classes Created:      ${data.seeded?.classesCount || 5}`)
+    console.log(`Classes Created:      ${data.seeded?.classesCount || 9}`)
     console.log(`Products Created:     ${data.seeded?.productsCount || 38}`)
     console.log(`Variants Created:     ${data.seeded?.variantsCount || 74}`)
     console.log(`Store Outlets:        ${data.seeded?.outletsCount || 4}`)
