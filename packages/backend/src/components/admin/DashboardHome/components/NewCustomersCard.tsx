@@ -21,13 +21,13 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       <div
@@ -41,10 +41,10 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
         }}
       >
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
             New Customers
           </div>
-          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
             Recent user registrations and activity
           </div>
         </div>
@@ -52,8 +52,8 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
         <Link
           href="/admin/collections/users"
           style={{
-            fontSize: 12.5,
-            fontWeight: 600,
+            fontSize: 12,
+            fontWeight: 500,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
           }}

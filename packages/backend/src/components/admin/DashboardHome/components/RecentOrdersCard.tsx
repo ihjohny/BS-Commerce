@@ -91,16 +91,16 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       {/* Header */}
@@ -115,7 +115,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
             Recent Orders
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
@@ -126,8 +126,8 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
         <Link
           href="/admin/collections/orders"
           style={{
-            fontSize: 12.5,
-            fontWeight: 600,
+            fontSize: 12,
+            fontWeight: 500,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
           }}
@@ -154,9 +154,9 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
             display: 'inline-flex',
             flexWrap: 'wrap',
             padding: 2,
-            borderRadius: 'var(--bs-radius-sm, 6px)',
+            borderRadius: 7,
             background: 'var(--theme-elevation-100)',
-            border: '1px solid var(--theme-elevation-200)',
+            border: '1px solid var(--theme-elevation-150)',
             gap: 1,
           }}
         >
@@ -168,15 +168,15 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                 onClick={() => setStatusFilter(st)}
                 style={{
                   padding: '3px 9px',
-                  borderRadius: 4,
-                  border: isActive ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+                  borderRadius: 5,
+                  border: 'none',
                   background: isActive ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
                   color: isActive ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
                   fontSize: 12,
                   fontWeight: isActive ? 600 : 500,
                   textTransform: 'capitalize',
                   cursor: 'pointer',
-                  boxShadow: isActive ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+                  boxShadow: isActive ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
                   transition: 'all 0.12s ease',
                 }}
               >

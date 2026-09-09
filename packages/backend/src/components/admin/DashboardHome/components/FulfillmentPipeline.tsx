@@ -66,12 +66,12 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
-        padding: '1.25rem 1.4rem',
-        marginBottom: '1.75rem',
-        boxShadow: 'var(--bs-shadow-xs)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
+        padding: '1.15rem 1.35rem',
+        marginBottom: '1.25rem',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       <div
@@ -83,7 +83,7 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
         }}
       >
         <div>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--theme-text)' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
             Order Fulfillment Pipeline
           </span>
           <span style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginLeft: 8 }}>
@@ -93,8 +93,8 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
         <Link
           href="/admin/collections/orders"
           style={{
-            fontSize: 12.5,
-            fontWeight: 600,
+            fontSize: 12,
+            fontWeight: 500,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
             display: 'inline-flex',

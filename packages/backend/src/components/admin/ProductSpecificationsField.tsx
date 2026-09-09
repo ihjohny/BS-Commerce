@@ -139,6 +139,14 @@ export default function ProductSpecificationsField(props: { path?: string; label
   const [customValue, setCustomValue] = useState('')
   const [customUnit, setCustomUnit] = useState('')
   const [customGroup, setCustomGroup] = useState('Additional Specifications')
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+
+  const toggleGroupCollapse = useCallback((groupName: string) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [groupName]: !prev[groupName],
+    }))
+  }, [])
 
   const isInitializedRef = useRef(false)
   const prevClassIdRef = useRef<string | null>(classId)
@@ -448,50 +456,81 @@ export default function ProductSpecificationsField(props: { path?: string; label
   return (
     <div
       style={{
-        margin: '1.5rem 0',
-        padding: '1.25rem',
+        margin: '1.75rem 0',
+        padding: '1.25rem 1.35rem',
         border: '1px solid var(--theme-elevation-150)',
-        borderRadius: 'var(--bs-radius-md, 8px)',
-        backgroundColor: 'var(--theme-elevation-50)',
+        borderRadius: 12,
+        backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
-      <div style={{ marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h4
-            style={{
-              margin: '0 0 0.25rem 0',
-              fontSize: '1rem',
-              fontWeight: 600,
-              color: 'var(--theme-text)',
-            }}
-          >
-            Product Specifications &amp; Attributes
-          </h4>
-          {classDoc && (
+      {/* Header */}
+      <div style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--theme-elevation-150)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h4
+                style={{
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--theme-text)',
+                }}
+              >
+                Product Specifications &amp; Attributes
+              </h4>
+              {classDoc && (
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    backgroundColor: 'var(--theme-elevation-100)',
+                    color: 'var(--theme-elevation-650, #475569)',
+                    border: '1px solid var(--theme-elevation-200)',
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                    <polyline points="2 17 12 22 22 17" />
+                    <polyline points="2 12 12 17 22 12" />
+                  </svg>
+                  Class: {formatLabel(classDoc.name, classDoc.slug)}
+                </span>
+              )}
+            </div>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.825rem', color: 'var(--theme-elevation-500)' }}>
+              {classDoc
+                ? 'Structured technical parameters defined by the assigned Product Class template.'
+                : 'Select a Product Class above to populate standardized parameters, or add ad-hoc specifications below.'}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span
               style={{
                 fontSize: '0.75rem',
-                fontWeight: 600,
-                backgroundColor: 'var(--bs-primary-subtle)',
-                color: 'var(--bs-primary)',
-                border: '1px solid var(--bs-primary-border)',
-                padding: '0.2rem 0.6rem',
-                borderRadius: 'var(--bs-radius-full, 9999px)',
+                fontWeight: 500,
+                padding: '2px 7px',
+                borderRadius: 5,
+                background: 'var(--theme-elevation-100)',
+                color: 'var(--theme-elevation-500)',
+                border: '1px solid var(--theme-elevation-150)',
               }}
             >
-              Class: {formatLabel(classDoc.name, classDoc.slug)}
+              {Object.keys(specsMap).length} Active Specs
             </span>
-          )}
+          </div>
         </div>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--theme-elevation-500)' }}>
-          {classDoc
-            ? 'Fill in template parameters below or attach ad-hoc and custom attributes. Values power storefront facets and PDP specifications.'
-            : 'Select a Product Class above to load standard template parameters, or attach global/custom attributes below.'}
-        </p>
       </div>
 
       {loading && (
-        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--theme-elevation-500)' }}>
+        <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--theme-elevation-500)' }}>
           Loading template specifications...
         </div>
       )}
@@ -503,7 +542,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
             backgroundColor: 'var(--bs-error-subtle)',
             color: 'var(--bs-error, #dc2626)',
             border: '1px solid var(--bs-error-subtle)',
-            borderRadius: 'var(--bs-radius-sm, 6px)',
+            borderRadius: 8,
             fontSize: '0.85rem',
             marginBottom: '1rem',
           }}
@@ -513,222 +552,297 @@ export default function ProductSpecificationsField(props: { path?: string; label
       )}
 
       {classDoc && classDoc.groups && classDoc.groups.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {classDoc.groups.map((group) => {
             const groupName = formatLabel(group.name, 'General')
             const attributes = group.attributes || []
             if (attributes.length === 0) return null
 
+            const isCollapsed = Boolean(collapsedGroups[groupName])
+            const filledCount = attributes.filter((item) => {
+              const a = typeof item.attribute === 'object' && item.attribute !== null ? item.attribute : null
+              return a && a.key && specsMap[a.key]?.value
+            }).length
+
             return (
               <div
                 key={group.id || groupName}
                 style={{
-                  backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+                  backgroundColor: 'var(--theme-elevation-50)',
                   border: '1px solid var(--theme-elevation-150)',
-                  borderRadius: 'var(--bs-radius-md, 6px)',
-                  padding: '1rem',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  transition: 'border-color 0.15s ease',
                 }}
               >
-                <h5
-                  style={{
-                    margin: '0 0 0.85rem 0',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: 'var(--theme-elevation-700)',
-                    borderBottom: '1px solid var(--theme-elevation-150)',
-                    paddingBottom: '0.4rem',
-                  }}
-                >
-                  {groupName}
-                </h5>
-
+                {/* Collapsible Accordion Header */}
                 <div
+                  onClick={() => toggleGroupCollapse(groupName)}
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    gap: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1rem',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    background: isCollapsed ? 'transparent' : 'var(--theme-elevation-100)',
+                    borderBottom: isCollapsed ? 'none' : '1px solid var(--theme-elevation-150)',
+                    transition: 'background 0.15s ease',
                   }}
                 >
-                  {attributes.map((item) => {
-                    const attr = typeof item.attribute === 'object' && item.attribute !== null ? item.attribute : null
-                    if (!attr || !attr.key) return null
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.15s ease',
+                        color: 'var(--theme-elevation-500)',
+                      }}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    <span
+                      style={{
+                        fontSize: '0.825rem',
+                        fontWeight: 600,
+                        letterSpacing: '-0.01em',
+                        color: 'var(--theme-text)',
+                      }}
+                    >
+                      {groupName}
+                    </span>
+                  </div>
 
-                    const currentVal = specsMap[attr.key]?.value ?? ''
-                    const attrLabel = formatLabel(attr.label, attr.key)
-                    const unitSuffix = attr.unit || ''
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span
+                      style={{
+                        fontSize: '0.725rem',
+                        fontWeight: 500,
+                        color: filledCount > 0 ? 'var(--theme-text)' : 'var(--theme-elevation-400)',
+                        backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                        border: '1px solid var(--theme-elevation-200)',
+                      }}
+                    >
+                      {filledCount}/{attributes.length} defined
+                    </span>
+                  </div>
+                </div>
 
-                    return (
-                      <div
-                        key={attr.key}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.35rem',
-                          padding: '0.65rem',
-                          borderRadius: 'var(--bs-radius-sm, 4px)',
-                          border: '1px solid var(--theme-elevation-150)',
-                          backgroundColor: 'var(--theme-elevation-50)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <label
-                            style={{
-                              fontSize: '0.825rem',
-                              fontWeight: 600,
-                              color: 'var(--theme-text)',
-                            }}
-                          >
-                            {attrLabel}
-                            {item.isRequired && <span style={{ color: 'var(--bs-error, #ef4444)', marginLeft: '0.2rem' }}>*</span>}
-                          </label>
-                          {unitSuffix && (
-                            <span
+                {!isCollapsed && (
+                  <div
+                    style={{
+                      padding: '1rem',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    {attributes.map((item) => {
+                      const attr = typeof item.attribute === 'object' && item.attribute !== null ? item.attribute : null
+                      if (!attr || !attr.key) return null
+
+                      const currentVal = specsMap[attr.key]?.value ?? ''
+                      const attrLabel = formatLabel(attr.label, attr.key)
+                      const unitSuffix = attr.unit || ''
+
+                      return (
+                        <div
+                          key={attr.key}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.35rem',
+                            padding: '0.65rem 0.75rem',
+                            borderRadius: 6,
+                            border: '1px solid var(--theme-elevation-150)',
+                            backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.02)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <label
                               style={{
-                                fontSize: '0.7rem',
+                                fontSize: '0.8rem',
                                 fontWeight: 500,
-                                backgroundColor: 'var(--theme-elevation-150)',
-                                color: 'var(--theme-elevation-600)',
-                                padding: '0.1rem 0.35rem',
-                                borderRadius: '4px',
+                                color: 'var(--theme-text)',
                               }}
                             >
-                              {unitSuffix}
-                            </span>
+                              {attrLabel}
+                              {item.isRequired && <span style={{ color: 'var(--bs-error, #ef4444)', marginLeft: '0.2rem' }}>*</span>}
+                            </label>
+                            {unitSuffix && (
+                              <span
+                                style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 500,
+                                  backgroundColor: 'var(--theme-elevation-100)',
+                                  color: 'var(--theme-elevation-500)',
+                                  padding: '1px 5px',
+                                  borderRadius: 4,
+                                  border: '1px solid var(--theme-elevation-150)',
+                                }}
+                              >
+                                {unitSuffix}
+                              </span>
+                            )}
+                          </div>
+
+                          {attr.dataType === 'select' && attr.options && attr.options.length > 0 ? (
+                            <select
+                              value={currentVal}
+                              onChange={(e) =>
+                                handleValueChange(attr.key, e.target.value, {
+                                  attribute: attr.id,
+                                  label: attrLabel,
+                                  unit: unitSuffix,
+                                  group: groupName,
+                                })
+                              }
+                              style={{
+                                padding: '0.35rem 0.55rem',
+                                fontSize: '0.825rem',
+                                borderRadius: 6,
+                                border: '1px solid var(--theme-elevation-200)',
+                                background: 'var(--theme-elevation-50)',
+                                color: 'var(--theme-text)',
+                                outline: 'none',
+                                fontFamily: 'inherit',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <option value="">— Select {attrLabel} —</option>
+                              {attr.options.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {formatLabel(opt.label, opt.value)}
+                                </option>
+                              ))}
+                            </select>
+                          ) : attr.dataType === 'boolean' ? (
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                padding: 2,
+                                borderRadius: 6,
+                                background: 'var(--theme-elevation-100)',
+                                border: '1px solid var(--theme-elevation-150)',
+                                gap: 1,
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleValueChange(attr.key, currentVal === 'true' ? '' : 'true', {
+                                    attribute: attr.id,
+                                    label: attrLabel,
+                                    group: groupName,
+                                  })
+                                }
+                                style={{
+                                  flex: 1,
+                                  padding: '0.25rem 0.5rem',
+                                  fontSize: '0.775rem',
+                                  fontWeight: currentVal === 'true' ? 600 : 500,
+                                  borderRadius: 4,
+                                  border: 'none',
+                                  backgroundColor: currentVal === 'true' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+                                  color: currentVal === 'true' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+                                  boxShadow: currentVal === 'true' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.12s ease',
+                                }}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleValueChange(attr.key, currentVal === 'false' ? '' : 'false', {
+                                    attribute: attr.id,
+                                    label: attrLabel,
+                                    group: groupName,
+                                  })
+                                }
+                                style={{
+                                  flex: 1,
+                                  padding: '0.25rem 0.5rem',
+                                  fontSize: '0.775rem',
+                                  fontWeight: currentVal === 'false' ? 600 : 500,
+                                  borderRadius: 4,
+                                  border: 'none',
+                                  backgroundColor: currentVal === 'false' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+                                  color: currentVal === 'false' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+                                  boxShadow: currentVal === 'false' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.12s ease',
+                                }}
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <input
+                              type={attr.dataType === 'number' ? 'number' : 'text'}
+                              value={currentVal}
+                              placeholder={`Enter ${attrLabel}…`}
+                              onChange={(e) =>
+                                handleValueChange(attr.key, e.target.value, {
+                                  attribute: attr.id,
+                                  label: attrLabel,
+                                  unit: unitSuffix,
+                                  group: groupName,
+                                })
+                              }
+                              style={{
+                                padding: '0.35rem 0.55rem',
+                                fontSize: '0.825rem',
+                                borderRadius: 6,
+                                border: '1px solid var(--theme-elevation-200)',
+                                background: 'var(--theme-elevation-50)',
+                                color: 'var(--theme-text)',
+                                outline: 'none',
+                                fontFamily: 'inherit',
+                              }}
+                            />
                           )}
                         </div>
-
-                        {attr.dataType === 'select' && attr.options && attr.options.length > 0 ? (
-                          <select
-                            value={currentVal}
-                            onChange={(e) =>
-                              handleValueChange(attr.key, e.target.value, {
-                                attribute: attr.id,
-                                label: attrLabel,
-                                unit: unitSuffix,
-                                group: groupName,
-                              })
-                            }
-                            style={{
-                              padding: '0.45rem 0.6rem',
-                              fontSize: '0.85rem',
-                              borderRadius: 'var(--bs-radius-sm, 4px)',
-                              border: '1px solid var(--theme-elevation-200)',
-                              background: 'var(--theme-input-bg)',
-                              color: 'var(--theme-text)',
-                            }}
-                          >
-                            <option value="">— Select {attrLabel} —</option>
-                            {attr.options.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {formatLabel(opt.label, opt.value)}
-                              </option>
-                            ))}
-                          </select>
-                        ) : attr.dataType === 'boolean' ? (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleValueChange(attr.key, currentVal === 'true' ? '' : 'true', {
-                                  attribute: attr.id,
-                                  label: attrLabel,
-                                  group: groupName,
-                                })
-                              }
-                              style={{
-                                flex: 1,
-                                padding: '0.35rem',
-                                fontSize: '0.8rem',
-                                fontWeight: 600,
-                                borderRadius: 'var(--bs-radius-sm, 4px)',
-                                border: '1px solid',
-                                borderColor: currentVal === 'true' ? 'var(--bs-success)' : 'var(--theme-elevation-200)',
-                                backgroundColor: currentVal === 'true' ? 'var(--bs-success-subtle)' : 'var(--theme-elevation-0, var(--theme-bg))',
-                                color: currentVal === 'true' ? 'var(--bs-success)' : 'var(--theme-elevation-600)',
-                                cursor: 'pointer',
-                                transition: 'all 0.12s ease',
-                              }}
-                            >
-                              Yes
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleValueChange(attr.key, currentVal === 'false' ? '' : 'false', {
-                                  attribute: attr.id,
-                                  label: attrLabel,
-                                  group: groupName,
-                                })
-                              }
-                              style={{
-                                flex: 1,
-                                padding: '0.35rem',
-                                fontSize: '0.8rem',
-                                fontWeight: 600,
-                                borderRadius: 'var(--bs-radius-sm, 4px)',
-                                border: '1px solid',
-                                borderColor: currentVal === 'false' ? 'var(--bs-error)' : 'var(--theme-elevation-200)',
-                                backgroundColor: currentVal === 'false' ? 'var(--bs-error-subtle)' : 'var(--theme-elevation-0, var(--theme-bg))',
-                                color: currentVal === 'false' ? 'var(--bs-error)' : 'var(--theme-elevation-600)',
-                                cursor: 'pointer',
-                                transition: 'all 0.12s ease',
-                              }}
-                            >
-                              No
-                            </button>
-                          </div>
-                        ) : (
-                          <input
-                            type={attr.dataType === 'number' ? 'number' : 'text'}
-                            value={currentVal}
-                            placeholder={`Enter ${attrLabel}...`}
-                            onChange={(e) =>
-                              handleValueChange(attr.key, e.target.value, {
-                                attribute: attr.id,
-                                label: attrLabel,
-                                unit: unitSuffix,
-                                group: groupName,
-                              })
-                            }
-                            style={{
-                              padding: '0.45rem 0.6rem',
-                              fontSize: '0.85rem',
-                              borderRadius: 'var(--bs-radius-sm, 4px)',
-                              border: '1px solid var(--theme-elevation-200)',
-                              background: 'var(--theme-input-bg)',
-                              color: 'var(--theme-text)',
-                            }}
-                          />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
       ) : null}
 
+      {/* 2. Ad-Hoc Global & Custom Specifications */}
       <div
         style={{
-          marginTop: '1.25rem',
-          backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+          marginTop: '1rem',
+          backgroundColor: 'var(--theme-elevation-50)',
           border: '1px solid var(--theme-elevation-150)',
-          borderRadius: 'var(--bs-radius-md, 6px)',
+          borderRadius: 8,
           padding: '1rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', flexWrap: 'wrap', gap: 8 }}>
           <div>
             <h5
               style={{
                 margin: 0,
-                fontSize: '0.875rem',
+                fontSize: '0.85rem',
                 fontWeight: 600,
-                color: 'var(--theme-elevation-700)',
+                letterSpacing: '-0.01em',
+                color: 'var(--theme-text)',
               }}
             >
               Ad-Hoc Global &amp; Custom Specifications
@@ -743,18 +857,26 @@ export default function ProductSpecificationsField(props: { path?: string; label
               type="button"
               onClick={() => setShowCustomModal(true)}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
                 padding: '0.35rem 0.75rem',
-                fontSize: '0.8rem',
+                fontSize: '0.775rem',
                 fontWeight: 500,
-                borderRadius: 'var(--bs-radius-sm, 4px)',
+                borderRadius: 6,
                 border: '1px solid var(--theme-elevation-200)',
-                backgroundColor: 'var(--theme-elevation-50)',
+                backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
                 color: 'var(--theme-text)',
                 cursor: 'pointer',
+                boxShadow: '0 1px 2px 0 rgba(0,0,0,0.03)',
                 transition: 'all 0.12s ease',
               }}
             >
-              + Add Custom Spec
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Custom Spec
             </button>
           </div>
         </div>
@@ -765,10 +887,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
               display: 'flex',
               gap: '0.5rem',
               alignItems: 'center',
-              padding: '0.5rem',
-              borderRadius: 'var(--bs-radius-sm, 4px)',
-              backgroundColor: 'var(--theme-elevation-50)',
-              border: '1px dashed var(--theme-elevation-200)',
+              padding: '0.5rem 0.65rem',
+              borderRadius: 6,
+              backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+              border: '1px solid var(--theme-elevation-150)',
               marginBottom: '0.85rem',
             }}
           >
@@ -777,12 +899,15 @@ export default function ProductSpecificationsField(props: { path?: string; label
               onChange={(e) => setSelectedAdHocAttrId(e.target.value)}
               style={{
                 flex: 1,
-                padding: '0.4rem 0.5rem',
-                fontSize: '0.825rem',
-                borderRadius: 'var(--bs-radius-sm, 4px)',
+                padding: '0.35rem 0.55rem',
+                fontSize: '0.8rem',
+                borderRadius: 5,
                 border: '1px solid var(--theme-elevation-200)',
-                background: 'var(--theme-input-bg)',
+                background: 'var(--theme-elevation-50)',
                 color: 'var(--theme-text)',
+                outline: 'none',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
               }}
             >
               <option value="">— Attach Global Attribute ({availableGlobalAttrs.length} available) —</option>
@@ -797,12 +922,12 @@ export default function ProductSpecificationsField(props: { path?: string; label
               disabled={!selectedAdHocAttrId}
               onClick={handleAttachGlobalAttribute}
               style={{
-                padding: '0.4rem 0.85rem',
-                fontSize: '0.825rem',
-                fontWeight: 600,
-                borderRadius: 'var(--bs-radius-sm, 4px)',
+                padding: '0.35rem 0.85rem',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                borderRadius: 5,
                 border: 'none',
-                backgroundColor: selectedAdHocAttrId ? 'var(--bs-primary, #3b82f6)' : 'var(--theme-elevation-200)',
+                backgroundColor: selectedAdHocAttrId ? 'var(--bs-primary, #2563eb)' : 'var(--theme-elevation-200)',
                 color: selectedAdHocAttrId ? '#ffffff' : 'var(--theme-elevation-500)',
                 cursor: selectedAdHocAttrId ? 'pointer' : 'not-allowed',
                 transition: 'all 0.12s ease',
@@ -814,7 +939,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
         )}
 
         {adHocAndCustomSpecs.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.85rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
             {adHocAndCustomSpecs.map((item) => {
               const globalDef = allGlobalAttributes.find((a) => a.key === item.key || a.id === item.attribute)
 
@@ -825,10 +950,11 @@ export default function ProductSpecificationsField(props: { path?: string; label
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.35rem',
-                    padding: '0.65rem',
-                    borderRadius: 'var(--bs-radius-sm, 4px)',
+                    padding: '0.65rem 0.75rem',
+                    borderRadius: 6,
                     border: '1px solid var(--theme-elevation-150)',
-                    backgroundColor: 'var(--theme-elevation-50)',
+                    backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.02)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -836,17 +962,19 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       <span
                         style={{
                           fontSize: '0.65rem',
-                          fontWeight: 700,
+                          fontWeight: 600,
                           textTransform: 'uppercase',
-                          padding: '0.1rem 0.35rem',
-                          borderRadius: '4px',
+                          letterSpacing: '0.02em',
+                          padding: '1px 5px',
+                          borderRadius: 4,
                           backgroundColor: item.isCustom ? 'var(--bs-warning-subtle)' : 'var(--bs-success-subtle)',
                           color: item.isCustom ? 'var(--bs-warning, #d97706)' : 'var(--bs-success, #16a34a)',
+                          border: `1px solid ${item.isCustom ? 'var(--bs-warning-subtle)' : 'var(--bs-success-subtle)'}`,
                         }}
                       >
                         {item.isCustom ? 'Custom' : 'Ad-Hoc'}
                       </span>
-                      <strong style={{ fontSize: '0.825rem', color: 'var(--theme-text)' }}>
+                      <strong style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--theme-text)' }}>
                         {item.label || item.key}
                       </strong>
                     </div>
@@ -860,11 +988,20 @@ export default function ProductSpecificationsField(props: { path?: string; label
                         border: 'none',
                         color: 'var(--theme-elevation-400)',
                         cursor: 'pointer',
-                        fontSize: '1rem',
-                        lineHeight: 1,
+                        padding: '2px 4px',
+                        borderRadius: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'color 0.12s ease',
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--bs-error, #dc2626)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--theme-elevation-400)')}
                     >
-                      ×
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
                     </button>
                   </div>
 
@@ -873,12 +1010,14 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       value={item.value}
                       onChange={(e) => handleValueChange(item.key, e.target.value)}
                       style={{
-                        padding: '0.4rem 0.5rem',
+                        padding: '0.35rem 0.55rem',
                         fontSize: '0.825rem',
-                        borderRadius: 'var(--bs-radius-sm, 4px)',
+                        borderRadius: 6,
                         border: '1px solid var(--theme-elevation-200)',
-                        background: 'var(--theme-input-bg)',
+                        background: 'var(--theme-elevation-50)',
                         color: 'var(--theme-text)',
+                        outline: 'none',
+                        fontFamily: 'inherit',
                       }}
                     >
                       <option value="">— Select Value —</option>
@@ -893,27 +1032,32 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       <input
                         type="text"
                         value={item.value}
-                        placeholder="Value..."
+                        placeholder="Value…"
                         onChange={(e) => handleValueChange(item.key, e.target.value)}
                         style={{
                           flex: 1,
-                          padding: '0.4rem 0.5rem',
+                          padding: '0.35rem 0.55rem',
                           fontSize: '0.825rem',
-                          borderRadius: 'var(--bs-radius-sm, 4px)',
+                          borderRadius: 6,
                           border: '1px solid var(--theme-elevation-200)',
-                          background: 'var(--theme-input-bg)',
+                          background: 'var(--theme-elevation-50)',
                           color: 'var(--theme-text)',
+                          outline: 'none',
+                          fontFamily: 'inherit',
                         }}
                       />
                       {item.unit && (
                         <span
                           style={{
-                            fontSize: '0.75rem',
+                            fontSize: '0.7rem',
                             fontWeight: 500,
-                            padding: '0.4rem',
-                            backgroundColor: 'var(--theme-elevation-150)',
-                            color: 'var(--theme-elevation-600)',
-                            borderRadius: '4px',
+                            padding: '0.35rem 0.5rem',
+                            backgroundColor: 'var(--theme-elevation-100)',
+                            color: 'var(--theme-elevation-500)',
+                            borderRadius: 6,
+                            border: '1px solid var(--theme-elevation-150)',
+                            display: 'flex',
+                            alignItems: 'center',
                           }}
                         >
                           {item.unit}
@@ -938,8 +1082,8 @@ export default function ProductSpecificationsField(props: { path?: string; label
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.55)',
-            backdropFilter: 'blur(4px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(3px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -951,20 +1095,20 @@ export default function ProductSpecificationsField(props: { path?: string; label
               backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
               color: 'var(--theme-text)',
               border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 'var(--bs-radius-lg, 12px)',
-              padding: '1.5rem',
+              borderRadius: 12,
+              padding: '1.4rem',
               width: '90%',
               maxWidth: '440px',
-              boxShadow: 'var(--bs-shadow-lg)',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--theme-text)' }}>
+            <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--theme-text)' }}>
               Add Custom Specification
             </h4>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Label *</label>
+                <label style={{ fontSize: '0.775rem', fontWeight: 500, color: 'var(--theme-elevation-600)', display: 'block', marginBottom: 4 }}>Label *</label>
                 <input
                   type="text"
                   placeholder="e.g. Special Box Contents"
@@ -975,60 +1119,60 @@ export default function ProductSpecificationsField(props: { path?: string; label
                       setCustomKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]+/g, '_'))
                     }
                   }}
-                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem 0.6rem', fontSize: '0.825rem', borderRadius: 6, border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Key / Identifier *</label>
+                <label style={{ fontSize: '0.775rem', fontWeight: 500, color: 'var(--theme-elevation-600)', display: 'block', marginBottom: 4 }}>Key / Identifier *</label>
                 <input
                   type="text"
                   placeholder="e.g. special_box_contents"
                   value={customKey}
                   onChange={(e) => setCustomKey(e.target.value)}
-                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem 0.6rem', fontSize: '0.825rem', borderRadius: 6, border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Value *</label>
+                <label style={{ fontSize: '0.775rem', fontWeight: 500, color: 'var(--theme-elevation-600)', display: 'block', marginBottom: 4 }}>Value *</label>
                 <input
                   type="text"
                   placeholder="e.g. Includes Commemorative Coin"
                   value={customValue}
                   onChange={(e) => setCustomValue(e.target.value)}
-                  style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem 0.6rem', fontSize: '0.825rem', borderRadius: 6, border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Unit (Optional)</label>
+                  <label style={{ fontSize: '0.775rem', fontWeight: 500, color: 'var(--theme-elevation-600)', display: 'block', marginBottom: 4 }}>Unit (Optional)</label>
                   <input
                     type="text"
                     placeholder="e.g. mm, g, pcs"
                     value={customUnit}
                     onChange={(e) => setCustomUnit(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem 0.6rem', fontSize: '0.825rem', borderRadius: 6, border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', outline: 'none', fontFamily: 'inherit' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-elevation-700)', display: 'block', marginBottom: 4 }}>Group (Section)</label>
+                  <label style={{ fontSize: '0.775rem', fontWeight: 500, color: 'var(--theme-elevation-600)', display: 'block', marginBottom: 4 }}>Group (Section)</label>
                   <input
                     type="text"
                     placeholder="e.g. Package Contents"
                     value={customGroup}
                     onChange={(e) => setCustomGroup(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-input-bg)', color: 'var(--theme-text)' }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '0.4rem 0.6rem', fontSize: '0.825rem', borderRadius: 6, border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', outline: 'none', fontFamily: 'inherit' }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.85rem' }}>
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: 'var(--bs-radius-sm, 4px)', border: '1px solid var(--theme-elevation-200)', background: 'var(--theme-elevation-50)', color: 'var(--theme-text)', cursor: 'pointer' }}
+                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.825rem', borderRadius: 6, border: '1px solid var(--theme-elevation-200)', background: 'transparent', color: 'var(--theme-text)', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
@@ -1037,14 +1181,15 @@ export default function ProductSpecificationsField(props: { path?: string; label
                   disabled={!customKey.trim() || !customValue.trim()}
                   onClick={handleAddCustomSpec}
                   style={{
-                    padding: '0.45rem 1rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    borderRadius: 'var(--bs-radius-sm, 4px)',
+                    padding: '0.4rem 1rem',
+                    fontSize: '0.825rem',
+                    fontWeight: 500,
+                    borderRadius: 6,
                     border: 'none',
-                    backgroundColor: customKey.trim() && customValue.trim() ? 'var(--bs-primary, #3b82f6)' : 'var(--theme-elevation-200)',
+                    backgroundColor: customKey.trim() && customValue.trim() ? 'var(--bs-primary, #2563eb)' : 'var(--theme-elevation-200)',
                     color: customKey.trim() && customValue.trim() ? '#ffffff' : 'var(--theme-elevation-500)',
                     cursor: customKey.trim() && customValue.trim() ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.12s ease',
                   }}
                 >
                   Add Specification

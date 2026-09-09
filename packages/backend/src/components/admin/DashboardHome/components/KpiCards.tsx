@@ -77,22 +77,22 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       value: formatCurrency(kpis.revenue.value, currency),
       metric: kpis.revenue,
       href: '/admin/collections/orders',
-      sublabel: `Prev: ${formatCurrency(kpis.revenue.previousValue, currency)}`,
+      sublabel: `vs prev: ${formatCurrency(kpis.revenue.previousValue, currency)}`,
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="12" y1="1" x2="12" y2="23" />
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
         </svg>
       ),
     },
     {
-      label: 'Order Volume',
+      label: 'Total Orders',
       value: kpis.orders.value.toLocaleString(),
       metric: kpis.orders,
       href: '/admin/collections/orders',
-      sublabel: `Prev: ${kpis.orders.previousValue.toLocaleString()} orders`,
+      sublabel: `vs prev: ${kpis.orders.previousValue.toLocaleString()}`,
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="9" cy="21" r="1" />
           <circle cx="20" cy="21" r="1" />
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
@@ -106,7 +106,7 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       href: '/admin/collections/users',
       sublabel: 'Registered accounts',
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -119,9 +119,9 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       value: formatCurrency(kpis.aov.value, currency),
       metric: kpis.aov,
       href: '/admin/collections/orders',
-      sublabel: `Prev: ${formatCurrency(kpis.aov.previousValue, currency)}`,
+      sublabel: `vs prev: ${formatCurrency(kpis.aov.previousValue, currency)}`,
       icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
         </svg>
       ),
@@ -132,9 +132,9 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.75rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+        gap: '0.85rem',
+        marginBottom: '1.25rem',
       }}
     >
       {cards.map((c) => (
@@ -145,36 +145,33 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
             display: 'block',
             textDecoration: 'none',
             color: 'inherit',
-            padding: '1.25rem 1.35rem',
-            borderRadius: 'var(--bs-radius-md, 8px)',
+            padding: '1.15rem 1.25rem',
+            borderRadius: 12,
             border: '1px solid var(--theme-elevation-150)',
-            background: 'var(--theme-elevation-50)',
-            boxShadow: 'var(--bs-shadow-xs)',
-            transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+            background: 'var(--theme-elevation-0, var(--theme-bg))',
+            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--bs-primary-border)'
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = 'var(--bs-shadow-md)'
+            e.currentTarget.style.borderColor = 'var(--theme-elevation-300)'
+            e.currentTarget.style.boxShadow = '0 2px 6px 0 rgba(0, 0, 0, 0.05)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-            e.currentTarget.style.transform = 'none'
-            e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
+            e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.03)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--theme-elevation-500)', letterSpacing: '0.01em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--theme-elevation-500)', letterSpacing: '-0.01em' }}>
               {c.label}
             </span>
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 'var(--bs-radius-sm, 6px)',
+                width: 28,
+                height: 28,
+                borderRadius: 6,
                 background: 'var(--theme-elevation-100)',
-                border: '1px solid var(--theme-elevation-200)',
                 color: 'var(--theme-elevation-600)',
                 display: 'flex',
                 alignItems: 'center',
@@ -185,11 +182,11 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5 }}>
             <div
               style={{
-                fontSize: 25,
-                fontWeight: 700,
+                fontSize: 26,
+                fontWeight: 600,
                 lineHeight: 1.15,
                 letterSpacing: '-0.03em',
                 fontVariantNumeric: 'tabular-nums',
@@ -201,7 +198,7 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
             <TrendBadge change={c.metric.changePercentage} />
           </div>
 
-          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)' }}>
+          <div style={{ fontSize: 12, color: 'var(--theme-elevation-450, #737373)', fontWeight: 400 }}>
             {c.sublabel}
           </div>
         </a>

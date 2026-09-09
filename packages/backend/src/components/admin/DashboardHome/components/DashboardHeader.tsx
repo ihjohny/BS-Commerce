@@ -58,7 +58,7 @@ export function DashboardHeader({
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: '1rem',
         }}
       >
@@ -67,25 +67,24 @@ export function DashboardHeader({
             <h1
               style={{
                 fontSize: 24,
-                fontWeight: 700,
+                fontWeight: 600,
                 margin: 0,
-                letterSpacing: '-0.02em',
+                letterSpacing: '-0.03em',
                 color: 'var(--theme-text)',
               }}
             >
-              Dashboard
+              Store Overview
             </h1>
             <span
               style={{
                 fontSize: 11,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                padding: '3px 9px',
-                borderRadius: 'var(--bs-radius-full, 9999px)',
-                background: 'var(--bs-primary-subtle, rgba(37,99,235,0.08))',
-                color: 'var(--bs-primary, #2563eb)',
-                border: '1px solid var(--bs-primary-border, rgba(37,99,235,0.2))',
+                fontWeight: 500,
+                letterSpacing: '0.02em',
+                padding: '2px 8px',
+                borderRadius: 6,
+                background: 'var(--theme-elevation-100)',
+                color: 'var(--theme-elevation-600)',
+                border: '1px solid var(--theme-elevation-200)',
               }}
             >
               {role === 'admin' ? 'Store Admin' : 'Vendor Portal'}
@@ -94,12 +93,12 @@ export function DashboardHeader({
           <p
             style={{
               color: 'var(--theme-elevation-500)',
-              fontSize: 13.5,
+              fontSize: 13,
               marginTop: 4,
               marginBottom: 0,
             }}
           >
-            Real-time analytics across sales, fulfillment, catalog, and customers.
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })} · Monitor sales, operational pipeline, and customer behavior.
           </p>
         </div>
 
@@ -222,22 +221,22 @@ export function DashboardHeader({
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '0.85rem',
-          padding: '0.65rem 0.85rem',
-          borderRadius: 'var(--bs-radius-md, 8px)',
-          background: 'var(--theme-elevation-50)',
+          gap: '0.75rem',
+          padding: '0.5rem 0.75rem',
+          borderRadius: 10,
+          background: 'var(--theme-elevation-0, var(--theme-bg))',
           border: '1px solid var(--theme-elevation-150)',
-          boxShadow: 'var(--bs-shadow-xs)',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.02)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.65rem' }}>
           {/* Store Selector Dropdown */}
           {stores.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span
                 style={{
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--theme-elevation-500)',
                   display: 'flex',
                   alignItems: 'center',
@@ -254,17 +253,16 @@ export function DashboardHeader({
                 value={selectedStoreId || ''}
                 onChange={(e) => onStoreChange(e.target.value ? e.target.value : null)}
                 style={{
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: 'var(--bs-radius-sm, 6px)',
+                  padding: '0.3rem 0.6rem',
+                  borderRadius: 6,
                   border: '1px solid var(--theme-elevation-200)',
-                  background: 'var(--theme-elevation-0, var(--theme-bg))',
+                  background: 'var(--theme-elevation-50)',
                   color: 'var(--theme-text)',
-                  fontSize: 12.5,
+                  fontSize: 12,
                   fontWeight: 500,
                   outline: 'none',
                   cursor: 'pointer',
                   fontFamily: 'inherit',
-                  boxShadow: 'var(--bs-shadow-xs)',
                 }}
                 aria-label="Store View"
               >
@@ -283,9 +281,9 @@ export function DashboardHeader({
             style={{
               display: 'inline-flex',
               padding: 2,
-              borderRadius: 'var(--bs-radius-sm, 6px)',
+              borderRadius: 7,
               background: 'var(--theme-elevation-100)',
-              border: '1px solid var(--theme-elevation-200)',
+              border: '1px solid var(--theme-elevation-150)',
               gap: 1,
             }}
           >
@@ -297,27 +295,25 @@ export function DashboardHeader({
                   type="button"
                   onClick={() => onTimeRangeChange(preset.key)}
                   style={{
-                    border: active ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
-                    borderRadius: 4,
+                    border: 'none',
+                    borderRadius: 5,
                     padding: '3px 9px',
                     fontSize: 12,
                     fontWeight: active ? 600 : 500,
                     color: active ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
                     background: active ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-                    boxShadow: active ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+                    boxShadow: active ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
                     cursor: 'pointer',
                     transition: 'all 0.12s ease',
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
                       e.currentTarget.style.color = 'var(--theme-text)'
-                      e.currentTarget.style.background = 'var(--theme-elevation-150)'
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.color = 'var(--theme-elevation-600)'
-                      e.currentTarget.style.background = 'transparent'
                     }
                   }}
                 >

@@ -31,16 +31,16 @@ export function DashboardSkeleton() {
       </div>
 
       {/* KPI Cards Skeleton */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
             style={{
-              padding: '1.25rem 1.4rem',
-              borderRadius: 'var(--bs-radius-md, 8px)',
+              padding: '1.15rem 1.25rem',
+              borderRadius: 12,
               border: '1px solid var(--theme-elevation-150)',
-              background: 'var(--theme-elevation-50)',
-              boxShadow: 'var(--bs-shadow-xs)',
+              background: 'var(--theme-elevation-0, var(--theme-bg))',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
               height: 110,
             }}
           >
@@ -52,14 +52,14 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Chart & Summary Skeleton */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderRadius: 'var(--bs-radius-md, 8px)',
+            borderRadius: 12,
             border: '1px solid var(--theme-elevation-150)',
-            background: 'var(--theme-elevation-50)',
-            boxShadow: 'var(--bs-shadow-xs)',
+            background: 'var(--theme-elevation-0, var(--theme-bg))',
+            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
             height: 280,
           }}
         >
@@ -70,10 +70,10 @@ export function DashboardSkeleton() {
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderRadius: 'var(--bs-radius-md, 8px)',
+            borderRadius: 12,
             border: '1px solid var(--theme-elevation-150)',
-            background: 'var(--theme-elevation-50)',
-            boxShadow: 'var(--bs-shadow-xs)',
+            background: 'var(--theme-elevation-0, var(--theme-bg))',
+            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
             height: 280,
           }}
         >

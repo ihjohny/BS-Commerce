@@ -67,14 +67,14 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       <div
@@ -88,12 +88,12 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
             Sales Activity
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
             Total {isRevenue ? 'Revenue' : 'Orders'}:{' '}
-            <strong style={{ color: 'var(--theme-text)', fontWeight: 700 }}>
+            <strong style={{ color: 'var(--theme-text)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
               {isRevenue ? formatCurrency(totalValue, currency) : `${totalValue.toLocaleString()} orders`}
             </strong>
           </div>
@@ -104,24 +104,24 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           style={{
             display: 'inline-flex',
             padding: 2,
-            borderRadius: 'var(--bs-radius-sm, 6px)',
+            borderRadius: 7,
             background: 'var(--theme-elevation-100)',
-            border: '1px solid var(--theme-elevation-200)',
+            border: '1px solid var(--theme-elevation-150)',
             gap: 1,
           }}
         >
           <button
             onClick={() => setMetric('revenue')}
             style={{
-              padding: '0.3rem 0.75rem',
-              borderRadius: 4,
+              padding: '0.25rem 0.65rem',
+              borderRadius: 5,
               fontSize: 12,
               fontWeight: isRevenue ? 600 : 500,
-              border: isRevenue ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+              border: 'none',
               cursor: 'pointer',
               background: isRevenue ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
               color: isRevenue ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
-              boxShadow: isRevenue ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+              boxShadow: isRevenue ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               transition: 'all 0.12s ease',
             }}
           >
@@ -130,15 +130,15 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           <button
             onClick={() => setMetric('orders')}
             style={{
-              padding: '0.3rem 0.75rem',
-              borderRadius: 4,
+              padding: '0.25rem 0.65rem',
+              borderRadius: 5,
               fontSize: 12,
               fontWeight: !isRevenue ? 600 : 500,
-              border: !isRevenue ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
+              border: 'none',
               cursor: 'pointer',
               background: !isRevenue ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
               color: !isRevenue ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
-              boxShadow: !isRevenue ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+              boxShadow: !isRevenue ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               transition: 'all 0.12s ease',
             }}
           >

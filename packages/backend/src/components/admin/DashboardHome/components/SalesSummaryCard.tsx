@@ -26,17 +26,17 @@ export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em', marginBottom: '0.25rem' }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em', marginBottom: '0.2rem' }}>
         Sales Breakdown
       </div>
       <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', marginBottom: '1.25rem' }}>

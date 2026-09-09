@@ -12,13 +12,13 @@ export function LowStockCard({ items }: LowStockCardProps) {
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       <div
@@ -33,16 +33,16 @@ export function LowStockCard({ items }: LowStockCardProps) {
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
               Low Stock Alerts
             </span>
             {items.length > 0 && (
               <span
                 style={{
-                  fontSize: 10.5,
-                  fontWeight: 700,
+                  fontSize: 11,
+                  fontWeight: 600,
                   padding: '1px 6px',
-                  borderRadius: 999,
+                  borderRadius: 6,
                   background: 'var(--bs-error-subtle)',
                   color: 'var(--bs-error, #dc2626)',
                   border: '1px solid var(--bs-error-subtle)',
@@ -52,7 +52,7 @@ export function LowStockCard({ items }: LowStockCardProps) {
               </span>
             )}
           </div>
-          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
             Items nearing or below reorder threshold
           </div>
         </div>
@@ -60,8 +60,8 @@ export function LowStockCard({ items }: LowStockCardProps) {
         <Link
           href="/admin/collections/stock-levels"
           style={{
-            fontSize: 12.5,
-            fontWeight: 600,
+            fontSize: 12,
+            fontWeight: 500,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
           }}

@@ -21,13 +21,13 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       {/* Header Tabs */}
@@ -45,22 +45,22 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
           style={{
             display: 'inline-flex',
             padding: 2,
-            borderRadius: 'var(--bs-radius-sm, 6px)',
+            borderRadius: 7,
             background: 'var(--theme-elevation-100)',
-            border: '1px solid var(--theme-elevation-200)',
+            border: '1px solid var(--theme-elevation-150)',
             gap: 1,
           }}
         >
           <button
             onClick={() => setTab('bestsellers')}
             style={{
-              borderRadius: 4,
+              borderRadius: 5,
               fontSize: 12,
               fontWeight: tab === 'bestsellers' ? 600 : 500,
               color: tab === 'bestsellers' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
               background: tab === 'bestsellers' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-              border: tab === 'bestsellers' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
-              boxShadow: tab === 'bestsellers' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+              border: 'none',
+              boxShadow: tab === 'bestsellers' ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -71,13 +71,13 @@ export function BestsellersCard({ bestsellers, topEngaged, currency }: Bestselle
           <button
             onClick={() => setTab('engaged')}
             style={{
-              borderRadius: 4,
+              borderRadius: 5,
               fontSize: 12,
               fontWeight: tab === 'engaged' ? 600 : 500,
               color: tab === 'engaged' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
               background: tab === 'engaged' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-              border: tab === 'engaged' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
-              boxShadow: tab === 'engaged' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+              border: 'none',
+              boxShadow: tab === 'engaged' ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',

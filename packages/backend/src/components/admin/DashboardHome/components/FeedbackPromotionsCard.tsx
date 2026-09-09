@@ -24,13 +24,13 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
   return (
     <div
       style={{
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       {/* Header with Tabs */}
@@ -48,22 +48,22 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           style={{
             display: 'inline-flex',
             padding: 2,
-            borderRadius: 'var(--bs-radius-sm, 6px)',
+            borderRadius: 7,
             background: 'var(--theme-elevation-100)',
-            border: '1px solid var(--theme-elevation-200)',
+            border: '1px solid var(--theme-elevation-150)',
             gap: 1,
           }}
         >
           <button
             onClick={() => setTab('reviews')}
             style={{
-              borderRadius: 4,
+              borderRadius: 5,
               fontSize: 12,
               fontWeight: tab === 'reviews' ? 600 : 500,
               color: tab === 'reviews' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
               background: tab === 'reviews' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-              border: tab === 'reviews' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
-              boxShadow: tab === 'reviews' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+              border: 'none',
+              boxShadow: tab === 'reviews' ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -74,13 +74,13 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           <button
             onClick={() => setTab('coupons')}
             style={{
-              borderRadius: 4,
+              borderRadius: 5,
               fontSize: 12,
               fontWeight: tab === 'coupons' ? 600 : 500,
               color: tab === 'coupons' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
               background: tab === 'coupons' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-              border: tab === 'coupons' ? '1px solid var(--theme-elevation-200)' : '1px solid transparent',
-              boxShadow: tab === 'coupons' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+              border: 'none',
+              boxShadow: tab === 'coupons' ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
               padding: '3px 9px',
               transition: 'all 0.12s ease',
@@ -92,7 +92,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
 
         <a
           href={tab === 'reviews' ? '/admin/collections/product-reviews' : '/admin/collections/coupons'}
-          style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--bs-primary, #2563eb)', textDecoration: 'none' }}
+          style={{ fontSize: 12, fontWeight: 500, color: 'var(--bs-primary, #2563eb)', textDecoration: 'none' }}
         >
           {tab === 'reviews' ? 'All Reviews' : 'All Coupons'} &rarr;
         </a>
