@@ -50,6 +50,7 @@ export function getPayloadTrustedOrigins(): string[] {
     ...new Set(
       [
         getPayloadServerUrl(),
+        process.env.STOREFRONT_PUBLIC_URL,
         process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001',
         process.env.NEXT_PUBLIC_MULTIVENDOR_STOREFRONT_URL,
         ...fromExtra,
