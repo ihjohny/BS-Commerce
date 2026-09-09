@@ -21,6 +21,7 @@ import type {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { storeViewLabel } from "@/lib/store";
 import {
   Card,
   CardContent,
@@ -374,7 +375,7 @@ export function Reports() {
                 }
               >
                 <SelectTrigger id="report-store" className="w-48">
-                  <SelectValue placeholder="All stores" />
+                  <SelectValue>{storeViewLabel(stores, storeId)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">All stores</SelectItem>

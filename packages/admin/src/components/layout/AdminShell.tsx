@@ -308,12 +308,22 @@ function SidebarBody() {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2 py-1.5">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-              BS
-            </div>
-            <span className="text-sm font-semibold group-data-[collapsible=icon]:hidden">
-              BS-Commerce
-            </span>
+            {/* Full lockup expanded; standalone mark in the icon rail. */}
+            <img
+              src="/bs23-logo.svg"
+              alt="Brain Station 23"
+              className="h-6 w-auto dark:hidden"
+            />
+            <img
+              src="/bs23-logo-dark.svg"
+              alt="Brain Station 23"
+              className="hidden h-6 w-auto dark:block"
+            />
+            <img
+              src="/bs23-mark.svg"
+              alt="BS23"
+              className="hidden size-7 group-data-[collapsible=icon]:block"
+            />
           </div>
         </SidebarHeader>
         <SidebarContent>

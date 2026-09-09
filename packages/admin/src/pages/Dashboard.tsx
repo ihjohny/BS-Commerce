@@ -26,6 +26,7 @@ import { api } from "@/lib/api";
 import { DateRangePicker } from "@/components/fields/DatePicker";
 import type { Paginated } from "@/lib/api";
 import { getCollectionSchema } from "@/lib/schema";
+import { storeViewLabel } from "@/lib/store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -639,7 +640,7 @@ function RecentOrdersCard({
                   <TableCell className="text-right">
                     <Link
                       to={`/collections/orders/${order.id}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="inline-flex h-8 items-center rounded-md border px-3 text-sm font-medium hover:bg-muted"
                     >
                       View
                     </Link>
@@ -858,7 +859,7 @@ export function Dashboard() {
                 }
               >
                 <SelectTrigger id="dash-store" className="w-48">
-                  <SelectValue placeholder="All store views" />
+                  <SelectValue>{storeViewLabel(stores, storeId)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">All store views</SelectItem>
