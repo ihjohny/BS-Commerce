@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -68,6 +68,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -237,6 +238,39 @@ function CollapsibleNavGroup({
   );
 }
 
+/** Sidebar brand mark — reads collapse state from the provider context. */
+function SidebarLogo() {
+  const { state } = useSidebar();
+  // Track the html.dark class directly — useTheme() instances elsewhere
+  // don't share state, so this stays correct no matter who toggles.
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains("dark"),
+  );
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <img
+      src={
+        state === "collapsed"
+          ? "/bs23-mark.svg"
+          : dark
+            ? "/bs23-logo-dark.svg"
+            : "/bs23-logo.svg"
+      }
+      alt="Brain Station 23"
+      className="h-6 w-auto"
+    />
+  );
+}
+
 function SidebarBody() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -308,22 +342,7 @@ function SidebarBody() {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2 py-1.5">
-            {/* Full lockup expanded; standalone mark in the icon rail. */}
-            <img
-              src="/bs23-logo.svg"
-              alt="Brain Station 23"
-              className="h-6 w-auto group-data-[collapsible=icon]:hidden dark:hidden"
-            />
-            <img
-              src="/bs23-logo-dark.svg"
-              alt="Brain Station 23"
-              className="hidden h-6 w-auto group-data-[collapsible=icon]:hidden dark:block"
-            />
-            <img
-              src="/bs23-mark.svg"
-              alt="BS23"
-              className="hidden size-6 group-data-[collapsible=icon]:block"
-            />
+            <SidebarLogo />
           </div>
         </SidebarHeader>
         <SidebarContent>

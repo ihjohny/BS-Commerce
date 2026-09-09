@@ -83,7 +83,7 @@ export function Login() {
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             First time setup?{' '}
-            <Link to="/create-first-user" className="text-primary underline-offset-4 hover:underline">
+            <Link to="/create-first-user" className="text-primary underline">
               Create the first admin
             </Link>
           </p>

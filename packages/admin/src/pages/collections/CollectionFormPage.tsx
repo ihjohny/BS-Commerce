@@ -21,19 +21,10 @@ import type { VersionListResult } from "@/lib/api";
 import { getCollectionSchema, docTitle } from "@/lib/schema";
 import type { NormCollection, NormField } from "@/lib/schema";
 import { useAccess } from "@/contexts/AccessContext";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { serializeForSave, SchemaField } from "@/components/fields/SchemaField";
 import type { FieldValues } from "@/components/fields/SchemaField";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -479,7 +470,9 @@ export function CollectionFormPage() {
   }, [dirty]);
 
   // Block in-app navigation with unsaved changes. The declarative router has
-  // no useBlocker, so link clicks are intercepted at the document (capture).
+  // no useBlocker, so link clicks are intercepted at the document (capture)
+  // and confirmed via the app-wide ConfirmDialog before navigating.
+  const [pendingNav, setPendingNav] = useState<string | null>(null);
   useEffect(() => {
     if (!dirty) return;
     const onClick = (e: MouseEvent) => {
@@ -488,11 +481,16 @@ export function CollectionFormPage() {
       ) as HTMLAnchorElement | null;
       if (!a) return;
       const href = a.getAttribute("href") ?? "";
-      if (a.target === "_blank" || href.startsWith("#")) return;
-      if (!window.confirm("You have unsaved changes. Leave without saving?")) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      // Only intercept internal app paths. External http(s), mailto, tel,
+      // and hash links pass through untouched (navigating to them via
+      // navigate() would be wrong or lossy).
+      if (!href.startsWith("/")) return;
+      // Known limitation: the confirm path re-navigates from the raw href
+      // string, so Link state/replace props on the intercepted link are
+      // dropped. No in-app link currently relies on those.
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNav(href);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
@@ -1019,27 +1017,33 @@ export function CollectionFormPage() {
         documentBody
       )}
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete this {schema.label.toLowerCase()}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes the record. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteMutation.mutate()}
-              className="text-destructive"
-            >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Delete this ${schema.label.toLowerCase()}?`}
+        description="This permanently removes the record. This action cannot be undone."
+        confirmLabel={deleteMutation.isPending ? "Deleting…" : "Delete"}
+        cancelLabel="Cancel"
+        destructive
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
+      />
+
+      <ConfirmDialog
+        open={pendingNav !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingNav(null);
+        }}
+        title="Leave without saving?"
+        description="You have unsaved changes that will be lost if you leave this page."
+        confirmLabel="Leave"
+        destructive
+        onConfirm={() => {
+          const href = pendingNav;
+          setPendingNav(null);
+          if (href) navigate(href);
+        }}
+      />
 
       <Dialog
         open={Boolean(versionPreview)}

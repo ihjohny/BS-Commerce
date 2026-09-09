@@ -367,7 +367,7 @@ export function OrderDetailsPage() {
               buyer.name
             ) : relId(order.customer) ? (
               <Link
-                className="text-primary hover:underline"
+                className="text-primary"
                 to={`/collections/users/${relId(order.customer)}`}
               >
                 Registered customer
@@ -536,7 +536,7 @@ export function OrderDetailsPage() {
               Transaction:{" "}
               {relId(transaction) ? (
                 <Link
-                  className="text-primary hover:underline"
+                  className="text-primary"
                   to={`/collections/transactions/${relId(transaction)}`}
                 >
                   {transaction && typeof transaction === "object"

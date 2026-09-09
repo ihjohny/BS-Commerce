@@ -33,7 +33,7 @@ export function Placeholder({ title, description, icon: Icon = Construction }: {
               This section is part of the phased migration. See{' '}
               <Link
                 to="/"
-                className="text-primary underline-offset-4 hover:underline"
+                className="text-primary underline"
               >
                 the dashboard
               </Link>{' '}

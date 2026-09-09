@@ -26,16 +26,7 @@ import { docTitle, getCollectionSchema } from "@/lib/schema";
 import type { NormCollection, NormField } from "@/lib/schema";
 import { useAccess } from "@/contexts/AccessContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -172,7 +163,7 @@ function CellValue({
       return (
         <Link
           to={`/collections/${relation.relationTo}/${relId}`}
-          className="block max-w-full hover:underline"
+          className="block max-w-full"
           onClick={(e) => e.stopPropagation()}
         >
           {content}
@@ -238,7 +229,7 @@ function CellValue({
     return (
       <Link
         to={selfHref}
-        className="block max-w-full hover:underline"
+        className="block max-w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {inner}
@@ -1197,29 +1188,17 @@ export function CollectionListPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={bulkConfirm} onOpenChange={setBulkConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete{" "}
-              {selected.size > 1 ? `${selected.size} records` : "this record"}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes the selected {label.toLowerCase()}. This
-              action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteMany.mutate()}
-              className="text-destructive"
-            >
-              {deleteMany.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={bulkConfirm}
+        onOpenChange={setBulkConfirm}
+        title={`Delete ${selected.size > 1 ? `${selected.size} records` : "this record"}?`}
+        description={`This permanently removes the selected ${label.toLowerCase()}. This action cannot be undone.`}
+        confirmLabel={deleteMany.isPending ? "Deleting…" : "Delete"}
+        cancelLabel="Cancel"
+        destructive
+        loading={deleteMany.isPending}
+        onConfirm={() => deleteMany.mutate()}
+      />
     </div>
   );
 }
