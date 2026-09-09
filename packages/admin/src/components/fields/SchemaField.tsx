@@ -17,6 +17,7 @@ import {
   UploadInput,
 } from "@/components/fields/FieldInputs";
 import { RichTextInput } from "@/components/fields/RichTextInput";
+import { DateTimePicker } from "@/components/fields/DatePicker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -227,29 +228,21 @@ function SimpleField({ field, value, onChange, disabled, error }: FieldProps) {
         </Field>
       );
     }
-    case "date": {
-      // Payload stores full ISO; datetime-local needs "YYYY-MM-DDTHH:mm".
-      const local = str ? str.slice(0, 16) : "";
+    case "date":
+      // Calendar picker; Payload stores full ISO.
       return (
         <Field>
           <Label field={field} />
-          <Input
+          <DateTimePicker
             id={id}
-            type="datetime-local"
-            value={local}
+            value={str || null}
+            onChange={onChange}
             disabled={dis}
-            className={errCls}
-            onChange={(e) =>
-              onChange(
-                e.target.value ? new Date(e.target.value).toISOString() : null,
-              )
-            }
           />
           <Description text={field.description} />
           <ErrorText error={error} />
         </Field>
       );
-    }
     case "richText":
     case "richtext":
       // Visual editor: renders stored Lexical JSON as rich text (never raw JSON).

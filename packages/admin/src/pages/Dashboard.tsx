@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { api } from "@/lib/api";
+import { DateRangePicker } from "@/components/fields/DatePicker";
 import type { Paginated } from "@/lib/api";
 import { getCollectionSchema } from "@/lib/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -887,26 +888,17 @@ export function Dashboard() {
             </div>
           </Field>
           {preset === "custom" && (
-            <>
-              <Field>
-                <FieldLabel htmlFor="dash-from">From</FieldLabel>
-                <Input
-                  id="dash-from"
-                  type="date"
-                  value={customFrom}
-                  onChange={(e) => setCustomFrom(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="dash-to">To</FieldLabel>
-                <Input
-                  id="dash-to"
-                  type="date"
-                  value={customTo}
-                  onChange={(e) => setCustomTo(e.target.value)}
-                />
-              </Field>
-            </>
+            <Field>
+              <FieldLabel>Custom range</FieldLabel>
+              <DateRangePicker
+                from={customFrom}
+                to={customTo}
+                onChange={(f, t) => {
+                  setCustomFrom(f);
+                  setCustomTo(t);
+                }}
+              />
+            </Field>
           )}
         </CardContent>
       </Card>
