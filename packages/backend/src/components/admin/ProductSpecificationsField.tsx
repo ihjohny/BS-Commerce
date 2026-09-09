@@ -353,21 +353,17 @@ export default function ProductSpecificationsField(props: { path?: string; label
     (key: string, value: string, meta?: Partial<SpecItem>) => {
       setSpecsMap((prev) => {
         const next = { ...prev }
-        if (value === '') {
-          delete next[key]
-        } else {
-          const existing = prev[key] || {}
-          next[key] = {
-            ...existing,
-            key,
-            value,
-            label: meta?.label || existing.label || key,
-            unit: meta?.unit !== undefined ? meta.unit : existing.unit,
-            group: meta?.group || existing.group || '',
-            attribute: meta?.attribute || existing.attribute,
-            isCustom: meta?.isCustom !== undefined ? meta.isCustom : existing.isCustom,
-            isAdHoc: meta?.isAdHoc !== undefined ? meta.isAdHoc : existing.isAdHoc,
-          }
+        const existing = prev[key] || {}
+        next[key] = {
+          ...existing,
+          key,
+          value,
+          label: meta?.label || existing.label || key,
+          unit: meta?.unit !== undefined ? meta.unit : existing.unit,
+          group: meta?.group || existing.group || '',
+          attribute: meta?.attribute || existing.attribute,
+          isCustom: meta?.isCustom !== undefined ? meta.isCustom : existing.isCustom,
+          isAdHoc: meta?.isAdHoc !== undefined ? meta.isAdHoc : existing.isAdHoc,
         }
 
         if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
@@ -410,7 +406,7 @@ export default function ProductSpecificationsField(props: { path?: string; label
         ? 'true'
         : ''
 
-    handleValueChange(attr.key, initialVal || 'true', {
+    handleValueChange(attr.key, initialVal, {
       attribute: attr.id,
       label: formatLabel(attr.label, attr.key),
       unit: attr.unit || '',
@@ -727,67 +723,31 @@ export default function ProductSpecificationsField(props: { path?: string; label
                               ))}
                             </select>
                           ) : attr.dataType === 'boolean' ? (
-                            <div
+                            <select
+                              value={currentVal}
+                              onChange={(e) =>
+                                handleValueChange(attr.key, e.target.value, {
+                                  attribute: attr.id,
+                                  label: attrLabel,
+                                  group: groupName,
+                                })
+                              }
                               style={{
-                                display: 'inline-flex',
-                                padding: 2,
+                                padding: '0.35rem 0.55rem',
+                                fontSize: '0.825rem',
                                 borderRadius: 6,
-                                background: 'var(--theme-elevation-100)',
-                                border: '1px solid var(--theme-elevation-150)',
-                                gap: 1,
+                                border: '1px solid var(--theme-elevation-200)',
+                                background: 'var(--theme-elevation-50)',
+                                color: currentVal ? 'var(--theme-text)' : 'var(--theme-elevation-400)',
+                                outline: 'none',
+                                fontFamily: 'inherit',
+                                cursor: 'pointer',
                               }}
                             >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleValueChange(attr.key, currentVal === 'true' ? '' : 'true', {
-                                    attribute: attr.id,
-                                    label: attrLabel,
-                                    group: groupName,
-                                  })
-                                }
-                                style={{
-                                  flex: 1,
-                                  padding: '0.25rem 0.5rem',
-                                  fontSize: '0.775rem',
-                                  fontWeight: currentVal === 'true' ? 600 : 500,
-                                  borderRadius: 4,
-                                  border: 'none',
-                                  backgroundColor: currentVal === 'true' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-                                  color: currentVal === 'true' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
-                                  boxShadow: currentVal === 'true' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.12s ease',
-                                }}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleValueChange(attr.key, currentVal === 'false' ? '' : 'false', {
-                                    attribute: attr.id,
-                                    label: attrLabel,
-                                    group: groupName,
-                                  })
-                                }
-                                style={{
-                                  flex: 1,
-                                  padding: '0.25rem 0.5rem',
-                                  fontSize: '0.775rem',
-                                  fontWeight: currentVal === 'false' ? 600 : 500,
-                                  borderRadius: 4,
-                                  border: 'none',
-                                  backgroundColor: currentVal === 'false' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-                                  color: currentVal === 'false' ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
-                                  boxShadow: currentVal === 'false' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.12s ease',
-                                }}
-                              >
-                                No
-                              </button>
-                            </div>
+                              <option value="">— Select (Yes / No) —</option>
+                              <option value="true">Yes</option>
+                              <option value="false">No</option>
+                            </select>
                           ) : (
                             <input
                               type={attr.dataType === 'number' ? 'number' : 'text'}
@@ -1015,9 +975,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
                         borderRadius: 6,
                         border: '1px solid var(--theme-elevation-200)',
                         background: 'var(--theme-elevation-50)',
-                        color: 'var(--theme-text)',
+                        color: item.value ? 'var(--theme-text)' : 'var(--theme-elevation-400)',
                         outline: 'none',
                         fontFamily: 'inherit',
+                        cursor: 'pointer',
                       }}
                     >
                       <option value="">— Select Value —</option>
@@ -1026,6 +987,26 @@ export default function ProductSpecificationsField(props: { path?: string; label
                           {formatLabel(opt.label, opt.value)}
                         </option>
                       ))}
+                    </select>
+                  ) : globalDef?.dataType === 'boolean' ? (
+                    <select
+                      value={item.value}
+                      onChange={(e) => handleValueChange(item.key, e.target.value)}
+                      style={{
+                        padding: '0.35rem 0.55rem',
+                        fontSize: '0.825rem',
+                        borderRadius: 6,
+                        border: '1px solid var(--theme-elevation-200)',
+                        background: 'var(--theme-elevation-50)',
+                        color: item.value ? 'var(--theme-text)' : 'var(--theme-elevation-400)',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="">— Select (Yes / No) —</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
                     </select>
                   ) : (
                     <div style={{ display: 'flex', gap: '0.35rem' }}>
