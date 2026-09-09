@@ -536,7 +536,6 @@ export function CollectionListPage() {
       params.set("depth", "1");
       params.set("sort", sort);
       params.set("locale", locale);
-      if (schema?.hasLocalized) params.set("fallback-locale", "null");
       if (isDrafts && !statusValue) params.set("draft", "true");
       return api.get<Paginated<Record<string, unknown>>>(
         `/api/${slug}?${params.toString()}${whereParam}`,
@@ -564,9 +563,7 @@ export function CollectionListPage() {
 
   const setStatusMany = useMutation({
     mutationFn: async (_status: string) => {
-      const q = schema?.hasLocalized
-        ? `?locale=${locale}&fallback-locale=null`
-        : "";
+      const q = schema?.hasLocalized ? `?locale=${locale}` : "";
       await Promise.all(
         Array.from(selected).map((id) =>
           api.patch(`/api/${slug}/${id}${q}`, { _status }),
@@ -584,7 +581,6 @@ export function CollectionListPage() {
       const getQ = new URLSearchParams({ depth: "0" });
       if (schema?.hasLocalized) {
         getQ.set("locale", locale);
-        getQ.set("fallback-locale", "null");
       }
       const doc = await api.get<Record<string, unknown>>(
         `/api/${slug}/${id}?${getQ.toString()}`,

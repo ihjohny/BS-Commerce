@@ -81,6 +81,10 @@ export function AccountPage() {
       setPasswordProblem("Enter a new password.");
       return;
     }
+    if (password.length < 8) {
+      setPasswordProblem("Password must be at least 8 characters.");
+      return;
+    }
     if (password !== passwordConfirm) {
       setPasswordProblem("Passwords do not match.");
       return;

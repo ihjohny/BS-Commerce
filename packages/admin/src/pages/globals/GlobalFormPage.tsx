@@ -44,7 +44,6 @@ export function GlobalFormPage() {
     enabled: Boolean(schema),
     queryFn: () => {
       const params = new URLSearchParams({ depth: "0", locale });
-      if (schema?.hasLocalized) params.set("fallback-locale", "null");
       return api.get<Record<string, unknown>>(
         `/api/globals/${slug}?${params.toString()}`,
       );

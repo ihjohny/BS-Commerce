@@ -317,7 +317,6 @@ export function CollectionFormPage() {
     enabled: Boolean(schema && isEdit),
     queryFn: () => {
       const params = new URLSearchParams({ depth: "0", locale });
-      if (schema?.hasLocalized) params.set("fallback-locale", "null");
       return api.get<Record<string, unknown>>(
         `/api/${slug}/${id}?${params.toString()}`,
       );
@@ -401,7 +400,6 @@ export function CollectionFormPage() {
   const duplicateMutation = useMutation({
     mutationFn: async () => {
       const getQ = new URLSearchParams({ depth: "0", locale });
-      if (schema?.hasLocalized) getQ.set("fallback-locale", "null");
       const doc = await api.get<Record<string, unknown>>(
         `/api/${slug}/${id}?${getQ.toString()}`,
       );
