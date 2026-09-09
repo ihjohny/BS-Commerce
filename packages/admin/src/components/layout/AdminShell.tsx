@@ -312,17 +312,17 @@ function SidebarBody() {
             <img
               src="/bs23-logo.svg"
               alt="Brain Station 23"
-              className="h-6 w-auto dark:hidden"
+              className="h-6 w-auto group-data-[collapsible=icon]:hidden dark:hidden"
             />
             <img
               src="/bs23-logo-dark.svg"
               alt="Brain Station 23"
-              className="hidden h-6 w-auto dark:block"
+              className="hidden h-6 w-auto group-data-[collapsible=icon]:hidden dark:block"
             />
             <img
               src="/bs23-mark.svg"
               alt="BS23"
-              className="hidden size-7 group-data-[collapsible=icon]:block"
+              className="hidden size-6 group-data-[collapsible=icon]:block"
             />
           </div>
         </SidebarHeader>

@@ -16,6 +16,19 @@ import { CustomerEngagement } from "@/pages/reports/CustomerEngagement";
 import { InventoryOperations } from "@/pages/reports/InventoryOperations";
 import { AccountPage } from "@/pages/AccountPage";
 
+import { OrderDetailsPage } from "@/pages/collections/OrderDetailsPage";
+import { useParams } from "react-router-dom";
+
+/** Orders render as an invoice-style page; other collections use the form. */
+function CollectionDocRoute() {
+  const { slug = "" } = useParams();
+  return slug === "orders" ? (
+    <OrderDetailsPage />
+  ) : (
+    <CollectionFormPage />
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -38,7 +51,7 @@ export default function App() {
           />
           <Route
             path="collections/:slug/:id"
-            element={<CollectionFormPage />}
+            element={<CollectionDocRoute />}
           />
           <Route path="globals/:slug" element={<GlobalFormPage />} />
         </Route>
