@@ -9,27 +9,41 @@
 :root {
   --bs-admin-logo-url: url('/branding/brainstation-23-symbol.png');
 
-  /* Brand Accent Tokens */
+  /* Brand Accent Tokens (Soothing Blue / Indigo) */
   --bs-primary: #2563eb;
   --bs-primary-hover: #1d4ed8;
   --bs-primary-subtle: rgba(37, 99, 235, 0.08);
-  --bs-primary-border: rgba(37, 99, 235, 0.25);
+  --bs-primary-border: rgba(37, 99, 235, 0.22);
 
-  /* Status Tokens */
-  --bs-success: #16a34a;
-  --bs-success-subtle: rgba(22, 163, 74, 0.1);
-  --bs-warning: #d97706;
-  --bs-warning-subtle: rgba(217, 119, 6, 0.1);
-  --bs-error: #dc2626;
-  --bs-error-subtle: rgba(220, 38, 38, 0.1);
-  --bs-info: #0284c7;
-  --bs-info-subtle: rgba(2, 132, 199, 0.1);
+  /* Status Tokens (Refined softer hues) */
+  --bs-success: #15803d;
+  --bs-success-subtle: rgba(21, 128, 61, 0.1);
+  --bs-warning: #b45309;
+  --bs-warning-subtle: rgba(180, 83, 9, 0.1);
+  --bs-error: #b91c1c;
+  --bs-error-subtle: rgba(185, 28, 28, 0.1);
+  --bs-info: #0369a1;
+  --bs-info-subtle: rgba(3, 105, 161, 0.1);
 
-  /* Elevation Shadows */
-  --bs-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --bs-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
-  --bs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-  --bs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+  /* Surface / Neutral Fine-tuning for Light Mode (Softer, eye-soothing, warm slate) */
+  --color-base-0: #ffffff;
+  --color-base-50: #f8fafc;
+  --color-base-100: #f1f5f9;
+  --color-base-150: #e2e8f0;
+  --color-base-200: #cbd5e1;
+  --color-base-250: #94a3b8;
+  --color-base-300: #64748b;
+  --color-base-500: #475569;
+  --color-base-700: #334155;
+  --color-base-800: #1e293b;
+  --color-base-900: #0f172a;
+  --color-base-950: #020617;
+
+  /* Elevation Shadows (Soft natural ambient diffusion) */
+  --bs-shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --bs-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --bs-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --bs-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.07), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
 
   /* Radius Tokens */
   --bs-radius-sm: 6px;
@@ -38,22 +52,64 @@
   --bs-radius-full: 9999px;
 }
 
-/* Dark Mode Overrides */
+/* Dark Mode Overrides (Studio-grade Deep Zinc / Obsidian - Eye-Soothing & Zero Harsh Glare) */
 html[data-theme='dark'] {
-  --bs-primary: #3b82f6;
-  --bs-primary-hover: #60a5fa;
-  --bs-primary-subtle: rgba(59, 130, 246, 0.15);
-  --bs-primary-border: rgba(59, 130, 246, 0.35);
+  --bs-primary: #60a5fa;
+  --bs-primary-hover: #93c5fd;
+  --bs-primary-subtle: rgba(96, 165, 250, 0.14);
+  --bs-primary-border: rgba(96, 165, 250, 0.28);
 
-  --bs-success: #22c55e;
-  --bs-success-subtle: rgba(34, 197, 94, 0.15);
-  --bs-warning: #f59e0b;
-  --bs-warning-subtle: rgba(245, 158, 11, 0.15);
-  --bs-error: #ef4444;
-  --bs-error-subtle: rgba(239, 68, 68, 0.15);
+  --bs-success: #4ade80;
+  --bs-success-subtle: rgba(74, 222, 128, 0.14);
+  --bs-warning: #fbbf24;
+  --bs-warning-subtle: rgba(251, 191, 36, 0.14);
+  --bs-error: #f87171;
+  --bs-error-subtle: rgba(248, 113, 113, 0.14);
+  --bs-info: #38bdf8;
+  --bs-info-subtle: rgba(56, 189, 248, 0.14);
+
+  /* Deep, velvety slate/zinc palette to avoid eye fatigue */
+  --color-base-0: #090d16;
+  --color-base-50: #0f172a;
+  --color-base-100: #1e293b;
+  --color-base-150: #334155;
+  --color-base-200: #475569;
+  --color-base-250: #64748b;
+  --color-base-300: #94a3b8;
+  --color-base-500: #cbd5e1;
+  --color-base-700: #e2e8f0;
+  --color-base-800: #f1f5f9;
+  --color-base-900: #f8fafc;
+  --color-base-950: #ffffff;
+
+  /* Elevation overrides for Dark Mode */
+  --theme-bg: #090d16 !important;
+  --theme-elevation-0: #090d16 !important;
+  --theme-elevation-50: #0f172a !important;
+  --theme-elevation-100: #172033 !important;
+  --theme-elevation-150: #1e293b !important;
+  --theme-elevation-200: #334155 !important;
+  --theme-elevation-250: #475569 !important;
+  --theme-elevation-300: #64748b !important;
+  --theme-elevation-400: #94a3b8 !important;
+  --theme-elevation-450: #94a3b8 !important;
+  --theme-elevation-500: #cbd5e1 !important;
+  --theme-elevation-600: #e2e8f0 !important;
+  --theme-elevation-700: #f1f5f9 !important;
+  --theme-elevation-800: #f8fafc !important;
+  --theme-elevation-900: #ffffff !important;
+  --theme-text: #f1f5f9 !important;
+  --theme-input-bg: #0f172a !important;
+  --theme-border-color: #1e293b !important;
+
+  /* Shadows for Dark Mode (Soft edge glow instead of dark shadow) */
+  --bs-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --bs-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --bs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --bs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
 }
 
-/* ─── Global Font Smoothing & Base Improvements ────────────────────────────── */
+/* ─── Global Font Smoothing & Legibility Enhancements ───────────────────────── */
 body,
 input,
 button,
@@ -62,7 +118,30 @@ textarea {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.011em;
+}
+
+body {
+  color: var(--theme-text);
+  line-height: 1.5;
+}
+
+/* Eye-Friendly Selection Colors */
+::selection {
+  background-color: var(--bs-primary-subtle) !important;
+  color: var(--bs-primary) !important;
+}
+
+html[data-theme='dark'] ::selection {
+  background-color: rgba(96, 165, 250, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* ─── Improved Focus Ring Accessibility ──────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--bs-primary) !important;
+  outline-offset: 1px !important;
 }
 
 /* ─── Top Left Brand Icon / Sidebar Toggler ───────────────────────────── */
