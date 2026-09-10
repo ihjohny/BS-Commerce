@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
+import { ProductStockModal } from './modals/ProductStockModal'
 
 export type OrderItemData = {
   id: string
@@ -71,6 +72,15 @@ function formatMoney(amount: number, currency: string) {
 }
 
 export function OrderItemsTable({ items, currency, canEdit, onEditItems }: OrderItemsTableProps) {
+  const [selectedStockItem, setSelectedStockItem] = useState<{
+    productId: string
+    productName: string
+    variantId?: string | null
+    variantName?: string | null
+    sku?: string | null
+    productImage?: string | null
+  } | null>(null)
+
   if (!items || items.length === 0) {
     return (
       <div
@@ -165,7 +175,6 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
               }}
             >
               <th style={{ padding: '10px 14px' }}>Product</th>
-              <th style={{ padding: '10px 14px' }}>SKU</th>
               <th style={{ padding: '10px 14px', textAlign: 'right' }}>Price</th>
               <th style={{ padding: '10px 14px', textAlign: 'center' }}>Qty</th>
               <th style={{ padding: '10px 14px', textAlign: 'right' }}>Total</th>
@@ -179,6 +188,18 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
               const title = item.productName || item.productTitle || productObj?.title || 'Product Item'
               const variantTitle = item.variantName || variantObj?.title
               const sku = item.sku || variantObj?.sku || '-'
+              const productId =
+                typeof item.product === 'object' && item.product !== null
+                  ? item.product.id
+                  : typeof item.product === 'string'
+                  ? item.product
+                  : null
+              const variantId =
+                typeof item.variant === 'object' && item.variant !== null
+                  ? item.variant.id
+                  : typeof item.variant === 'string'
+                  ? item.variant
+                  : null
 
               const unitPrice =
                 item.unitPrice != null
@@ -260,15 +281,56 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span
-                          style={{
-                            fontWeight: 600,
-                            color: 'var(--theme-text, #0f172a)',
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {title}
-                        </span>
+                        {productId ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedStockItem({
+                                productId,
+                                productName: title,
+                                variantId,
+                                variantName: variantTitle,
+                                sku,
+                                productImage: imageUrl,
+                              })
+                            }
+                            title="Click to view real-time inventory and warehouse stock"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              margin: 0,
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              color: 'var(--bs-primary, #2563eb)',
+                              lineHeight: 1.3,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              textDecoration: 'none',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                          >
+                            <span>{title}</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, opacity: 0.7 }}>
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                              <polyline points="15 3 21 3 21 9" />
+                              <line x1="10" y1="14" x2="21" y2="3" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--theme-text, #0f172a)',
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {title}
+                          </span>
+                        )}
                         {variantTitle && (
                           <span
                             style={{
@@ -276,7 +338,19 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
                               color: 'var(--theme-elevation-500, #64748b)',
                             }}
                           >
-                            {variantTitle}
+                            Variant: {variantTitle}
+                          </span>
+                        )}
+                        {sku && sku !== '-' && (
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontFamily: 'monospace',
+                              color: 'var(--theme-elevation-500, #64748b)',
+                              fontWeight: 400,
+                            }}
+                          >
+                            SKU: {sku}
                           </span>
                         )}
                         {item.tenant && typeof item.tenant === 'object' && item.tenant !== null && (
@@ -292,19 +366,6 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
                         )}
                       </div>
                     </div>
-                  </td>
-
-                  {/* SKU column */}
-                  <td
-                    style={{
-                      padding: '12px 14px',
-                      verticalAlign: 'middle',
-                      fontFamily: 'monospace',
-                      color: 'var(--theme-elevation-600, #475569)',
-                      fontSize: 12,
-                    }}
-                  >
-                    {sku}
                   </td>
 
                   {/* Unit price */}
@@ -361,6 +422,20 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
           </tbody>
         </table>
       </div>
+
+      {/* Product Stock Information Modal */}
+      {selectedStockItem && (
+        <ProductStockModal
+          isOpen={true}
+          productId={selectedStockItem.productId}
+          productName={selectedStockItem.productName}
+          variantId={selectedStockItem.variantId}
+          variantName={selectedStockItem.variantName}
+          sku={selectedStockItem.sku}
+          productImage={selectedStockItem.productImage}
+          onClose={() => setSelectedStockItem(null)}
+        />
+      )}
     </div>
   )
 }

@@ -434,7 +434,6 @@ export function EditItemsModal({
                     }}
                   >
                     <th style={{ padding: '8px 12px', textAlign: 'left' }}>Item</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'left', width: 120 }}>SKU</th>
                     <th style={{ padding: '8px 12px', textAlign: 'right', width: 130 }}>Unit Price ({currency})</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center', width: 80 }}>Qty</th>
                     <th style={{ padding: '8px 12px', textAlign: 'right', width: 120 }}>Line Total</th>
@@ -453,36 +452,46 @@ export function EditItemsModal({
                             <img
                               src={it.productImage}
                               alt={it.productName}
-                              style={{ width: 30, height: 30, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                              style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
                             />
                           )}
-                          <div>
-                            <div>{it.productName}</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                              <span>{it.productName}</span>
+                              {it.isNew && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    padding: '2px 5px',
+                                    borderRadius: 4,
+                                    background: '#dcfce7',
+                                    color: '#15803d',
+                                  }}
+                                >
+                                  NEW
+                                </span>
+                              )}
+                            </div>
                             {it.variantName && (
                               <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--bs-primary, #2563eb)' }}>
                                 Variant: {it.variantName}
                               </span>
                             )}
-                            {it.isNew && (
+                            {it.sku && (
                               <span
                                 style={{
-                                  marginLeft: 6,
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  padding: '2px 5px',
-                                  borderRadius: 4,
-                                  background: '#dcfce7',
-                                  color: '#15803d',
+                                  fontSize: 11,
+                                  fontFamily: 'monospace',
+                                  color: 'var(--theme-elevation-500, #64748b)',
+                                  fontWeight: 400,
                                 }}
                               >
-                                NEW
+                                SKU: {it.sku}
                               </span>
                             )}
                           </div>
                         </div>
-                      </td>
-                      <td style={{ padding: '8px 12px', fontFamily: 'monospace', color: 'var(--theme-elevation-600, #475569)' }}>
-                        {it.sku}
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'right' }}>
                         <input

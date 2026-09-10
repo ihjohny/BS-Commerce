@@ -78,9 +78,9 @@ export function printOrderInvoice(order: any) {
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding: 10px 8px; vertical-align: top;">
             <div style="font-weight: 600; color: #0f172a;">${title}</div>
-            ${variant ? `<div style="font-size: 11px; color: #64748b;">${variant}</div>` : ''}
+            ${variant ? `<div style="font-size: 11px; color: #64748b;">Variant: ${variant}</div>` : ''}
+            ${sku && sku !== '-' ? `<div style="font-size: 11px; font-family: monospace; color: #64748b;">SKU: ${sku}</div>` : ''}
           </td>
-          <td style="padding: 10px 8px; vertical-align: top; font-family: monospace; color: #475569;">${sku}</td>
           <td style="padding: 10px 8px; vertical-align: top; text-align: right; color: #0f172a;">${formatMoney(price, currency)}</td>
           <td style="padding: 10px 8px; vertical-align: top; text-align: center; font-weight: 600;">${qty}</td>
           <td style="padding: 10px 8px; vertical-align: top; text-align: right; font-weight: 700; color: #0f172a;">${formatMoney(total, currency)}</td>
@@ -153,7 +153,6 @@ export function printOrderInvoice(order: any) {
           <thead>
             <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; text-align: left; font-size: 12px; color: #475569;">
               <th style="padding: 10px 8px;">Item Description</th>
-              <th style="padding: 10px 8px;">SKU</th>
               <th style="padding: 10px 8px; text-align: right;">Price</th>
               <th style="padding: 10px 8px; text-align: center;">Qty</th>
               <th style="padding: 10px 8px; text-align: right;">Total</th>

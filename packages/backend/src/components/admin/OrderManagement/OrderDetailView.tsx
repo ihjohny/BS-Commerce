@@ -5,9 +5,10 @@ import { OrderDetailClient } from './OrderDetailClient'
 
 /**
  * Server Component: OrderDetailView
- * Entry point for Payload CMS collection views.edit.default.
+ * Entry point for Payload CMS collection views.edit.root.
+ * Overrides the entire document edit view to remove redundant default Payload tabs (Edit, API).
  * Receives DocumentViewServerProps, loads deep relations (items, customer, store, history),
- * and renders the production-grade Order Management UI with proper spacing and top divider.
+ * and renders the production-grade Order Management UI.
  */
 export default async function OrderDetailView(props: DocumentViewServerProps) {
   const { doc, params, payload: directPayload, initPageResult } = props || {}
