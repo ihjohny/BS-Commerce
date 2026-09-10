@@ -133,6 +133,10 @@ export default function ProductSpecificationsField(props: { path?: string; label
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   const [selectedAdHocAttrId, setSelectedAdHocAttrId] = useState<string>('')
+  const [isAttrDropdownOpen, setIsAttrDropdownOpen] = useState(false)
+  const [attrSearchQuery, setAttrSearchQuery] = useState('')
+  const attrDropdownRef = useRef<HTMLDivElement>(null)
+  const attrSearchInputRef = useRef<HTMLInputElement>(null)
   const [showCustomModal, setShowCustomModal] = useState(false)
   const [customKey, setCustomKey] = useState('')
   const [customLabel, setCustomLabel] = useState('')
@@ -140,6 +144,35 @@ export default function ProductSpecificationsField(props: { path?: string; label
   const [customUnit, setCustomUnit] = useState('')
   const [customGroup, setCustomGroup] = useState('Additional Specifications')
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    if (!isAttrDropdownOpen) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (attrDropdownRef.current && !attrDropdownRef.current.contains(e.target as Node)) {
+        setIsAttrDropdownOpen(false)
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAttrDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isAttrDropdownOpen])
+
+  useEffect(() => {
+    if (isAttrDropdownOpen && attrSearchInputRef.current) {
+      attrSearchInputRef.current.focus()
+    }
+  }, [isAttrDropdownOpen])
 
   const toggleGroupCollapse = useCallback((groupName: string) => {
     setCollapsedGroups((prev) => ({
@@ -416,6 +449,8 @@ export default function ProductSpecificationsField(props: { path?: string; label
     })
 
     setSelectedAdHocAttrId('')
+    setIsAttrDropdownOpen(false)
+    setAttrSearchQuery('')
   }
 
   const handleAddCustomSpec = () => {
@@ -448,6 +483,29 @@ export default function ProductSpecificationsField(props: { path?: string; label
       (a) => !templateAttributesMap.has(a.key) && !specsMap[a.key]
     )
   }, [allGlobalAttributes, templateAttributesMap, specsMap])
+
+  const selectedAttrObj = useMemo(() => {
+    return allGlobalAttributes.find((a) => a.id === selectedAdHocAttrId) || null
+  }, [allGlobalAttributes, selectedAdHocAttrId])
+
+  const filteredGlobalAttrs = useMemo(() => {
+    if (!attrSearchQuery.trim()) return availableGlobalAttrs
+    const q = attrSearchQuery.trim().toLowerCase()
+    return availableGlobalAttrs.filter((a) => {
+      const label = formatLabel(a.label, a.key).toLowerCase()
+      const key = a.key.toLowerCase()
+      const category = (a.category || '').toLowerCase()
+      const dataType = a.dataType.toLowerCase()
+      const unit = (a.unit || '').toLowerCase()
+      return (
+        label.includes(q) ||
+        key.includes(q) ||
+        category.includes(q) ||
+        dataType.includes(q) ||
+        unit.includes(q)
+      )
+    })
+  }, [availableGlobalAttrs, attrSearchQuery])
 
   return (
     <div
@@ -854,35 +912,357 @@ export default function ProductSpecificationsField(props: { path?: string; label
               marginBottom: '0.85rem',
             }}
           >
-            <select
-              value={selectedAdHocAttrId}
-              onChange={(e) => setSelectedAdHocAttrId(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '0.35rem 0.55rem',
-                fontSize: '0.8rem',
-                borderRadius: 5,
-                border: '1px solid var(--theme-elevation-200)',
-                background: 'var(--theme-elevation-50)',
-                color: 'var(--theme-text)',
-                outline: 'none',
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-              }}
-            >
-              <option value="">— Attach Global Attribute ({availableGlobalAttrs.length} available) —</option>
-              {availableGlobalAttrs.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {formatLabel(a.label, a.key)} ({a.dataType}{a.unit ? ` · ${a.unit}` : ''})
-                </option>
-              ))}
-            </select>
+            {/* Custom Searchable Attribute Combobox */}
+            <div ref={attrDropdownRef} style={{ position: 'relative', flex: 1 }}>
+              <button
+                type="button"
+                onClick={() => setIsAttrDropdownOpen((prev) => !prev)}
+                aria-haspopup="listbox"
+                aria-expanded={isAttrDropdownOpen}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  padding: '0.42rem 0.65rem',
+                  fontSize: '0.8rem',
+                  borderRadius: 5,
+                  border: isAttrDropdownOpen
+                    ? '1px solid var(--bs-primary, #2563eb)'
+                    : '1px solid var(--theme-elevation-200)',
+                  backgroundColor: 'var(--theme-elevation-50)',
+                  color: selectedAttrObj ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: isAttrDropdownOpen ? '0 0 0 2px rgba(37,99,235,0.15)' : 'none',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                  {selectedAttrObj ? (
+                    <>
+                      <span style={{ fontWeight: 600, color: 'var(--theme-text)' }}>
+                        {formatLabel(selectedAttrObj.label, selectedAttrObj.key)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontFamily: 'monospace',
+                          padding: '0.1rem 0.35rem',
+                          borderRadius: 3,
+                          backgroundColor: 'var(--theme-elevation-150)',
+                          color: 'var(--theme-elevation-700)',
+                        }}
+                      >
+                        {selectedAttrObj.key}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          padding: '0.1rem 0.35rem',
+                          borderRadius: 3,
+                          backgroundColor: 'rgba(37,99,235,0.08)',
+                          color: 'var(--bs-primary, #2563eb)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {selectedAttrObj.dataType}
+                        {selectedAttrObj.unit ? ` · ${selectedAttrObj.unit}` : ''}
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--theme-elevation-500)' }}>
+                      — Select Global Attribute ({availableGlobalAttrs.length} available) —
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  {selectedAdHocAttrId && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedAdHocAttrId('')
+                      }}
+                      title="Clear selection"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--theme-elevation-200)',
+                        color: 'var(--theme-elevation-600)',
+                        fontSize: '0.75rem',
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ×
+                    </span>
+                  )}
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: isAttrDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.15s ease',
+                      color: 'var(--theme-elevation-500)',
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Dropdown Popover Menu */}
+              {isAttrDropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 4px)',
+                    left: 0,
+                    right: 0,
+                    zIndex: 999,
+                    backgroundColor: 'var(--theme-elevation-0, var(--theme-bg))',
+                    border: '1px solid var(--theme-elevation-200)',
+                    borderRadius: 8,
+                    boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.18), 0 2px 6px -1px rgba(0,0,0,0.06)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Search Input Box */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                      padding: '0.5rem 0.65rem',
+                      borderBottom: '1px solid var(--theme-elevation-150)',
+                      backgroundColor: 'var(--theme-elevation-50)',
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ color: 'var(--theme-elevation-500)', flexShrink: 0 }}
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                      ref={attrSearchInputRef}
+                      type="text"
+                      value={attrSearchQuery}
+                      onChange={(e) => setAttrSearchQuery(e.target.value)}
+                      placeholder="Search by name, key, category, data type..."
+                      style={{
+                        flex: 1,
+                        border: 'none',
+                        outline: 'none',
+                        background: 'transparent',
+                        fontSize: '0.8rem',
+                        color: 'var(--theme-text)',
+                        padding: 0,
+                        fontFamily: 'inherit',
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && filteredGlobalAttrs.length > 0) {
+                          e.preventDefault()
+                          setSelectedAdHocAttrId(filteredGlobalAttrs[0].id)
+                          setIsAttrDropdownOpen(false)
+                          setAttrSearchQuery('')
+                        }
+                      }}
+                    />
+                    {attrSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setAttrSearchQuery('')}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          color: 'var(--theme-elevation-500)',
+                          fontSize: '0.85rem',
+                          lineHeight: 1,
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search result count */}
+                  <div
+                    style={{
+                      padding: '0.3rem 0.65rem',
+                      fontSize: '0.68rem',
+                      color: 'var(--theme-elevation-500)',
+                      backgroundColor: 'var(--theme-elevation-50)',
+                      borderBottom: '1px solid var(--theme-elevation-100)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <span>
+                      Showing {filteredGlobalAttrs.length} of {availableGlobalAttrs.length} attributes
+                    </span>
+                    {attrSearchQuery && (
+                      <span style={{ fontStyle: 'italic' }}>Filtered by &ldquo;{attrSearchQuery}&rdquo;</span>
+                    )}
+                  </div>
+
+                  {/* Attributes List */}
+                  <div
+                    role="listbox"
+                    style={{
+                      maxHeight: 240,
+                      overflowY: 'auto',
+                      padding: '0.35rem 0',
+                    }}
+                  >
+                    {filteredGlobalAttrs.length === 0 ? (
+                      <div
+                        style={{
+                          padding: '1.25rem 1rem',
+                          textAlign: 'center',
+                          fontSize: '0.78rem',
+                          color: 'var(--theme-elevation-500)',
+                        }}
+                      >
+                        No global attributes match &ldquo;{attrSearchQuery}&rdquo;
+                      </div>
+                    ) : (
+                      filteredGlobalAttrs.map((a) => {
+                        const isSelected = a.id === selectedAdHocAttrId
+                        return (
+                          <div
+                            key={a.id}
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => {
+                              setSelectedAdHocAttrId(a.id)
+                              setIsAttrDropdownOpen(false)
+                              setAttrSearchQuery('')
+                            }}
+                            style={{
+                              padding: '0.45rem 0.65rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '0.5rem',
+                              cursor: 'pointer',
+                              backgroundColor: isSelected
+                                ? 'rgba(37,99,235,0.08)'
+                                : 'transparent',
+                              transition: 'background-color 0.12s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = 'var(--theme-elevation-100)'
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = 'transparent'
+                              }
+                            }}
+                          >
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--theme-text)' }}>
+                                  {formatLabel(a.label, a.key)}
+                                </span>
+                                {a.category && (
+                                  <span
+                                    style={{
+                                      fontSize: '0.65rem',
+                                      padding: '0.08rem 0.35rem',
+                                      borderRadius: 4,
+                                      backgroundColor: 'var(--theme-elevation-150)',
+                                      color: 'var(--theme-elevation-700)',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {a.category}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem' }}>
+                                <span
+                                  style={{
+                                    fontFamily: 'monospace',
+                                    color: 'var(--theme-elevation-500)',
+                                    fontSize: '0.68rem',
+                                  }}
+                                >
+                                  {a.key}
+                                </span>
+                                <span style={{ color: 'var(--theme-elevation-400)' }}>•</span>
+                                <span
+                                  style={{
+                                    color: 'var(--bs-primary, #2563eb)',
+                                    fontWeight: 500,
+                                    fontSize: '0.68rem',
+                                  }}
+                                >
+                                  {a.dataType}
+                                  {a.unit ? ` (${a.unit})` : ''}
+                                </span>
+                              </div>
+                            </div>
+
+                            {isSelected && (
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="var(--bs-primary, #2563eb)"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ flexShrink: 0 }}
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               disabled={!selectedAdHocAttrId}
               onClick={handleAttachGlobalAttribute}
               style={{
-                padding: '0.35rem 0.85rem',
+                padding: '0.42rem 0.95rem',
                 fontSize: '0.8rem',
                 fontWeight: 500,
                 borderRadius: 5,
@@ -891,6 +1271,8 @@ export default function ProductSpecificationsField(props: { path?: string; label
                 color: selectedAdHocAttrId ? '#ffffff' : 'var(--theme-elevation-500)',
                 cursor: selectedAdHocAttrId ? 'pointer' : 'not-allowed',
                 transition: 'all 0.12s ease',
+                flexShrink: 0,
+                height: 32,
               }}
             >
               Attach
