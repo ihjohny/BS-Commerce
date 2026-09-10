@@ -19,6 +19,9 @@ export default async function PayloadLayout({
       config={configPromise}
       importMap={importMap}
       serverFunction={payloadServerFunction}
+      htmlProps={{
+        suppressHydrationWarning: true,
+      }}
     >
       {children}
     </RootLayout>

@@ -73,6 +73,7 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    suppressHydrationWarning: true,
     meta: {
       titleSuffix: '— BS-Commerce Admin',
       icons: [{ url: '/branding/brainstation-23-symbol.png', type: 'image/png' }],
