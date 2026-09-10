@@ -9,15 +9,8 @@ import type { Paginated } from "@/lib/api";
 import { getCollectionSchema } from "@/lib/schema";
 import type { NormField } from "@/lib/schema";
 import { useAccess } from "@/contexts/AccessContext";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -33,7 +26,6 @@ interface Related {
   sku?: string;
   providerTransactionId?: string;
 }
-
 
 interface Address {
   firstName?: string;
@@ -134,24 +126,70 @@ function relId(rel: string | Related | undefined): string | null {
   return typeof rel === "string" ? rel : rel.id;
 }
 
-function AddressBlock({ a }: { a: Address | undefined }) {
-  if (!a || (!a.street1 && !a.city && !a.firstName)) return null;
+/** Magento-style section heading with rule underneath. */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="grid gap-4">
+      <h2 className="border-b pb-2 text-lg font-medium">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+/** Label/value row; striped background on every other row. */
+function InfoRow({
+  label,
+  children,
+  striped,
+}: {
+  label: string;
+  children: React.ReactNode;
+  striped?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-start justify-between gap-4 rounded-md px-3 py-2 text-sm ${
+        striped ? "bg-muted/60" : ""
+      }`}
+    >
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 text-right">{children}</span>
+    </div>
+  );
+}
+
+/** Address rendered as stacked lines, Magento style. */
+function AddressLines({
+  a,
+  fallback = "—",
+}: {
+  a: Address | undefined;
+  fallback?: string;
+}) {
+  if (!a || (!a.street1 && !a.city && !a.firstName)) {
+    return <p className="text-sm text-muted-foreground">{fallback}</p>;
+  }
   const lines = [
     [a.firstName, a.lastName].filter(Boolean).join(" "),
-    [a.street1, a.street2].filter(Boolean).join(", "),
+    [a.street1, a.street2].filter(Boolean).join("\n"),
     [a.city, a.state, a.postalCode].filter(Boolean).join(", "),
     a.country,
-    a.phone,
+    a.phone ? `T. ${a.phone}` : "",
   ].filter(Boolean);
   return (
-    <p className="text-sm text-muted-foreground">
+    <div className="text-sm">
       {lines.map((line, i) => (
-        <span key={i}>
+        <p key={i} className="whitespace-pre-line">
           {line}
-          {i < lines.length - 1 ? <br /> : null}
-        </span>
+        </p>
       ))}
-    </p>
+    </div>
   );
 }
 
@@ -215,9 +253,7 @@ export function OrderDetailsPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ depth: "1", limit: "200", locale });
       params.set("where[order][equals]", id);
-      return api.get<Paginated<Item>>(
-        `/api/order-items?${params.toString()}`,
-      );
+      return api.get<Paginated<Item>>(`/api/order-items?${params.toString()}`);
     },
   });
 
@@ -264,11 +300,15 @@ export function OrderDetailsPage() {
   }
   if (orderQuery.isError || !order) {
     return (
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         <p className="text-sm text-destructive">
           Failed to load order — it may not exist.
         </p>
-        <Button variant="outline" className="w-fit print:hidden" render={<Link to="/collections/orders" />}>
+        <Button
+          variant="outline"
+          className="w-fit print:hidden"
+          render={<Link to="/collections/orders" />}
+        >
           <ArrowLeft /> Back to orders
         </Button>
       </div>
@@ -286,7 +326,7 @@ export function OrderDetailsPage() {
   const transaction = order.transaction;
 
   return (
-    <div className="grid gap-4 print:gap-2">
+    <div className="grid gap-8">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
         <div>
@@ -303,133 +343,176 @@ export function OrderDetailsPage() {
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
             Order {order.orderNumber ?? order.id}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {order.placedAt
-              ? `Placed ${format(new Date(order.placedAt), "PPP p")}`
-              : "Placed date unknown"}
-          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => window.print()}>
             <Printer /> Print invoice
           </Button>
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={!dirty || saveMutation.isPending}
+          >
+            <Save /> Save status
+          </Button>
         </div>
       </div>
 
-      {/* Summary strip */}
-      <Card className="print:border-0 print:shadow-none">
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              Order status
-            </span>
-            <StatusSelect
-              value={status ?? order.status ?? ""}
-              options={statusOptions}
-              onChange={setStatus}
-              disabled={saveMutation.isPending}
-            />
+      {/* Order & Account Information */}
+      <Section title="Order & Account Information">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-2">
+            <p className="font-medium">Order # {order.orderNumber ?? order.id}</p>
+            <InfoRow label="Order Date" striped>
+              {order.placedAt
+                ? format(new Date(order.placedAt), "MMM d, yyyy, h:mm:ss a")
+                : "—"}
+            </InfoRow>
+            <InfoRow label="Order Status">
+              <span className="inline-flex items-center gap-2">
+                {status ?? order.status ?? "—"}
+                {status !== null && (
+                  <span className="text-xs text-muted-foreground">(unsaved)</span>
+                )}
+              </span>
+            </InfoRow>
+            <InfoRow label="Payment Status">
+              <span className="inline-flex items-center gap-2">
+                {paymentStatus ?? order.paymentStatus ?? "—"}
+                {paymentStatus !== null && (
+                  <span className="text-xs text-muted-foreground">(unsaved)</span>
+                )}
+              </span>
+            </InfoRow>
+            <InfoRow label="Store" striped>
+              {storeName || "—"}
+            </InfoRow>
+            <div className="flex flex-wrap items-end gap-3 pt-2 print:hidden">
+              <div className="grid gap-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Order Status
+                </span>
+                <StatusSelect
+                  value={status ?? order.status ?? ""}
+                  options={statusOptions}
+                  onChange={setStatus}
+                  disabled={saveMutation.isPending}
+                />
+              </div>
+              <div className="grid gap-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Payment Status
+                </span>
+                <StatusSelect
+                  value={paymentStatus ?? order.paymentStatus ?? ""}
+                  options={paymentOptions}
+                  onChange={setPaymentStatus}
+                  disabled={saveMutation.isPending}
+                />
+              </div>
+            </div>
           </div>
-          <div className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              Payment status
-            </span>
-            <StatusSelect
-              value={paymentStatus ?? order.paymentStatus ?? ""}
-              options={paymentOptions}
-              onChange={setPaymentStatus}
-              disabled={saveMutation.isPending}
-            />
+          <div className="grid gap-2">
+            <p className="font-medium">Account Information</p>
+            <InfoRow label="Customer Name" striped>
+              {buyer.name ? (
+                buyer.name
+              ) : relId(order.customer) ? (
+                <Link
+                  className="text-primary underline"
+                  to={`/collections/users/${relId(order.customer)}`}
+                >
+                  Registered customer
+                </Link>
+              ) : (
+                "Guest customer"
+              )}
+            </InfoRow>
+            <InfoRow label="Email">
+              {buyer.email ?? order.guestEmail ?? "—"}
+            </InfoRow>
+            <InfoRow label="Phone" striped>
+              {buyer.phone ?? order.guestPhone ?? "—"}
+            </InfoRow>
+            {buyer.locale && <InfoRow label="Locale">{buyer.locale}</InfoRow>}
           </div>
-          {storeName && (
-            <span className="text-sm text-muted-foreground">{storeName}</span>
-          )}
-          {dirty && (
-            <Button
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending}
-              className="ms-auto"
-            >
-              <Save /> Save status
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      </Section>
 
-      {/* Parties */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="print:border-0 print:shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">Customer</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {buyer.name ? (
-              buyer.name
-            ) : relId(order.customer) ? (
-              <Link
-                className="text-primary"
-                to={`/collections/users/${relId(order.customer)}`}
-              >
-                Registered customer
-              </Link>
-            ) : (
-              "Guest customer"
-            )}
-            <br />
-            {buyer.email ?? order.guestEmail ?? "—"}
-            <br />
-            {buyer.phone ?? order.guestPhone ?? "—"}
-            {buyer.locale ? (
-              <>
-                <br />
-                Locale: {buyer.locale}
-              </>
-            ) : null}
-          </CardContent>
-        </Card>
-        <Card className="print:border-0 print:shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">Shipping address</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AddressBlock a={order.shippingAddress} />
-          </CardContent>
-        </Card>
-        <Card className="print:border-0 print:shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">Billing address</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {order.billingAddress?.street1 ? (
-              <AddressBlock a={order.billingAddress} />
-            ) : (
+      {/* Address Information */}
+      <Section title="Address Information">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-2">
+            <p className="font-medium">Billing Address</p>
+            <AddressLines a={order.billingAddress} fallback="Same as shipping address" />
+          </div>
+          <div className="grid gap-2">
+            <p className="font-medium">Shipping Address</p>
+            <AddressLines a={order.shippingAddress} />
+          </div>
+        </div>
+      </Section>
+
+      {/* Payment & Shipping Method */}
+      <Section title="Payment & Shipping Method">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-2">
+            <p className="font-medium">Payment Information</p>
+            <p className="text-sm">{order.checkoutPaymentChannel ?? "—"}</p>
+            <p className="text-sm text-muted-foreground">
+              Transaction:{" "}
+              {relId(transaction) ? (
+                <Link
+                  className="text-primary underline"
+                  to={`/collections/transactions/${relId(transaction)}`}
+                >
+                  {transaction && typeof transaction === "object"
+                    ? String(transaction.providerTransactionId ?? transaction.id)
+                    : relId(transaction)}
+                </Link>
+              ) : (
+                "—"
+              )}
+            </p>
+            {order.couponCodeSnapshot && (
               <p className="text-sm text-muted-foreground">
-                Same as shipping address
+                Coupon: {order.couponCodeSnapshot}
               </p>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <div className="grid gap-2">
+            <p className="font-medium">Shipping &amp; Handling Information</p>
+            <p className="text-sm">
+              {storeName || "—"}
+              {num(order.shippingTotal) !== 0 && (
+                <>
+                  {" — "}
+                  {money(order.shippingTotal, currency)}
+                </>
+              )}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              The order was placed using {currency}.
+            </p>
+          </div>
+        </div>
+      </Section>
 
-      {/* Line items — the invoice table */}
-      <Card className="print:border-0 print:shadow-none">
-        <CardHeader>
-          <CardTitle className="text-base">Items</CardTitle>
-          <CardDescription>
-            {items.length} line item{items.length === 1 ? "" : "s"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
+      {/* Items Ordered */}
+      <Section title="Items Ordered">
+        <div className="grid gap-3">
           {items.map((item, i) => {
             const variantDoc =
               item.variant && typeof item.variant === "object"
                 ? item.variant
                 : null;
-            const sku = item.sku ?? (variantDoc ? String(variantDoc.sku ?? "—") : "—");
+            const sku =
+              item.sku ?? (variantDoc ? String(variantDoc.sku ?? "—") : "—");
             return (
               <div
                 key={item.id ?? i}
-                className="flex items-center gap-4 rounded-lg border p-3"
+                className={`flex items-center gap-4 rounded-md border border-border/60 px-4 py-3 ${
+                  i % 2 === 1 ? "bg-muted/40" : "bg-card"
+                }`}
               >
                 {item.productImage ? (
                   <img
@@ -444,7 +527,7 @@ export function OrderDetailsPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
-                    {i + 1}. {item.productName ?? item.itemLabel ?? "—"}
+                    {item.productName ?? item.itemLabel ?? "—"}
                   </p>
                   {item.productSlug && (
                     <p className="truncate text-xs text-muted-foreground">
@@ -463,7 +546,7 @@ export function OrderDetailsPage() {
                     {money(item.totalPrice, currency)}
                   </p>
                   <p className="text-xs text-muted-foreground tabular-nums">
-                    {item.quantity ?? "—"} ×{" "}
+                    Ordered {item.quantity ?? "—"} ×{" "}
                     {money(item.unitPrice, currency)}
                   </p>
                 </div>
@@ -475,95 +558,70 @@ export function OrderDetailsPage() {
               No line items on this order.
             </p>
           )}
+        </div>
+      </Section>
 
-          {/* Totals */}
-          <div className="ms-auto mt-2 grid w-full max-w-xs gap-1.5 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="tabular-nums">
-                {money(order.subtotal ?? computedSubtotal, currency)}
-              </span>
-            </div>
+      {/* Order Total */}
+      <Section title="Order Total">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-2">
+            <p className="font-medium">Notes for this Order</p>
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {order.notes || "—"}
+            </p>
+          </div>
+          <div className="grid gap-0.5 self-start">
+            <InfoRow label="Subtotal" striped>
+              {money(order.subtotal ?? computedSubtotal, currency)}
+            </InfoRow>
             {num(order.shippingTotal) !== 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="tabular-nums">
-                  {money(order.shippingTotal, currency)}
-                </span>
-              </div>
+              <InfoRow label="Shipping & Handling">
+                {money(order.shippingTotal, currency)}
+              </InfoRow>
             )}
             {num(order.taxTotal) !== 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax</span>
-                <span className="tabular-nums">
-                  {money(order.taxTotal, currency)}
-                </span>
-              </div>
+              <InfoRow label="Tax" striped>
+                {money(order.taxTotal, currency)}
+              </InfoRow>
             )}
             {num(order.discountTotal) !== 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Discount
-                  {order.couponCodeSnapshot
-                    ? ` (${order.couponCodeSnapshot})`
-                    : ""}
-                </span>
-                <span className="tabular-nums">
-                  −{money(order.discountTotal, currency)}
-                </span>
-              </div>
+              <InfoRow
+                label={
+                  order.couponCodeSnapshot
+                    ? `Discount (${order.couponCodeSnapshot})`
+                    : "Discount"
+                }
+              >
+                −{money(order.discountTotal, currency)}
+              </InfoRow>
             )}
-            <Separator />
-            <div className="flex justify-between text-base font-semibold">
-              <span>Grand total</span>
-              <span className="tabular-nums">
+            <InfoRow label="Grand Total" striped>
+              <span className="font-semibold">
                 {money(order.grandTotal, currency)}
               </span>
-            </div>
+            </InfoRow>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Section>
 
-      {/* Payment + notes */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="print:border-0 print:shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">Payment</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            <p>Channel: {order.checkoutPaymentChannel ?? "—"}</p>
-            <p>
-              Transaction:{" "}
-              {relId(transaction) ? (
-                <Link
-                  className="text-primary"
-                  to={`/collections/transactions/${relId(transaction)}`}
-                >
-                  {transaction && typeof transaction === "object"
-                    ? String(transaction.providerTransactionId ?? transaction.id)
-                    : relId(transaction)}
-                </Link>
-              ) : (
-                "—"
-              )}
-            </p>
-            {order.couponCodeSnapshot && <p>Coupon: {order.couponCodeSnapshot}</p>}
-          </CardContent>
-        </Card>
-        <Card className="print:border-0 print:shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
-          </CardHeader>
-          <CardContent className="whitespace-pre-wrap text-sm text-muted-foreground">
-            {order.notes || "—"}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Separator className="print:hidden" />
       <p className="text-xs text-muted-foreground print:hidden">
         Internal ID: {order.id}
       </p>
+
+      <ConfirmDialog
+        open={saveMutation.isError}
+        onOpenChange={() => saveMutation.reset()}
+        title="Could not update status."
+        description={
+          saveMutation.error instanceof Error
+            ? saveMutation.error.message
+            : "Unknown error"
+        }
+        confirmLabel={saveMutation.isPending ? "Retrying…" : "Retry"}
+        cancelLabel="Dismiss"
+        loading={saveMutation.isPending}
+        onConfirm={() => saveMutation.mutate()}
+      />
     </div>
   );
 }

@@ -1,32 +1,55 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
+  Activity,
+  BadgeCheck,
   BarChart3,
   Boxes,
+  Building,
+  Building2,
   ChevronDown,
-  Coins,
+  CircleDollarSign,
+  Cog,
   CreditCard,
   FileText,
+  FolderTree,
+  GitFork,
   Globe,
+  Heart,
+  History,
   Images,
   LayoutDashboard,
-  Layers,
   LogOut,
+  Map as MapIcon,
   MapPin,
-  Megaphone,
+  MessageSquare,
+  Milestone,
   Moon,
   Package,
+  PackageCheck,
+  PackageSearch,
+  PanelBottom,
   PanelTop,
+  Percent,
   Receipt,
-  Settings,
+  Route,
+  ScrollText,
+  Settings2,
+  Shapes,
+  ShieldCheck,
   ShoppingBag,
   ShoppingCart,
+  Signpost,
+  SlidersHorizontal,
   Star,
-  Sun,
-  Truck,
-  Users,
   Store,
+  Sun,
+  Ticket,
+  TrendingUp,
+  Truck,
   UserRound,
+  Users,
+  Wallet,
   Warehouse,
 } from "lucide-react";
 
@@ -68,7 +91,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -107,45 +129,46 @@ const COLLECTION_ICONS: Record<string, IconType> = {
   users: Users,
   media: Images,
   pages: FileText,
-  categories: Boxes,
-  brands: Layers,
+  categories: FolderTree,
+  brands: BadgeCheck,
+  attributes: SlidersHorizontal,
+  classes: Shapes,
   products: Package,
-  "product-variants": Layers,
-  orders: ShoppingCart,
-  "order-items": Receipt,
-  "sub-orders": Receipt,
+  "product-variants": GitFork,
   carts: ShoppingBag,
-  "wishlist-items": Star,
-  "stock-locations": MapPin,
+  addresses: MapPin,
+  "wishlist-items": Heart,
+  "stock-locations": Building,
   "stock-levels": Warehouse,
-  "shipping-zones": Truck,
+  "shipping-zones": MapIcon,
   "shipping-methods": Truck,
   transactions: CreditCard,
-  coupons: Coins,
+  orders: ShoppingCart,
+  "sub-orders": PackageCheck,
+  "order-items": Receipt,
+  "order-status-history": History,
+  "order-status-histories": History,
+  "verification-codes": ShieldCheck,
+  coupons: Ticket,
   "product-reviews": Star,
-  "vendor-reviews": Star,
-  tenants: Store,
+  "vendor-reviews": MessageSquare,
+  tenants: Building2,
   "vendor-profiles": Store,
-  "vendor-settings": Settings,
-  "vendor-applications": FileText,
-  "commission-rules": Coins,
-  payouts: CreditCard,
-  "payout-items": Receipt,
+  "vendor-settings": Settings2,
+  "vendor-applications": ScrollText,
   "geo-countries": Globe,
-  "geo-subdivisions": MapPin,
-  "geo-localities": MapPin,
-  "verification-codes": Megaphone,
-  addresses: MapPin,
-  attributes: Layers,
-  classes: Layers,
-  "order-status-history": Receipt,
-  "stock-location-service-areas": MapPin,
+  "geo-subdivisions": Milestone,
+  "geo-localities": Signpost,
+  "stock-location-service-areas": Route,
+  "commission-rules": Percent,
+  "payout-items": CircleDollarSign,
+  payouts: Wallet,
 };
 
 const GLOBAL_ICONS: Record<string, IconType> = {
   header: PanelTop,
-  footer: PanelTop,
-  "platform-settings": Settings,
+  footer: PanelBottom,
+  "platform-settings": Cog,
 };
 
 interface NavItem {
@@ -192,7 +215,7 @@ function navForGlobal(g: NormGlobal): NavItem {
   return {
     title: g.label,
     to: `/globals/${g.slug}`,
-    icon: GLOBAL_ICONS[g.slug] ?? Settings,
+    icon: GLOBAL_ICONS[g.slug] ?? Cog,
   };
 }
 
@@ -235,39 +258,6 @@ function CollapsibleNavGroup({
         </SidebarGroupContent>
       )}
     </SidebarGroup>
-  );
-}
-
-/** Sidebar brand mark — reads collapse state from the provider context. */
-function SidebarLogo() {
-  const { state } = useSidebar();
-  // Track the html.dark class directly — useTheme() instances elsewhere
-  // don't share state, so this stays correct no matter who toggles.
-  const [dark, setDark] = useState(() =>
-    document.documentElement.classList.contains("dark"),
-  );
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setDark(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => observer.disconnect();
-  }, []);
-  return (
-    <img
-      src={
-        state === "collapsed"
-          ? "/bs23-mark.svg"
-          : dark
-            ? "/bs23-logo-dark.svg"
-            : "/bs23-logo.svg"
-      }
-      alt="Brain Station 23"
-      className="h-6 w-auto"
-    />
   );
 }
 
@@ -342,7 +332,15 @@ function SidebarBody() {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2 py-1.5">
-            <SidebarLogo />
+            {/* Globe mark always; wordmark is plain text, hidden in the rail. */}
+            <img
+              src="/bs23-mark.svg"
+              alt="Brain Station 23"
+              className="size-7 shrink-0"
+            />
+            <span className="whitespace-nowrap text-sm font-semibold group-data-[collapsible=icon]:hidden">
+              Brain Station 23
+            </span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -360,22 +358,22 @@ function SidebarBody() {
               {
                 title: "Sales Analytics",
                 to: "/reports/sales",
-                icon: BarChart3,
+                icon: TrendingUp,
               },
               {
                 title: "Product & Catalog",
                 to: "/reports/products",
-                icon: Package,
+                icon: BarChart3,
               },
               {
                 title: "Customer Engagement",
                 to: "/reports/engagement",
-                icon: Users,
+                icon: Activity,
               },
               {
                 title: "Inventory & Operations",
                 to: "/reports/inventory",
-                icon: Warehouse,
+                icon: PackageSearch,
               },
             ]}
           />
