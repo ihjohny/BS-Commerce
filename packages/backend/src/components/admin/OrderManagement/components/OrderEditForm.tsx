@@ -593,7 +593,7 @@ export function OrderEditForm({
 
           {items.length === 0 ? (
             <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--theme-elevation-500, #64748b)', fontSize: 13, background: 'var(--theme-elevation-50, #f8fafc)', borderRadius: 8 }}>
-              No line items in order. Click <strong>"Add Item / Variant"</strong> above to add products.
+              No line items in order. Click <strong>&ldquo;Add Item / Variant&rdquo;</strong> above to add products.
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>

@@ -413,7 +413,7 @@ export function EditItemsModal({
                 marginBottom: '1.25rem',
               }}
             >
-              All line items have been removed. Click <strong>"Add Item / Variant"</strong> above to add items.
+              All line items have been removed. Click <strong>&ldquo;Add Item / Variant&rdquo;</strong> above to add items.
             </div>
           ) : (
             <div
