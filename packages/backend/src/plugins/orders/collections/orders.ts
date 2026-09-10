@@ -253,6 +253,9 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
         'customer.phone',
       ],
       components: {
+        beforeListTable: [
+          '/components/admin/OrderManagement/OrderListFilterTabs',
+        ],
         views: {
           edit: {
             default: {
