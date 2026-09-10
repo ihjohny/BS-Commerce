@@ -152,11 +152,11 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
   return {
     slug: 'order-items',
     admin: {
+      hidden: true,
       useAsTitle: 'itemLabel',
       defaultColumns: splitByVendor
         ? ['order', 'subOrder', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice']
         : ['order', 'productName', 'variantName', 'stockLevel', 'quantity', 'unitPrice', 'totalPrice'],
-      group: 'Orders',
       description:
         'Line items for an order. Created at checkout from cart. Commercial snapshots (title, product slug at checkout, SKU, price, qty) are immutable after create; admins may still change stock level for fulfillment routing. Shipping address, store, and totals live on the parent order / sub-order.',
     },

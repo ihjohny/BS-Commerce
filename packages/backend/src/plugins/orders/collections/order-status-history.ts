@@ -4,9 +4,9 @@ import { isAdmin } from '../../../access/is-admin'
 export const OrderStatusHistory: CollectionConfig = {
   slug: 'order-status-history',
   admin: {
+    hidden: true,
     useAsTitle: 'id',
     defaultColumns: ['order', 'fromStatus', 'toStatus', 'changedBy', 'timestamp'],
-    group: 'Orders',
     description: 'Audit log of order status changes.',
   },
   access: {

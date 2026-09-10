@@ -223,7 +223,7 @@ export function createProductVariantsConfig(multivendorEnabled = false): Collect
       defaultColumns: multivendorEnabled
         ? ['name', 'sku', 'price', 'product', 'tenant', 'isActive']
         : ['name', 'sku', 'price', 'product', 'isActive'],
-      group: 'Ecommerce',
+      group: 'Catalog',
     },
     access: {
       create: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,

@@ -238,7 +238,7 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
         'currency',
         'placedAt',
       ],
-      group: 'Orders',
+      group: 'Ecommerce',
       components: {
         views: {
           edit: {

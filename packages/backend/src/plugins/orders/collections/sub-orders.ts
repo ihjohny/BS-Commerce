@@ -25,9 +25,9 @@ const subOrderStatusOptions = [
 export const SubOrders: CollectionConfig = {
   slug: 'sub-orders',
     admin: {
+      hidden: true,
       useAsTitle: 'subOrderNumber',
       defaultColumns: ['subOrderNumber', 'parentOrderNumber', 'tenant', 'status', 'subtotal', 'vendorEarnings', 'commissionAmount'],
-      group: 'Orders',
       description:
         'Per-vendor order segments. Vendors fulfill their own sub-orders. Shipping method, tracking, dates, and store may be updated by admins or vendors during fulfillment; tenantNameSnapshot stays fixed.',
     },

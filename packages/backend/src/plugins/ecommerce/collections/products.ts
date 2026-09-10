@@ -693,7 +693,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       defaultColumns: multivendorEnabled
         ? ['name', 'brand', 'slug', 'tenant', 'status', 'basePrice', 'currency', 'publishedAt']
         : ['name', 'brand', 'slug', 'status', 'basePrice', 'currency', 'publishedAt'],
-      group: 'Ecommerce',
+      group: 'Catalog',
     },
     access: {
       create: multivendorEnabled ? isAdminOrVendorOwner : isAdmin,
