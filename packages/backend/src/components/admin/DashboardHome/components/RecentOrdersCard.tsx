@@ -276,13 +276,11 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
             </thead>
             <tbody>
               {filteredOrders.map((o) => {
-                const initials = (o.customerName || 'G')
-                  .split(' ')
-                  .map((n) => n[0])
-                  .filter(Boolean)
+                const customerIdentifier = o.customerPhone || o.customerEmail || o.customerName || 'Guest'
+                const initials = (o.customerPhone || o.customerEmail || o.customerName || 'G')
+                  .replace(/[^a-zA-Z0-9]/g, '')
                   .slice(0, 2)
-                  .join('')
-                  .toUpperCase()
+                  .toUpperCase() || 'CU'
 
                 return (
                   <tr
@@ -324,7 +322,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                         <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <div
                             style={{ fontWeight: 500, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                            title={[o.customerName, o.customerEmail, o.customerPhone].filter(Boolean).join(' • ')}
+                            title={[customerIdentifier, o.customerName, o.customerEmail, o.customerPhone].filter(Boolean).join(' • ')}
                           >
                             {o.customerId ? (
                               <Link
@@ -338,7 +336,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                                 onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
                                 onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
                               >
-                                {o.customerName}
+                                {customerIdentifier}
                               </Link>
                             ) : o.customerEmail || o.customerPhone ? (
                               <Link
@@ -359,10 +357,10 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                                 }}
                                 title="Search for customer account"
                               >
-                                {o.customerName}
+                                {customerIdentifier}
                               </Link>
                             ) : (
-                              <span>{o.customerName}</span>
+                              <span>{customerIdentifier}</span>
                             )}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>

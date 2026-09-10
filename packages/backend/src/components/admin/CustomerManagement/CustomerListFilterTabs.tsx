@@ -25,6 +25,7 @@ export function CustomerListFilterTabs() {
 
     // Check role equals
     if (where.role?.equals === 'customer') return 'customer'
+    if (where.role?.equals === 'admin') return 'admin'
 
     // Check 'and' conditions if present
     if (Array.isArray(where.and)) {
@@ -35,13 +36,14 @@ export function CustomerListFilterTabs() {
           return 'inactive'
         }
         if (cond?.role?.equals === 'customer') return 'customer'
+        if (cond?.role?.equals === 'admin') return 'admin'
       }
     }
 
     return 'all'
   }, [query?.where])
 
-  const setFilterTab = (tab: 'all' | 'active' | 'inactive' | 'customer') => {
+  const setFilterTab = (tab: 'all' | 'active' | 'inactive' | 'customer' | 'admin') => {
     if (typeof handleWhereChange !== 'function') return
 
     if (tab === 'all') {
@@ -66,6 +68,13 @@ export function CustomerListFilterTabs() {
     if (tab === 'customer') {
       handleWhereChange({
         role: { equals: 'customer' },
+      })
+      return
+    }
+
+    if (tab === 'admin') {
+      handleWhereChange({
+        role: { equals: 'admin' },
       })
       return
     }
@@ -122,6 +131,15 @@ export function CustomerListFilterTabs() {
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
           <line x1="3" y1="6" x2="21" y2="6" />
           <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+      ),
+    },
+    {
+      id: 'admin',
+      label: 'Admin only',
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       ),
     },
@@ -189,10 +207,6 @@ export function CustomerListFilterTabs() {
             </button>
           )
         })}
-      </div>
-
-      <div style={{ fontSize: '0.78rem', color: 'var(--theme-elevation-500, #64748b)' }}>
-        Click any customer row to view rich profile, orders & device intelligence
       </div>
     </div>
   )

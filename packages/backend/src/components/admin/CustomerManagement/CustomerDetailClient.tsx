@@ -407,7 +407,7 @@ export function CustomerDetailClient({
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
-              Edit Customer (Form)
+              Edit Customer
             </Link>
           </div>
         </div>
@@ -1051,7 +1051,7 @@ export function CustomerDetailClient({
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                     gap: '0.65rem',
                   }}
                 >
@@ -1059,7 +1059,7 @@ export function CustomerDetailClient({
                     <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', fontWeight: 600 }}>
                       Primary Devices
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, textTransform: 'capitalize', color: 'var(--theme-text, #0f172a)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, textTransform: 'capitalize', color: 'var(--theme-text, #0f172a)', wordBreak: 'break-word' }}>
                       {devices.length > 0 ? devices.join(', ') : 'None detected'}
                     </div>
                   </div>
@@ -1068,7 +1068,7 @@ export function CustomerDetailClient({
                     <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', fontWeight: 600 }}>
                       Browsers Used
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: 'var(--theme-text, #0f172a)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: 'var(--theme-text, #0f172a)', wordBreak: 'break-word' }}>
                       {browsers.length > 0 ? browsers.join(', ') : 'None detected'}
                     </div>
                   </div>
@@ -1077,18 +1077,42 @@ export function CustomerDetailClient({
                     <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', fontWeight: 600 }}>
                       Operating Systems
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: 'var(--theme-text, #0f172a)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: 'var(--theme-text, #0f172a)', wordBreak: 'break-word' }}>
                       {osList.length > 0 ? osList.join(', ') : 'None detected'}
                     </div>
                   </div>
+                </div>
 
-                  <div style={{ background: 'var(--theme-elevation-50, #f8fafc)', padding: '0.65rem 0.75rem', borderRadius: 8, border: '1px solid var(--theme-elevation-150, #e2e8f0)' }}>
-                    <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', fontWeight: 600 }}>
-                      Last Known IP
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginTop: 4, fontFamily: 'monospace', color: 'var(--theme-text, #0f172a)' }}>
-                      {ipList.length > 0 ? ipList[0] : 'None detected'}
-                    </div>
+                {/* Last Known IP Box - dedicated row below so long IPv6/IPv4-mapped addresses never overlap */}
+                <div
+                  style={{
+                    background: 'var(--theme-elevation-50, #f8fafc)',
+                    padding: '0.65rem 0.75rem',
+                    borderRadius: 8,
+                    border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 6,
+                  }}
+                >
+                  <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', fontWeight: 600 }}>
+                    Last Known IP Address
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      fontFamily: 'monospace',
+                      color: 'var(--theme-text, #0f172a)',
+                      wordBreak: 'break-all',
+                      background: 'var(--theme-elevation-100, #e2e8f0)',
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    {ipList.length > 0 ? ipList[0] : 'None detected'}
                   </div>
                 </div>
 
