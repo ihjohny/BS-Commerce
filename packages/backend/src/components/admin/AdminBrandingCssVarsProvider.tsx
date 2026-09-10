@@ -37,9 +37,23 @@ export default function AdminBrandingCssVarsProvider({ children }: { children?: 
     }
     document.addEventListener('visibilitychange', onVisible)
 
+    // Intercept click on the step-nav home icon if already on /admin to trigger dashboard reload
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null
+      const homeLink = target?.closest('.step-nav__home, a[href="/admin"], a[href="/admin/"]')
+      if (homeLink) {
+        const path = window.location.pathname
+        if (path === '/admin' || path === '/admin/') {
+          window.dispatchEvent(new CustomEvent('admin:reload-dashboard'))
+        }
+      }
+    }
+    document.addEventListener('click', handleDocumentClick, true)
+
     return () => {
       cancelled = true
       document.removeEventListener('visibilitychange', onVisible)
+      document.removeEventListener('click', handleDocumentClick, true)
     }
   }, [])
 

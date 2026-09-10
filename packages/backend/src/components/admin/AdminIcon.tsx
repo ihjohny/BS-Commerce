@@ -8,16 +8,29 @@ import React from 'react'
  * `admin-branding-overrides.css` + `--bs-admin-logo-url` so we do not show the logo twice.
  */
 export default function AdminIcon() {
+  const handleClick = (e: React.MouseEvent) => {
+    const isHome =
+      window.location.pathname === '/admin' ||
+      window.location.pathname === '/admin/'
+
+    if (isHome) {
+      // Dispatches custom event to reload dashboard stats immediately without full page flicker
+      window.dispatchEvent(new CustomEvent('admin:reload-dashboard'))
+    }
+  }
+
   return (
     <span
+      onClick={handleClick}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
         color: 'var(--theme-elevation-600, #94a3b8)',
+        cursor: 'pointer',
       }}
-      title="Dashboard"
+      title="Dashboard (Click to reload)"
       aria-hidden
     >
       <svg width={20} height={20} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

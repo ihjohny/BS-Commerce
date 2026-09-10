@@ -65,7 +65,16 @@ export function DashboardHomeClient() {
   useEffect(() => {
     // Initial fetch on mount
     fetchStats()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Listen for home icon click when already on dashboard
+    const handleReloadEvent = () => {
+      fetchStats()
+    }
+    window.addEventListener('admin:reload-dashboard', handleReloadEvent)
+    return () => {
+      window.removeEventListener('admin:reload-dashboard', handleReloadEvent)
+    }
+  }, [fetchStats])
 
   const handleTimeRangeChange = (range: string) => {
     setTimeRange(range)

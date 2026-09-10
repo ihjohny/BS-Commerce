@@ -277,10 +277,6 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
             <tbody>
               {filteredOrders.map((o) => {
                 const customerIdentifier = o.customerPhone || o.customerEmail || o.customerName || 'Guest'
-                const initials = (o.customerPhone || o.customerEmail || o.customerName || 'G')
-                  .replace(/[^a-zA-Z0-9]/g, '')
-                  .slice(0, 2)
-                  .toUpperCase() || 'CU'
 
                 return (
                   <tr
@@ -306,18 +302,20 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                             width: 26,
                             height: 26,
                             borderRadius: '50%',
-                            background: 'var(--theme-elevation-150)',
+                            background: 'var(--theme-elevation-100)',
                             border: '1px solid var(--theme-elevation-200)',
-                            color: 'var(--theme-elevation-700)',
-                            fontSize: 10,
-                            fontWeight: 700,
+                            color: 'var(--theme-elevation-600)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             flexShrink: 0,
                           }}
+                          aria-hidden="true"
                         >
-                          {initials}
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
                         </div>
                         <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <div
