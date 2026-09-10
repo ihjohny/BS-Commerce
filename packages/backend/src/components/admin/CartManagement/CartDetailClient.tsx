@@ -128,6 +128,38 @@ function formatMoney(amount: number, currency: string) {
   })}`
 }
 
+function formatDateWithOrdinal(dateString?: string | null) {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return String(dateString)
+
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec',
+  ]
+  const month = months[date.getMonth()]
+  const day = date.getDate()
+  const year = date.getFullYear()
+
+  const nth = (d: number) => {
+    if (d > 3 && d < 21) return 'th'
+    switch (d % 10) {
+      case 1: return 'st'
+      case 2: return 'nd'
+      case 3: return 'rd'
+      default: return 'th'
+    }
+  }
+
+  const time = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+
+  return `${month} ${day}${nth(day)} ${year}, ${time}`
+}
+
 function formatDate(dateStr?: string | null) {
   if (!dateStr) return 'N/A'
   try {
@@ -228,6 +260,14 @@ export function CartDetailClient({
   const couponCodeStr = resolveString(cart?.couponCode)
   const customerNoteStr = resolveString(cart?.customerNote)
 
+  const createdFormatted = formatDateWithOrdinal(cart?.createdAt)
+  const modifiedFormatted = formatDateWithOrdinal(cart?.updatedAt || cart?.createdAt)
+
+  const cartBreadcrumbIdentifier =
+    customerPhone ||
+    customerEmail ||
+    (isGuest ? (guestIdStr || 'Guest Cart') : cartIdStr)
+
   return (
     <div style={{ maxWidth: 1380, margin: '0 auto', paddingBottom: '3rem' }}>
       {/* Top bar StepNav: Home icon / Carts / Cart ID */}
@@ -266,89 +306,141 @@ export function CartDetailClient({
         }
       `}</style>
 
-      {/* Top Header Card */}
+      {/* Main Cart Header Card - Exact Match with OrderHeader & CustomerDetailClient */}
       <div
+        className="order-header-card"
         style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.85rem',
+          padding: '1.25rem 1.5rem',
           background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
           border: '1px solid var(--theme-elevation-150, #e2e8f0)',
           borderRadius: 12,
-          padding: '1.25rem 1.5rem',
           marginBottom: '1.25rem',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
         }}
       >
-        {/* Navigation breadcrumb & Action bar */}
+        {/* Top row: Breadcrumb, audit timestamps (Last Modified / Created), and Edit Cart action */}
         <div
+          className="order-header-top-row"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            fontSize: 13,
+            color: 'var(--theme-elevation-500, #64748b)',
             flexWrap: 'wrap',
-            gap: '0.75rem',
-            paddingBottom: '0.9rem',
-            borderBottom: '1px solid var(--theme-elevation-100, #f1f5f9)',
-            marginBottom: '1rem',
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Link
               href="/admin/collections/carts"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
-                fontSize: '0.8125rem',
+                gap: 4,
+                color: 'var(--bs-primary, #2563eb)',
                 fontWeight: 500,
-                color: 'var(--theme-elevation-500, #64748b)',
                 textDecoration: 'none',
-                padding: '3px 8px',
-                borderRadius: 5,
-                background: 'var(--theme-elevation-100, #f1f5f9)',
-                transition: 'all 0.15s ease',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               Back to Carts
             </Link>
-
-            <span style={{ color: 'var(--theme-elevation-300, #cbd5e1)' }}>/</span>
-
-            <span style={{ fontSize: '0.8125rem', color: 'var(--theme-elevation-700, #334155)', fontWeight: 600 }}>
-              Cart Details
+            <span>/</span>
+            <span style={{ fontWeight: 600, color: 'var(--theme-text, #0f172a)' }}>
+              {cartBreadcrumbIdentifier}
             </span>
+
+            <button
+              type="button"
+              onClick={() => handleCopy(cartBreadcrumbIdentifier, setCopiedId)}
+              title={copiedId ? 'Copied!' : 'Copy Cart Identifier'}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                borderRadius: 4,
+                color: copiedId ? 'var(--bs-success, #16a34a)' : 'var(--theme-elevation-500, #94a3b8)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {copiedId ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              )}
+            </button>
           </div>
 
-          {/* Primary Action Button: Navigates to Payload's native edit form */}
-          <Link
-            href={`/admin/collections/carts/${cartIdStr}/edit`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '0.45rem 1rem',
-              background: 'var(--bs-primary, #2563eb)',
-              color: '#ffffff',
-              borderRadius: 6,
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              boxShadow: '0 1px 3px rgba(37, 99, 235, 0.25)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            Edit Cart
-          </Link>
+          <div className="order-header-top-actions" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            {/* Metadata timestamps */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12 }}>
+              {modifiedFormatted && (
+                <span style={{ color: 'var(--theme-elevation-500, #64748b)' }}>
+                  <strong style={{ color: 'var(--theme-elevation-700, #475569)', fontWeight: 600 }}>Last Modified: </strong>
+                  {modifiedFormatted}
+                </span>
+              )}
+
+              {createdFormatted && (
+                <span style={{ color: 'var(--theme-elevation-500, #64748b)' }}>
+                  <strong style={{ color: 'var(--theme-elevation-700, #475569)', fontWeight: 600 }}>Created: </strong>
+                  {createdFormatted}
+                </span>
+              )}
+            </div>
+
+            {/* Dedicated Edit Cart Action */}
+            <Link
+              href={`/admin/collections/carts/${cartIdStr}/edit`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                background: 'var(--bs-primary, #2563eb)',
+                color: '#ffffff',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+                boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bs-primary-hover, #1d4ed8)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--bs-primary, #2563eb)'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Edit Cart
+            </Link>
+          </div>
         </div>
 
         {/* Main Title & Status Pills */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div
+          className="order-header-main-row"
+          style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}
+        >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <h1

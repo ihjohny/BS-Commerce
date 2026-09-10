@@ -287,13 +287,13 @@ export function CustomerDetailClient({
             </Link>
             <span>/</span>
             <span style={{ fontWeight: 600, color: 'var(--theme-text, #0f172a)' }}>
-              {customer.username || customer.email || customer.id}
+              {customer.phone || customer.email || customer.username || customer.id}
             </span>
 
             <button
               type="button"
-              onClick={() => handleCopy(customer.id, 'header-id')}
-              title={copiedKey === 'header-id' ? 'Copied!' : 'Copy Customer ID'}
+              onClick={() => handleCopy(customer.phone || customer.email || customer.username || customer.id, 'header-id')}
+              title={copiedKey === 'header-id' ? 'Copied!' : 'Copy User Identifier'}
               style={{
                 background: 'none',
                 border: 'none',
@@ -338,29 +338,35 @@ export function CustomerDetailClient({
               )}
             </div>
 
-            {/* Dedicated Edit Customer Action */}
+            {/* Dedicated Edit User Action */}
             <Link
               href={`/admin/collections/users/${customer.id}/edit`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
-                padding: '0.35rem 0.85rem',
+                gap: 6,
+                padding: '6px 14px',
                 background: 'var(--bs-primary, #2563eb)',
                 color: '#ffffff',
-                borderRadius: 6,
-                fontSize: 12,
+                borderRadius: 8,
+                fontSize: 13,
                 fontWeight: 600,
                 textDecoration: 'none',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
-                transition: 'background-color 0.15s ease',
+                boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bs-primary-hover, #1d4ed8)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--bs-primary, #2563eb)'
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
-              Edit Customer
+              Edit User
             </Link>
           </div>
         </div>
