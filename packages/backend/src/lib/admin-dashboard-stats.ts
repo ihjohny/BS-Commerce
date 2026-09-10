@@ -48,6 +48,7 @@ export type RecentOrder = {
   orderNumber: string
   customerName: string
   customerEmail: string
+  customerPhone?: string
   itemsCount: number
   grandTotal: number
   currency: string
@@ -671,6 +672,7 @@ export async function loadDashboardStats(
   const recentOrders: RecentOrder[] = allRecentOrders.map((o: any) => {
     let customerName = 'Guest'
     let customerEmail = o.guestEmail || ''
+    let customerPhone = o.guestPhone || o.shippingAddress?.phone || o.billingAddress?.phone || ''
 
     if (o.buyerSnapshot?.name) {
       customerName = o.buyerSnapshot.name
@@ -681,10 +683,14 @@ export async function loadDashboardStats(
         o.customer.username ||
         'Customer'
       if (!customerEmail) customerEmail = o.customer.email || ''
+      if (!customerPhone) customerPhone = o.customer.phone || ''
     }
 
     if (o.buyerSnapshot?.email) {
       customerEmail = o.buyerSnapshot.email
+    }
+    if (o.buyerSnapshot?.phone) {
+      customerPhone = o.buyerSnapshot.phone
     }
 
     const storeName = o.store && typeof o.store === 'object' ? String(o.store.name || '') : null
@@ -695,6 +701,7 @@ export async function loadDashboardStats(
       orderNumber: String(o.orderNumber || `ORD-${o.id}`),
       customerName,
       customerEmail,
+      customerPhone: customerPhone ? String(customerPhone) : undefined,
       itemsCount,
       grandTotal: Number(o.grandTotal) || 0,
       currency: String(o.currency || currency),

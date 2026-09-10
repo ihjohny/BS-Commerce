@@ -78,11 +78,20 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
+      const term = searchTerm.trim().toLowerCase()
+      const termDigits = term.replace(/\D/g, '')
+      const phoneDigits = (o.customerPhone || '').replace(/\D/g, '')
+
+      const matchPhone =
+        Boolean(o.customerPhone && o.customerPhone.toLowerCase().includes(term)) ||
+        Boolean(termDigits.length >= 3 && phoneDigits.includes(termDigits))
+
       const matchSearch =
-        !searchTerm.trim() ||
-        o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+        !term ||
+        o.orderNumber.toLowerCase().includes(term) ||
+        o.customerName.toLowerCase().includes(term) ||
+        o.customerEmail.toLowerCase().includes(term) ||
+        matchPhone
 
       const matchStatus =
         statusFilter === 'all' ||
@@ -213,7 +222,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
           </svg>
           <input
             type="text"
-            placeholder="Search orders…"
+            placeholder="Search by Order #, Email, Phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -224,7 +233,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
               color: 'var(--theme-text)',
               fontSize: 12.5,
               outline: 'none',
-              width: 190,
+              width: 230,
               boxShadow: 'var(--bs-shadow-xs)',
             }}
           />
@@ -313,7 +322,10 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                           {initials}
                         </div>
                         <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <div style={{ fontWeight: 500, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={o.customerName}>
+                          <div
+                            style={{ fontWeight: 500, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            title={[o.customerName, o.customerEmail, o.customerPhone].filter(Boolean).join(' • ')}
+                          >
                             {o.customerName}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
