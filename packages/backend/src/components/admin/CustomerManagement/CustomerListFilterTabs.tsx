@@ -80,12 +80,20 @@ export function CustomerListFilterTabs() {
     }
   }
 
-  const tabs = [
+  const tabs: Array<{
+    id: 'all' | 'active' | 'inactive' | 'customer' | 'admin'
+    label: string
+    color: string
+    activeBg: string
+    icon: React.ReactNode
+  }> = [
     {
       id: 'all',
       label: 'All Users',
+      color: 'var(--theme-elevation-700, #334155)',
+      activeBg: 'var(--bs-primary, #2563eb)',
       icon: (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -96,13 +104,15 @@ export function CustomerListFilterTabs() {
     {
       id: 'active',
       label: 'Active',
+      color: 'var(--bs-success, #16a34a)',
+      activeBg: 'var(--bs-success, #16a34a)',
       icon: (
         <span
           style={{
             width: 7,
             height: 7,
             borderRadius: '50%',
-            background: 'var(--bs-success, #16a34a)',
+            background: 'currentColor',
             display: 'inline-block',
           }}
         />
@@ -111,13 +121,15 @@ export function CustomerListFilterTabs() {
     {
       id: 'inactive',
       label: 'Inactive / Suspended',
+      color: 'var(--bs-error, #dc2626)',
+      activeBg: 'var(--bs-error, #dc2626)',
       icon: (
         <span
           style={{
             width: 7,
             height: 7,
             borderRadius: '50%',
-            background: 'var(--bs-error, #dc2626)',
+            background: 'currentColor',
             display: 'inline-block',
           }}
         />
@@ -126,9 +138,11 @@ export function CustomerListFilterTabs() {
     {
       id: 'customer',
       label: 'Customers Only',
+      color: '#4f46e5',
+      activeBg: '#4f46e5',
       icon: (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
           <line x1="3" y1="6" x2="21" y2="6" />
           <path d="M16 10a4 4 0 0 1-8 0" />
         </svg>
@@ -137,13 +151,15 @@ export function CustomerListFilterTabs() {
     {
       id: 'admin',
       label: 'Admin only',
+      color: '#7c3aed',
+      activeBg: '#7c3aed',
       icon: (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       ),
     },
-  ] as const
+  ]
 
   return (
     <div
@@ -172,7 +188,7 @@ export function CustomerListFilterTabs() {
             marginRight: '0.35rem',
           }}
         >
-          Quick Filter:
+          QUICK FILTER:
         </span>
 
         {tabs.map((t) => {
@@ -191,18 +207,26 @@ export function CustomerListFilterTabs() {
                 fontWeight: isActive ? 600 : 500,
                 color: isActive ? '#ffffff' : 'var(--theme-elevation-700, #334155)',
                 background: isActive
-                  ? 'var(--bs-primary, #2563eb)'
+                  ? t.activeBg
                   : 'var(--theme-elevation-100, #f1f5f9)',
                 border: isActive
-                  ? '1px solid var(--bs-primary, #2563eb)'
+                  ? `1px solid ${t.activeBg}`
                   : '1px solid var(--theme-elevation-200, #e2e8f0)',
                 borderRadius: 6,
                 cursor: 'pointer',
-                boxShadow: isActive ? '0 1px 2px rgba(37, 99, 235, 0.2)' : 'none',
+                boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.15)' : 'none',
                 transition: 'all 0.15s ease',
               }}
             >
-              {t.icon}
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: isActive ? '#ffffff' : t.color,
+                }}
+              >
+                {t.icon}
+              </span>
               <span>{t.label}</span>
             </button>
           )

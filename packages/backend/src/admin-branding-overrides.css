@@ -1541,13 +1541,16 @@ html[data-theme='dark'] .template-minimal--width-normal .template-minimal__wrap 
   }
 }
 
-/* Hide redundant default Payload document title and Edit/API tabs when OrderDetailView or CustomerDetailView is rendered */
+/* Hide redundant default Payload document title and Edit/API tabs when OrderDetailView, CustomerDetailView, or CartDetailView is rendered */
 .doc-header:has(~ * .order-detail-view-container),
 .doc-header:has(~ .order-detail-view-container),
 body:has(.order-detail-view-container) .doc-header,
 .doc-header:has(~ * .customer-detail-view-container),
 .doc-header:has(~ .customer-detail-view-container),
-body:has(.customer-detail-view-container) .doc-header {
+body:has(.customer-detail-view-container) .doc-header,
+.doc-header:has(~ * .cart-detail-view-container),
+.doc-header:has(~ .cart-detail-view-container),
+body:has(.cart-detail-view-container) .doc-header {
   display: none !important;
 }
 

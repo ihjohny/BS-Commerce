@@ -6,7 +6,7 @@ export const Attributes: CollectionConfig = {
   slug: 'attributes',
   admin: {
     useAsTitle: 'label',
-    defaultColumns: ['label', 'key', 'dataType', 'category', 'unit', 'defaultGroup', 'isFilterable', 'displayOrder'],
+    defaultColumns: ['label', 'key', 'dataType', 'isFilterable', 'displayOrder'],
     group: 'Catalog',
     description: 'Manage reusable product specifications, series, features, and dynamic filter facets with predefined standardized values.',
   },

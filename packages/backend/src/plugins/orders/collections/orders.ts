@@ -153,6 +153,7 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
     },
     {
       name: 'checkoutPaymentChannel',
+      label: 'Payment Channel',
       type: 'select',
       required: true,
       defaultValue: 'online',

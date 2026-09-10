@@ -6,7 +6,7 @@ export const Brands: CollectionConfig = {
   slug: 'brands',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'featured', 'displayOrder', 'website', 'updatedAt'],
+    defaultColumns: ['name', 'slug', 'displayOrder', 'website', 'updatedAt'],
     group: 'Catalog',
     description: 'Manage product brands and manufacturers (logos, hero banners, websites, and official brand profiles).',
   },

@@ -71,11 +71,42 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
 
   return {
   slug: 'carts',
-  admin: {
-    useAsTitle: 'id',
-    defaultColumns: ['user', 'guestId', 'subtotal', 'expiresAt'],
-    group: 'Ecommerce',
-  },
+    admin: {
+      useAsTitle: 'id',
+      defaultColumns: ['user', 'guestId', 'subtotal', 'expiresAt'],
+      group: 'Ecommerce',
+      listSearchableFields: [
+        'guestId',
+        'user.email',
+        'user.phone',
+        'user.username',
+        'user.firstName',
+        'user.lastName',
+        'user.displayName',
+      ],
+      components: {
+        beforeListTable: ['/components/admin/CartManagement/CartListFilterTabs'],
+        views: {
+          edit: {
+            default: {
+              Component: '/components/admin/CartManagement/CartDetailView',
+              tab: {
+                label: 'Cart Details',
+              },
+            },
+            edit: {
+              Component: '/components/admin/CartManagement/CartDetailView',
+              path: '/edit',
+              tab: {
+                label: 'Edit (Raw)',
+                href: '/edit',
+                order: 200,
+              },
+            },
+          },
+        },
+      },
+    },
   hooks: {
     beforeChange: [
       async ({ data, req, operation }) => {

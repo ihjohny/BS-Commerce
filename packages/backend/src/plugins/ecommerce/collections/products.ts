@@ -691,8 +691,8 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
     admin: {
       useAsTitle: 'name',
       defaultColumns: multivendorEnabled
-        ? ['name', 'brand', 'slug', 'tenant', 'status', 'basePrice', 'currency', 'publishedAt']
-        : ['name', 'brand', 'slug', 'status', 'basePrice', 'currency', 'publishedAt'],
+        ? ['name', 'brand', 'slug', 'tenant', 'status', 'basePrice', 'publishedAt']
+        : ['name', 'brand', 'slug', 'status', 'basePrice', 'publishedAt'],
       group: 'Catalog',
     },
     access: {
