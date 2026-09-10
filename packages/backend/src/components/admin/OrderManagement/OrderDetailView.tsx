@@ -97,7 +97,7 @@ export default async function OrderDetailView(props: DocumentViewServerProps) {
       // 4. Fetch active stores/warehouses for assignment
       const storeResult = await payload.find({
         collection: 'stock-locations',
-        where: { active: { equals: true } },
+        where: { isActive: { equals: true } },
         depth: 0,
         limit: 100,
         overrideAccess: true,
