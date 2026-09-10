@@ -490,12 +490,6 @@ button.nav-toggler.app-header__mobile-nav-toggler {
   padding: 1.25rem 0.75rem !important;
 }
 
-/* Stable Scroll Container — prevents reset and page-jump artifacts */
-.nav__scroll {
-  scroll-behavior: auto !important;
-  overscroll-behavior-y: contain !important;
-}
-
 /* Custom Slim Scrollbar for Navigation */
 .nav::-webkit-scrollbar,
 .nav__scroll::-webkit-scrollbar {
