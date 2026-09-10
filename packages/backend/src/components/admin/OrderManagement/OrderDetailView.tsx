@@ -2,23 +2,60 @@ import React from 'react'
 import type { DocumentViewServerProps } from 'payload'
 import { Gutter } from '@payloadcms/ui'
 import { OrderDetailClient } from './OrderDetailClient'
+import NativeEditView from './NativeEditView'
 
 /**
  * Server Component: OrderDetailView
- * Entry point for Payload CMS collection views.edit.root.
- * Overrides the entire document edit view to remove redundant default Payload tabs (Edit, API).
- * Receives DocumentViewServerProps, loads deep relations (items, customer, store, history),
- * and renders the production-grade Order Management UI.
+ * Entry point for Payload CMS collection views.edit.default and views.edit.edit.
+ * - When clicking [Create New] (/create) or visiting raw edit (/edit): Renders Payload's native form ("old view").
+ * - When clicking an order in the list (/admin/collections/orders/:id): Renders the custom Order Details view.
  */
 export default async function OrderDetailView(props: DocumentViewServerProps) {
-  const { doc, params, payload: directPayload, initPageResult } = props || {}
+  const { doc, params, payload: directPayload, initPageResult, searchParams } = props || {}
   const payload = directPayload || initPageResult?.req?.payload
 
-  // Extract order ID
-  const segments = (params as Record<string, any>)?.segments
-  const orderId =
-    doc?.id ||
-    (Array.isArray(segments) ? segments[segments.length - 1] : (params as Record<string, any>)?.id)
+  // Extract route segments to detect /create or /edit
+  const rawSegments = (params as Record<string, any>)?.segments
+  const segments = Array.isArray(rawSegments) ? rawSegments : []
+  const lastSegment = segments[segments.length - 1]
+
+  const isCreate =
+    !doc?.id &&
+    (lastSegment === 'create' ||
+      segments.includes('create') ||
+      (params as Record<string, any>)?.id === 'create')
+
+  const isEditMode =
+    lastSegment === 'edit' ||
+    segments.includes('edit') ||
+    (searchParams as Record<string, any>)?.view === 'edit'
+
+  // If creating new order or editing raw fields, safely render Payload's native form
+  if (isCreate || isEditMode) {
+    const clientProps = {
+      BeforeDocumentControls: (props as any).BeforeDocumentControls,
+      Description: (props as any).Description,
+      EditMenuItems: (props as any).EditMenuItems,
+      LivePreview: (props as any).LivePreview,
+      PreviewButton: (props as any).PreviewButton,
+      PublishButton: (props as any).PublishButton,
+      SaveButton: (props as any).SaveButton,
+      SaveDraftButton: (props as any).SaveDraftButton,
+      Status: (props as any).Status,
+      UnpublishButton: (props as any).UnpublishButton,
+      Upload: (props as any).Upload,
+      UploadControls: (props as any).UploadControls,
+    }
+
+    return <NativeEditView {...(clientProps as any)} />
+  }
+
+  // Otherwise, extract order ID for custom Order Details view
+  const segmentId =
+    lastSegment === 'details' || lastSegment === 'edit'
+      ? segments[segments.length - 2]
+      : lastSegment
+  const orderId = doc?.id || (params as Record<string, any>)?.id || segmentId
 
   let fullOrder = doc
   let historyDocs: any[] = []
@@ -88,11 +125,11 @@ export default async function OrderDetailView(props: DocumentViewServerProps) {
   }))
 
   return (
-    <Gutter>
+    <Gutter className="order-detail-view-container">
       {/* Clean top spacing below Payload Document tabs without duplicate divider */}
       <div
         style={{
-          marginTop: '1.25rem',
+          marginTop: '0.75rem',
         }}
       >
         <OrderDetailClient

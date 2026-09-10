@@ -1197,14 +1197,16 @@ html[data-theme='dark'] .template-minimal--width-normal .template-minimal__wrap 
     padding: 1.5rem 1rem !important;
   }
 
-  .template-minimal--width-normal .template-minimal__wrap {
-    padding: 2rem 1.5rem !important;
-    border-radius: 14px !important;
-  }
-
   .admin-login-theme-toggle-wrap {
     top: 12px !important;
     right: 14px !important;
   }
+}
+
+/* Hide redundant default Payload document title and Edit/API tabs when OrderDetailView is rendered */
+.doc-header:has(~ * .order-detail-view-container),
+.doc-header:has(~ .order-detail-view-container),
+body:has(.order-detail-view-container) .doc-header {
+  display: none !important;
 }
 

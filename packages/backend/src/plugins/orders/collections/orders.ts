@@ -242,8 +242,20 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
       components: {
         views: {
           edit: {
-            root: {
+            default: {
               Component: '/components/admin/OrderManagement/OrderDetailView',
+              tab: {
+                label: 'Order Details',
+              },
+            },
+            edit: {
+              Component: '/components/admin/OrderManagement/OrderDetailView',
+              path: '/edit',
+              tab: {
+                label: 'Edit (Raw)',
+                href: '/edit',
+                order: 200,
+              },
             },
           },
         },
