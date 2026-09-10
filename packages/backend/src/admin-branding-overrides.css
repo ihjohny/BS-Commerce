@@ -1210,3 +1210,164 @@ body:has(.order-detail-view-container) .doc-header {
   display: none !important;
 }
 
+/* ==========================================================================
+   Order Management - Responsive Multi-Screen Layout & Card Organization
+   ========================================================================== */
+
+.order-detail-view-container {
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+}
+
+@media (max-width: 768px) {
+  .order-detail-view-container {
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+  }
+}
+
+/* Base Responsive Grid */
+.order-details-responsive-grid {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.order-grid-card {
+  min-width: 0;
+}
+
+/* 1. Large Desktop (>= 1150px): Two-Column Layout (Main + Sidebar) */
+@media (min-width: 1150px) {
+  .order-details-responsive-grid {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 1.25rem;
+  }
+  .order-layout-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .order-layout-side {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+}
+
+/* 2. Tablet / Medium Screens (768px - 1149px): Balanced 2-Column Card Grid */
+@media (min-width: 768px) and (max-width: 1149px) {
+  .order-details-responsive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .order-layout-main,
+  .order-layout-side {
+    display: contents;
+  }
+
+  /* Items table spans both columns for full width readability */
+  .order-grid-items {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+  /* Financials and Customer sit side-by-side */
+  .order-grid-financials {
+    grid-column: 1;
+    order: 2;
+  }
+  .order-grid-customer {
+    grid-column: 2;
+    order: 3;
+  }
+  /* Fulfillment and Notes sit side-by-side */
+  .order-grid-fulfillment {
+    grid-column: 1;
+    order: 4;
+  }
+  .order-grid-notes {
+    grid-column: 2;
+    order: 5;
+  }
+  /* Security & Audit spans full width */
+  .order-grid-audit {
+    grid-column: 1 / -1;
+    order: 6;
+  }
+  /* Timeline spans full width at the bottom */
+  .order-grid-timeline {
+    grid-column: 1 / -1;
+    order: 7;
+  }
+}
+
+/* 3. Mobile / Small Screen (< 768px): Single-Column Logical Hierarchy */
+@media (max-width: 767px) {
+  .order-details-responsive-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .order-layout-main,
+  .order-layout-side {
+    display: contents;
+  }
+
+  /* Optimal mobile reading order:
+     Items -> Financials -> Customer -> Fulfillment -> Notes -> Audit -> Timeline */
+  .order-grid-items { order: 1; }
+  .order-grid-financials { order: 2; }
+  .order-grid-customer { order: 3; }
+  .order-grid-fulfillment { order: 4; }
+  .order-grid-notes { order: 5; }
+  .order-grid-audit { order: 6; }
+  .order-grid-timeline { order: 7; }
+
+  /* Compact card styling on mobile */
+  .order-grid-card > div {
+    padding: 1rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+/* Header Responsiveness */
+.order-header-card {
+  padding: 1.25rem 1.5rem;
+}
+
+@media (max-width: 767px) {
+  .order-header-card {
+    padding: 1rem !important;
+    gap: 0.85rem !important;
+    border-radius: 10px !important;
+  }
+  .order-header-top-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.65rem !important;
+  }
+  .order-header-top-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+  }
+  .order-header-main-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.85rem !important;
+  }
+  .order-header-status-group {
+    width: 100% !important;
+    gap: 6px !important;
+  }
+  .order-header-actions-group {
+    width: 100% !important;
+  }
+  .order-header-actions-group button {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+}
+
+

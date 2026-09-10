@@ -500,62 +500,69 @@ export function OrderDetailClient({
         </div>
       )}
 
-      {/* Main Two-Column Layout (Always Visible In-Place) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 380px',
-          gap: '1.25rem',
-          alignItems: 'start',
-        }}
-      >
-        {/* Left Column: Order Items, Financials, Timeline */}
-        <div style={{ minWidth: 0 }}>
-          <OrderItemsTable
-            items={order.items || []}
-            currency={order.currency}
-            canEdit={canEditItems}
-            onEditItems={() => setActiveModal('items')}
-          />
+      {/* Main Responsive Card Grid Layout */}
+      <div className="order-details-responsive-grid">
+        {/* Main Column Group */}
+        <div className="order-layout-main">
+          <div className="order-grid-card order-grid-items">
+            <OrderItemsTable
+              items={order.items || []}
+              currency={order.currency}
+              canEdit={canEditItems}
+              onEditItems={() => setActiveModal('items')}
+            />
+          </div>
 
-          <OrderFinancials
-            order={order}
-            onEditFinancials={() => setActiveModal('financials')}
-          />
+          <div className="order-grid-card order-grid-financials">
+            <OrderFinancials
+              order={order}
+              onEditFinancials={() => setActiveModal('financials')}
+            />
+          </div>
 
-          <OrderTimeline
-            history={history}
-            currentStatus={order.status}
-            placedAt={order.placedAt}
-            createdAt={order.createdAt}
-          />
+          <div className="order-grid-card order-grid-timeline">
+            <OrderTimeline
+              history={history}
+              currentStatus={order.status}
+              placedAt={order.placedAt}
+              createdAt={order.createdAt}
+            />
+          </div>
         </div>
 
-        {/* Right Column: Customer, Fulfillment, Notes, Security Audit */}
-        <div style={{ minWidth: 0 }}>
-          <CustomerCard
-            customer={order.customer}
-            guestEmail={order.guestEmail}
-            guestPhone={order.guestPhone}
-            buyerSnapshot={order.buyerSnapshot}
-          />
+        {/* Side Column Group */}
+        <div className="order-layout-side">
+          <div className="order-grid-card order-grid-customer">
+            <CustomerCard
+              customer={order.customer}
+              guestEmail={order.guestEmail}
+              guestPhone={order.guestPhone}
+              buyerSnapshot={order.buyerSnapshot}
+            />
+          </div>
 
-          <FulfillmentCard
-            shippingAddress={order.shippingAddress}
-            billingAddress={order.billingAddress}
-            store={order.store}
-            onEditAddress={() => setActiveModal('address')}
-          />
+          <div className="order-grid-card order-grid-fulfillment">
+            <FulfillmentCard
+              shippingAddress={order.shippingAddress}
+              billingAddress={order.billingAddress}
+              store={order.store}
+              onEditAddress={() => setActiveModal('address')}
+            />
+          </div>
 
-          <OrderNotesCard
-            notes={order.notes}
-            onEditNotes={() => setActiveModal('notes')}
-          />
+          <div className="order-grid-card order-grid-notes">
+            <OrderNotesCard
+              notes={order.notes}
+              onEditNotes={() => setActiveModal('notes')}
+            />
+          </div>
 
-          <DeviceAuditCard
-            deviceTracking={order.deviceTracking}
-            preferredLanguage={order.buyerSnapshot?.locale}
-          />
+          <div className="order-grid-card order-grid-audit">
+            <DeviceAuditCard
+              deviceTracking={order.deviceTracking}
+              preferredLanguage={order.buyerSnapshot?.locale}
+            />
+          </div>
         </div>
       </div>
 

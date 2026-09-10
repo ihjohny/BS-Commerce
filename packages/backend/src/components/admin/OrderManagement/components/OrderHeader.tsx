@@ -148,6 +148,7 @@ export function OrderHeader({
 
   return (
     <div
+      className="order-header-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -161,6 +162,7 @@ export function OrderHeader({
     >
       {/* Top row: Breadcrumb, audit timestamps (Last Modified / Created), and Print Invoice button */}
       <div
+        className="order-header-top-row"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -223,7 +225,7 @@ export function OrderHeader({
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <div className="order-header-top-actions" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           {/* Metadata timestamps */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12 }}>
             {modifiedFormatted && (
@@ -274,6 +276,7 @@ export function OrderHeader({
 
       {/* Main header row */}
       <div
+        className="order-header-main-row"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -282,7 +285,7 @@ export function OrderHeader({
           gap: '1rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="order-header-status-group" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
 
 
           {onEditOrderStatus ? (
@@ -337,7 +340,7 @@ export function OrderHeader({
         </div>
 
         {/* Action buttons toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div className="order-header-actions-group" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {/* Quick status transition actions */}
           {!isEditing && allowedNext.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

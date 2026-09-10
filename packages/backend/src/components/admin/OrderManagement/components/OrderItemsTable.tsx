@@ -160,6 +160,7 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
         <table
           style={{
             width: '100%',
+            minWidth: 620,
             borderCollapse: 'collapse',
             textAlign: 'left',
             fontSize: 13,
