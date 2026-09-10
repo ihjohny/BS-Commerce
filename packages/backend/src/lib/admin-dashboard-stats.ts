@@ -46,6 +46,7 @@ export type SalesSummary = {
 export type RecentOrder = {
   id: string
   orderNumber: string
+  customerId?: string
   customerName: string
   customerEmail: string
   customerPhone?: string
@@ -695,10 +696,17 @@ export async function loadDashboardStats(
 
     const storeName = o.store && typeof o.store === 'object' ? String(o.store.name || '') : null
     const itemsCount = Array.isArray(o.items) ? o.items.length : 0
+    const customerId =
+      o.customer && typeof o.customer === 'object'
+        ? String(o.customer.id)
+        : typeof o.customer === 'string'
+        ? o.customer
+        : undefined
 
     return {
       id: String(o.id),
       orderNumber: String(o.orderNumber || `ORD-${o.id}`),
+      customerId,
       customerName,
       customerEmail,
       customerPhone: customerPhone ? String(customerPhone) : undefined,

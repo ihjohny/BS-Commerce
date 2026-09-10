@@ -1203,11 +1203,65 @@ html[data-theme='dark'] .template-minimal--width-normal .template-minimal__wrap 
   }
 }
 
-/* Hide redundant default Payload document title and Edit/API tabs when OrderDetailView is rendered */
+/* Hide redundant default Payload document title and Edit/API tabs when OrderDetailView or CustomerDetailView is rendered */
 .doc-header:has(~ * .order-detail-view-container),
 .doc-header:has(~ .order-detail-view-container),
-body:has(.order-detail-view-container) .doc-header {
+body:has(.order-detail-view-container) .doc-header,
+.doc-header:has(~ * .customer-detail-view-container),
+.doc-header:has(~ .customer-detail-view-container),
+body:has(.customer-detail-view-container) .doc-header {
   display: none !important;
+}
+
+.customer-detail-view-container {
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+}
+
+@media (max-width: 768px) {
+  .customer-detail-view-container {
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+  }
+}
+
+/* Customer Order History View Order Button - Collapses label to icon on shrink */
+.customer-order-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--bs-primary-subtle, rgba(37, 99, 235, 0.12));
+  color: var(--bs-primary, #2563eb);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.customer-order-view-btn:hover {
+  background: var(--bs-primary, #2563eb);
+  color: #ffffff;
+}
+
+.customer-order-view-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .customer-order-view-btn {
+    padding: 6px 8px !important;
+    min-width: 32px;
+    height: 30px;
+  }
+  .customer-order-view-btn-text {
+    display: none !important;
+  }
 }
 
 /* ==========================================================================

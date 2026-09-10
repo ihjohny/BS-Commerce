@@ -30,6 +30,31 @@ export const Users: CollectionConfig = {
     useAsTitle: 'username',
     defaultColumns: ['username', 'email', 'phone', 'role', 'status', 'createdAt'],
     group: 'Platform',
+    listSearchableFields: ['username', 'email', 'phone', 'firstName', 'lastName', 'displayName'],
+    components: {
+      beforeListTable: [
+        '/components/admin/CustomerManagement/CustomerListFilterTabs',
+      ],
+      views: {
+        edit: {
+          default: {
+            Component: '/components/admin/CustomerManagement/CustomerDetailView',
+            tab: {
+              label: 'Customer Details',
+            },
+          },
+          edit: {
+            Component: '/components/admin/CustomerManagement/CustomerDetailView',
+            path: '/edit',
+            tab: {
+              label: 'Edit (Raw)',
+              href: '/edit',
+              order: 200,
+            },
+          },
+        },
+      },
+    },
   },
   access: {
     admin: canAccessAdmin, // Only admins can access the admin panel (create-first-user allows when no users exist)

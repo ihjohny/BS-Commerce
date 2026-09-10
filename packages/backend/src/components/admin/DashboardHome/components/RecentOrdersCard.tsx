@@ -326,7 +326,44 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                             style={{ fontWeight: 500, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                             title={[o.customerName, o.customerEmail, o.customerPhone].filter(Boolean).join(' • ')}
                           >
-                            {o.customerName}
+                            {o.customerId ? (
+                              <Link
+                                href={`/admin/collections/users/${o.customerId}`}
+                                style={{
+                                  color: 'var(--bs-primary, #2563eb)',
+                                  textDecoration: 'none',
+                                  fontWeight: 600,
+                                  transition: 'color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                              >
+                                {o.customerName}
+                              </Link>
+                            ) : o.customerEmail || o.customerPhone ? (
+                              <Link
+                                href={`/admin/collections/users?search=${encodeURIComponent(o.customerEmail || o.customerPhone || '')}`}
+                                style={{
+                                  color: 'var(--theme-text)',
+                                  textDecoration: 'none',
+                                  fontWeight: 500,
+                                  transition: 'color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = 'var(--bs-primary, #2563eb)'
+                                  e.currentTarget.style.textDecoration = 'underline'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = 'var(--theme-text)'
+                                  e.currentTarget.style.textDecoration = 'none'
+                                }}
+                                title="Search for customer account"
+                              >
+                                {o.customerName}
+                              </Link>
+                            ) : (
+                              <span>{o.customerName}</span>
+                            )}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
                             {formatDate(o.createdAt)}

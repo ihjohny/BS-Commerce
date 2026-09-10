@@ -1,3 +1,5 @@
+import { default as default_57c438a771474eee03ba3cedd1c6a224 } from '../../../components/admin/CustomerManagement/CustomerListFilterTabs'
+import { default as default_5ed732a73b538e0a3293c085184add4c } from '../../../components/admin/CustomerManagement/CustomerDetailView'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -34,6 +36,8 @@ import { default as default_b67385d9e3ba48f5eeae6cb71a19ba17 } from '../../../co
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
+  "/components/admin/CustomerManagement/CustomerListFilterTabs#default": default_57c438a771474eee03ba3cedd1c6a224,
+  "/components/admin/CustomerManagement/CustomerDetailView#default": default_5ed732a73b538e0a3293c085184add4c,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
