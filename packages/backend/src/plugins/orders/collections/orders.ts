@@ -37,11 +37,13 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
     {
       name: 'guestEmail',
       type: 'email',
+      label: 'Email',
       admin: { description: 'For guest checkout.' },
     },
     {
       name: 'guestPhone',
       type: 'text',
+      label: 'Phone',
       admin: { description: 'For guest checkout with phone identity.' },
     },
     {
@@ -239,6 +241,17 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
         'placedAt',
       ],
       group: 'Ecommerce',
+      listSearchableFields: [
+        'orderNumber',
+        'guestPhone',
+        'guestEmail',
+        'buyerSnapshot.phone',
+        'buyerSnapshot.email',
+        'shippingAddress.phone',
+        'billingAddress.phone',
+        'customer.email',
+        'customer.phone',
+      ],
       components: {
         views: {
           edit: {
