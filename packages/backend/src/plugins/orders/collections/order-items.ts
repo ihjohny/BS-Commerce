@@ -170,20 +170,26 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
     timestamps: true,
     hooks: {
       beforeChange: [
-        ({ data, operation, originalDoc }) => {
+        ({ data, operation, originalDoc, req }) => {
           if (operation !== 'update' || !data || !originalDoc) return data
           const snapFields: string[] = [
             'productName',
             'productSlug',
             'variantName',
             'sku',
-            'unitPrice',
-            'totalPrice',
             'productImage',
-            'quantity',
             'itemLabel',
           ]
           if (splitByVendor) snapFields.push('vendorNameSnapshot')
+
+          // Admins can edit quantity and unitPrice before order completion
+          const canEditLinePricing =
+            req?.user?.role === 'admin' || (req as Record<string, any>)?.context?.allowOrderItemEdit === true
+
+          if (!canEditLinePricing) {
+            snapFields.push('unitPrice', 'totalPrice', 'quantity')
+          }
+
           const orig = originalDoc as Record<string, unknown>
           const patch = data as Record<string, unknown>
           for (const key of snapFields) {
@@ -196,6 +202,13 @@ export function createOrderItemsConfig(splitByVendor: boolean): CollectionConfig
             if (!(key in patch)) continue
             if (vendorPatchValueUnchanged(patch[key], orig[key])) continue
             throw new Error(`Cannot change ${key} after order item creation.`)
+          }
+          if (canEditLinePricing && (patch.quantity != null || patch.unitPrice != null)) {
+            const finalQty = Number(patch.quantity ?? orig.quantity) || 1
+            const finalPrice = Number(patch.unitPrice ?? orig.unitPrice) || 0
+            data.quantity = finalQty
+            data.unitPrice = finalPrice
+            data.totalPrice = finalQty * finalPrice
           }
           return data
         },

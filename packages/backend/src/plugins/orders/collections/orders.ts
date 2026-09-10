@@ -239,8 +239,15 @@ export function createOrdersConfig(splitByVendor: boolean): CollectionConfig {
         'placedAt',
       ],
       group: 'Orders',
-      description:
-        'Customer orders. Use status=Cancelled to cancel (releases inventory). Orders are never deleted (audit/tax).',
+      components: {
+        views: {
+          edit: {
+            default: {
+              Component: '/components/admin/OrderManagement/OrderDetailView',
+            },
+          },
+        },
+      },
     },
     hooks: {
       beforeDelete: [

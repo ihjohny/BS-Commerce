@@ -594,8 +594,8 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
         },
       ],
     },
-    { name: 'basePrice', type: 'number', required: true, min: 0 },
-    { name: 'compareAtPrice', type: 'number', min: 0 },
+    { name: 'basePrice', type: 'number', required: true, min: 0, admin: { step: 1 } },
+    { name: 'compareAtPrice', type: 'number', min: 0, admin: { step: 1 } },
     {
       name: 'saleDisplayMode',
       type: 'select',
@@ -613,7 +613,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
           'How to show savings when compare-at price is higher than selling price. Variants can override.',
       },
     },
-    { name: 'costPrice', type: 'number', min: 0 },
+    { name: 'costPrice', type: 'number', min: 0, admin: { step: 1 } },
     {
       name: 'currency',
       type: 'select',

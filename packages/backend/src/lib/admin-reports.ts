@@ -123,8 +123,10 @@ const REPORT_CURRENCY_SYMBOLS: Record<string, string> = {
 export function formatReportCurrency(amount: number, currency = 'USD'): string {
   const code = (currency || 'USD').toUpperCase().trim()
   const symbol = REPORT_CURRENCY_SYMBOLS[code] ?? `${code} `
-  return `${symbol}${Number(amount || 0).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
+  const num = Number(amount || 0)
+  const hasDecimals = num % 1 !== 0
+  return `${symbol}${num.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   })}`
 }

@@ -10,7 +10,12 @@ type SalesSummaryCardProps = {
 
 function formatCurrency(amount: number, currency: string) {
   const symbol = currency === 'BDT' ? '৳' : currency === 'USD' ? '$' : `${currency} `
-  return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const num = Number(amount || 0)
+  const hasDecimals = num % 1 !== 0
+  return `${symbol}${num.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  })}`
 }
 
 export function SalesSummaryCard({ summary, currency }: SalesSummaryCardProps) {

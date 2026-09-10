@@ -169,8 +169,8 @@ export function createProductVariantsConfig(multivendorEnabled = false): Collect
     },
     { name: 'name', type: 'text', required: true },
     { name: 'sku', type: 'text', unique: true, admin: { description: 'Unique per variant. Leave empty for auto-generated.' } },
-    { name: 'price', type: 'number', required: true, min: 0 },
-    { name: 'compareAtPrice', type: 'number', min: 0 },
+    { name: 'price', type: 'number', required: true, min: 0, admin: { step: 1 } },
+    { name: 'compareAtPrice', type: 'number', min: 0, admin: { step: 1 } },
     {
       name: 'saleDisplayMode',
       type: 'select',

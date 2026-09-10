@@ -351,8 +351,13 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
                 s.key.toLowerCase().includes('valuation') ||
                 s.key.toLowerCase().includes('aov')
               const symbol = currency === 'BDT' ? '৳' : currency === 'USD' ? '$' : `${currency} `
+              const num = Number(val || 0)
+              const hasDecimals = num % 1 !== 0
               const displayVal = isMonetary
-                ? `${symbol}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                ? `${symbol}${num.toLocaleString('en-US', {
+                    minimumFractionDigits: hasDecimals ? 2 : 0,
+                    maximumFractionDigits: 2,
+                  })}`
                 : val.toLocaleString('en-US')
 
               return (

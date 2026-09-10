@@ -66,7 +66,7 @@ test('resolveReportDates properly resolves dates for day, week, month, quarter, 
 
 test('format helpers format currencies, numbers, and percentages correctly', () => {
   assert.equal(formatReportCurrency(1234.56, 'USD'), '$1,234.56')
-  assert.equal(formatReportCurrency(500, 'BDT'), '৳500.00')
+  assert.equal(formatReportCurrency(500, 'BDT'), '৳500')
   assert.equal(formatReportNumber(54321), '54,321')
   assert.equal(formatReportPercent(12.345), '12.3%')
 })
@@ -394,7 +394,7 @@ test('generateAdminReport runs Customer Lifetime Value report', async () => {
   assert.equal(res.meta.reportType, 'customer-ltv')
   assert.equal(res.table.rows.length, 1)
   assert.equal(res.table.rows[0].ordersCount, 2)
-  assert.equal(res.table.rows[0].totalSpend, '$800.00')
+  assert.equal(res.table.rows[0].totalSpend, '$800')
 })
 
 test('generateAdminReport runs Abandoned Products report', async () => {
@@ -471,7 +471,7 @@ test('generateAdminReport runs Stock Valuation report', async () => {
   assert.equal(res.meta.reportType, 'stock-valuation')
   assert.equal(res.table.rows.length, 1)
   assert.equal(res.table.rows[0].location, 'Downtown Store')
-  assert.equal(res.table.rows[0].valuation, '$1,000.00')
+  assert.equal(res.table.rows[0].valuation, '$1,000')
 })
 
 test('convertReportCurrency properly converts between USD and BDT and handles identical currency', () => {
@@ -506,9 +506,9 @@ test('generateAdminReport respects selected currency options.currency = BDT', as
   )
 
   assert.equal(res.meta.currency, 'BDT')
-  // $100 * 110 rate = ৳11,000.00
-  assert.equal(res.table.totals?.grandTotal, '৳11,000.00')
-  assert.equal(res.kpis.find((k) => k.key === 'revenue')?.formattedValue, '৳11,000.00')
+  // $100 * 110 rate = ৳11,000
+  assert.equal(res.table.totals?.grandTotal, '৳11,000')
+  assert.equal(res.kpis.find((k) => k.key === 'revenue')?.formattedValue, '৳11,000')
 })
 
 test('generateAdminReport loads default currency from platform-settings global', async () => {
@@ -552,7 +552,7 @@ test('generateAdminReport loads default currency from platform-settings global',
   assert.equal(res.meta.currency, 'BDT')
   assert.equal(res.meta.defaultCurrency, 'BDT')
   assert.deepEqual(res.meta.availableCurrencies, ['BDT', 'USD'])
-  assert.equal(res.table.totals?.grandTotal, '৳500.00')
+  assert.equal(res.table.totals?.grandTotal, '৳500')
 })
 
 test('generateAdminReport runs Customer Lifetime Value report with missing customer name without throwing', async () => {
@@ -617,7 +617,7 @@ test('generateAdminReport runs Customer Orders & Device Activity report', async 
   assert.equal(res.table.rows[0].customer, 'Jane Doe')
   assert.equal(res.table.rows[0].accountType, 'Registered')
   assert.equal(res.table.rows[0].itemsCount, 3)
-  assert.equal(res.table.rows[0].grandTotal, '$250.00')
+  assert.equal(res.table.rows[0].grandTotal, '$250')
   assert.equal(res.table.rows[0].deviceType, 'Mobile')
   assert.equal(res.table.rows[0].browserOs, 'Safari 18 / iOS')
   assert.equal(res.table.rows[0].ipAddress, '192.168.1.1')
