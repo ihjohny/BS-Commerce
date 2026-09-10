@@ -37,60 +37,13 @@ const ORDER_ALLOWED_TRANSITIONS: Record<string, string[]> = {
   refunded: [],
 }
 
+import { AdminStatusBadge } from '../../ui'
+
 export function formatStatusLabel(status: string): string {
   return status.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export function StatusPill({ status, type = 'order' }: { status: string; type?: 'order' | 'payment' }) {
-  const s = status.toLowerCase()
-  let color = 'var(--theme-elevation-600, #64748b)'
-  let bg = 'var(--theme-elevation-150, rgba(120,120,120,0.12))'
-
-  if (s === 'pending' || s === 'unpaid') {
-    color = 'var(--bs-warning, #d97706)'
-    bg = 'var(--bs-warning-subtle, rgba(217, 119, 6, 0.12))'
-  } else if (s === 'processing') {
-    color = 'var(--bs-primary, #2563eb)'
-    bg = 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.12))'
-  } else if (s === 'shipped' || s === 'partially-shipped') {
-    color = '#6366f1'
-    bg = 'rgba(99, 102, 241, 0.12)'
-  } else if (s === 'delivered' || s === 'completed' || s === 'paid') {
-    color = 'var(--bs-success, #16a34a)'
-    bg = 'var(--bs-success-subtle, rgba(22, 163, 74, 0.12))'
-  } else if (s === 'cancelled' || s === 'refunded') {
-    color = 'var(--bs-error, #dc2626)'
-    bg = 'var(--bs-error-subtle, rgba(220, 38, 38, 0.12))'
-  }
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        padding: '3px 10px',
-        borderRadius: '9999px',
-        background: bg,
-        color: color,
-        whiteSpace: 'nowrap',
-        letterSpacing: '0.01em',
-      }}
-    >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: color,
-        }}
-      />
-      {type === 'payment' ? `Payment: ${formatStatusLabel(status)}` : formatStatusLabel(status)}
-    </span>
-  )
-}
+export const StatusPill = AdminStatusBadge
 
 export function OrderHeader({
   order,

@@ -1,17 +1,11 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { useListQuery } from '@payloadcms/ui'
 
-export type CartFilterTabKey = 'all' | 'registered' | 'guest'
+import { AdminQuickFilterBar, type AdminFilterTab } from '../ui'
 
-interface CartTabDef {
-  id: CartFilterTabKey
-  label: string
-  color: string
-  activeBg: string
-  icon: React.ReactNode
-}
+export type CartFilterTabKey = 'all' | 'registered' | 'guest'
 
 /**
  * Client component rendered via admin.components.beforeListTable on the `carts` collection.
@@ -87,7 +81,7 @@ export function CartListFilterTabs() {
     }
   }
 
-  const tabs: CartTabDef[] = [
+  const tabs: AdminFilterTab<CartFilterTabKey>[] = [
     {
       id: 'all',
       label: 'All Carts',
@@ -158,78 +152,113 @@ export function CartListFilterTabs() {
     },
   ]
 
+  // Dynamically synchronize the search input placeholder & aria-label on the carts list page
+  useEffect(() => {
+    const hint = 'Search by email, phone, guest ID...'
+    const updateInputPlaceholder = () => {
+      const inputs = document.querySelectorAll<HTMLInputElement>(
+        '#search-filter-input, input.search-filter__input, .list-controls input[type="text"]'
+      )
+      inputs.forEach((input) => {
+        if (input && input.placeholder !== hint) {
+          input.placeholder = hint
+          input.setAttribute('aria-label', hint)
+        }
+      })
+    }
+
+    updateInputPlaceholder()
+
+    const observer = new MutationObserver((mutations) => {
+      let hasAddedNodes = false
+      for (const m of mutations) {
+        if (m.addedNodes.length > 0) {
+          hasAddedNodes = true
+          break
+        }
+      }
+      if (hasAddedNodes) {
+        updateInputPlaceholder()
+      }
+    })
+
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    return () => observer.disconnect()
+  }, [])
+
+  const handleFocusSearch = () => {
+    const input = document.querySelector<HTMLInputElement>(
+      '#search-filter-input, input.search-filter__input, .list-controls input[type="text"]'
+    )
+    if (input) {
+      input.focus()
+    }
+  }
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.75rem',
-        padding: '0.65rem 0.95rem',
-        marginBottom: '0.85rem',
-        background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: 10,
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-        <span
+    <AdminQuickFilterBar<CartFilterTabKey>
+      tabs={tabs}
+      activeTab={currentTab}
+      onSelectTab={setFilterTab}
+      rightAction={
+        <div
+          onClick={handleFocusSearch}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleFocusSearch()
+            }
+          }}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
             fontSize: '0.75rem',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            color: 'var(--theme-elevation-500, #64748b)',
-            marginRight: '0.35rem',
+            color: 'var(--theme-elevation-600, #475569)',
+            background: 'var(--theme-elevation-100, #f1f5f9)',
+            border: '1px solid var(--theme-elevation-200, #e2e8f0)',
+            padding: '0.35rem 0.75rem',
+            borderRadius: 6,
+            cursor: 'pointer',
+            userSelect: 'none',
+            transition: 'all 0.15s ease',
+          }}
+          title="Click to search carts by customer email, phone number, or guest ID"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--bs-primary-border, rgba(37, 99, 235, 0.35))'
+            e.currentTarget.style.background = 'var(--theme-elevation-150, #e2e8f0)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--theme-elevation-200, #e2e8f0)'
+            e.currentTarget.style.background = 'var(--theme-elevation-100, #f1f5f9)'
           }}
         >
-          QUICK FILTER:
-        </span>
-
-        {tabs.map((t) => {
-          const isActive = currentTab === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setFilterTab(t.id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.4rem 0.85rem',
-                fontSize: '0.8125rem',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? '#ffffff' : 'var(--theme-elevation-700, #334155)',
-                background: isActive
-                  ? t.activeBg
-                  : 'var(--theme-elevation-100, #f1f5f9)',
-                border: isActive
-                  ? `1px solid ${t.activeBg}`
-                  : '1px solid var(--theme-elevation-200, #e2e8f0)',
-                borderRadius: 6,
-                cursor: 'pointer',
-                boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.15)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  color: isActive ? '#ffffff' : t.color,
-                }}
-              >
-                {t.icon}
-              </span>
-              <span>{t.label}</span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: 'var(--bs-primary, #2563eb)' }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span>
+            Search hint:{' '}
+            <strong style={{ fontWeight: 600, color: 'var(--theme-text)' }}>
+              Email, Phone, Guest ID
+            </strong>
+          </span>
+        </div>
+      }
+    />
   )
 }
 

@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import type { NewCustomer } from '../../../../lib/admin-dashboard-stats'
+import { AdminStatusBadge } from '../../ui'
 
 type NewCustomersCardProps = {
   customers: NewCustomer[]
@@ -151,20 +152,7 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      padding: '2px 7px',
-                      borderRadius: 999,
-                      letterSpacing: '0.04em',
-                      background: c.status === 'active' ? 'var(--bs-success-subtle)' : 'var(--bs-error-subtle)',
-                      color: c.status === 'active' ? 'var(--bs-success, #16a34a)' : 'var(--bs-error, #dc2626)',
-                    }}
-                  >
-                    {c.status}
-                  </span>
+                  <AdminStatusBadge status={c.status} type="user" />
                   <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
                     {formatDate(c.createdAt)}
                   </div>

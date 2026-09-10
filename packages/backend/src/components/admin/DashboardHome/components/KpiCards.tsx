@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { KpiMetric } from '../../../../lib/admin-dashboard-stats'
+import { AdminKpiCard } from '../../ui'
 
 type KpiCardsProps = {
   currency: string
@@ -23,64 +24,12 @@ function formatCurrency(amount: number, currency: string) {
   })}`
 }
 
-function TrendBadge({ change }: { change: number | null }) {
-  if (change === null || isNaN(change)) return null
-
-  const isPositive = change > 0
-  const isZero = change === 0
-
-  const color = isZero
-    ? 'var(--theme-elevation-500)'
-    : isPositive
-    ? 'var(--bs-success, #16a34a)'
-    : 'var(--bs-error, #dc2626)'
-
-  const bg = isZero
-    ? 'var(--theme-elevation-150)'
-    : isPositive
-    ? 'var(--bs-success-subtle, rgba(22,163,74,0.1))'
-    : 'var(--bs-error-subtle, rgba(220,38,38,0.1))'
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 3,
-        fontSize: 11,
-        fontWeight: 600,
-        color: color,
-        background: bg,
-        padding: '1.5px 7px',
-        borderRadius: 'var(--bs-radius-full, 9999px)',
-      }}
-    >
-      {!isZero && (
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ transform: isPositive ? 'none' : 'rotate(180deg)' }}
-        >
-          <polyline points="18 15 12 9 6 15" />
-        </svg>
-      )}
-      <span>{isPositive ? `+${change}%` : `${change}%`}</span>
-    </span>
-  )
-}
-
 export function KpiCards({ currency, kpis }: KpiCardsProps) {
   const cards = [
     {
       label: 'Total Revenue',
       value: formatCurrency(kpis.revenue.value, currency),
-      metric: kpis.revenue,
+      change: kpis.revenue.changePercentage,
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${formatCurrency(kpis.revenue.previousValue, currency)}`,
       icon: (
@@ -93,7 +42,7 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
     {
       label: 'Total Orders',
       value: kpis.orders.value.toLocaleString(),
-      metric: kpis.orders,
+      change: kpis.orders.changePercentage,
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${kpis.orders.previousValue.toLocaleString()}`,
       icon: (
@@ -107,7 +56,7 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
     {
       label: 'Total Customers',
       value: kpis.customers.value.toLocaleString(),
-      metric: kpis.customers,
+      change: kpis.customers.changePercentage,
       href: '/admin/collections/users',
       sublabel: 'Registered accounts',
       icon: (
@@ -122,7 +71,7 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
     {
       label: 'Average Order Value',
       value: formatCurrency(kpis.aov.value, currency),
-      metric: kpis.aov,
+      change: kpis.aov.changePercentage,
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${formatCurrency(kpis.aov.previousValue, currency)}`,
       icon: (
@@ -143,71 +92,18 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       }}
     >
       {cards.map((c) => (
-        <a
+        <AdminKpiCard
           key={c.label}
+          label={c.label}
+          value={c.value}
+          change={c.change}
+          sublabel={c.sublabel}
           href={c.href}
-          style={{
-            display: 'block',
-            textDecoration: 'none',
-            color: 'inherit',
-            padding: '1.15rem 1.25rem',
-            borderRadius: 12,
-            border: '1px solid var(--theme-elevation-150)',
-            background: 'var(--theme-elevation-0, var(--theme-bg))',
-            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--theme-elevation-300)'
-            e.currentTarget.style.boxShadow = '0 2px 6px 0 rgba(0, 0, 0, 0.05)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-            e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.03)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--theme-elevation-500)', letterSpacing: '-0.01em' }}>
-              {c.label}
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                background: 'var(--theme-elevation-100)',
-                color: 'var(--theme-elevation-600)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {c.icon}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5 }}>
-            <div
-              style={{
-                fontSize: 26,
-                fontWeight: 600,
-                lineHeight: 1.15,
-                letterSpacing: '-0.03em',
-                fontVariantNumeric: 'tabular-nums',
-                color: 'var(--theme-text)',
-              }}
-            >
-              {c.value}
-            </div>
-            <TrendBadge change={c.metric.changePercentage} />
-          </div>
-
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-450, #737373)', fontWeight: 400 }}>
-            {c.sublabel}
-          </div>
-        </a>
+          icon={c.icon}
+        />
       ))}
     </div>
   )
 }
+
+export default KpiCards

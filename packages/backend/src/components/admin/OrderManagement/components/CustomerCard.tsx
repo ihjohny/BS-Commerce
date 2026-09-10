@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { AdminCard, AdminStatusBadge } from '../../ui'
 
 export type CustomerCardProps = {
   customer?: {
@@ -71,73 +72,23 @@ export function CustomerCard({
     .toUpperCase() || 'C'
 
   return (
-    <div
-      style={{
-        background: 'var(--theme-elevation-0, #ffffff)',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: 12,
-        padding: '1.25rem',
-        marginBottom: '1.25rem',
-      }}
-    >
-      <div
-        style={{
-          borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
-          paddingBottom: '0.75rem',
-          marginBottom: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: '1rem',
-            fontWeight: 600,
-            color: 'var(--theme-text, #0f172a)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          Customer Profile
-        </h2>
-
-        {isGuest ? (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              background: 'var(--theme-elevation-100, #f1f5f9)',
-              color: 'var(--theme-elevation-600, #64748b)',
-              border: '1px solid var(--theme-elevation-200, #e2e8f0)',
-            }}
-          >
-            Guest Checkout
-          </span>
+    <AdminCard
+      style={{ marginBottom: '1.25rem' }}
+      title="Customer Profile"
+      icon={
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      }
+      badge={
+        isGuest ? (
+          <AdminStatusBadge status="guest" label="Guest Checkout" />
         ) : (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              background: 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.12))',
-              color: 'var(--bs-primary, #2563eb)',
-            }}
-          >
-            Registered User
-          </span>
-        )}
-      </div>
-
+          <AdminStatusBadge status="registered" label="Registered User" />
+        )
+      }
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
         <div
           style={{
@@ -255,6 +206,8 @@ export function CustomerCard({
           </div>
         )}
       </div>
-    </div>
+    </AdminCard>
   )
 }
+
+export default CustomerCard

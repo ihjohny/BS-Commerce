@@ -3,6 +3,10 @@
 import React, { useMemo } from 'react'
 import { useListQuery } from '@payloadcms/ui'
 
+import { AdminQuickFilterBar, type AdminFilterTab } from '../ui'
+
+export type CustomerFilterTabKey = 'all' | 'active' | 'inactive' | 'customer' | 'admin'
+
 /**
  * Client component rendered via admin.components.beforeListTable on the `users` collection.
  * Provides quick-filter tabs for customer status ('All', 'Active', 'Suspended / Inactive', 'Customers Only')
@@ -12,7 +16,7 @@ export function CustomerListFilterTabs() {
   const { handleWhereChange, query } = useListQuery()
 
   // Determine current active filter from list query
-  const currentTab = useMemo(() => {
+  const currentTab = useMemo<CustomerFilterTabKey>(() => {
     const where = query?.where as any
     if (!where) return 'all'
 
@@ -43,7 +47,7 @@ export function CustomerListFilterTabs() {
     return 'all'
   }, [query?.where])
 
-  const setFilterTab = (tab: 'all' | 'active' | 'inactive' | 'customer' | 'admin') => {
+  const setFilterTab = (tab: CustomerFilterTabKey) => {
     if (typeof handleWhereChange !== 'function') return
 
     if (tab === 'all') {
@@ -80,13 +84,7 @@ export function CustomerListFilterTabs() {
     }
   }
 
-  const tabs: Array<{
-    id: 'all' | 'active' | 'inactive' | 'customer' | 'admin'
-    label: string
-    color: string
-    activeBg: string
-    icon: React.ReactNode
-  }> = [
+  const tabs: AdminFilterTab<CustomerFilterTabKey>[] = [
     {
       id: 'all',
       label: 'All Users',
@@ -162,77 +160,11 @@ export function CustomerListFilterTabs() {
   ]
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.75rem',
-        padding: '0.65rem 0.95rem',
-        marginBottom: '0.85rem',
-        background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: 10,
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-        <span
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            color: 'var(--theme-elevation-500, #64748b)',
-            marginRight: '0.35rem',
-          }}
-        >
-          QUICK FILTER:
-        </span>
-
-        {tabs.map((t) => {
-          const isActive = currentTab === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setFilterTab(t.id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.4rem 0.85rem',
-                fontSize: '0.8125rem',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? '#ffffff' : 'var(--theme-elevation-700, #334155)',
-                background: isActive
-                  ? t.activeBg
-                  : 'var(--theme-elevation-100, #f1f5f9)',
-                border: isActive
-                  ? `1px solid ${t.activeBg}`
-                  : '1px solid var(--theme-elevation-200, #e2e8f0)',
-                borderRadius: 6,
-                cursor: 'pointer',
-                boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.15)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  color: isActive ? '#ffffff' : t.color,
-                }}
-              >
-                {t.icon}
-              </span>
-              <span>{t.label}</span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
+    <AdminQuickFilterBar<CustomerFilterTabKey>
+      tabs={tabs}
+      activeTab={currentTab}
+      onSelectTab={setFilterTab}
+    />
   )
 }
 

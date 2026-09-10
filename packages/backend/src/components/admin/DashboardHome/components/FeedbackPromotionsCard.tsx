@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import type { RecentReview, ActiveCoupon } from '../../../../lib/admin-dashboard-stats'
+import { AdminStatusBadge } from '../../ui'
 
 type FeedbackPromotionsCardProps = {
   reviews: RecentReview[]
@@ -165,28 +166,10 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                     </div>
 
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 600,
-                          textTransform: 'uppercase',
-                          padding: '2px 7px',
-                          borderRadius: 999,
-                          letterSpacing: '0.04em',
-                          background: isPending
-                            ? 'var(--bs-warning-subtle)'
-                            : isApproved
-                            ? 'var(--bs-success-subtle)'
-                            : 'var(--bs-error-subtle)',
-                          color: isPending
-                            ? 'var(--bs-warning, #d97706)'
-                            : isApproved
-                            ? 'var(--bs-success, #16a34a)'
-                            : 'var(--bs-error, #dc2626)',
-                        }}
-                      >
-                        {r.status}
-                      </span>
+                      <AdminStatusBadge
+                        status={r.status}
+                        variant={isPending ? 'warning' : isApproved ? 'success' : 'error'}
+                      />
                       <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
                         {formatDate(r.createdAt)}
                       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { AdminCard } from '../../ui'
 import { formatStatusLabel } from './OrderHeader'
 
 export type StatusHistoryItem = {
@@ -52,45 +53,36 @@ export function OrderTimeline({
   )
 
   return (
-    <div
-      style={{
-        background: 'var(--theme-elevation-0, #ffffff)',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: 12,
-        padding: '1.25rem',
-        marginBottom: '1.25rem',
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: '100%',
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          textAlign: 'left',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--theme-text, #0f172a)' }}>
-            Order Audit & Status Timeline
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--theme-elevation-500, #64748b)', fontSize: 12 }}>
+    <AdminCard
+      style={{ marginBottom: '1.25rem' }}
+      title="Order Audit & Status Timeline"
+      icon={
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      }
+      action={
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: 'var(--theme-elevation-500, #64748b)',
+            fontSize: 12,
+            fontWeight: 500,
+          }}
+        >
           <span>{isOpen ? 'Hide Details' : 'Show Details'}</span>
           <svg
-            width="16"
-            height="16"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -102,9 +94,11 @@ export function OrderTimeline({
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-        </div>
-      </button>
-
+        </button>
+      }
+      headerDivider={isOpen}
+      noPadding={!isOpen}
+    >
       {isOpen && (
         <div
           style={{
@@ -248,6 +242,6 @@ export function OrderTimeline({
         </div>
       </div>
       )}
-    </div>
+    </AdminCard>
   )
 }

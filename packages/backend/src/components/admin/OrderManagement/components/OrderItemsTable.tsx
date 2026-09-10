@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { AdminCard } from '../../ui'
 import { ProductStockModal } from './modals/ProductStockModal'
 
 export type OrderItemData = {
@@ -100,44 +101,19 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
   }
 
   return (
-    <div
-      style={{
-        background: 'var(--theme-elevation-0, #ffffff)',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: 12,
-        overflow: 'hidden',
-        marginBottom: '1.25rem',
-      }}
-    >
-      <div
-        style={{
-          padding: '1rem 1.25rem',
-          borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: '1rem',
-            fontWeight: 600,
-            color: 'var(--theme-text, #0f172a)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          Order Items ({items.length})
-        </h2>
-
-        {canEdit && onEditItems && (
+    <AdminCard
+      noPadding
+      style={{ marginBottom: '1.25rem' }}
+      title={`Order Items (${items.length})`}
+      icon={
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+      }
+      action={
+        canEdit && onEditItems && (
           <button
             type="button"
             onClick={onEditItems}
@@ -153,8 +129,9 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
           >
             Edit Items
           </button>
-        )}
-      </div>
+        )
+      }
+    >
 
       <div style={{ overflowX: 'auto' }}>
         <table
@@ -437,6 +414,6 @@ export function OrderItemsTable({ items, currency, canEdit, onEditItems }: Order
           onClose={() => setSelectedStockItem(null)}
         />
       )}
-    </div>
+    </AdminCard>
   )
 }

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { RecentOrder } from '../../../../lib/admin-dashboard-stats'
+import { AdminStatusBadge } from '../../ui'
 
 type RecentOrdersCardProps = {
   orders: RecentOrder[]
@@ -17,50 +18,6 @@ function formatCurrency(amount: number, currency: string) {
     minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   })}`
-}
-
-function StatusPill({ status }: { status: string }) {
-  const s = status.toLowerCase()
-  let color = 'var(--theme-elevation-600, #64748b)'
-  let bg = 'var(--theme-elevation-150, rgba(120,120,120,0.12))'
-
-  if (s === 'pending') {
-    color = 'var(--bs-warning, #d97706)'
-    bg = 'var(--bs-warning-subtle, rgba(217, 119, 6, 0.12))'
-  } else if (s === 'processing') {
-    color = 'var(--bs-primary, #2563eb)'
-    bg = 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.12))'
-  } else if (s === 'shipped' || s === 'partially-shipped') {
-    color = '#6366f1'
-    bg = 'rgba(99, 102, 241, 0.12)'
-  } else if (s === 'delivered' || s === 'completed') {
-    color = 'var(--bs-success, #16a34a)'
-    bg = 'var(--bs-success-subtle, rgba(22, 163, 74, 0.12))'
-  } else if (s === 'refunded' || s === 'cancelled') {
-    color = 'var(--bs-error, #dc2626)'
-    bg = 'var(--bs-error-subtle, rgba(220, 38, 38, 0.12))'
-  }
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        textTransform: 'capitalize',
-        padding: '2px 8px',
-        borderRadius: 'var(--bs-radius-full, 9999px)',
-        background: bg,
-        color: color,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
-      {status.replace(/-/g, ' ')}
-    </span>
-  )
 }
 
 function formatDate(iso: string) {
@@ -368,7 +325,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                       </div>
                     </td>
                     <td style={{ padding: '10px 10px' }}>
-                      <StatusPill status={o.status} />
+                      <AdminStatusBadge status={o.status} type="order" />
                     </td>
                     <td
                       style={{

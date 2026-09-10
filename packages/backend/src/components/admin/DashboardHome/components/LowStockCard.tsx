@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import type { LowStockItem } from '../../../../lib/admin-dashboard-stats'
+import { AdminStatusBadge } from '../../ui'
 
 type LowStockCardProps = {
   items: LowStockItem[]
@@ -133,19 +134,11 @@ export function LowStockCard({ items }: LowStockCardProps) {
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: '2px 8px',
-                      borderRadius: 999,
-                      background: isOutOfStock ? 'var(--bs-error-subtle)' : 'var(--bs-warning-subtle)',
-                      color: isOutOfStock ? 'var(--bs-error, #dc2626)' : 'var(--bs-warning, #d97706)',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {isOutOfStock ? 'Out of Stock' : `${item.quantity} In Stock`}
-                  </span>
+                  <AdminStatusBadge
+                    status={isOutOfStock ? 'out_of_stock' : 'low_stock'}
+                    variant={isOutOfStock ? 'error' : 'warning'}
+                    label={isOutOfStock ? 'Out of Stock' : `${item.quantity} In Stock`}
+                  />
                   {item.reservedQuantity > 0 && (
                     <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
                       ({item.reservedQuantity} reserved)

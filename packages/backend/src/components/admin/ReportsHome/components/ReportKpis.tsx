@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { ReportKpi } from '../../../../lib/admin-reports'
+import { AdminKpiCard } from '../../ui'
 
 type ReportKpisProps = {
   kpis: ReportKpi[]
@@ -9,8 +10,8 @@ type ReportKpisProps = {
 
 function getKpiIcon(key: string) {
   const props = {
-    width: 16,
-    height: 16,
+    width: 15,
+    height: 15,
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
@@ -64,95 +65,22 @@ export function ReportKpis({ kpis }: ReportKpisProps) {
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(auto-fit, minmax(220px, 1fr))`,
-        gap: '1rem',
-        marginBottom: '1.5rem',
+        gap: '0.85rem',
+        marginBottom: '1.25rem',
       }}
     >
       {kpis.map((kpi) => (
-        <div
+        <AdminKpiCard
           key={kpi.key}
-          style={{
-            background: 'var(--theme-elevation-50)',
-            border: '1px solid var(--theme-elevation-150)',
-            borderRadius: 'var(--bs-radius-md, 8px)',
-            boxShadow: 'var(--bs-shadow-xs)',
-            padding: '1.25rem 1.35rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-1px)'
-            e.currentTarget.style.boxShadow = 'var(--bs-shadow-sm)'
-            e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'none'
-            e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
-            e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 11.5,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                color: 'var(--theme-elevation-500)',
-              }}
-            >
-              {kpi.label}
-            </span>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 'var(--bs-radius-sm, 6px)',
-                background: 'rgba(37, 99, 235, 0.08)',
-                color: 'var(--bs-primary, #2563eb)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {getKpiIcon(kpi.key)}
-            </div>
-          </div>
-
-          <div
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: 'var(--theme-text)',
-              lineHeight: 1.2,
-              marginBottom: 4,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {kpi.formattedValue}
-          </div>
-
-          {kpi.subtext && (
-            <div
-              style={{
-                fontSize: 11.5,
-                color: 'var(--theme-elevation-500)',
-              }}
-            >
-              {kpi.subtext}
-            </div>
-          )}
-        </div>
+          label={kpi.label}
+          value={kpi.formattedValue}
+          sublabel={kpi.subtext}
+          icon={getKpiIcon(kpi.key)}
+          iconVariant="primary"
+        />
       ))}
     </div>
   )
 }
+
+export default ReportKpis

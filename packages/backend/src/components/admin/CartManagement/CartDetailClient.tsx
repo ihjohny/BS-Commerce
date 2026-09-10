@@ -163,60 +163,13 @@ function formatRelativeTime(dateStr?: string | null) {
   }
 }
 
+import { AdminStatusBadge, AdminKpiCard } from '../ui'
+
 function formatStatusLabel(status: string): string {
   return status.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function StatusPill({ status, type = 'status' }: { status: string; type?: 'status' | 'payment' }) {
-  const s = (status || '').toLowerCase()
-  let color = 'var(--theme-elevation-600, #64748b)'
-  let bg = 'var(--theme-elevation-150, rgba(120, 120, 120, 0.12))'
-
-  if (s === 'pending' || s === 'unpaid') {
-    color = 'var(--bs-warning, #d97706)'
-    bg = 'var(--bs-warning-subtle, rgba(217, 119, 6, 0.12))'
-  } else if (s === 'processing') {
-    color = 'var(--bs-primary, #2563eb)'
-    bg = 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.12))'
-  } else if (s === 'shipped' || s === 'partially-shipped') {
-    color = '#6366f1'
-    bg = 'rgba(99, 102, 241, 0.12)'
-  } else if (s === 'delivered' || s === 'completed' || s === 'paid' || s === 'active') {
-    color = 'var(--bs-success, #16a34a)'
-    bg = 'var(--bs-success-subtle, rgba(22, 163, 74, 0.12))'
-  } else if (s === 'refunded' || s === 'cancelled' || s === 'suspended' || s === 'banned') {
-    color = 'var(--bs-error, #dc2626)'
-    bg = 'var(--bs-error-subtle, rgba(220, 38, 38, 0.12))'
-  }
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        padding: '2px 8px',
-        borderRadius: 9999,
-        background: bg,
-        color: color,
-        whiteSpace: 'nowrap',
-        letterSpacing: '0.01em',
-      }}
-    >
-      <span
-        style={{
-          width: 5,
-          height: 5,
-          borderRadius: '50%',
-          backgroundColor: color,
-        }}
-      />
-      {formatStatusLabel(status || 'Unknown')}
-    </span>
-  )
-}
+const StatusPill = AdminStatusBadge
 
 export function CartDetailClient({
   cart,
@@ -551,77 +504,44 @@ export function CartDetailClient({
         </div>
       </div>
 
-      {/* KPI Metric Strip */}
-      <div className="cart-kpi-strip">
-        {/* Metric 1: Grand Total */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 10,
-            padding: '1rem 1.15rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', marginBottom: 4 }}>
-            Estimated Total
-          </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--theme-elevation-900, #0f172a)' }}>
-            {formatMoney(grandTotal, currency)}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
-            Subtotal: {formatMoney(subtotal, currency)}
-          </div>
-        </div>
+      {/* KPI Metric Strip - Standardized with AdminKpiCard */}
+      <div
+        className="cart-kpi-strip"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '0.85rem',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <AdminKpiCard
+          label="Estimated Total"
+          value={formatMoney(grandTotal, currency)}
+          sublabel={`Subtotal: ${formatMoney(subtotal, currency)}`}
+          compact
+        />
 
-        {/* Metric 2: Items & Units */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 10,
-            padding: '1rem 1.15rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', marginBottom: 4 }}>
-            Cart Contents
-          </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--theme-elevation-900, #0f172a)' }}>
-            {items.length} {items.length === 1 ? 'Product' : 'Products'}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
-            Total quantity: {totalUnits} units
-          </div>
-        </div>
+        <AdminKpiCard
+          label="Cart Contents"
+          value={`${items.length} ${items.length === 1 ? 'Product' : 'Products'}`}
+          sublabel={`Total quantity: ${totalUnits} units`}
+          compact
+        />
 
-        {/* Metric 3: Coupon & Discount */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 10,
-            padding: '1rem 1.15rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--theme-elevation-500, #64748b)', marginBottom: 4 }}>
-            Discounts Applied
-          </div>
-          <div
-            style={{
-              fontSize: '1.4rem',
-              fontWeight: 700,
-              color: discountTotal > 0 ? 'var(--bs-success, #16a34a)' : 'var(--theme-elevation-700, #475569)',
-            }}
-          >
-            {discountTotal > 0 ? `-${formatMoney(discountTotal, currency)}` : 'No Discount'}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
-            {couponCodeStr ? `Coupon: ${couponCodeStr}` : 'No promo code attached'}
-          </div>
-        </div>
-
+        <AdminKpiCard
+          label="Discounts Applied"
+          value={
+            discountTotal > 0 ? (
+              <span style={{ color: 'var(--bs-success, #16a34a)' }}>
+                -{formatMoney(discountTotal, currency)}
+              </span>
+            ) : (
+              'No Discount'
+            )
+          }
+          sublabel={couponCodeStr ? `Coupon: ${couponCodeStr}` : 'No promo code attached'}
+          compact
+        />
       </div>
 
       {/* Main Two-Column Responsive Layout */}

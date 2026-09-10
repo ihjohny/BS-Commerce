@@ -121,60 +121,13 @@ function formatRelativeDate(iso?: string | null) {
   }
 }
 
+import { AdminStatusBadge, AdminKpiCard } from '../ui'
+
 function formatStatusLabel(status: string): string {
   return status.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function StatusPill({ status, type = 'status' }: { status: string; type?: 'status' | 'payment' }) {
-  const s = (status || '').toLowerCase()
-  let color = 'var(--theme-elevation-600, #64748b)'
-  let bg = 'var(--theme-elevation-150, rgba(120, 120, 120, 0.12))'
-
-  if (s === 'pending' || s === 'unpaid') {
-    color = 'var(--bs-warning, #d97706)'
-    bg = 'var(--bs-warning-subtle, rgba(217, 119, 6, 0.12))'
-  } else if (s === 'processing') {
-    color = 'var(--bs-primary, #2563eb)'
-    bg = 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.12))'
-  } else if (s === 'shipped' || s === 'partially-shipped') {
-    color = '#6366f1'
-    bg = 'rgba(99, 102, 241, 0.12)'
-  } else if (s === 'delivered' || s === 'completed' || s === 'paid' || s === 'active') {
-    color = 'var(--bs-success, #16a34a)'
-    bg = 'var(--bs-success-subtle, rgba(22, 163, 74, 0.12))'
-  } else if (s === 'refunded' || s === 'cancelled' || s === 'suspended' || s === 'banned') {
-    color = 'var(--bs-error, #dc2626)'
-    bg = 'var(--bs-error-subtle, rgba(220, 38, 38, 0.12))'
-  }
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        padding: '3px 10px',
-        borderRadius: '9999px',
-        background: bg,
-        color: color,
-        whiteSpace: 'nowrap',
-        letterSpacing: '0.01em',
-      }}
-    >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: color,
-        }}
-      />
-      {type === 'payment' ? `Payment: ${formatStatusLabel(status)}` : formatStatusLabel(status)}
-    </span>
-  )
-}
+const StatusPill = AdminStatusBadge
 
 export function CustomerDetailClient({
   customer,
@@ -553,98 +506,42 @@ export function CustomerDetailClient({
         </div>
       </div>
 
-      {/* KPI Ribbon - Styled identically to Order Financials Summary */}
+      {/* KPI Ribbon - Standardized with AdminKpiCard */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
+          gap: '0.85rem',
           marginBottom: '1rem',
         }}
       >
-        {/* LTV */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, #ffffff)',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 12,
-            padding: '1.1rem 1.25rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-500, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Lifetime Value (LTV)
-          </div>
-          <div style={{ fontSize: '1.45rem', fontWeight: 700, marginTop: 4, color: 'var(--theme-text, #0f172a)' }}>
-            {formatCurrency(metrics.totalSpent, currency)}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500, #64748b)', marginTop: 4 }}>
-            Total spend across {metrics.totalOrders} order{metrics.totalOrders === 1 ? '' : 's'}
-          </div>
-        </div>
+        <AdminKpiCard
+          label="Lifetime Value (LTV)"
+          value={formatCurrency(metrics.totalSpent, currency)}
+          sublabel={`Total spend across ${metrics.totalOrders} order${metrics.totalOrders === 1 ? '' : 's'}`}
+          compact
+        />
 
-        {/* Total Orders */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, #ffffff)',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 12,
-            padding: '1.1rem 1.25rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-500, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Total Orders
-          </div>
-          <div style={{ fontSize: '1.45rem', fontWeight: 700, marginTop: 4, color: 'var(--theme-text, #0f172a)' }}>
-            {metrics.totalOrders}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--bs-success, #16a34a)', marginTop: 4, fontWeight: 500 }}>
-            {metrics.completedOrdersCount} completed / fulfilled
-          </div>
-        </div>
+        <AdminKpiCard
+          label="Total Orders"
+          value={metrics.totalOrders}
+          sublabel={<span style={{ color: 'var(--bs-success, #16a34a)', fontWeight: 500 }}>{metrics.completedOrdersCount} completed / fulfilled</span>}
+          compact
+        />
 
-        {/* Average Order Value */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, #ffffff)',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 12,
-            padding: '1.1rem 1.25rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-500, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Average Order Value (AOV)
-          </div>
-          <div style={{ fontSize: '1.45rem', fontWeight: 700, marginTop: 4, color: 'var(--theme-text, #0f172a)' }}>
-            {formatCurrency(metrics.averageOrderValue, currency)}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500, #64748b)', marginTop: 4 }}>
-            Average basket size
-          </div>
-        </div>
+        <AdminKpiCard
+          label="Average Order Value (AOV)"
+          value={formatCurrency(metrics.averageOrderValue, currency)}
+          sublabel="Average basket size"
+          compact
+        />
 
-        {/* Last Order Date */}
-        <div
-          style={{
-            background: 'var(--theme-elevation-0, #ffffff)',
-            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-            borderRadius: 12,
-            padding: '1.1rem 1.25rem',
-            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-500, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Last Order Placed
-          </div>
-          <div style={{ fontSize: '1.15rem', fontWeight: 700, marginTop: 5, color: 'var(--theme-text, #0f172a)' }}>
-            {metrics.lastOrderDate ? formatRelativeDate(metrics.lastOrderDate) : 'No Orders'}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500, #64748b)', marginTop: 4 }}>
-            {metrics.lastOrderDate ? formatDateWithOrdinal(metrics.lastOrderDate) : 'First order pending'}
-          </div>
-        </div>
+        <AdminKpiCard
+          label="Last Order Placed"
+          value={metrics.lastOrderDate ? formatRelativeDate(metrics.lastOrderDate) : 'No Orders'}
+          sublabel={metrics.lastOrderDate ? formatDateWithOrdinal(metrics.lastOrderDate) : 'First order pending'}
+          compact
+        />
       </div>
 
       {/* 1. Full-Width Order History Card */}

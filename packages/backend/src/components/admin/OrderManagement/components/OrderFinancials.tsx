@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { AdminCard } from '../../ui'
 
 export type OrderFinancialsProps = {
   order: {
@@ -55,43 +56,16 @@ export function OrderFinancials({ order, onEditFinancials }: OrderFinancialsProp
     (typeof order.appliedCoupon === 'object' ? order.appliedCoupon?.code : null)
 
   return (
-    <div
-      style={{
-        background: 'var(--theme-elevation-0, #ffffff)',
-        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
-        borderRadius: 12,
-        padding: '1.25rem',
-        marginBottom: '1.25rem',
-      }}
-    >
-      <div
-        style={{
-          borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
-          paddingBottom: '0.75rem',
-          marginBottom: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: '1rem',
-            fontWeight: 600,
-            color: 'var(--theme-text, #0f172a)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="2" y="5" width="20" height="14" rx="2" />
-            <line x1="2" y1="10" x2="22" y2="10" />
-          </svg>
-          Order Financials & Payment
-        </h2>
-
+    <AdminCard
+      style={{ marginBottom: '1.25rem' }}
+      title="Order Financials & Payment"
+      icon={
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <line x1="2" y1="10" x2="22" y2="10" />
+        </svg>
+      }
+      action={
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span
             style={{
@@ -122,7 +96,8 @@ export function OrderFinancials({ order, onEditFinancials }: OrderFinancialsProp
             </button>
           )}
         </div>
-      </div>
+      }
+    >
 
       {/* Financial breakdown rows */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
@@ -412,6 +387,6 @@ export function OrderFinancials({ order, onEditFinancials }: OrderFinancialsProp
           </div>
         )
       })()}
-    </div>
+    </AdminCard>
   )
 }

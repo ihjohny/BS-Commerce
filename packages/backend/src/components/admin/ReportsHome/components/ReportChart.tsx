@@ -18,14 +18,15 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
     return (
       <div
         style={{
-          background: 'var(--theme-elevation-50)',
-          border: '1px solid var(--theme-elevation-200)',
-          borderRadius: 8,
+          background: 'var(--theme-elevation-0, var(--theme-bg))',
+          border: '1px solid var(--theme-elevation-150)',
+          borderRadius: 12,
           padding: '2.5rem',
           textAlign: 'center',
           color: 'var(--theme-elevation-500)',
           fontSize: 13,
           marginBottom: '1.5rem',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
         }}
       >
         No chart activity recorded for the selected period and filters.
@@ -80,14 +81,14 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
   return (
     <div
       style={{
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         border: '1px solid var(--theme-elevation-150)',
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         padding: '1.25rem 1.5rem',
         marginBottom: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       {/* Header & Legend */}

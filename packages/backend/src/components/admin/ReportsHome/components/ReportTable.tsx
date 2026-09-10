@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import type { ReportTable as ReportTableType } from '../../../../lib/admin-reports'
+import { AdminStatusBadge } from '../../ui'
 
 type ReportTableProps = {
   table: ReportTableType
@@ -55,53 +56,20 @@ export function ReportTable({ table, currency: _currency }: ReportTableProps) {
     const isSuccess = ['in stock', 'paid', 'completed', 'delivered', 'registered'].includes(valLower)
     const isWarning = ['low stock', 'pending', 'processing', 'partially-shipped'].includes(valLower)
     const isError = ['out of stock', 'unpaid', 'cancelled', 'refunded', 'failed'].includes(valLower)
-    const isDevice = ['desktop', 'mobile', 'tablet', 'bot', 'other/direct'].includes(valLower)
 
-    const bg = isError
-      ? 'var(--bs-error-subtle)'
-      : isWarning
-      ? 'var(--bs-warning-subtle)'
-      : isSuccess
-      ? 'var(--bs-success-subtle)'
-      : isDevice
-      ? 'var(--theme-elevation-150)'
-      : 'var(--theme-elevation-150)'
-    const color = isError
-      ? 'var(--bs-error, #dc2626)'
-      : isWarning
-      ? 'var(--bs-warning, #d97706)'
-      : isSuccess
-      ? 'var(--bs-success, #16a34a)'
-      : isDevice
-      ? 'var(--theme-elevation-700)'
-      : 'var(--theme-elevation-800)'
+    const variant = isError ? 'error' : isWarning ? 'warning' : isSuccess ? 'success' : 'neutral'
 
-    return (
-      <span
-        style={{
-          display: 'inline-block',
-          padding: '2px 8px',
-          borderRadius: 'var(--bs-radius-full, 9999px)',
-          fontSize: 11,
-          fontWeight: 600,
-          background: bg,
-          color: color,
-          textTransform: isDevice ? 'none' : 'capitalize',
-        }}
-      >
-        {value}
-      </span>
-    )
+    return <AdminStatusBadge status={value} variant={variant} />
   }
 
   return (
     <div
       style={{
-        background: 'var(--theme-elevation-50)',
+        background: 'var(--theme-elevation-0, var(--theme-bg))',
         border: '1px solid var(--theme-elevation-150)',
-        borderRadius: 'var(--bs-radius-md, 8px)',
+        borderRadius: 12,
         overflow: 'hidden',
-        boxShadow: 'var(--bs-shadow-xs)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
       <div style={{ overflowX: 'auto' }}>

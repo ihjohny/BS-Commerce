@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { StoreOption } from '../../../../lib/admin-dashboard-stats'
+import { AdminStatusBadge } from '../../ui'
 
 type DashboardHeaderProps = {
   role: 'admin' | 'vendor'
@@ -75,20 +76,11 @@ export function DashboardHeader({
             >
               Store Overview
             </h1>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: '0.02em',
-                padding: '2px 8px',
-                borderRadius: 6,
-                background: 'var(--theme-elevation-100)',
-                color: 'var(--theme-elevation-600)',
-                border: '1px solid var(--theme-elevation-200)',
-              }}
-            >
-              {role === 'admin' ? 'Store Admin' : 'Vendor Portal'}
-            </span>
+            <AdminStatusBadge
+              status={role}
+              variant="info"
+              label={role === 'admin' ? 'Store Admin' : 'Vendor Portal'}
+            />
           </div>
           <p
             style={{
