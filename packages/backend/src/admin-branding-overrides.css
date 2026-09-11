@@ -499,7 +499,127 @@ button.nav-toggler.app-header__mobile-nav-toggler {
 }
 
 .nav {
-  padding: 1.25rem 0.75rem !important;
+  padding: 0 !important;
+}
+
+.nav__scroll {
+  padding-top: 0 !important;
+}
+
+/* ─── Sticky Sidebar Brand Header ─────────────────────────────────────────── */
+.admin-sidebar-brand {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  background-color: var(--theme-bg, #ffffff) !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 14px !important;
+  border-bottom: 1px solid var(--theme-elevation-150) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.admin-sidebar-brand__header-inner {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.admin-sidebar-brand__icon-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  background-color: var(--theme-elevation-50, #f8fafc) !important;
+  background-image: var(--bs-admin-logo-url, url('/branding/brainstation-23-symbol.png')) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 18px 18px !important;
+  border: 1px solid var(--theme-elevation-200, #e2e8f0) !important;
+  border-radius: var(--bs-radius-sm, 7px) !important;
+  box-shadow: var(--bs-shadow-xs, 0 1px 2px rgba(0,0,0,0.05)) !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+  overflow: hidden !important;
+}
+
+.admin-sidebar-brand__icon-btn:hover {
+  background-color: var(--theme-elevation-100) !important;
+  border-color: var(--theme-elevation-300) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--bs-shadow-sm) !important;
+}
+
+.admin-sidebar-brand__icon-btn:active {
+  transform: translateY(0) !important;
+}
+
+.admin-sidebar-brand__icon-img {
+  width: 18px !important;
+  height: 18px !important;
+  object-fit: contain !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.admin-sidebar-brand__link {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  border-radius: var(--bs-radius-sm, 6px) !important;
+  padding: 2px 6px !important;
+  margin: -2px -6px !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.admin-sidebar-brand__link:hover {
+  background-color: var(--theme-elevation-100) !important;
+}
+
+.admin-sidebar-brand__title {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--theme-text, #0f172a) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.25 !important;
+}
+
+.admin-sidebar-brand__sub {
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  color: var(--theme-elevation-500, #64748b) !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+}
+
+/* Hide duplicate floating toggler when sidebar is open to prevent collision */
+button.nav-toggler.template-default__nav-toggler.nav-toggler--is-open,
+.template-default__nav-toggler-wrapper:has(.nav-toggler--is-open) {
+  display: none !important;
+}
+
+.nav__wrap {
+  padding: 0.5rem 0.75rem 1.5rem 0.75rem !important;
+  box-sizing: border-box !important;
 }
 
 /* Custom Slim Scrollbar for Navigation */

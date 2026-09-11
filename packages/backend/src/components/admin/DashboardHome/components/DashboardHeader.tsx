@@ -96,34 +96,48 @@ export function DashboardHeader({
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
             <h1
               style={{
-                fontSize: 'var(--bs-font-2xl, 1.625rem)',
+                fontSize: 'var(--bs-font-2xl, 1.5rem)',
                 fontWeight: 700,
                 margin: 0,
                 letterSpacing: '-0.025em',
                 color: 'var(--theme-text, #0f172a)',
+                lineHeight: 1.25,
               }}
             >
-              {displayPlatformName}
+              {role === 'admin' ? 'Store Admin' : 'Vendor Portal'}
             </h1>
-            <AdminStatusBadge
-              status={role}
-              variant="info"
-              label={role === 'admin' ? 'Store Admin' : 'Vendor Portal'}
-            />
+            <span
+              style={{
+                color: 'var(--theme-elevation-300, #cbd5e1)',
+                fontSize: '0.875rem',
+                userSelect: 'none',
+                lineHeight: 1,
+              }}
+              aria-hidden
+            >
+              •
+            </span>
+            <p
+              style={{
+                color: 'var(--theme-elevation-500, #64748b)',
+                fontSize: 'var(--bs-font-base, 0.875rem)',
+                margin: 0,
+                lineHeight: 1.25,
+              }}
+            >
+              Track your sales performance, order status, and commerce metrics.
+            </p>
           </div>
-          <p
-            style={{
-              color: 'var(--theme-elevation-500, #64748b)',
-              fontSize: 'var(--bs-font-base, 0.875rem)',
-              marginTop: 3,
-              marginBottom: 0,
-            }}
-          >
-            Track your sales performance, order status, and commerce metrics.
-          </p>
         </div>
 
         {/* Top Header Utilities */}
