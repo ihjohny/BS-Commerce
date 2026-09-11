@@ -357,38 +357,25 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
           {/* Precision Floating Tooltip */}
           {hoveredPoint && (
             <div
+              className="admin-chart-tooltip"
               style={{
-                position: 'absolute',
                 top: 8,
                 left: `${Math.min(84, Math.max(16, (hoveredPoint.x / width) * 100))}%`,
                 transform: 'translateX(-50%)',
-                background: 'var(--theme-elevation-900, #0f172a)',
-                color: '#ffffff',
-                border: '1px solid var(--theme-elevation-700, #334155)',
-                padding: '0.5rem 0.85rem',
-                borderRadius: 'var(--bs-radius-sm, 7px)',
-                fontSize: '0.75rem',
-                boxShadow: 'var(--bs-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15))',
-                pointerEvents: 'none',
-                zIndex: 10,
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 3,
               }}
             >
-              <div style={{ fontWeight: 600, color: '#93c5fd', fontSize: '0.71875rem', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 3, marginBottom: 2 }}>
+              <div className="admin-chart-tooltip__title">
                 {hoveredPoint.data.date}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Revenue:</span>
-                <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#ffffff' }}>
+              <div className="admin-chart-tooltip__row">
+                <span className="admin-chart-tooltip__label">Revenue:</span>
+                <strong className="admin-chart-tooltip__val">
                   {formatCurrency(hoveredPoint.data.revenue, currency)}
                 </strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Orders:</span>
-                <strong style={{ fontVariantNumeric: 'tabular-nums', color: '#ffffff' }}>
+              <div className="admin-chart-tooltip__row">
+                <span className="admin-chart-tooltip__label">Orders:</span>
+                <strong className="admin-chart-tooltip__val">
                   {hoveredPoint.data.orders.toLocaleString()}
                 </strong>
               </div>

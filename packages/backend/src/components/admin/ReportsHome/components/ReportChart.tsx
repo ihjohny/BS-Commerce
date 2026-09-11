@@ -322,22 +322,13 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
         {/* Hover Tooltip Overlay */}
         {hoverIndex !== null && data[hoverIndex] && (
           <div
+            className="admin-chart-tooltip"
             style={{
-              position: 'absolute',
               top: 10,
               right: 15,
-              background: 'var(--theme-elevation-800, #1e293b)',
-              color: '#ffffff',
-              padding: '0.5rem 0.75rem',
-              borderRadius: 6,
-              fontSize: 12,
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
-              pointerEvents: 'none',
-              zIndex: 10,
-              border: '1px solid var(--theme-elevation-700, #334155)',
             }}
           >
-            <div style={{ fontWeight: 700, marginBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: 2 }}>
+            <div className="admin-chart-tooltip__title">
               {String(data[hoverIndex][xAxisKey])}
             </div>
             {visibleSeries.map((s) => {
@@ -362,9 +353,21 @@ export function ReportChart({ chart, currency }: ReportChartProps) {
                 : val.toLocaleString('en-US')
 
               return (
-                <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <span style={{ color: s.color }}>{s.name}:</span>
-                  <span style={{ fontWeight: 600 }}>{displayVal}</span>
+                <div key={s.key} className="admin-chart-tooltip__row">
+                  <span className="admin-chart-tooltip__label">
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: s.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {s.name}:
+                  </span>
+                  <strong className="admin-chart-tooltip__val">{displayVal}</strong>
                 </div>
               )
             })}

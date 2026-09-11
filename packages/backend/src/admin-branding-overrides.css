@@ -1897,4 +1897,76 @@ body:has(.cart-detail-view-container) .doc-header {
   }
 }
 
+/* ─── Admin Chart Floating Tooltips (Light & Dark Mode High Contrast) ─────── */
+.admin-chart-tooltip {
+  position: absolute !important;
+  z-index: 50 !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+  padding: 0.55rem 0.85rem !important;
+  border-radius: var(--bs-radius-sm, 8px) !important;
+  font-size: var(--bs-font-xs, 0.75rem) !important;
+  line-height: 1.4 !important;
+  background-color: var(--color-base-900, #0f172a) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--color-base-700, #334155) !important;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.35), 0 4px 6px -4px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.admin-chart-tooltip__title {
+  font-weight: 700 !important;
+  font-size: 0.725rem !important;
+  letter-spacing: 0.02em !important;
+  color: #93c5fd !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding-bottom: 4px !important;
+  margin-bottom: 5px !important;
+}
+
+.admin-chart-tooltip__row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin: 2px 0 !important;
+}
+
+.admin-chart-tooltip__label {
+  font-weight: 500 !important;
+  color: #cbd5e1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.admin-chart-tooltip__val {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Dark mode specific high-clarity surface for chart tooltip */
+html[data-theme='dark'] .admin-chart-tooltip {
+  background-color: rgba(15, 23, 42, 0.94) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.32) !important;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme='dark'] .admin-chart-tooltip__title {
+  color: #60a5fa !important;
+  border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html[data-theme='dark'] .admin-chart-tooltip__label {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme='dark'] .admin-chart-tooltip__val {
+  color: #ffffff !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+}
+
 
