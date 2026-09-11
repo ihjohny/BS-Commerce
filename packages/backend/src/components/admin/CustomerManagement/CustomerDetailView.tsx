@@ -59,17 +59,31 @@ export default async function CustomerDetailView(props: DocumentViewServerProps)
 
   let fullCustomer: any = doc
   let orders: any[] = []
+  let customerAddresses: any[] = []
 
   if (payload && customerId) {
     try {
-      // 1. Fetch user doc with populated addresses/relations if not already complete
-      if (!fullCustomer || !fullCustomer.email) {
-        fullCustomer = await payload.findByID({
-          collection: 'users',
-          id: String(customerId),
-          depth: 2,
+      // 1. Fetch user doc with depth 2 so relations (addresses, avatar) are fully resolved
+      fullCustomer = await payload.findByID({
+        collection: 'users',
+        id: String(customerId),
+        depth: 2,
+        overrideAccess: true,
+      })
+
+      // 1b. Directly fetch customer addresses from the addresses collection as a resilient guarantee
+      customerAddresses = Array.isArray(fullCustomer?.addresses) ? fullCustomer.addresses : []
+      if (customerAddresses.length === 0 || typeof customerAddresses[0] === 'string') {
+        const directAddresses = await payload.find({
+          collection: 'addresses',
+          where: { user: { equals: String(customerId) } },
+          depth: 1,
+          limit: 20,
           overrideAccess: true,
         })
+        if (directAddresses.docs && directAddresses.docs.length > 0) {
+          customerAddresses = directAddresses.docs
+        }
       }
 
       // 2. Fetch orders placed by this customer (by customer user ID, email, or phone)
@@ -161,7 +175,7 @@ export default async function CustomerDetailView(props: DocumentViewServerProps)
     locale: fullCustomer.locale || 'en',
     createdAt: fullCustomer.createdAt || null,
     updatedAt: fullCustomer.updatedAt || null,
-    addresses: Array.isArray(fullCustomer.addresses) ? fullCustomer.addresses : null,
+    addresses: customerAddresses && customerAddresses.length > 0 ? customerAddresses : (Array.isArray(fullCustomer?.addresses) ? fullCustomer.addresses : null),
   }
 
   // Shape orders data

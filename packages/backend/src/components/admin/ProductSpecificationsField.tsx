@@ -750,36 +750,55 @@ export default function ProductSpecificationsField(props: { path?: string; label
                             )}
                           </div>
 
-                          {attr.dataType === 'select' && attr.options && attr.options.length > 0 ? (
-                            <select
-                              value={currentVal}
-                              onChange={(e) =>
-                                handleValueChange(attr.key, e.target.value, {
-                                  attribute: attr.id,
-                                  label: attrLabel,
-                                  unit: unitSuffix,
-                                  group: groupName,
-                                })
-                              }
-                              style={{
-                                padding: '0.35rem 0.55rem',
-                                fontSize: '0.825rem',
-                                borderRadius: 6,
-                                border: '1px solid var(--theme-elevation-200)',
-                                background: 'var(--theme-elevation-50)',
-                                color: 'var(--theme-text)',
-                                outline: 'none',
-                                fontFamily: 'inherit',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <option value="">— Select {attrLabel} —</option>
-                              {attr.options.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {formatLabel(opt.label, opt.value)}
-                                </option>
-                              ))}
-                            </select>
+                          {attr.dataType === 'select' ? (
+                            attr.options && attr.options.length > 0 ? (
+                              <select
+                                value={currentVal}
+                                onChange={(e) =>
+                                  handleValueChange(attr.key, e.target.value, {
+                                    attribute: attr.id,
+                                    label: attrLabel,
+                                    unit: unitSuffix,
+                                    group: groupName,
+                                  })
+                                }
+                                style={{
+                                  padding: '0.35rem 0.55rem',
+                                  fontSize: '0.825rem',
+                                  borderRadius: 6,
+                                  border: '1px solid var(--theme-elevation-200)',
+                                  background: 'var(--theme-elevation-50)',
+                                  color: 'var(--theme-text)',
+                                  outline: 'none',
+                                  fontFamily: 'inherit',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <option value="">— Select {attrLabel} —</option>
+                                {attr.options.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {formatLabel(opt.label, opt.value)}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <select
+                                disabled
+                                style={{
+                                  padding: '0.35rem 0.55rem',
+                                  fontSize: '0.825rem',
+                                  borderRadius: 6,
+                                  border: '1px dashed var(--theme-elevation-250)',
+                                  background: 'var(--theme-elevation-100)',
+                                  color: 'var(--theme-elevation-400)',
+                                  outline: 'none',
+                                  fontFamily: 'inherit',
+                                  cursor: 'not-allowed',
+                                }}
+                              >
+                                <option value="">(No predefined options configured in Attributes)</option>
+                              </select>
+                            )
                           ) : attr.dataType === 'boolean' ? (
                             <select
                               value={currentVal}
@@ -1347,29 +1366,48 @@ export default function ProductSpecificationsField(props: { path?: string; label
                     </button>
                   </div>
 
-                  {globalDef?.options && globalDef.options.length > 0 ? (
-                    <select
-                      value={item.value}
-                      onChange={(e) => handleValueChange(item.key, e.target.value)}
-                      style={{
-                        padding: '0.35rem 0.55rem',
-                        fontSize: '0.825rem',
-                        borderRadius: 6,
-                        border: '1px solid var(--theme-elevation-200)',
-                        background: 'var(--theme-elevation-50)',
-                        color: item.value ? 'var(--theme-text)' : 'var(--theme-elevation-400)',
-                        outline: 'none',
-                        fontFamily: 'inherit',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <option value="">— Select Value —</option>
-                      {globalDef.options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {formatLabel(opt.label, opt.value)}
-                        </option>
-                      ))}
-                    </select>
+                  {globalDef?.dataType === 'select' ? (
+                    globalDef.options && globalDef.options.length > 0 ? (
+                      <select
+                        value={item.value}
+                        onChange={(e) => handleValueChange(item.key, e.target.value)}
+                        style={{
+                          padding: '0.35rem 0.55rem',
+                          fontSize: '0.825rem',
+                          borderRadius: 6,
+                          border: '1px solid var(--theme-elevation-200)',
+                          background: 'var(--theme-elevation-50)',
+                          color: item.value ? 'var(--theme-text)' : 'var(--theme-elevation-400)',
+                          outline: 'none',
+                          fontFamily: 'inherit',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <option value="">— Select Value —</option>
+                        {globalDef.options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {formatLabel(opt.label, opt.value)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <select
+                        disabled
+                        style={{
+                          padding: '0.35rem 0.55rem',
+                          fontSize: '0.825rem',
+                          borderRadius: 6,
+                          border: '1px dashed var(--theme-elevation-250)',
+                          background: 'var(--theme-elevation-100)',
+                          color: 'var(--theme-elevation-400)',
+                          outline: 'none',
+                          fontFamily: 'inherit',
+                          cursor: 'not-allowed',
+                        }}
+                      >
+                        <option value="">(No predefined options configured in Attributes)</option>
+                      </select>
+                    )
                   ) : globalDef?.dataType === 'boolean' ? (
                     <select
                       value={item.value}

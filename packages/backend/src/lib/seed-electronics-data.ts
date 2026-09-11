@@ -22,6 +22,7 @@ import type { Payload } from 'payload'
 import fs from 'node:fs'
 import path from 'node:path'
 import { getMediaStaticDir } from './media-upload-dir'
+import { recomputeProductRating } from '../plugins/reviews/lib/aggregate-ratings'
 
 export interface SeedResult {
   success: boolean
@@ -38,6 +39,8 @@ export interface SeedResult {
     variantsCount: number
     outletsCount: number
     customersCount: number
+    addressesCount?: number
+    wishlistCount?: number
     ordersCount: number
     activeCartsCount: number
     abandonedCartsCount: number
@@ -1992,11 +1995,78 @@ export async function seedElectronicsStore(
     },
 
     // ── Strategic Series & Badges ──
-    { label: 'Pro Max Series', key: 'series-pro-max', slug: 'pro-max-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
-    { label: 'Ultra Series', key: 'series-ultra', slug: 'ultra-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
-    { label: 'M3 Silicon Series', key: 'series-m3-silicon', slug: 'm3-silicon-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
-    { label: 'GaNPrime Series', key: 'series-ganprime', slug: 'ganprime-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
-    { label: 'Bravia XR Series', key: 'series-bravia-xr', slug: 'bravia-xr-series', dataType: 'select', category: 'series', defaultGroup: 'General', isFilterable: true, isComparable: true },
+    {
+      label: 'Pro Max Series',
+      key: 'series-pro-max',
+      slug: 'pro-max-series',
+      dataType: 'select',
+      category: 'series',
+      defaultGroup: 'General',
+      isFilterable: true,
+      isComparable: true,
+      options: [
+        { label: 'iPhone 16 Pro Max Edition', value: 'iphone-16-pro-max' },
+        { label: 'iPhone 15 Pro Max Edition', value: 'iphone-15-pro-max' },
+      ],
+    },
+    {
+      label: 'Ultra Series',
+      key: 'series-ultra',
+      slug: 'ultra-series',
+      dataType: 'select',
+      category: 'series',
+      defaultGroup: 'General',
+      isFilterable: true,
+      isComparable: true,
+      options: [
+        { label: 'Galaxy S24 Ultra Titanium Flagship', value: 'galaxy-s24-ultra' },
+        { label: 'Apple Watch Ultra 2 Rugged GPS + Cellular', value: 'apple-watch-ultra-2' },
+      ],
+    },
+    {
+      label: 'M3 Silicon Series',
+      key: 'series-m3-silicon',
+      slug: 'm3-silicon-series',
+      dataType: 'select',
+      category: 'series',
+      defaultGroup: 'General',
+      isFilterable: true,
+      isComparable: true,
+      options: [
+        { label: 'Apple M3 Architecture', value: 'm3' },
+        { label: 'Apple M3 Pro Architecture', value: 'm3-pro' },
+        { label: 'Apple M3 Max Architecture', value: 'm3-max' },
+      ],
+    },
+    {
+      label: 'GaNPrime Series',
+      key: 'series-ganprime',
+      slug: 'ganprime-series',
+      dataType: 'select',
+      category: 'series',
+      defaultGroup: 'General',
+      isFilterable: true,
+      isComparable: true,
+      options: [
+        { label: 'Anker GaNPrime 65W Multi-Port', value: 'ganprime-65w' },
+        { label: 'Anker GaNPrime 100W Ultra-Fast', value: 'ganprime-100w' },
+        { label: 'Anker GaNPrime 140W Hyper-Speed', value: 'ganprime-140w' },
+      ],
+    },
+    {
+      label: 'Bravia XR Series',
+      key: 'series-bravia-xr',
+      slug: 'bravia-xr-series',
+      dataType: 'select',
+      category: 'series',
+      defaultGroup: 'General',
+      isFilterable: true,
+      isComparable: true,
+      options: [
+        { label: 'Bravia XR Cognitive Processor Master Series', value: 'bravia-xr-master' },
+        { label: 'Bravia XR Cognitive Processor Cinema Series', value: 'bravia-xr-cinema' },
+      ],
+    },
 
     // ── Boolean Hardware Flags ──
     { label: '5G Cellular Support', key: 'conn-5g', slug: '5g-cellular', dataType: 'boolean', category: 'connectivity', defaultGroup: 'Connectivity', isFilterable: true, isComparable: true },
@@ -3535,6 +3605,7 @@ export async function seedElectronicsStore(
   ]
 
   const createdCustomers: any[] = []
+  let totalAddresses = 0
   for (const c of customerProfiles) {
     const doc = await payload.create({
       collection: 'users',
@@ -3552,7 +3623,79 @@ export async function seedElectronicsStore(
       } as any,
       overrideAccess: true,
     })
+
+    // Seed primary address into addresses collection
+    try {
+      const addressDoc = await payload.create({
+        collection: 'addresses',
+        data: {
+          user: doc.id,
+          label: 'Home',
+          firstName: c.firstName,
+          lastName: c.lastName,
+          street1: c.address,
+          city: c.city,
+          state: c.city === 'Chittagong' ? 'Chattogram' : c.city === 'Sylhet' ? 'Sylhet' : 'Dhaka Division',
+          postalCode: c.city === 'Chittagong' ? '4000' : c.city === 'Sylhet' ? '3100' : '1212',
+          country: 'BD',
+          phone: c.phone,
+          isDefault: true,
+        } as any,
+        overrideAccess: true,
+      })
+
+      // Link address to user profile
+      await payload.update({
+        collection: 'users',
+        id: doc.id,
+        data: {
+          addresses: [addressDoc.id],
+        } as any,
+        overrideAccess: true,
+      })
+      totalAddresses++
+    } catch (addrErr: any) {
+      payload.logger.warn(`[Electronics Seeder] Address note for ${c.email}: ${addrErr?.message || addrErr}`)
+    }
+
     createdCustomers.push({ ...c, id: doc.id })
+  }
+
+  // ─── 8.5. WISHLIST ITEMS FOR REGISTERED CUSTOMERS ─────────────────────────
+  let totalWishlistItems = 0
+  const wishlistMap: Array<{ customerIndex: number; productIndexes: number[] }> = [
+    { customerIndex: 0, productIndexes: [0, 6, 17] },       // Tanvir: iPhone 16 Pro Max, MacBook Pro 16", AirPods Max
+    { customerIndex: 1, productIndexes: [1, 4, 18] },       // Sadia: iPhone 16, iPad Pro 13", Sony WH-1000XM5
+    { customerIndex: 2, productIndexes: [2, 10, 31] },      // Rahim: Galaxy S24 Ultra, Galaxy Watch Ultra, Anker 737 GaN
+    { customerIndex: 3, productIndexes: [3, 11, 23] },      // Farhan: Pixel 9 Pro XL, Pixel Watch 3, Bose QC Ultra
+    { customerIndex: 4, productIndexes: [4, 7, 24] },       // Nusrat: iPad Pro 13", MacBook Air 15", Marshall Emberton III
+    { customerIndex: 5, productIndexes: [9, 12, 28] },      // Arif: ROG SCAR 18, DJI Mini 4 Pro, TP-Link BE9300
+    { customerIndex: 6, productIndexes: [8, 17, 34] },      // Mehnaz: MacBook Air 13", AirPods Max, Dyson V15
+    { customerIndex: 7, productIndexes: [13, 20, 30] },     // Zubair: DJI Osmo Pocket 3, Sony WF-1000XM5, Dyson Supersonic
+    { customerIndex: 8, productIndexes: [5, 19, 33] },      // Tahmina: iPad Air 11", Bose QuietComfort Ultra Earbuds, Anker MagGo
+    { customerIndex: 9, productIndexes: [9, 2, 29] },       // Shahriar: ROG SCAR 18, Galaxy S24 Ultra, TP-Link Archer GE800
+  ]
+
+  for (const entry of wishlistMap) {
+    const cust = createdCustomers[entry.customerIndex]
+    if (!cust) continue
+    for (const pIdx of entry.productIndexes) {
+      const prod = createdProducts[pIdx]
+      if (!prod) continue
+      try {
+        await payload.create({
+          collection: 'wishlist-items',
+          data: {
+            user: cust.id,
+            product: prod.id,
+          } as any,
+          overrideAccess: true,
+        })
+        totalWishlistItems++
+      } catch (wErr: any) {
+        payload.logger.warn(`[Electronics Seeder] Wishlist note: ${wErr?.message || wErr}`)
+      }
+    }
   }
 
   // ─── 9. 42 REALISTIC CUSTOMER ORDERS WITH DEVICE TRACKING ───────────────────
@@ -3566,15 +3709,28 @@ export async function seedElectronicsStore(
 
   const paymentChannels = ['online', 'online', 'online', 'cash_on_delivery']
   const paymentStatuses = ['paid', 'paid', 'paid', 'unpaid']
-  const orderStatuses = ['completed', 'completed', 'delivered', 'processing', 'pending']
+  // Realistic multi-stage fulfillment lifecycle across all stages
+  const orderStatuses = [
+    'completed',
+    'delivered',
+    'completed',
+    'shipped',
+    'processing',
+    'delivered',
+    'pending',
+    'partially-shipped',
+    'cancelled',
+    'refunded',
+  ]
 
   let totalOrders = 0
   const now = new Date()
 
   for (let i = 0; i < 42; i++) {
-    const cust = createdCustomers[i % createdCustomers.length]
+    // For first 10 orders, strictly align cust i with prod i so customer review verified purchase check matches
+    const cust = i < 10 ? createdCustomers[i] : createdCustomers[i % createdCustomers.length]
+    const prod = i < 10 ? createdProducts[i] : createdProducts[i % createdProducts.length]
     const dev = deviceScenarios[i % deviceScenarios.length]
-    const prod = createdProducts[i % createdProducts.length]
     const matchingVariants = createdVariants.filter((v) => {
       const pRef = v.product
       const pId = typeof pRef === 'object' ? pRef?.id : pRef
@@ -3595,8 +3751,14 @@ export async function seedElectronicsStore(
     const orderNumber = `AG-ORD-202608${String(30 - (daysAgo % 28)).padStart(2, '0')}-${orderNumSuffix}`
 
     const outlet = createdOutlets[i % createdOutlets.length]
-    const status = orderStatuses[i % orderStatuses.length]
-    const paymentStatus = (status === 'completed' || status === 'delivered') ? 'paid' : paymentStatuses[i % paymentStatuses.length]
+    // The first 10 orders are completed/delivered so customer reviews qualify as verified purchases
+    const status = i < 10 ? (i % 2 === 0 ? 'completed' : 'delivered') : orderStatuses[i % orderStatuses.length]
+    const paymentStatus =
+      status === 'completed' || status === 'delivered' || status === 'shipped'
+        ? 'paid'
+        : status === 'refunded'
+        ? 'refunded'
+        : paymentStatuses[i % paymentStatuses.length]
 
     try {
       const orderDoc = await payload.create({
@@ -3682,7 +3844,7 @@ export async function seedElectronicsStore(
     }
   }
 
-  // ─── 10. VERIFIED CUSTOMER REVIEWS ──────────────────────────────────────────
+  // ─── 10. VERIFIED CUSTOMER REVIEWS & RATING AGGREGATES ─────────────────────
   const reviewsData = [
     { prodIndex: 0, custIndex: 0, rating: 5, title: '100% Authentic Apple Flagship!', comment: 'Received original USA spec iPhone 16 Pro Max with active AppleCare warranty. Same day delivery in Banani!' },
     { prodIndex: 1, custIndex: 1, rating: 5, title: 'Gorgeous Ultramarine Color', comment: 'Loving the new Camera Control button and battery life on iPhone 16. Delivered within 3 hours.' },
@@ -3713,11 +3875,18 @@ export async function seedElectronicsStore(
             status: 'approved',
           } as any,
           user: { id: c.id, role: 'customer' } as any,
+          req: { user: { id: c.id, role: 'customer' }, payload } as any,
           overrideAccess: true,
         })
+
+        // Ensure aggregate rating on product is recalculated
+        try {
+          await recomputeProductRating(payload, { productId: String(p.id) })
+        } catch {}
+
         totalReviews++
       } catch (e: any) {
-        payload.logger.warn(`[Electronics Seeder] Review note: ${e?.message || e}`)
+        payload.logger.warn(`[Electronics Seeder] Review note for prod #${r.prodIndex}: ${e?.message || e}`)
       }
     }
   }
@@ -3990,6 +4159,8 @@ export async function seedElectronicsStore(
       variantsCount: totalVariants,
       outletsCount: createdOutlets.length,
       customersCount: createdCustomers.length,
+      addressesCount: totalAddresses,
+      wishlistCount: totalWishlistItems,
       ordersCount: totalOrders,
       activeCartsCount,
       abandonedCartsCount,

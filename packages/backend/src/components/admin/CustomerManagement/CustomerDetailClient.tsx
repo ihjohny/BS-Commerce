@@ -201,19 +201,46 @@ export function CustomerDetailClient({
     )
   )
 
-  // Aggregate addresses from orders
-  const addressesFromOrders = orders
-    .map((o) => o.shippingAddress)
-    .filter(Boolean)
-    .filter(
-      (addr, idx, arr) =>
-        arr.findIndex(
-          (a) =>
-            a?.street1 === addr?.street1 &&
-            a?.city === addr?.city &&
-            a?.postalCode === addr?.postalCode
-        ) === idx
-    )
+  interface AddressItem {
+    firstName?: string | null
+    lastName?: string | null
+    street1?: string | null
+    street2?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    country?: string | null
+    phone?: string | null
+    label?: string | null
+  }
+
+  // Aggregate addresses from customer profile and orders
+  const savedProfileAddresses: AddressItem[] = (customer.addresses || []).map((a: any) => ({
+    firstName: a?.firstName,
+    lastName: a?.lastName,
+    street1: a?.street1,
+    street2: a?.street2,
+    city: a?.city,
+    state: a?.state,
+    postalCode: a?.postalCode,
+    country: a?.country,
+    phone: a?.phone,
+    label: a?.label || null,
+  }))
+
+  const rawAddresses: AddressItem[] = [
+    ...savedProfileAddresses,
+    ...orders.map((o) => (o.shippingAddress ? { ...o.shippingAddress, label: null } : null)).filter(Boolean) as AddressItem[],
+  ]
+  const addressesFromOrders = rawAddresses.filter(
+    (addr, idx, arr) =>
+      arr.findIndex(
+        (a) =>
+          a?.street1 === addr?.street1 &&
+          a?.city === addr?.city &&
+          a?.postalCode === addr?.postalCode
+      ) === idx
+  )
 
   const createdFormatted = formatDateWithOrdinal(customer.createdAt)
   const modifiedFormatted = formatDateWithOrdinal(customer.updatedAt || customer.createdAt)
@@ -1094,8 +1121,26 @@ export function CustomerDetailClient({
                       fontSize: 13,
                     }}
                   >
-                    <div style={{ fontWeight: 600, color: 'var(--theme-text, #0f172a)', marginBottom: 3 }}>
-                      {[addr?.firstName, addr?.lastName].filter(Boolean).join(' ') || 'Delivery Address'}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <div style={{ fontWeight: 600, color: 'var(--theme-text, #0f172a)' }}>
+                        {[addr?.firstName, addr?.lastName].filter(Boolean).join(' ') || 'Delivery Address'}
+                      </div>
+                      {addr?.label && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: '1px 6px',
+                            borderRadius: 4,
+                            background: 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.1))',
+                            color: 'var(--bs-primary, #2563eb)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.03em',
+                          }}
+                        >
+                          {addr.label}
+                        </span>
+                      )}
                     </div>
                     <div style={{ color: 'var(--theme-elevation-700, #475569)', lineHeight: 1.45 }}>
                       {addr?.street1}

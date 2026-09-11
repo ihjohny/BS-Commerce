@@ -57,6 +57,8 @@ async function run() {
     console.log(`Storefront Pages:     ${data.seeded?.pagesCount || 14}`)
     console.log(`Hero Carousel Slides: ${data.seeded?.heroSlidesCount || 4}`)
     console.log(`Customers Created:    ${data.seeded?.customersCount || 10}`)
+    console.log(`Customer Addresses:   ${data.seeded?.addressesCount || 10}`)
+    console.log(`Wishlist Items:       ${data.seeded?.wishlistCount || 30}`)
     console.log(`Orders Seeded:        ${data.seeded?.ordersCount || 42}`)
     console.log(`Active Carts:         ${data.seeded?.activeCartsCount || 4}`)
     console.log(`Abandoned Carts:      ${data.seeded?.abandonedCartsCount || 11}`)

@@ -96,8 +96,8 @@ export const Addresses: CollectionConfig = {
     ],
     beforeChange: [
       ({ data, req }) => {
-        if (req.user?.role !== 'admin' && data) {
-          data.user = req.user!.id
+        if (req?.user && req.user.role !== 'admin' && data) {
+          data.user = req.user.id
         }
         return data
       },

@@ -16,6 +16,24 @@ export const Attributes: CollectionConfig = {
     update: isAdmin,
     delete: isAdmin,
   },
+  hooks: {
+    beforeValidate: [
+      ({ data, originalDoc }) => {
+        if (!data) return data
+        const dataType = data.dataType ?? originalDoc?.dataType
+        const options = data.options ?? originalDoc?.options
+
+        if (dataType === 'select' || dataType === 'multiselect') {
+          if (!Array.isArray(options) || options.length === 0) {
+            throw new Error(
+              `Attributes with type "${dataType === 'select' ? 'Select (Single Choice)' : 'Multi-Select'}" require at least one predefined option with a label and value. Please add options before saving.`,
+            )
+          }
+        }
+        return data
+      },
+    ],
+  },
   fields: [
     {
       name: 'label',
