@@ -1063,7 +1063,7 @@ export function CartDetailClient({
                   whiteSpace: 'pre-wrap',
                 }}
               >
-                "{customerNoteStr}"
+                &ldquo;{customerNoteStr}&rdquo;
               </blockquote>
             ) : (
               <div style={{ fontSize: '0.8125rem', color: 'var(--theme-elevation-500, #64748b)', fontStyle: 'italic' }}>
