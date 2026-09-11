@@ -72,43 +72,111 @@ export function AdminKpiTrendBadge({ change }: { change?: number | null }) {
   )
 }
 
-function MiniSparkline({ points, color = 'var(--bs-primary, #2563eb)' }: { points: number[]; color?: string }) {
-  if (!points || points.length < 2) return null
+function clamp(val: number, min: number, max: number): number {
+  return Math.min(Math.max(val, min), max)
+}
 
-  const width = 120
-  const height = 30
-  const min = Math.min(...points)
-  const max = Math.max(...points)
-  const range = max - min || 1
+function MiniSparkline({
+  points,
+  color = 'var(--bs-primary, #2563eb)',
+  height = 50,
+  isHovered = false,
+}: {
+  points?: number[]
+  color?: string
+  height?: number
+  isHovered?: boolean
+}) {
+  const gradientId = React.useId().replace(/:/g, '')
 
-  const coords = points.map((val, idx) => {
-    const x = (idx / (points.length - 1)) * width
-    const y = height - 4 - ((val - min) / range) * (height - 8)
+  const rawPoints = points && points.length > 0 ? points : [0, 0]
+  const data = rawPoints.length === 1 ? [rawPoints[0], rawPoints[0]] : rawPoints
+
+  const viewBoxWidth = 100
+  const viewBoxHeight = 40
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min
+
+  // Padding inside SVG so peak strokes never clip
+  const topPad = 6
+  const bottomPad = 2
+  const usableHeight = viewBoxHeight - topPad - bottomPad
+
+  const coords = data.map((val, idx) => {
+    const x = (idx / (data.length - 1)) * viewBoxWidth
+    const y =
+      range === 0
+        ? viewBoxHeight - bottomPad - usableHeight * 0.35
+        : viewBoxHeight - bottomPad - ((val - min) / range) * usableHeight
     return { x, y }
   })
 
-  // Build SVG path
-  let pathD = `M ${coords[0].x},${coords[0].y}`
+  // Build smooth Catmull-Rom to Cubic Bezier curve
+  let pathD = `M ${coords[0].x.toFixed(2)},${coords[0].y.toFixed(2)}`
   for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[i === 0 ? 0 : i - 1]
     const p1 = coords[i]
     const p2 = coords[i + 1]
-    const mx = (p1.x + p2.x) / 2
-    pathD += ` C ${mx},${p1.y} ${mx},${p2.y} ${p2.x},${p2.y}`
+    const p3 = coords[i + 2] || p2
+
+    const cp1x = clamp(p1.x + (p2.x - p0.x) / 6, 0, viewBoxWidth)
+    const cp1y = clamp(p1.y + (p2.y - p0.y) / 6, 1, viewBoxHeight - 1)
+    const cp2x = clamp(p2.x - (p3.x - p1.x) / 6, 0, viewBoxWidth)
+    const cp2y = clamp(p2.y - (p3.y - p1.y) / 6, 1, viewBoxHeight - 1)
+
+    pathD += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`
   }
 
-  const areaD = `${pathD} L ${width},${height} L 0,${height} Z`
+  const areaD = `${pathD} L ${viewBoxWidth},${viewBoxHeight} L 0,${viewBoxHeight} Z`
 
   return (
-    <div style={{ width: '100%', height: 32, marginTop: 4, overflow: 'hidden' }}>
-      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', display: 'block' }}>
+    <div
+      style={{
+        width: '100%',
+        height,
+        marginTop: 'auto',
+        overflow: 'hidden',
+        lineHeight: 0,
+        pointerEvents: 'none',
+      }}
+      aria-hidden="true"
+    >
+      <svg
+        viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+        preserveAspectRatio="none"
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
+        }}
+      >
         <defs>
-          <linearGradient id={`kpiSparkGradient-${color.replace(/[^a-zA-Z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.18" />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={isHovered ? 0.32 : 0.2} />
+            <stop offset="85%" stopColor={color} stopOpacity={isHovered ? 0.08 : 0.03} />
             <stop offset="100%" stopColor={color} stopOpacity="0.0" />
           </linearGradient>
         </defs>
-        <path d={areaD} fill={`url(#kpiSparkGradient-${color.replace(/[^a-zA-Z0-9]/g, '')})`} />
-        <path d={pathD} fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d={areaD}
+          fill={`url(#${gradientId})`}
+          style={{ transition: 'fill-opacity 0.25s ease' }}
+        />
+        <path
+          d={pathD}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            transition: 'stroke-width 0.25s ease, opacity 0.25s ease',
+            opacity: isHovered ? 1 : 0.9,
+          }}
+        />
       </svg>
     </div>
   )
@@ -130,6 +198,7 @@ export function AdminKpiCard({
   sparklineColor,
 }: AdminKpiCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const hasSparkline = sparklinePoints !== undefined
 
   // Color mapping for icon variants matching Apex shadcn chart styles
   const getIconStyles = () => {
@@ -163,6 +232,11 @@ export function AdminKpiCard({
   }
 
   const iconStyle = getIconStyles()
+  const effectiveSparklineColor =
+    sparklineColor ||
+    (change && change < 0
+      ? 'var(--bs-error, #dc2626)'
+      : iconStyle.color || 'var(--bs-primary, #2563eb)')
 
   const cardStyle: React.CSSProperties = {
     display: 'flex',
@@ -170,7 +244,11 @@ export function AdminKpiCard({
     justifyContent: 'space-between',
     textDecoration: 'none',
     color: 'inherit',
-    padding: compact ? '1rem 1.15rem' : '1.25rem 1.25rem 0.85rem 1.25rem',
+    padding: hasSparkline
+      ? 0
+      : compact
+      ? '1rem 1.15rem'
+      : '1.25rem 1.25rem 1.15rem 1.25rem',
     borderRadius: 'var(--bs-radius-lg, 12px)',
     border: `1px solid ${
       isHovered
@@ -179,12 +257,12 @@ export function AdminKpiCard({
     }`,
     background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
     boxShadow: isHovered
-      ? '0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03)'
+      ? '0 6px 16px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03)'
       : 'var(--bs-shadow-xs, 0 1px 2px 0 rgba(0, 0, 0, 0.03))',
-    transform: isHovered && href ? 'translateY(-1px)' : 'none',
-    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+    transform: isHovered && href ? 'translateY(-2px)' : 'none',
+    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
     cursor: href ? 'pointer' : 'default',
-    minHeight: compact ? 92 : 124,
+    minHeight: compact ? 92 : hasSparkline ? 146 : 124,
     position: 'relative',
     overflow: 'hidden',
     ...style,
@@ -192,102 +270,115 @@ export function AdminKpiCard({
 
   const content = (
     <>
-      {/* Top Header Row: Label + Icon / Badge */}
+      {/* Upper Content Section with proper padding */}
       <div
         style={{
+          padding: hasSparkline
+            ? compact
+              ? '1rem 1.15rem 0.25rem 1.15rem'
+              : '1.25rem 1.25rem 0.25rem 1.25rem'
+            : 0,
+          flex: 1,
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-          marginBottom: compact ? 6 : 10,
+          flexDirection: 'column',
         }}
       >
-        <span
+        {/* Top Header Row: Metric Title & Value on Left, Icon on Right */}
+        <div
           style={{
-            fontSize: 'var(--bs-font-xs, 0.75rem)',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            color: 'var(--theme-elevation-500, #64748b)',
-            lineHeight: 1.3,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 12,
+            marginBottom: compact ? 6 : 8,
           }}
         >
-          {label}
-        </span>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {badge}
-          {icon && (
-            <div
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 10,
-                background: iconStyle.bg,
-                color: iconStyle.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: 'transform 0.2s ease',
-                transform: isHovered ? 'scale(1.08)' : 'none',
+                fontSize: 'var(--bs-font-xs, 0.75rem)',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                color: 'var(--theme-elevation-500, #64748b)',
+                lineHeight: 1.2,
               }}
             >
-              {icon}
+              {label}
+            </span>
+
+            <div
+              style={{
+                fontSize: compact ? 'var(--bs-font-xl, 1.35rem)' : 'var(--bs-font-2xl, 1.625rem)',
+                fontWeight: 700,
+                lineHeight: 1.15,
+                letterSpacing: '-0.025em',
+                fontVariantNumeric: 'tabular-nums',
+                color: 'var(--theme-text, #0f172a)',
+                marginTop: 2,
+              }}
+            >
+              {value}
             </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {badge}
+            {icon && (
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: iconStyle.bg,
+                  color: iconStyle.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'transform 0.2s ease',
+                  transform: isHovered ? 'scale(1.08)' : 'none',
+                }}
+              >
+                {icon}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Trend + Sublabel Row */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+            marginTop: 4,
+          }}
+        >
+          <AdminKpiTrendBadge change={change} />
+          {sublabel && (
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: 'var(--theme-elevation-500, #64748b)',
+                fontWeight: 400,
+                lineHeight: 1.3,
+              }}
+            >
+              {sublabel}
+            </span>
           )}
         </div>
       </div>
 
-      {/* Middle Value + Trend Row */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: sublabel ? 4 : 2,
-        }}
-      >
-        <div
-          style={{
-            fontSize: compact ? 'var(--bs-font-xl, 1.35rem)' : 'var(--bs-font-2xl, 1.625rem)',
-            fontWeight: 700,
-            lineHeight: 1.15,
-            letterSpacing: '-0.025em',
-            fontVariantNumeric: 'tabular-nums',
-            color: 'var(--theme-text, #0f172a)',
-          }}
-        >
-          {value}
-        </div>
-        <AdminKpiTrendBadge change={change} />
-      </div>
-
-      {/* Bottom Sublabel / Help text */}
-      {sublabel && (
-        <div
-          style={{
-            fontSize: '0.75rem',
-            color: 'var(--theme-elevation-500, #64748b)',
-            fontWeight: 400,
-            lineHeight: 1.35,
-          }}
-        >
-          {sublabel}
-        </div>
-      )}
-
-      {/* Subtle Bottom Sparkline (if provided) */}
-      {sparklinePoints && sparklinePoints.length > 1 && (
+      {/* Full-Width Edge-to-Edge Sparkline Area Chart taking entire bottom of box */}
+      {hasSparkline && (
         <MiniSparkline
           points={sparklinePoints}
-          color={
-            sparklineColor ||
-            (change && change < 0
-              ? 'var(--bs-error, #dc2626)'
-              : iconStyle.color || 'var(--bs-primary, #2563eb)')
-          }
+          color={effectiveSparklineColor}
+          height={compact ? 38 : 50}
+          isHovered={isHovered}
         />
       )}
     </>

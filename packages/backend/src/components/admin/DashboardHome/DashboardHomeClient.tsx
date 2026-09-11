@@ -106,18 +106,37 @@ export function DashboardHomeClient() {
     setCustomEndDate('')
   }
 
-  // Derive real trendline sparkline points from daily sales chart
+  // Derive real trendline sparkline points from daily sales chart & customer registrations
   const sparklines = useMemo(() => {
     if (!stats?.salesChart || stats.salesChart.length === 0) return undefined
     const revenuePts = stats.salesChart.map((p) => p.revenue)
     const ordersPts = stats.salesChart.map((p) => p.orders)
     const aovPts = stats.salesChart.map((p) => (p.orders > 0 ? Math.round(p.revenue / p.orders) : 0))
+
+    // Derive cumulative customer trajectory across date buckets
+    const totalCustomers = stats.kpis?.customers?.value || 0
+    const prevCustomers = stats.kpis?.customers?.previousValue ?? totalCustomers
+    const dateMap = new Map<string, number>()
+    for (const nc of stats.newCustomers || []) {
+      if (nc.createdAt) {
+        const d = nc.createdAt.slice(0, 10)
+        dateMap.set(d, (dateMap.get(d) || 0) + 1)
+      }
+    }
+    let running = prevCustomers
+    const customersPts = stats.salesChart.map((p) => {
+      const added = dateMap.get(p.fullDate || p.date) || 0
+      running += added
+      return Math.min(running, totalCustomers)
+    })
+
     return {
       revenue: revenuePts,
       orders: ordersPts,
+      customers: customersPts,
       aov: aovPts,
     }
-  }, [stats?.salesChart])
+  }, [stats?.salesChart, stats?.newCustomers, stats?.kpis?.customers])
 
   if (loading && !stats) {
     return <DashboardSkeleton />

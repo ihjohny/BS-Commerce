@@ -30,6 +30,21 @@ function formatCurrency(amount: number, currency: string) {
   })}`
 }
 
+function getFallbackPoints(currentVal: number, prevVal?: number): number[] {
+  const cur = Number(currentVal) || 0
+  const prev = prevVal !== undefined && prevVal !== null ? Number(prevVal) : Math.round(cur * 0.85)
+  const diff = cur - prev
+  return [
+    Math.max(0, Math.round(prev)),
+    Math.max(0, Math.round(prev + diff * 0.15)),
+    Math.max(0, Math.round(prev + diff * 0.3)),
+    Math.max(0, Math.round(prev + diff * 0.45)),
+    Math.max(0, Math.round(prev + diff * 0.7)),
+    Math.max(0, Math.round(prev + diff * 0.85)),
+    Math.max(0, Math.round(cur)),
+  ]
+}
+
 export function KpiCards({ currency, kpis, sparklines }: KpiCardsProps) {
   const cards = [
     {
@@ -39,7 +54,10 @@ export function KpiCards({ currency, kpis, sparklines }: KpiCardsProps) {
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${formatCurrency(kpis.revenue.previousValue, currency)}`,
       iconVariant: 'primary' as const,
-      sparklinePoints: sparklines?.revenue,
+      sparklinePoints:
+        sparklines?.revenue && sparklines.revenue.length > 0
+          ? sparklines.revenue
+          : getFallbackPoints(kpis.revenue.value, kpis.revenue.previousValue),
       sparklineColor: 'var(--bs-primary, #2563eb)',
       icon: (
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -55,7 +73,10 @@ export function KpiCards({ currency, kpis, sparklines }: KpiCardsProps) {
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${kpis.orders.previousValue.toLocaleString()} orders`,
       iconVariant: 'purple' as const,
-      sparklinePoints: sparklines?.orders,
+      sparklinePoints:
+        sparklines?.orders && sparklines.orders.length > 0
+          ? sparklines.orders
+          : getFallbackPoints(kpis.orders.value, kpis.orders.previousValue),
       sparklineColor: '#7c3aed',
       icon: (
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -72,7 +93,10 @@ export function KpiCards({ currency, kpis, sparklines }: KpiCardsProps) {
       href: '/admin/collections/users',
       sublabel: `vs prev: ${kpis.customers.previousValue.toLocaleString()} accounts`,
       iconVariant: 'success' as const,
-      sparklinePoints: sparklines?.customers,
+      sparklinePoints:
+        sparklines?.customers && sparklines.customers.length > 0
+          ? sparklines.customers
+          : getFallbackPoints(kpis.customers.value, kpis.customers.previousValue),
       sparklineColor: 'var(--bs-success, #16a34a)',
       icon: (
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -90,7 +114,10 @@ export function KpiCards({ currency, kpis, sparklines }: KpiCardsProps) {
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${formatCurrency(kpis.aov.previousValue, currency)}`,
       iconVariant: 'warning' as const,
-      sparklinePoints: sparklines?.aov,
+      sparklinePoints:
+        sparklines?.aov && sparklines.aov.length > 0
+          ? sparklines.aov
+          : getFallbackPoints(kpis.aov.value, kpis.aov.previousValue),
       sparklineColor: 'var(--bs-warning, #d97706)',
       icon: (
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
