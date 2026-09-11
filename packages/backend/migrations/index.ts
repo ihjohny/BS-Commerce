@@ -8,6 +8,7 @@ import * as migration_20260515_120000_addresses_geo_affinity from './20260515_12
 import * as migration_20260601_141500_wishlist_items from './20260601_141500_wishlist_items';
 import * as migration_20260601_153000_add_wishlist_locked_rels from './20260601_153000_add_wishlist_locked_rels';
 import * as migration_20260903_120000_add_attributes_and_order_tracking from './20260903_120000_add_attributes_and_order_tracking';
+import * as migration_20260912_120000_add_carts_flat_discount from './20260912_120000_add_carts_flat_discount';
 
 export const migrations = [
   {
@@ -59,5 +60,10 @@ export const migrations = [
     up: migration_20260903_120000_add_attributes_and_order_tracking.up,
     down: migration_20260903_120000_add_attributes_and_order_tracking.down,
     name: '20260903_120000_add_attributes_and_order_tracking',
+  },
+  {
+    up: migration_20260912_120000_add_carts_flat_discount.up,
+    down: migration_20260912_120000_add_carts_flat_discount.down,
+    name: '20260912_120000_add_carts_flat_discount',
   },
 ];

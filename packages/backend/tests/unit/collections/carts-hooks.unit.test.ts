@@ -488,3 +488,80 @@ test('beforeChange admin update preserves explicit user on update', async () => 
   const result = await hook({ operation: 'update', data, req })
   assert.equal(result.user, 'other-user')
 })
+
+test('beforeChange should apply flat discount and calculate grandTotal', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: 'p-1', quantity: 1 }],
+    flatDiscount: 15,
+    flatDiscountReason: 'Courtesy discount',
+  } as any
+  const req = {
+    user: { id: 'admin-1', role: 'admin' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 100 }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.subtotal, 100)
+  assert.equal(result.flatDiscount, 15)
+  assert.equal(result.flatDiscountReason, 'Courtesy discount')
+  assert.equal(result.discountTotal, 15)
+  assert.equal(result.grandTotal, 85)
+})
+
+test('beforeChange should combine coupon and flat discount and cap at subtotal', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: 'p-1', quantity: 1 }],
+    couponCode: 'SAVE10',
+    flatDiscount: 95,
+  } as any
+  const req = {
+    user: { id: 'admin-1', role: 'admin' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 100 }
+        return null
+      },
+      find: async ({ collection }: any) => {
+        if (collection === 'coupons') return { docs: [couponRow({ type: 'fixed', value: 20 })], totalDocs: 1 }
+        return { docs: [], totalDocs: 0 }
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.subtotal, 100)
+  // Coupon is 20, flat discount is 95 -> 115 total, but subtotal is 100 so discountTotal capped at 100
+  assert.equal(result.discountTotal, 100)
+  assert.equal(result.grandTotal, 0)
+})
+
+test('beforeChange should clear coupon when empty string provided', async () => {
+  const hook = getBeforeChangeHook()
+  const data = {
+    items: [{ product: 'p-1', quantity: 1 }],
+    couponCode: '',
+    flatDiscount: 10,
+  } as any
+  const req = {
+    user: { id: 'u-1', role: 'customer' },
+    headers: mockHeaders({}),
+    payload: {
+      findByID: async ({ collection }: any) => {
+        if (collection === 'products') return { id: 'p-1', basePrice: 50 }
+        return null
+      },
+    },
+  }
+  const result = await hook({ operation: 'update', data, req })
+  assert.equal(result.couponCode, null)
+  assert.equal(result.appliedCoupon, null)
+  assert.equal(result.discountTotal, 10)
+  assert.equal(result.grandTotal, 40)
+})

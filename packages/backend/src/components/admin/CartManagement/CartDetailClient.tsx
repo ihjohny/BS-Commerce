@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { SetStepNav } from '@payloadcms/ui'
+import { CartDiscountModal } from './CartDiscountModal'
 
 export type CartItemData = {
   id?: string
@@ -62,6 +63,8 @@ export type CartDetailClientProps = {
     items?: CartItemData[]
     subtotal?: number
     discountTotal?: number
+    flatDiscount?: number
+    flatDiscountReason?: any
     grandTotal?: number
     couponCode?: any
     appliedCoupon?: any
@@ -204,17 +207,20 @@ function formatStatusLabel(status: string): string {
 const StatusPill = AdminStatusBadge
 
 export function CartDetailClient({
-  cart,
+  cart: initialCart,
   customerOrders = [],
   customerMetrics,
   currency = 'BDT',
 }: CartDetailClientProps) {
+  const [cart, setCart] = useState<CartDetailClientProps['cart']>(initialCart)
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false)
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [copiedId, setCopiedId] = useState(false)
   const [copiedGuestId, setCopiedGuestId] = useState(false)
 
   const cartIdStr = resolveString(cart?.id, 'cart')
   const guestIdStr = resolveString(cart?.guestId)
-  const items = Array.isArray(cart?.items) ? cart.items : []
+  const items: CartItemData[] = Array.isArray(cart?.items) ? (cart.items as CartItemData[]) : []
   const isGuest = !cart?.user && Boolean(guestIdStr)
   const userObj = typeof cart?.user === 'object' && cart.user !== null ? cart.user : null
   const storeObj = typeof cart?.store === 'object' && cart.store !== null ? cart.store : null
@@ -226,7 +232,9 @@ export function CartDetailClient({
   const totalUnits = items.reduce((sum, item) => sum + (Number(item?.quantity) || 1), 0)
   const subtotal = Number(cart?.subtotal || 0)
   const discountTotal = Number(cart?.discountTotal || 0)
-  const grandTotal = Number(cart?.grandTotal || subtotal - discountTotal)
+  const flatDiscount = Number(cart?.flatDiscount || 0)
+  const flatDiscountReasonStr = resolveString(cart?.flatDiscountReason)
+  const grandTotal = Number(cart?.grandTotal || Math.max(0, subtotal - discountTotal))
 
   const handleCopy = (text: string, setter: (val: boolean) => void) => {
     if (navigator?.clipboard?.writeText) {
@@ -631,7 +639,15 @@ export function CartDetailClient({
               'No Discount'
             )
           }
-          sublabel={couponCodeStr ? `Coupon: ${couponCodeStr}` : 'No promo code attached'}
+          sublabel={
+            couponCodeStr && flatDiscount > 0
+              ? `Coupon: ${couponCodeStr} + ${formatMoney(flatDiscount, currency)} flat`
+              : couponCodeStr
+                ? `Coupon: ${couponCodeStr}`
+                : flatDiscount > 0
+                  ? `Flat: ${formatMoney(flatDiscount, currency)} (${flatDiscountReasonStr || 'Admin'})`
+                  : 'No promo code attached'
+          }
           compact
         />
       </div>
@@ -872,18 +888,45 @@ export function CartDetailClient({
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
             }}
           >
-            <h3
-              style={{
-                margin: '0 0 1rem 0',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                color: 'var(--theme-elevation-600, #475569)',
-              }}
-            >
-              Order Value Summary
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: 'var(--theme-elevation-600, #475569)',
+                }}
+              >
+                Order Value Summary
+              </h3>
+
+              <button
+                type="button"
+                onClick={() => setIsDiscountModalOpen(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--bs-primary, #2563eb)',
+                  background: 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.08))',
+                  color: 'var(--bs-primary, #2563eb)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
+                {discountTotal > 0 ? 'Edit / Manage Discounts' : 'Apply Discount / Coupon'}
+              </button>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.875rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--theme-elevation-700, #334155)' }}>
@@ -891,24 +934,66 @@ export function CartDetailClient({
                 <span style={{ fontWeight: 600 }}>{formatMoney(subtotal, currency)}</span>
               </div>
 
-              {discountTotal > 0 && (
+              {/* Coupon Discount Row */}
+              {couponCodeStr && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--bs-success, #16a34a)' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <span>Coupon Discount</span>
-                    {couponCodeStr && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                        background: 'var(--bs-success-subtle, rgba(21, 128, 61, 0.1))',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {couponCodeStr}
+                    </span>
+                  </span>
+                  <span style={{ fontWeight: 700 }}>
+                    -{formatMoney(Math.max(0, Math.round((discountTotal - flatDiscount) * 100) / 100), currency)}
+                  </span>
+                </div>
+              )}
+
+              {/* Flat Discount Row */}
+              {flatDiscount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--bs-success, #16a34a)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span>Flat / Courtesy Discount</span>
+                    {flatDiscountReasonStr && (
                       <span
                         style={{
                           fontSize: 11,
                           padding: '1px 6px',
                           borderRadius: 4,
-                          background: 'var(--bs-success-subtle, rgba(21, 128, 61, 0.1))',
-                          fontWeight: 600,
+                          background: 'var(--theme-elevation-100, #f1f5f9)',
+                          color: 'var(--theme-elevation-700, #334155)',
+                          fontWeight: 500,
                         }}
                       >
-                        {couponCodeStr}
+                        {flatDiscountReasonStr}
                       </span>
                     )}
                   </span>
+                  <span style={{ fontWeight: 700 }}>-{formatMoney(flatDiscount, currency)}</span>
+                </div>
+              )}
+
+              {/* Combined Total Savings Row (if both coupon and flat discount are active) */}
+              {couponCodeStr && flatDiscount > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    color: 'var(--bs-success, #16a34a)',
+                    fontSize: '0.8rem',
+                    fontStyle: 'italic',
+                    paddingTop: 2,
+                  }}
+                >
+                  <span>Total Savings Applied</span>
                   <span style={{ fontWeight: 700 }}>-{formatMoney(discountTotal, currency)}</span>
                 </div>
               )}
@@ -1405,6 +1490,60 @@ export function CartDetailClient({
           </div>
         </div>
       </div>
+
+      {/* Cart Discount Modal */}
+      <CartDiscountModal
+        isOpen={isDiscountModalOpen}
+        onClose={() => setIsDiscountModalOpen(false)}
+        cartId={cartIdStr}
+        subtotal={subtotal}
+        currency={currency}
+        currentCouponCode={couponCodeStr}
+        currentFlatDiscount={flatDiscount}
+        currentFlatDiscountReason={flatDiscountReasonStr}
+        customerId={customerId || undefined}
+        onSuccess={(updatedCart, message) => {
+          setCart(updatedCart)
+          setToast({ type: 'success', message })
+          setTimeout(() => setToast(null), 4000)
+        }}
+      />
+
+      {/* Toast Notification Alert */}
+      {toast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '12px 18px',
+            borderRadius: 10,
+            background: toast.type === 'success' ? '#16a34a' : '#dc2626',
+            color: '#ffffff',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            {toast.type === 'success' ? (
+              <polyline points="20 6 9 17 4 12" />
+            ) : (
+              <>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </>
+            )}
+          </svg>
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   )
 }

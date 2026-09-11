@@ -292,26 +292,47 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
           0
         )
         data.subtotal = Math.round(subtotal * 100) / 100
-        data.discountTotal = 0
-        data.appliedCoupon = null
-
+        
+        let couponDiscount = 0
         if (typeof data.couponCode === 'string' && data.couponCode.trim()) {
+          const cartUserId = data.user
+            ? typeof data.user === 'object'
+              ? (data.user as { id?: string | number })?.id
+              : data.user
+            : req.user?.role === 'admin'
+              ? undefined
+              : req.user?.id
+
           const couponResult = await validateCouponForSubtotal({
             payload: req.payload,
             req,
             couponCode: data.couponCode,
             subtotal: data.subtotal,
-            userId: req.user?.id,
+            userId: cartUserId,
           })
           if (!couponResult.valid) {
             throw new APIError(couponResult.discountReason, 400)
           }
           data.couponCode = couponResult.coupon.code
           data.appliedCoupon = couponResult.coupon.id
-          data.discountTotal = couponResult.discountTotal
+          couponDiscount = couponResult.discountTotal
+        } else if (data.couponCode === '' || data.couponCode === null) {
+          data.couponCode = null
+          data.appliedCoupon = null
         }
 
-        data.grandTotal = Math.round((Number(data.subtotal || 0) - Number(data.discountTotal || 0)) * 100) / 100
+        const flatDiscount = Math.max(0, Number(data.flatDiscount || 0))
+        data.flatDiscount = Math.round(flatDiscount * 100) / 100
+
+        if (typeof data.flatDiscountReason === 'string') {
+          const trimmedReason = data.flatDiscountReason.replace(/\0/g, '').trim().slice(0, 500)
+          data.flatDiscountReason = trimmedReason.length > 0 ? trimmedReason : null
+        } else if (data.flatDiscountReason === null) {
+          data.flatDiscountReason = null
+        }
+
+        data.discountTotal = Math.min(data.subtotal, Math.round((couponDiscount + data.flatDiscount) * 100) / 100)
+        data.grandTotal = Math.max(0, Math.round((Number(data.subtotal || 0) - Number(data.discountTotal || 0)) * 100) / 100)
         return data
       },
     ],
@@ -368,7 +389,19 @@ export function createCartsConfig(multivendorEnabled: boolean, allowGuestCheckou
       name: 'discountTotal',
       type: 'number',
       defaultValue: 0,
-      admin: { readOnly: true, description: 'Discount amount from applied coupon.' },
+      admin: { readOnly: true, description: 'Total discount amount from applied coupon and/or flat discount.' },
+    },
+    {
+      name: 'flatDiscount',
+      type: 'number',
+      defaultValue: 0,
+      min: 0,
+      admin: { description: 'Admin-applied flat or courtesy discount amount.' },
+    },
+    {
+      name: 'flatDiscountReason',
+      type: 'text',
+      admin: { description: 'Optional reason or note for admin flat discount.' },
     },
     {
       name: 'grandTotal',

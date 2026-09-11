@@ -519,6 +519,10 @@ export async function processCheckout(
     couponCodeSnapshot = couponResult.coupon.code
     discountTotal = couponResult.discountTotal
   }
+
+  const flatDiscount = Math.max(0, Number((cart as { flatDiscount?: number | null }).flatDiscount || 0))
+  discountTotal = Math.min(subtotalCalc, Math.round((discountTotal + flatDiscount) * 100) / 100)
+
   const grandTotal = Math.round((subtotalCalc + shippingTotal + taxTotal - discountTotal) * 100) / 100
 
   const inventoryEnabled = process.env.INVENTORY_ENABLED !== 'false'
