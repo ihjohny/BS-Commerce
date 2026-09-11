@@ -79,7 +79,13 @@ export default function AdminBrandingCssVarsProvider({ children }: { children?: 
       const saved = sessionStorage.getItem('payload_nav_scroll')
       const top = saved ? parseInt(saved, 10) : 0
 
-      if (top > 0 && navScroll.scrollTop !== top) {
+      // If top is near the very top (< 10px), ensure it's scrolled fully to 0
+      // so top nav items are never partially scrolled behind the sticky header.
+      if (top <= 10) {
+        if (navScroll.scrollTop !== 0) {
+          navScroll.scrollTop = 0
+        }
+      } else if (navScroll.scrollTop !== top) {
         navScroll.scrollTop = top
       }
     }

@@ -9,6 +9,11 @@
 :root {
   --bs-admin-logo-url: url('/branding/brainstation-23-symbol.png');
 
+  /* Sidebar Navigation Tokens & Spring Easing */
+  --nav-width: 275px !important;
+  --nav-trans-time: 0.28s !important;
+  --nav-easing: cubic-bezier(0.2, 0, 0, 1) !important;
+
   /* Brand Accent Tokens (Soothing Blue / Indigo) */
   --bs-primary: #2563eb;
   --bs-primary-hover: #1d4ed8;
@@ -167,6 +172,13 @@ html[data-theme='dark'] ::selection {
   z-index: 1000 !important;
   width: 32px !important;
   height: 32px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: scale(1) !important;
+  transition: opacity 0.22s var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)),
+              transform 0.22s var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)),
+              visibility 0s 0s !important;
 }
 
 .template-default__nav-toggler-container {
@@ -492,18 +504,45 @@ button.nav-toggler.app-header__mobile-nav-toggler {
   transform: translateY(-1px) !important;
 }
 
-/* ─── Sidebar Navigation ───────────────────────────────────────────────────── */
-.template-default__nav {
+/* ─── Sidebar Navigation & Smooth Transitions ───────────────────────────────── */
+.template-default--nav-animate {
+  transition: grid-template-columns var(--nav-trans-time, 0.28s) var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)) !important;
+  will-change: grid-template-columns;
+}
+
+.template-default--nav-open .template-default__nav-overlay {
+  transition: opacity var(--nav-trans-time, 0.28s) var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)) !important;
+}
+
+.template-default__nav,
+.nav {
   border-right: 1px solid var(--theme-elevation-150) !important;
   background-color: var(--theme-bg) !important;
-}
-
-.nav {
   padding: 0 !important;
+  overflow: hidden !important;
+  contain: paint layout !important;
 }
 
+.nav--nav-animate {
+  transition: opacity var(--nav-trans-time, 0.28s) var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)),
+              border-color var(--nav-trans-time, 0.28s) var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)) !important;
+  will-change: opacity, width;
+}
+
+.template-default:not(.template-default--nav-open) .template-default__nav,
+.template-default:not(.template-default--nav-open) .nav {
+  border-right-color: transparent !important;
+}
+
+/* Maintain fixed inner layout width so content never wraps, crushes, or squishes during expand/collapse */
 .nav__scroll {
+  width: var(--nav-width, 275px) !important;
+  min-width: var(--nav-width, 275px) !important;
+  max-width: var(--nav-width, 275px) !important;
+  box-sizing: border-box !important;
   padding-top: 0 !important;
+  scroll-padding-top: 56px !important;
+  overflow-anchor: none !important;
 }
 
 /* ─── Sticky Sidebar Brand Header ─────────────────────────────────────────── */
@@ -519,9 +558,12 @@ button.nav-toggler.app-header__mobile-nav-toggler {
   padding: 0 14px !important;
   border-bottom: 1px solid var(--theme-elevation-150) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
-  width: 100% !important;
+  width: var(--nav-width, 275px) !important;
+  min-width: var(--nav-width, 275px) !important;
+  max-width: var(--nav-width, 275px) !important;
   box-sizing: border-box !important;
   flex-shrink: 0 !important;
+  white-space: nowrap !important;
 }
 
 .admin-sidebar-brand__header-inner {
@@ -611,15 +653,27 @@ button.nav-toggler.app-header__mobile-nav-toggler {
   line-height: 1.2 !important;
 }
 
-/* Hide duplicate floating toggler when sidebar is open to prevent collision */
-button.nav-toggler.template-default__nav-toggler.nav-toggler--is-open,
-.template-default__nav-toggler-wrapper:has(.nav-toggler--is-open) {
-  display: none !important;
+/* Smoothly cross-fade floating toggler when sidebar is open to prevent collision and visual jumping */
+.template-default--nav-open .template-default__nav-toggler-wrapper,
+.template-default__nav-toggler-wrapper:has(.nav-toggler--is-open),
+button.nav-toggler.template-default__nav-toggler.nav-toggler--is-open {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: scale(0.85) !important;
+  transition: opacity 0.16s var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)),
+              transform 0.16s var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)),
+              visibility 0s 0.16s !important;
 }
 
 .nav__wrap {
-  padding: 0.5rem 0.75rem 1.5rem 0.75rem !important;
+  width: var(--nav-width, 275px) !important;
+  min-width: var(--nav-width, 275px) !important;
+  max-width: var(--nav-width, 275px) !important;
+  padding: 0.75rem 0.75rem 1.5rem 0.75rem !important;
   box-sizing: border-box !important;
+  position: relative !important;
+  white-space: nowrap !important;
 }
 
 /* Custom Slim Scrollbar for Navigation */
@@ -648,11 +702,18 @@ button.nav-toggler.template-default__nav-toggler.nav-toggler--is-open,
   margin-top: 0.75rem !important;
   border-radius: var(--bs-radius-sm);
   transition: color 0.15s ease, background-color 0.15s ease;
+  scroll-margin-top: 60px !important;
+  white-space: nowrap !important;
 }
 
 .nav-group__toggle:hover {
   color: var(--theme-text) !important;
   background-color: var(--theme-elevation-50);
+}
+
+.nav-group__indicator svg {
+  transition: transform 0.22s var(--nav-easing, cubic-bezier(0.2, 0, 0, 1)) !important;
+  will-change: transform;
 }
 
 /* ─── Sidebar Navigation Icons & Links ─────────────────────────────────────── */
@@ -668,6 +729,8 @@ button.nav-toggler.template-default__nav-toggler.nav-toggler--is-open,
   align-items: center !important;
   text-decoration: none !important;
   position: relative !important;
+  scroll-margin-top: 60px !important;
+  white-space: nowrap !important;
 }
 
 .nav__link:hover {
@@ -680,6 +743,7 @@ button.nav-toggler.template-default__nav-toggler.nav-toggler--is-open,
   color: var(--bs-primary) !important;
   background-color: var(--bs-primary-subtle) !important;
   font-weight: 600 !important;
+  scroll-margin-top: 60px !important;
 }
 
 .nav__link-indicator {
