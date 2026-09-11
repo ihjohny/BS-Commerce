@@ -131,24 +131,19 @@ export function SalesOverviewChart({ data, currency }: SalesOverviewChartProps) 
               letterSpacing: '-0.015em',
             }}
           >
-            Sales & Order Trajectory
+            Sales Overview
           </div>
           <div
             style={{
-              fontSize: 'var(--bs-font-sm, 0.8125rem)',
+              fontSize: 'var(--bs-font-xs, 0.75rem)',
               color: 'var(--theme-elevation-500, #64748b)',
-              marginTop: 3,
+              marginTop: 2,
               display: 'flex',
               alignItems: 'center',
               gap: 10,
             }}
           >
-            <span>
-              Total {isRevenue ? 'Revenue' : 'Orders'}:{' '}
-              <strong style={{ color: 'var(--theme-text, #0f172a)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                {isRevenue ? formatCurrency(totalValue, currency) : `${totalValue.toLocaleString()} orders`}
-              </strong>
-            </span>
+            <span>Daily performance for the selected timeframe</span>
             <span style={{ color: 'var(--theme-elevation-300, #cbd5e1)' }}>•</span>
             <span>
               Daily Avg:{' '}

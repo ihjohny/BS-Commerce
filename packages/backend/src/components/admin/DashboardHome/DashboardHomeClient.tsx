@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import type { AdminDashboardStats } from '../../../lib/admin-dashboard-stats'
 import { DashboardHeader } from './components/DashboardHeader'
 import { FulfillmentPipeline } from './components/FulfillmentPipeline'
 import { KpiCards } from './components/KpiCards'
 import { SalesOverviewChart } from './components/SalesOverviewChart'
+import { OrderStatusDonutCard } from './components/OrderStatusDonutCard'
+import { RevenueTargetsCard } from './components/RevenueTargetsCard'
 import { SalesSummaryCard } from './components/SalesSummaryCard'
 import { RecentOrdersCard } from './components/RecentOrdersCard'
 import { BestsellersCard } from './components/BestsellersCard'
@@ -104,6 +106,19 @@ export function DashboardHomeClient() {
     setCustomEndDate('')
   }
 
+  // Derive real trendline sparkline points from daily sales chart
+  const sparklines = useMemo(() => {
+    if (!stats?.salesChart || stats.salesChart.length === 0) return undefined
+    const revenuePts = stats.salesChart.map((p) => p.revenue)
+    const ordersPts = stats.salesChart.map((p) => p.orders)
+    const aovPts = stats.salesChart.map((p) => (p.orders > 0 ? Math.round(p.revenue / p.orders) : 0))
+    return {
+      revenue: revenuePts,
+      orders: ordersPts,
+      aov: aovPts,
+    }
+  }, [stats?.salesChart])
+
   if (loading && !stats) {
     return <DashboardSkeleton />
   }
@@ -117,10 +132,11 @@ export function DashboardHomeClient() {
   }
 
   return (
-    <div style={{ padding: '1.75rem 2rem 3rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
+    <div style={{ padding: '0.75rem 2rem 2.5rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
       {/* 1. Enhanced Filter Header */}
       <DashboardHeader
         role={stats.role}
+        platformName={stats.platformName}
         stores={stats.stores || []}
         selectedStoreId={selectedStoreId}
         timeRange={timeRange}
@@ -154,40 +170,81 @@ export function DashboardHomeClient() {
         </div>
       )}
 
-      {/* 2. Primary KPI Cards */}
-      <KpiCards currency={stats.currency} kpis={stats.kpis} />
+      {/* 2. Primary KPI Metric Cards with Apex Sparklines */}
+      <KpiCards currency={stats.currency} kpis={stats.kpis} sparklines={sparklines} />
 
-      {/* 3. Order Fulfillment Pipeline */}
-      {stats.orderStatusBreakdown && (
-        <FulfillmentPipeline
-          breakdown={stats.orderStatusBreakdown}
-          totalOrders={stats.kpis.orders.value}
-        />
-      )}
-
-      {/* 4. Sales Overview Chart & Financial Breakdown */}
+      {/* 3. Main Analytics Grid (8:4 layout matching Apex Shadcn: Sales Overview + Order Status Radial) */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
           gap: '1.25rem',
           marginBottom: '1.5rem',
         }}
       >
-        <div style={{ flex: '2 1 600px', minWidth: 300 }}>
+        <div style={{ gridColumn: 'span 12 / span 12', minWidth: 0 }} className="xl-col-8">
           <SalesOverviewChart data={stats.salesChart || []} currency={stats.currency} />
         </div>
-        <div style={{ flex: '1 1 300px', minWidth: 260 }}>
-          <SalesSummaryCard summary={stats.salesSummary} currency={stats.currency} />
+        <div style={{ gridColumn: 'span 12 / span 12', minWidth: 0 }} className="xl-col-4">
+          <OrderStatusDonutCard
+            breakdown={stats.orderStatusBreakdown}
+            totalOrders={stats.kpis.orders.value}
+          />
         </div>
       </div>
 
-      {/* 5. Recent Orders Feed (Full Width) */}
+      <style>{`
+        @media (min-width: 1024px) {
+          .xl-col-8 { grid-column: span 8 / span 12 !important; }
+          .xl-col-4 { grid-column: span 4 / span 12 !important; }
+        }
+      `}</style>
+
+      {/* 4. Secondary Row: Top Performers (8 col) & Revenue Targets / Goals (4 col) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
+          gap: '1.25rem',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <div style={{ gridColumn: 'span 12 / span 12', minWidth: 0 }} className="xl-col-8">
+          <BestsellersCard
+            bestsellers={stats.bestsellingProducts || []}
+            topEngaged={stats.topEngagedProducts || []}
+            currency={stats.currency}
+          />
+        </div>
+        <div style={{ gridColumn: 'span 12 / span 12', minWidth: 0 }} className="xl-col-4">
+          <RevenueTargetsCard
+            currentRevenue={stats.kpis.revenue.value}
+            targetRevenue={Math.max(stats.kpis.revenue.value * 1.25, 250000)}
+            currentOrders={stats.kpis.orders.value}
+            targetOrders={Math.max(stats.kpis.orders.value * 1.3, 50)}
+            currentCustomers={stats.kpis.customers.value}
+            targetCustomers={Math.max(stats.kpis.customers.value * 1.2, 30)}
+            currency={stats.currency}
+          />
+        </div>
+      </div>
+
+      {/* 5. Recent Transactions / Orders Table (Full Width) */}
       <div style={{ marginBottom: '1.5rem' }}>
         <RecentOrdersCard orders={stats.recentOrders || []} currency={stats.currency} />
       </div>
 
-      {/* 6. Product Performance & Operational Intelligence Cards */}
+      {/* 6. Order Fulfillment Pipeline (Multi-step operational view) */}
+      {stats.orderStatusBreakdown && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FulfillmentPipeline
+            breakdown={stats.orderStatusBreakdown}
+            totalOrders={stats.kpis.orders.value}
+          />
+        </div>
+      )}
+
+      {/* 7. Bottom Operational Intelligence Cards (Financial Summary, Low Stock Alerts, Customers, Reviews & Promos) */}
       <div
         style={{
           display: 'grid',
@@ -195,25 +252,21 @@ export function DashboardHomeClient() {
           gap: '1.25rem',
         }}
       >
-        {/* Left Column: Bestselling & Customer Reviews / Promotions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <BestsellersCard
-            bestsellers={stats.bestsellingProducts || []}
-            topEngaged={stats.topEngagedProducts || []}
-            currency={stats.currency}
-          />
-          <FeedbackPromotionsCard
-            reviews={stats.recentReviews || []}
-            coupons={stats.activeCoupons || []}
-            currency={stats.currency}
-          />
-        </div>
+        {/* Accounting & Financial breakdown */}
+        <SalesSummaryCard summary={stats.salesSummary} currency={stats.currency} />
 
-        {/* Right Column: Inventory Restock Alerts & New Customers */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <LowStockCard items={stats.lowStockProducts || []} />
-          <NewCustomersCard customers={stats.newCustomers || []} />
-        </div>
+        {/* Inventory Restock Alerts */}
+        <LowStockCard items={stats.lowStockProducts || []} />
+
+        {/* New Customer Registrations */}
+        <NewCustomersCard customers={stats.newCustomers || []} />
+
+        {/* Feedback & Active Promos */}
+        <FeedbackPromotionsCard
+          reviews={stats.recentReviews || []}
+          coupons={stats.activeCoupons || []}
+          currency={stats.currency}
+        />
       </div>
     </div>
   )

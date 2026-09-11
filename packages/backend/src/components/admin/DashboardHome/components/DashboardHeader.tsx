@@ -6,6 +6,7 @@ import { AdminStatusBadge } from '../../ui'
 
 type DashboardHeaderProps = {
   role: 'admin' | 'vendor'
+  platformName?: string
   stores: StoreOption[]
   selectedStoreId: string | null
   timeRange: string
@@ -24,6 +25,7 @@ type DashboardHeaderProps = {
 
 export function DashboardHeader({
   role,
+  platformName,
   stores,
   selectedStoreId,
   timeRange,
@@ -42,6 +44,8 @@ export function DashboardHeader({
 
   const isCustom = timeRange === 'custom'
   const isFiltered = timeRange !== '7d' || selectedStoreId !== null
+
+  const displayPlatformName = platformName?.trim() || 'BS-Commerce'
 
   const timeRangePresets = [
     { key: 'today', label: 'Today' },
@@ -80,15 +84,15 @@ export function DashboardHeader({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-      {/* 1. Executive Top Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+      {/* 1. Executive Top Header matching Apex Shadcn */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '1rem',
+          gap: '0.75rem',
         }}
       >
         <div>
@@ -102,7 +106,7 @@ export function DashboardHeader({
                 color: 'var(--theme-text, #0f172a)',
               }}
             >
-              Store Overview
+              {displayPlatformName}
             </h1>
             <AdminStatusBadge
               status={role}
@@ -114,17 +118,11 @@ export function DashboardHeader({
             style={{
               color: 'var(--theme-elevation-500, #64748b)',
               fontSize: 'var(--bs-font-base, 0.875rem)',
-              marginTop: 4,
+              marginTop: 3,
               marginBottom: 0,
             }}
           >
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}{' '}
-            · Operational sales, inventory & order analytics
+            Track your sales performance, order status, and commerce metrics.
           </p>
         </div>
 
@@ -140,12 +138,12 @@ export function DashboardHeader({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '7px 13px',
-              borderRadius: 8,
+              padding: '6px 12px',
+              borderRadius: 'var(--bs-radius-sm, 7px)',
               border: '1px solid var(--theme-elevation-200, #e2e8f0)',
               background: 'var(--theme-elevation-0, #ffffff)',
               color: 'var(--theme-elevation-700, #334155)',
-              fontSize: 'var(--bs-font-base, 0.875rem)',
+              fontSize: 'var(--bs-font-sm, 0.8125rem)',
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1,
@@ -176,7 +174,7 @@ export function DashboardHeader({
             >
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
             </svg>
-            <span>{loading ? 'Refreshing…' : 'Refresh'}</span>
+            <span>{loading ? 'Updating…' : 'Refresh'}</span>
           </button>
 
           {/* Discreet Demo / Seed Utility Menu (for Admin only) */}

@@ -12,6 +12,12 @@ type KpiCardsProps = {
     customers: KpiMetric
     aov: KpiMetric
   }
+  sparklines?: {
+    revenue?: number[]
+    orders?: number[]
+    customers?: number[]
+    aov?: number[]
+  }
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -24,7 +30,7 @@ function formatCurrency(amount: number, currency: string) {
   })}`
 }
 
-export function KpiCards({ currency, kpis }: KpiCardsProps) {
+export function KpiCards({ currency, kpis, sparklines }: KpiCardsProps) {
   const cards = [
     {
       label: 'Total Revenue',
@@ -32,9 +38,12 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       change: kpis.revenue.changePercentage,
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${formatCurrency(kpis.revenue.previousValue, currency)}`,
+      iconVariant: 'primary' as const,
+      sparklinePoints: sparklines?.revenue,
+      sparklineColor: 'var(--bs-primary, #2563eb)',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="1" x2="12" y2="23" />
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22" />
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
         </svg>
       ),
@@ -44,12 +53,15 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       value: kpis.orders.value.toLocaleString(),
       change: kpis.orders.changePercentage,
       href: '/admin/collections/orders',
-      sublabel: `vs prev: ${kpis.orders.previousValue.toLocaleString()}`,
+      sublabel: `vs prev: ${kpis.orders.previousValue.toLocaleString()} orders`,
+      iconVariant: 'purple' as const,
+      sparklinePoints: sparklines?.orders,
+      sparklineColor: '#7c3aed',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="9" cy="21" r="1" />
-          <circle cx="20" cy="21" r="1" />
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+          <path d="M3 6h18" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
         </svg>
       ),
     },
@@ -58,25 +70,32 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
       value: kpis.customers.value.toLocaleString(),
       change: kpis.customers.changePercentage,
       href: '/admin/collections/users',
-      sublabel: 'Registered accounts',
+      sublabel: `vs prev: ${kpis.customers.previousValue.toLocaleString()} accounts`,
+      iconVariant: 'success' as const,
+      sparklinePoints: sparklines?.customers,
+      sparklineColor: 'var(--bs-success, #16a34a)',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       ),
     },
     {
-      label: 'Average Order Value',
+      label: 'Avg Order Value',
       value: formatCurrency(kpis.aov.value, currency),
       change: kpis.aov.changePercentage,
       href: '/admin/collections/orders',
       sublabel: `vs prev: ${formatCurrency(kpis.aov.previousValue, currency)}`,
+      iconVariant: 'warning' as const,
+      sparklinePoints: sparklines?.aov,
+      sparklineColor: 'var(--bs-warning, #d97706)',
       icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+          <polyline points="16 7 22 7 22 13" />
         </svg>
       ),
     },
@@ -86,9 +105,9 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-        gap: '0.85rem',
-        marginBottom: '1.25rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem',
       }}
     >
       {cards.map((c) => (
@@ -100,6 +119,9 @@ export function KpiCards({ currency, kpis }: KpiCardsProps) {
           sublabel={c.sublabel}
           href={c.href}
           icon={c.icon}
+          iconVariant={c.iconVariant}
+          sparklinePoints={c.sparklinePoints}
+          sparklineColor={c.sparklineColor}
         />
       ))}
     </div>

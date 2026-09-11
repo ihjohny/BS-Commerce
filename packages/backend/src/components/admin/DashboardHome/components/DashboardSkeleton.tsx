@@ -10,7 +10,7 @@ export function DashboardSkeleton() {
   }
 
   return (
-    <div style={{ padding: '1.75rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
+    <div style={{ padding: '0.75rem 2rem 2.5rem 2rem', maxWidth: 1440, margin: '0 auto' }}>
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 0.6; }
@@ -51,36 +51,43 @@ export function DashboardSkeleton() {
         ))}
       </div>
 
-      {/* Chart & Summary Skeleton */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+      {/* Chart & Order Status Radial Skeleton */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, minmax(0, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
         <div
           style={{
+            gridColumn: 'span 8 / span 12',
             padding: '1.25rem 1.5rem',
             borderRadius: 12,
             border: '1px solid var(--theme-elevation-150)',
             background: 'var(--theme-elevation-0, var(--theme-bg))',
             boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-            height: 280,
+            height: 340,
           }}
         >
           <div style={{ ...pulseBlock, width: '30%', height: 18, marginBottom: 20 }} />
-          <div style={{ ...pulseBlock, width: '100%', height: 200 }} />
+          <div style={{ ...pulseBlock, width: '100%', height: 260 }} />
         </div>
 
         <div
           style={{
+            gridColumn: 'span 4 / span 12',
             padding: '1.25rem 1.5rem',
             borderRadius: 12,
             border: '1px solid var(--theme-elevation-150)',
             background: 'var(--theme-elevation-0, var(--theme-bg))',
             boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-            height: 280,
+            height: 340,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          <div style={{ ...pulseBlock, width: '40%', height: 18, marginBottom: 20 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} style={{ ...pulseBlock, width: '100%', height: 20 }} />
+          <div style={{ ...pulseBlock, width: '50%', height: 18, alignSelf: 'flex-start' }} />
+          <div style={{ ...pulseBlock, width: 150, height: 150, borderRadius: '50%' }} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} style={{ ...pulseBlock, width: '100%', height: 16 }} />
             ))}
           </div>
         </div>

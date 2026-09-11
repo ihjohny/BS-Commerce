@@ -139,6 +139,7 @@ export type ActiveCoupon = {
 export type AdminDashboardStats =
   | {
       role: 'admin'
+      platformName: string
       currency: string
       dateRange: {
         timeRange: string
@@ -172,6 +173,7 @@ export type AdminDashboardStats =
     }
   | {
       role: 'vendor'
+      platformName: string
       tenantId: string | null
       currency: string
       dateRange: {
@@ -335,6 +337,7 @@ export async function loadDashboardStats(
 ): Promise<AdminDashboardStats> {
   let defaultCurrency = getDefaultCurrency()
   let supportedCurrencies: string[] = ['USD', 'BDT']
+  let platformName = 'BS-Commerce'
 
   if (typeof payload.findGlobal === 'function') {
     try {
@@ -343,6 +346,9 @@ export async function loadDashboardStats(
         depth: 0,
         overrideAccess: true,
       })) as any
+      if (typeof settings?.platformName === 'string' && settings.platformName.trim()) {
+        platformName = settings.platformName.trim()
+      }
       const curr = settings?.currency
       if (curr) {
         if (typeof curr.defaultCurrency === 'string' && curr.defaultCurrency.trim()) {
@@ -975,6 +981,7 @@ export async function loadDashboardStats(
 
     return {
       role: 'admin',
+      platformName,
       currency,
       dateRange: {
         timeRange: dates.timeRange,
@@ -1044,6 +1051,7 @@ export async function loadDashboardStats(
     if (!tenantId) {
       return {
         role: 'vendor',
+        platformName,
         tenantId: null,
         currency,
         dateRange: {
@@ -1058,12 +1066,19 @@ export async function loadDashboardStats(
         productsTotal: 0,
         stockLevelsTotal: 0,
         kpis: {
-          revenue: { value: 0, previousValue: 0, changePercentage: 0 },
-          orders: { value: 0, previousValue: 0, changePercentage: 0 },
-          customers: { value: 0, previousValue: 0, changePercentage: 0 },
-          aov: { value: 0, previousValue: 0, changePercentage: 0 },
+          revenue: { value: 0, previousValue: 0, changePercentage: null },
+          orders: { value: 0, previousValue: 0, changePercentage: null },
+          customers: { value: 0, previousValue: 0, changePercentage: null },
+          aov: { value: 0, previousValue: 0, changePercentage: null },
         },
-        salesSummary: { revenue: 0, subtotal: 0, taxTotal: 0, shippingTotal: 0, discountTotal: 0, refundTotal: 0 },
+        salesSummary: {
+          revenue: 0,
+          subtotal: 0,
+          taxTotal: 0,
+          shippingTotal: 0,
+          discountTotal: 0,
+          refundTotal: 0,
+        },
         orderStatusBreakdown: { pending: 0, processing: 0, shipped: 0, delivered: 0, completed: 0, cancelled: 0, refunded: 0 },
         salesChart: [],
         recentOrders: [],
@@ -1092,6 +1107,7 @@ export async function loadDashboardStats(
 
     return {
       role: 'vendor',
+      platformName,
       tenantId,
       currency,
       dateRange: {
