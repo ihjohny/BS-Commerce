@@ -35,6 +35,14 @@ export interface ClassFacetsResult {
   }>
 }
 
+interface FacetsMemoryCacheEntry {
+  data: { classes: ClassFacetsResult[]; facets: FacetGroupResult[] }
+  expiresAt: number
+}
+
+const facetsMemoryCache = new Map<string, FacetsMemoryCacheEntry>()
+const FACETS_CACHE_TTL_MS = 60_000 // 60 seconds
+
 export async function aggregateCatalogFacets(
   payload: any,
   options: {
@@ -45,6 +53,12 @@ export async function aggregateCatalogFacets(
   }
 ): Promise<{ classes: ClassFacetsResult[]; facets: FacetGroupResult[] }> {
   const { category, productClass, storeId, locale = 'en' } = options
+
+  const cacheKey = `${category || ''}:${productClass || ''}:${storeId || ''}:${locale}`
+  const cached = facetsMemoryCache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data
+  }
 
   // 1. Resolve store stock filter if storeId is provided
   let storeProductIds: string[] | undefined
@@ -320,7 +334,17 @@ export async function aggregateCatalogFacets(
   // Sort facets by displayOrder
   facetsResult.sort((a, b) => a.displayOrder - b.displayOrder)
 
-  return { classes: classesResult, facets: facetsResult }
+  const finalResult = { classes: classesResult, facets: facetsResult }
+  facetsMemoryCache.set(cacheKey, {
+    data: finalResult,
+    expiresAt: Date.now() + FACETS_CACHE_TTL_MS,
+  })
+  if (facetsMemoryCache.size > 200) {
+    const oldest = facetsMemoryCache.keys().next().value
+    if (oldest) facetsMemoryCache.delete(oldest)
+  }
+
+  return finalResult
 }
 
 export const storefrontFacetsEndpoint: Endpoint = {

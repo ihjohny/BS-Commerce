@@ -508,6 +508,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
       name: 'status',
       type: 'select',
       required: true,
+      index: true,
       defaultValue: 'draft',
       options: [
         { label: 'Draft', value: 'draft' },
@@ -516,7 +517,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
         { label: 'Archived', value: 'archived' },
       ],
     },
-    { name: 'featured', type: 'checkbox', defaultValue: false },
+    { name: 'featured', type: 'checkbox', defaultValue: false, index: true },
     {
       name: 'brand',
       type: 'relationship',
@@ -594,7 +595,7 @@ export function createProductsConfig(multivendorEnabled = false): CollectionConf
         },
       ],
     },
-    { name: 'basePrice', type: 'number', required: true, min: 0, admin: { step: 1 } },
+    { name: 'basePrice', type: 'number', required: true, min: 0, index: true, admin: { step: 1 } },
     { name: 'compareAtPrice', type: 'number', min: 0, admin: { step: 1 } },
     {
       name: 'saleDisplayMode',
