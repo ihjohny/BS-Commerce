@@ -148,7 +148,8 @@ export async function checkoutProcessHandler(req: any, deps?: CheckoutProcessDep
 
   const isAdminUser = req.user?.role === 'admin'
   const isDev = process.env.NODE_ENV === 'development'
-  const safeSimulatePayment = (isAdminUser || isDev) ? simulatePayment === true : false
+  const allowSimulated = process.env.ALLOW_SIMULATED_PAYMENT === 'true'
+  const safeSimulatePayment = (isAdminUser || isDev || allowSimulated) ? simulatePayment === true : false
 
   const reqHeaders = req?.headers instanceof Headers
     ? req.headers
