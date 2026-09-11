@@ -50,6 +50,17 @@
   --bs-radius-md: 8px;
   --bs-radius-lg: 12px;
   --bs-radius-full: 9999px;
+
+  /* Typography Scale Tokens (Enhanced readability, clear hierarchy) */
+  --bs-font-2xs: 0.6875rem; /* 11px - micro metadata, tags, badges */
+  --bs-font-xs: 0.75rem;    /* 12px - secondary notes, timestamps, sublabels */
+  --bs-font-sm: 0.8125rem;  /* 13px - tertiary data rows, compact labels */
+  --bs-font-base: 0.875rem; /* 14px - standard body text, input controls, table cells */
+  --bs-font-md: 0.9375rem;  /* 15px - prominent card titles, subheadings */
+  --bs-font-lg: 1.0625rem;  /* 17px - major section headings */
+  --bs-font-xl: 1.25rem;    /* 20px - primary panel titles */
+  --bs-font-2xl: 1.5rem;    /* 24px - page headlines, large KPI figures */
+  --bs-font-3xl: 1.75rem;   /* 28px - hero stats */
 }
 
 /* Dark Mode Overrides (Studio-grade Deep Zinc / Obsidian - Eye-Soothing & Zero Harsh Glare) */
@@ -124,6 +135,7 @@ textarea {
 
 body {
   color: var(--theme-text);
+  font-size: var(--bs-font-base, 0.875rem);
   line-height: 1.5;
 }
 
@@ -507,7 +519,7 @@ button.nav-toggler.app-header__mobile-nav-toggler {
 
 /* Nav Group Header */
 .nav-group__toggle {
-  font-size: 11px !important;
+  font-size: var(--bs-font-xs, 12px) !important;
   font-weight: 700 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
@@ -525,7 +537,7 @@ button.nav-toggler.app-header__mobile-nav-toggler {
 
 /* ─── Sidebar Navigation Icons & Links ─────────────────────────────────────── */
 .nav__link {
-  font-size: 13px !important;
+  font-size: var(--bs-font-base, 13.5px) !important;
   font-weight: 500 !important;
   color: var(--theme-elevation-700) !important;
   border-radius: var(--bs-radius-sm) !important;
@@ -942,7 +954,7 @@ a[href*="/globals/platform-settings"] .nav__link-label::before {
 .table thead th {
   background-color: var(--theme-elevation-50) !important;
   color: var(--theme-elevation-600) !important;
-  font-size: 11.5px !important;
+  font-size: var(--bs-font-xs, 12px) !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.04em !important;
@@ -962,7 +974,7 @@ a[href*="/globals/platform-settings"] .nav__link-label::before {
 .table tbody td {
   padding: 0.75rem 1rem !important;
   border-bottom: 1px solid var(--theme-elevation-100) !important;
-  font-size: 13.5px !important;
+  font-size: var(--bs-font-base, 14px) !important;
   vertical-align: middle !important;
 }
 

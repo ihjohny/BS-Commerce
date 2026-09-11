@@ -23,15 +23,19 @@ function formatCurrency(amount: number, currency: string) {
 function formatDate(iso: string) {
   try {
     const d = new Date(iso)
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    return {
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    }
   } catch {
-    return iso
+    return { date: iso, time: '' }
   }
 }
 
 export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null)
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -59,19 +63,29 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
     })
   }, [orders, searchTerm, statusFilter])
 
+  const handleCopyOrderNumber = (e: React.MouseEvent, orderNumber: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigator.clipboard.writeText(orderNumber)
+    setCopiedOrderId(orderNumber)
+    setTimeout(() => {
+      setCopiedOrderId(null)
+    }, 1800)
+  }
+
   return (
     <div
       style={{
-        borderRadius: 12,
-        border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-0, var(--theme-bg))',
-        padding: '1.25rem 1.4rem',
+        borderRadius: 'var(--bs-radius-lg, 12px)',
+        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+        background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
+        padding: '1.25rem 1.5rem',
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        boxShadow: 'var(--bs-shadow-xs, 0 1px 2px 0 rgba(0, 0, 0, 0.03))',
       }}
     >
       {/* Header */}
@@ -86,10 +100,10 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
         }}
       >
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 'var(--bs-font-md, 0.9375rem)', fontWeight: 600, color: 'var(--theme-text, #0f172a)', letterSpacing: '-0.015em' }}>
             Recent Orders
           </div>
-          <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--bs-font-sm, 0.8125rem)', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
             Latest orders placed across channels
           </div>
         </div>
@@ -97,27 +111,31 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
         <Link
           href="/admin/collections/orders"
           style={{
-            fontSize: 12,
-            fontWeight: 500,
+            fontSize: 'var(--bs-font-sm, 0.8125rem)',
+            fontWeight: 600,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          View All &rarr;
+          <span>View All Orders</span>
+          <span>&rarr;</span>
         </Link>
       </div>
 
-      {/* Filter Row: Search & Status Filter */}
+      {/* Filter Toolbar: Status Chips & Quick Search */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 8,
+          gap: 10,
           marginBottom: '1rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '1px solid var(--theme-elevation-150)',
+          paddingBottom: '0.85rem',
+          borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
         }}
       >
         <div
@@ -125,10 +143,10 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
             display: 'inline-flex',
             flexWrap: 'wrap',
             padding: 2,
-            borderRadius: 7,
-            background: 'var(--theme-elevation-100)',
-            border: '1px solid var(--theme-elevation-150)',
-            gap: 1,
+            borderRadius: 'var(--bs-radius-sm, 7px)',
+            background: 'var(--theme-elevation-100, #f1f5f9)',
+            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+            gap: 2,
           }}
         >
           {['all', 'pending', 'processing', 'delivered', 'refunded'].map((st) => {
@@ -136,14 +154,15 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
             return (
               <button
                 key={st}
+                type="button"
                 onClick={() => setStatusFilter(st)}
                 style={{
-                  padding: '3px 9px',
-                  borderRadius: 5,
+                  padding: '4px 11px',
+                  borderRadius: 'var(--bs-radius-xs, 5px)',
                   border: 'none',
-                  background: isActive ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
-                  color: isActive ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
-                  fontSize: 12,
+                  background: isActive ? 'var(--theme-elevation-0, #ffffff)' : 'transparent',
+                  color: isActive ? 'var(--theme-text, #0f172a)' : 'var(--theme-elevation-600, #64748b)',
+                  fontSize: 'var(--bs-font-sm, 0.8125rem)',
                   fontWeight: isActive ? 600 : 500,
                   textTransform: 'capitalize',
                   cursor: 'pointer',
@@ -157,6 +176,7 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
           })}
         </div>
 
+        {/* Search Field */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <svg
             width="13"
@@ -169,8 +189,8 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
             strokeLinejoin="round"
             style={{
               position: 'absolute',
-              left: 9,
-              color: 'var(--theme-elevation-400)',
+              left: 10,
+              color: 'var(--theme-elevation-400, #94a3b8)',
               pointerEvents: 'none',
             }}
           >
@@ -179,89 +199,165 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
           </svg>
           <input
             type="text"
-            placeholder="Search by Order #, Email, Phone..."
+            placeholder="Search order #, customer, phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
-              padding: '0.35rem 0.65rem 0.35rem 1.85rem',
+              padding: '0.42rem 0.75rem 0.42rem 2.1rem',
               borderRadius: 'var(--bs-radius-sm, 6px)',
-              border: '1px solid var(--theme-elevation-200)',
-              background: 'var(--theme-elevation-0, var(--theme-bg))',
-              color: 'var(--theme-text)',
-              fontSize: 12.5,
+              border: '1px solid var(--theme-elevation-200, #cbd5e1)',
+              background: 'var(--theme-elevation-0, #ffffff)',
+              color: 'var(--theme-text, #0f172a)',
+              fontSize: 'var(--bs-font-sm, 0.8125rem)',
               outline: 'none',
-              width: 230,
+              width: 260,
               boxShadow: 'var(--bs-shadow-xs)',
+              transition: 'border-color 0.15s ease',
             }}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--bs-primary, #2563eb)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--theme-elevation-200, #cbd5e1)')}
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              style={{
+                position: 'absolute',
+                right: 6,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--theme-elevation-400)',
+                cursor: 'pointer',
+                fontSize: 14,
+                padding: '2px 4px',
+              }}
+              title="Clear search"
+            >
+              &times;
+            </button>
+          )}
         </div>
       </div>
 
       {/* Orders Table Container */}
       {filteredOrders.length === 0 ? (
-        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
-          {searchTerm || statusFilter !== 'all' ? 'No orders match this filter.' : 'No recent orders.'}
+        <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400, #94a3b8)', fontSize: 'var(--bs-font-sm, 0.8125rem)' }}>
+          {searchTerm || statusFilter !== 'all' ? 'No orders match this filter.' : 'No recent orders recorded.'}
         </div>
       ) : (
         <div style={{ width: '100%', overflowX: 'auto' }}>
           <table
             style={{
               width: '100%',
-              minWidth: 540,
+              minWidth: 640,
               borderCollapse: 'collapse',
               textAlign: 'left',
-              fontSize: 13,
+              fontSize: 'var(--bs-font-base, 0.875rem)',
               tableLayout: 'fixed',
             }}
           >
             <thead>
               <tr
                 style={{
-                  borderBottom: '1px solid var(--theme-elevation-150)',
-                  color: 'var(--theme-elevation-500)',
-                  fontSize: 11,
+                  borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
+                  color: 'var(--theme-elevation-500, #64748b)',
+                  fontSize: 'var(--bs-font-xs, 0.75rem)',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
+                  letterSpacing: '0.05em',
                 }}
               >
-                <th style={{ width: '24%', padding: '8px 10px', fontWeight: 600 }}>Order #</th>
-                <th style={{ width: '30%', padding: '8px 10px', fontWeight: 600 }}>Customer</th>
-                <th style={{ width: '18%', padding: '8px 10px', fontWeight: 600 }}>Status</th>
-                <th style={{ width: '16%', padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>Total</th>
-                <th style={{ width: '12%', padding: '8px 10px', fontWeight: 600, textAlign: 'center' }}>Action</th>
+                <th style={{ width: '22%', padding: '8px 10px', fontWeight: 600 }}>Order #</th>
+                <th style={{ width: '18%', padding: '8px 10px', fontWeight: 600 }}>Placed</th>
+                <th style={{ width: '28%', padding: '8px 10px', fontWeight: 600 }}>Customer</th>
+                <th style={{ width: '14%', padding: '8px 10px', fontWeight: 600 }}>Status</th>
+                <th style={{ width: '18%', padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>Total</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((o) => {
                 const customerIdentifier = o.customerPhone || o.customerEmail || o.customerName || 'Guest'
+                const { date: formattedDateText, time: formattedTimeText } = formatDate(o.createdAt)
+                const isCopied = copiedOrderId === o.orderNumber
 
                 return (
                   <tr
                     key={o.id}
                     style={{
-                      borderBottom: '1px solid var(--theme-elevation-100)',
+                      borderBottom: '1px solid var(--theme-elevation-100, #f1f5f9)',
                       transition: 'background-color 0.12s ease',
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--theme-elevation-50, #f8fafc)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <td style={{ padding: '10px 10px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <a
-                        href={`/admin/collections/orders/${o.id}`}
-                        style={{ color: 'var(--bs-primary, #2563eb)', textDecoration: 'none', fontWeight: 600 }}
-                        title={o.orderNumber}
-                      >
-                        {o.orderNumber}
-                      </a>
+                    {/* Order Number + Copy Button */}
+                    <td style={{ padding: '10px 10px', fontWeight: 600 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <a
+                          href={`/admin/collections/orders/${o.id}`}
+                          style={{
+                            color: 'var(--bs-primary, #2563eb)',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            fontVariantNumeric: 'tabular-nums',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={o.orderNumber}
+                        >
+                          {o.orderNumber}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyOrderNumber(e, o.orderNumber)}
+                          title={isCopied ? 'Copied!' : 'Copy order number'}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            padding: '2px 4px',
+                            cursor: 'pointer',
+                            color: isCopied ? 'var(--bs-success, #16a34a)' : 'var(--theme-elevation-400, #94a3b8)',
+                            borderRadius: 3,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            transition: 'color 0.12s ease',
+                          }}
+                        >
+                          {isCopied ? (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          ) : (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </td>
+
+                    {/* Placed Date & Time */}
+                    <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                      <div style={{ color: 'var(--theme-text, #0f172a)', fontWeight: 500 }}>
+                        {formattedDateText}
+                      </div>
+                      <div style={{ fontSize: '0.6875rem', color: 'var(--theme-elevation-450, #64748b)' }}>
+                        {formattedTimeText}
+                      </div>
+                    </td>
+
+                    {/* Customer */}
                     <td style={{ padding: '10px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div
                           style={{
-                            width: 26,
-                            height: 26,
+                            width: 24,
+                            height: 24,
                             borderRadius: '50%',
-                            background: 'var(--theme-elevation-100)',
-                            border: '1px solid var(--theme-elevation-200)',
-                            color: 'var(--theme-elevation-600)',
+                            background: 'var(--theme-elevation-100, #f1f5f9)',
+                            border: '1px solid var(--theme-elevation-200, #cbd5e1)',
+                            color: 'var(--theme-elevation-600, #64748b)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -269,35 +365,21 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                           }}
                           aria-hidden="true"
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                           </svg>
                         </div>
                         <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <div
-                            style={{ fontWeight: 500, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            style={{ fontWeight: 500, color: 'var(--theme-text, #0f172a)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                             title={[customerIdentifier, o.customerName, o.customerEmail, o.customerPhone].filter(Boolean).join(' • ')}
                           >
                             {o.customerId ? (
                               <Link
                                 href={`/admin/collections/users/${o.customerId}`}
                                 style={{
-                                  color: 'var(--bs-primary, #2563eb)',
-                                  textDecoration: 'none',
-                                  fontWeight: 600,
-                                  transition: 'color 0.15s ease',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-                                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-                              >
-                                {customerIdentifier}
-                              </Link>
-                            ) : o.customerEmail || o.customerPhone ? (
-                              <Link
-                                href={`/admin/collections/users?search=${encodeURIComponent(o.customerEmail || o.customerPhone || '')}`}
-                                style={{
-                                  color: 'var(--theme-text)',
+                                  color: 'var(--theme-text, #0f172a)',
                                   textDecoration: 'none',
                                   fontWeight: 500,
                                   transition: 'color 0.15s ease',
@@ -307,7 +389,27 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                                   e.currentTarget.style.textDecoration = 'underline'
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.color = 'var(--theme-text)'
+                                  e.currentTarget.style.color = 'var(--theme-text, #0f172a)'
+                                  e.currentTarget.style.textDecoration = 'none'
+                                }}
+                              >
+                                {customerIdentifier}
+                              </Link>
+                            ) : o.customerEmail || o.customerPhone ? (
+                              <Link
+                                href={`/admin/collections/users?search=${encodeURIComponent(o.customerEmail || o.customerPhone || '')}`}
+                                style={{
+                                  color: 'var(--theme-text, #0f172a)',
+                                  textDecoration: 'none',
+                                  fontWeight: 500,
+                                  transition: 'color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.color = 'var(--bs-primary, #2563eb)'
+                                  e.currentTarget.style.textDecoration = 'underline'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.color = 'var(--theme-text, #0f172a)'
                                   e.currentTarget.style.textDecoration = 'none'
                                 }}
                                 title="Search for customer account"
@@ -318,46 +420,48 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
                               <span>{customerIdentifier}</span>
                             )}
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)' }}>
-                            {formatDate(o.createdAt)}
-                          </div>
+                          {o.customerName && o.customerName !== customerIdentifier && (
+                            <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-500, #64748b)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {o.customerName}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
+
+                    {/* Order Status */}
                     <td style={{ padding: '10px 10px' }}>
                       <AdminStatusBadge status={o.status} type="order" />
                     </td>
+
+                    {/* Total Amount + Action view */}
                     <td
                       style={{
                         padding: '10px 10px',
                         textAlign: 'right',
                         fontWeight: 700,
-                        color: 'var(--theme-text)',
+                        color: 'var(--theme-text, #0f172a)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >
-                      {formatCurrency(o.grandTotal, o.currency || currency)}
-                    </td>
-                    <td style={{ padding: '10px 10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 'var(--bs-font-base, 0.875rem)' }}>
+                        {formatCurrency(o.grandTotal, o.currency || currency)}
+                      </div>
                       <a
                         href={`/admin/collections/orders/${o.id}`}
                         style={{
-                          fontSize: 11.5,
-                          fontWeight: 600,
-                          color: 'var(--theme-text)',
+                          fontSize: 'var(--bs-font-xs, 0.75rem)',
+                          color: 'var(--bs-primary, #2563eb)',
                           textDecoration: 'none',
-                          padding: '3px 8px',
-                          borderRadius: 'var(--bs-radius-sm, 6px)',
-                          background: 'var(--theme-elevation-100)',
-                          border: '1px solid var(--theme-elevation-200)',
+                          fontWeight: 500,
+                          marginTop: 2,
                           display: 'inline-block',
-                          transition: 'all 0.12s ease',
                         }}
                       >
-                        View
+                        Details &rarr;
                       </a>
                     </td>
                   </tr>
@@ -370,3 +474,4 @@ export function RecentOrdersCard({ orders, currency }: RecentOrdersCardProps) {
     </div>
   )
 }
+

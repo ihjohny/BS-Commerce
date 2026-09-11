@@ -144,10 +144,10 @@ export function AdminStatusBadge({
         display: 'inline-flex',
         alignItems: 'center',
         gap: isSmall ? 5 : 6,
-        fontSize: isSmall ? '0.71875rem' : '0.78125rem', // 11.5px vs 12.5px
+        fontSize: isSmall ? 'var(--bs-font-xs, 0.75rem)' : 'var(--bs-font-sm, 0.8125rem)', // 12px vs 13px
         fontWeight: 600,
-        lineHeight: 1,
-        padding: isSmall ? '3px 8.5px' : '4px 10.5px',
+        lineHeight: 1.15,
+        padding: isSmall ? '3.5px 9px' : '4.5px 11px',
         borderRadius: 'var(--bs-radius-full, 9999px)',
         background: token.bg,
         color: token.color,

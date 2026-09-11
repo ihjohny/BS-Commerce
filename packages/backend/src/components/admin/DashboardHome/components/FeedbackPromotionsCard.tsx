@@ -25,13 +25,13 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
   return (
     <div
       style={{
-        borderRadius: 12,
-        border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-0, var(--theme-bg))',
+        borderRadius: 'var(--bs-radius-lg, 12px)',
+        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+        background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        boxShadow: 'var(--bs-shadow-xs, 0 1px 2px 0 rgba(0, 0, 0, 0.03))',
       }}
     >
       {/* Header with Tabs */}
@@ -40,7 +40,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          borderBottom: '1px solid var(--theme-elevation-150)',
+          borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
           paddingBottom: '0.75rem',
           marginBottom: '1rem',
         }}
@@ -49,53 +49,64 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
           style={{
             display: 'inline-flex',
             padding: 2,
-            borderRadius: 7,
-            background: 'var(--theme-elevation-100)',
-            border: '1px solid var(--theme-elevation-150)',
-            gap: 1,
+            borderRadius: 'var(--bs-radius-sm, 7px)',
+            background: 'var(--theme-elevation-100, #f1f5f9)',
+            border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+            gap: 2,
           }}
         >
           <button
+            type="button"
             onClick={() => setTab('reviews')}
             style={{
-              borderRadius: 5,
-              fontSize: 12,
+              borderRadius: 'var(--bs-radius-xs, 5px)',
+              fontSize: 'var(--bs-font-sm, 0.8125rem)',
               fontWeight: tab === 'reviews' ? 600 : 500,
-              color: tab === 'reviews' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
-              background: tab === 'reviews' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              color: tab === 'reviews' ? 'var(--theme-text, #0f172a)' : 'var(--theme-elevation-600, #64748b)',
+              background: tab === 'reviews' ? 'var(--theme-elevation-0, #ffffff)' : 'transparent',
               border: 'none',
               boxShadow: tab === 'reviews' ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
-              padding: '3px 9px',
+              padding: '4px 12px',
               transition: 'all 0.12s ease',
             }}
           >
-            Customer Reviews ({reviews.length})
+            Reviews ({reviews.length})
           </button>
           <button
+            type="button"
             onClick={() => setTab('coupons')}
             style={{
-              borderRadius: 5,
-              fontSize: 12,
+              borderRadius: 'var(--bs-radius-xs, 5px)',
+              fontSize: 'var(--bs-font-sm, 0.8125rem)',
               fontWeight: tab === 'coupons' ? 600 : 500,
-              color: tab === 'coupons' ? 'var(--theme-text)' : 'var(--theme-elevation-600)',
-              background: tab === 'coupons' ? 'var(--theme-elevation-0, var(--theme-bg))' : 'transparent',
+              color: tab === 'coupons' ? 'var(--theme-text, #0f172a)' : 'var(--theme-elevation-600, #64748b)',
+              background: tab === 'coupons' ? 'var(--theme-elevation-0, #ffffff)' : 'transparent',
               border: 'none',
               boxShadow: tab === 'coupons' ? '0 1px 2px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
-              padding: '3px 9px',
+              padding: '4px 12px',
               transition: 'all 0.12s ease',
             }}
           >
-            Active Promotions ({coupons.length})
+            Active Coupons ({coupons.length})
           </button>
         </div>
 
         <a
           href={tab === 'reviews' ? '/admin/collections/product-reviews' : '/admin/collections/coupons'}
-          style={{ fontSize: 12, fontWeight: 500, color: 'var(--bs-primary, #2563eb)', textDecoration: 'none' }}
+          style={{
+            fontSize: 'var(--bs-font-sm, 0.8125rem)',
+            fontWeight: 600,
+            color: 'var(--bs-primary, #2563eb)',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
         >
-          {tab === 'reviews' ? 'All Reviews' : 'All Coupons'} &rarr;
+          <span>{tab === 'reviews' ? 'All Reviews' : 'All Coupons'}</span>
+          <span>&rarr;</span>
         </a>
       </div>
 
@@ -103,7 +114,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
       {tab === 'reviews' && (
         <>
           {reviews.length === 0 ? (
-            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400, #94a3b8)', fontSize: 'var(--bs-font-sm, 0.8125rem)' }}>
               No recent customer reviews submitted.
             </div>
           ) : (
@@ -124,37 +135,39 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                       textDecoration: 'none',
                       color: 'inherit',
                       padding: '8px 10px',
-                      borderRadius: 'var(--bs-radius-sm, 6px)',
-                      background: 'var(--theme-elevation-100)',
-                      border: '1px solid var(--theme-elevation-150)',
+                      borderRadius: 'var(--bs-radius-sm, 7px)',
+                      background: 'var(--theme-elevation-50, #f8fafc)',
+                      border: '1px solid var(--theme-elevation-150, #e2e8f0)',
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
-                      e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                      e.currentTarget.style.background = 'var(--theme-elevation-0, #ffffff)'
+                      e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-                      e.currentTarget.style.background = 'var(--theme-elevation-100)'
+                      e.currentTarget.style.borderColor = 'var(--theme-elevation-150, #e2e8f0)'
+                      e.currentTarget.style.background = 'var(--theme-elevation-50, #f8fafc)'
+                      e.currentTarget.style.boxShadow = 'none'
                     }}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                        <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <span style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: '#d97706', fontWeight: 700, letterSpacing: '0.05em' }}>
                           {'★'.repeat(Math.max(1, Math.min(5, r.rating)))}
                         </span>
-                        <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
+                        <span style={{ fontSize: 'var(--bs-font-base, 0.875rem)', fontWeight: 600, color: 'var(--theme-text, #0f172a)' }}>
                           {r.authorName}
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--theme-elevation-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <span style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-500, #64748b)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           on {r.productName}
                         </span>
                       </div>
                       {r.comment && (
                         <div
                           style={{
-                            fontSize: 12,
-                            color: 'var(--theme-elevation-600)',
+                            fontSize: 'var(--bs-font-sm, 0.8125rem)',
+                            color: 'var(--theme-elevation-600, #475569)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -170,7 +183,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                         status={r.status}
                         variant={isPending ? 'warning' : isApproved ? 'success' : 'error'}
                       />
-                      <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
+                      <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-450, #64748b)', marginTop: 3 }}>
                         {formatDate(r.createdAt)}
                       </div>
                     </div>
@@ -186,7 +199,7 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
       {tab === 'coupons' && (
         <>
           {coupons.length === 0 ? (
-            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400, #94a3b8)', fontSize: 'var(--bs-font-sm, 0.8125rem)' }}>
               No active coupons found.
             </div>
           ) : (
@@ -203,53 +216,55 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
                     textDecoration: 'none',
                     color: 'inherit',
                     padding: '8px 10px',
-                    borderRadius: 'var(--bs-radius-sm, 6px)',
-                    background: 'var(--theme-elevation-100)',
-                    border: '1px solid var(--theme-elevation-150)',
+                    borderRadius: 'var(--bs-radius-sm, 7px)',
+                    background: 'var(--theme-elevation-50, #f8fafc)',
+                    border: '1px solid var(--theme-elevation-150, #e2e8f0)',
                     transition: 'all 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
-                    e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-0, #ffffff)'
+                    e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-                    e.currentTarget.style.background = 'var(--theme-elevation-100)'
+                    e.currentTarget.style.borderColor = 'var(--theme-elevation-150, #e2e8f0)'
+                    e.currentTarget.style.background = 'var(--theme-elevation-50, #f8fafc)'
+                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span
                         style={{
-                          fontSize: 11.5,
+                          fontSize: 'var(--bs-font-xs, 0.75rem)',
                           fontWeight: 700,
                           fontFamily: 'monospace',
                           letterSpacing: '0.06em',
                           color: 'var(--bs-primary, #2563eb)',
-                          background: 'var(--bs-primary-subtle)',
-                          border: '1px dashed var(--bs-primary-border)',
+                          background: 'var(--bs-primary-subtle, rgba(37, 99, 235, 0.08))',
+                          border: '1px dashed var(--bs-primary-border, rgba(37, 99, 235, 0.3))',
                           padding: '2px 7px',
                           borderRadius: 4,
                         }}
                       >
                         {c.code}
                       </span>
-                      <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--theme-text)' }}>
+                      <span style={{ fontSize: 'var(--bs-font-base, 0.875rem)', fontWeight: 600, color: 'var(--theme-text, #0f172a)' }}>
                         {c.type === 'percentage' ? `${c.value}% OFF` : `${currency === 'BDT' ? '৳' : '$'}${c.value} OFF`}
                       </span>
                     </div>
                     {c.minOrderValue > 0 && (
-                      <div style={{ fontSize: 11, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+                      <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
                         Min Order: {currency === 'BDT' ? '৳' : '$'}{c.minOrderValue}
                       </div>
                     )}
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--theme-text)', fontVariantNumeric: 'tabular-nums' }}>
+                    <div style={{ fontSize: 'var(--bs-font-sm, 0.8125rem)', fontWeight: 700, color: 'var(--theme-text, #0f172a)', fontVariantNumeric: 'tabular-nums' }}>
                       {c.totalUses} used
                     </div>
-                    <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+                    <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
                       {c.expiresAt ? `Exp: ${formatDate(c.expiresAt)}` : 'No Expiry'}
                     </div>
                   </div>
@@ -262,3 +277,4 @@ export function FeedbackPromotionsCard({ reviews, coupons, currency }: FeedbackP
     </div>
   )
 }
+

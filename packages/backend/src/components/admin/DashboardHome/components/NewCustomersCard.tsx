@@ -22,13 +22,13 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
   return (
     <div
       style={{
-        borderRadius: 12,
-        border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-0, var(--theme-bg))',
+        borderRadius: 'var(--bs-radius-lg, 12px)',
+        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+        background: 'var(--theme-elevation-0, var(--theme-bg, #ffffff))',
         padding: '1.25rem 1.4rem',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        boxShadow: 'var(--bs-shadow-xs, 0 1px 2px 0 rgba(0, 0, 0, 0.03))',
       }}
     >
       <div
@@ -38,14 +38,14 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
           alignItems: 'center',
           marginBottom: '1rem',
           paddingBottom: '0.75rem',
-          borderBottom: '1px solid var(--theme-elevation-150)',
+          borderBottom: '1px solid var(--theme-elevation-150, #e2e8f0)',
         }}
       >
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 'var(--bs-font-md, 0.9375rem)', fontWeight: 600, color: 'var(--theme-text, #0f172a)', letterSpacing: '-0.015em' }}>
             New Customers
           </div>
-          <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-500, #64748b)', marginTop: 2 }}>
             Recent user registrations and activity
           </div>
         </div>
@@ -53,18 +53,22 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
         <Link
           href="/admin/collections/users"
           style={{
-            fontSize: 12,
-            fontWeight: 500,
+            fontSize: 'var(--bs-font-sm, 0.8125rem)',
+            fontWeight: 600,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          Users &rarr;
+          <span>Users</span>
+          <span>&rarr;</span>
         </Link>
       </div>
 
       {customers.length === 0 ? (
-        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400)', fontSize: 13 }}>
+        <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--theme-elevation-400, #94a3b8)', fontSize: 'var(--bs-font-sm, 0.8125rem)' }}>
           No customer accounts found.
         </div>
       ) : (
@@ -90,18 +94,20 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                   textDecoration: 'none',
                   color: 'inherit',
                   padding: '8px 10px',
-                  borderRadius: 'var(--bs-radius-sm, 6px)',
-                  background: 'var(--theme-elevation-100)',
-                  border: '1px solid var(--theme-elevation-150)',
+                  borderRadius: 'var(--bs-radius-sm, 7px)',
+                  background: 'var(--theme-elevation-50, #f8fafc)',
+                  border: '1px solid var(--theme-elevation-150, #e2e8f0)',
                   transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
-                  e.currentTarget.style.background = 'var(--theme-elevation-150)'
+                  e.currentTarget.style.background = 'var(--theme-elevation-0, #ffffff)'
+                  e.currentTarget.style.boxShadow = 'var(--bs-shadow-xs)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-                  e.currentTarget.style.background = 'var(--theme-elevation-100)'
+                  e.currentTarget.style.borderColor = 'var(--theme-elevation-150, #e2e8f0)'
+                  e.currentTarget.style.background = 'var(--theme-elevation-50, #f8fafc)'
+                  e.currentTarget.style.boxShadow = 'none'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -110,11 +116,11 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                       width: 32,
                       height: 32,
                       borderRadius: '50%',
-                      background: 'var(--theme-elevation-150)',
-                      border: '1px solid var(--theme-elevation-200)',
-                      color: 'var(--theme-elevation-700)',
+                      background: 'var(--theme-elevation-100, #f1f5f9)',
+                      border: '1px solid var(--theme-elevation-200, #cbd5e1)',
+                      color: 'var(--theme-elevation-700, #334155)',
                       fontWeight: 700,
-                      fontSize: 11,
+                      fontSize: 'var(--bs-font-xs, 0.75rem)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -126,9 +132,9 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: 13,
+                        fontSize: 'var(--bs-font-base, 0.875rem)',
                         fontWeight: 600,
-                        color: 'var(--theme-text)',
+                        color: 'var(--theme-text, #0f172a)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -138,8 +144,8 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
                     </div>
                     <div
                       style={{
-                        fontSize: 11,
-                        color: 'var(--theme-elevation-500)',
+                        fontSize: 'var(--bs-font-xs, 0.75rem)',
+                        color: 'var(--theme-elevation-500, #64748b)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -153,7 +159,7 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <AdminStatusBadge status={c.status} type="user" />
-                  <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
+                  <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-450, #64748b)', marginTop: 3 }}>
                     {formatDate(c.createdAt)}
                   </div>
                 </div>
@@ -165,3 +171,4 @@ export function NewCustomersCard({ customers }: NewCustomersCardProps) {
     </div>
   )
 }
+

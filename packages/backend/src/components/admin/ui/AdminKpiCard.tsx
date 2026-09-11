@@ -123,7 +123,7 @@ export function AdminKpiCard({
       >
         <span
           style={{
-            fontSize: '0.71875rem', // 11.5px
+            fontSize: 'var(--bs-font-xs, 0.78125rem)', // ~12.5px
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
@@ -174,7 +174,7 @@ export function AdminKpiCard({
       >
         <div
           style={{
-            fontSize: compact ? '1.35rem' : '1.55rem', // 22px / 25px
+            fontSize: compact ? 'var(--bs-font-2xl, 1.5rem)' : 'var(--bs-font-3xl, 1.7rem)', // 24px / 27px
             fontWeight: 700,
             lineHeight: 1.15,
             letterSpacing: '-0.025em',
@@ -191,8 +191,8 @@ export function AdminKpiCard({
       {sublabel && (
         <div
           style={{
-            fontSize: '0.75rem', // 12px
-            color: 'var(--theme-elevation-450, #64748b)',
+            fontSize: 'var(--bs-font-xs, 0.78125rem)', // ~12.5px
+            color: 'var(--theme-elevation-500, #64748b)',
             fontWeight: 400,
             lineHeight: 1.35,
           }}

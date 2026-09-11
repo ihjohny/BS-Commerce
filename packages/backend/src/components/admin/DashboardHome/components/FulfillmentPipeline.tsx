@@ -13,50 +13,68 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
   const stages = [
     {
       key: 'pending',
-      label: 'Pending',
+      label: 'Pending Approval',
+      sublabel: 'Awaiting fulfillment',
       count: breakdown.pending,
-      dotColor: 'var(--bs-warning, #d97706)',
-      bgLight: 'var(--bs-warning-subtle, rgba(245, 158, 11, 0.12))',
+      dotColor: '#d97706',
+      bgLight: 'rgba(217, 119, 6, 0.1)',
+      borderColor: 'rgba(217, 119, 6, 0.25)',
+      badge: breakdown.pending > 0 ? 'Needs Action' : null,
       href: '/admin/collections/orders?where%5Bstatus%5D%5Bequals%5D=pending',
     },
     {
       key: 'processing',
-      label: 'Processing',
+      label: 'Processing / Packing',
+      sublabel: 'Being prepared',
       count: breakdown.processing,
-      dotColor: 'var(--bs-primary, #2563eb)',
-      bgLight: 'var(--bs-primary-subtle, rgba(59, 130, 246, 0.12))',
+      dotColor: '#2563eb',
+      bgLight: 'rgba(37, 99, 235, 0.1)',
+      borderColor: 'rgba(37, 99, 235, 0.25)',
+      badge: null,
       href: '/admin/collections/orders?where%5Bstatus%5D%5Bequals%5D=processing',
     },
     {
       key: 'shipped',
-      label: 'Shipped',
+      label: 'Shipped / In Transit',
+      sublabel: 'With courier partner',
       count: breakdown.shipped,
-      dotColor: '#6366f1',
-      bgLight: 'rgba(99, 102, 241, 0.12)',
+      dotColor: '#7c3aed',
+      bgLight: 'rgba(124, 58, 237, 0.1)',
+      borderColor: 'rgba(124, 58, 237, 0.25)',
+      badge: null,
       href: '/admin/collections/orders?where%5Bstatus%5D%5Bequals%5D=shipped',
     },
     {
       key: 'delivered',
-      label: 'Delivered',
+      label: 'Delivered & Done',
+      sublabel: 'Customer received',
       count: breakdown.delivered + breakdown.completed,
-      dotColor: 'var(--bs-success, #16a34a)',
-      bgLight: 'var(--bs-success-subtle, rgba(22, 163, 74, 0.12))',
+      dotColor: '#16a34a',
+      bgLight: 'rgba(22, 163, 74, 0.1)',
+      borderColor: 'rgba(22, 163, 74, 0.25)',
+      badge: null,
       href: '/admin/collections/orders?where%5Bstatus%5D%5Bin%5D%5B0%5D=delivered&where%5Bstatus%5D%5Bin%5D%5B1%5D=completed',
     },
     {
       key: 'cancelled',
       label: 'Cancelled',
+      sublabel: 'Voided by client/store',
       count: breakdown.cancelled,
-      dotColor: 'var(--theme-elevation-500, #94a3b8)',
-      bgLight: 'var(--theme-elevation-150, rgba(148, 163, 184, 0.12))',
+      dotColor: '#64748b',
+      bgLight: 'rgba(100, 116, 139, 0.1)',
+      borderColor: 'rgba(100, 116, 139, 0.2)',
+      badge: null,
       href: '/admin/collections/orders?where%5Bstatus%5D%5Bequals%5D=cancelled',
     },
     {
       key: 'refunded',
-      label: 'Refunded',
+      label: 'Returns & Refunds',
+      sublabel: 'Returned goods',
       count: breakdown.refunded,
-      dotColor: 'var(--bs-error, #dc2626)',
-      bgLight: 'var(--bs-error-subtle, rgba(220, 38, 38, 0.12))',
+      dotColor: '#dc2626',
+      bgLight: 'rgba(220, 38, 38, 0.1)',
+      borderColor: 'rgba(220, 38, 38, 0.2)',
+      badge: null,
       href: '/admin/collections/orders?where%5Bstatus%5D%5Bequals%5D=refunded',
     },
   ]
@@ -67,34 +85,35 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
     <div
       style={{
         borderRadius: 12,
-        border: '1px solid var(--theme-elevation-150)',
-        background: 'var(--theme-elevation-0, var(--theme-bg))',
-        padding: '1.15rem 1.35rem',
+        border: '1px solid var(--theme-elevation-150, #e2e8f0)',
+        background: 'var(--theme-elevation-0, #ffffff)',
+        padding: '1.25rem 1.4rem',
         marginBottom: '1.25rem',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
       }}
     >
+      {/* Header */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '0.85rem',
+          marginBottom: '0.9rem',
         }}
       >
         <div>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--theme-text)', letterSpacing: '-0.01em' }}>
-            Order Fulfillment Pipeline
+          <span style={{ fontSize: 'var(--bs-font-md, 0.9375rem)', fontWeight: 700, color: 'var(--theme-elevation-900, #0f172a)' }}>
+            Fulfillment Workflow Pipeline
           </span>
-          <span style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginLeft: 8 }}>
-            ({totalOrders} total in range)
+          <span style={{ fontSize: 'var(--bs-font-sm, 0.8125rem)', color: 'var(--theme-elevation-500, #64748b)', marginLeft: 8 }}>
+            ({totalOrders} total orders in period)
           </span>
         </div>
         <Link
           href="/admin/collections/orders"
           style={{
-            fontSize: 12,
-            fontWeight: 500,
+            fontSize: 'var(--bs-font-sm, 0.8125rem)',
+            fontWeight: 600,
             color: 'var(--bs-primary, #2563eb)',
             textDecoration: 'none',
             display: 'inline-flex',
@@ -102,20 +121,21 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
             gap: 4,
           }}
         >
-          Manage Orders &rarr;
+          <span>All Orders</span>
+          <span>&rarr;</span>
         </Link>
       </div>
 
-      {/* Visual Multi-Segment Proportion Bar */}
+      {/* Multi-Segment Proportion Track */}
       {totalStageCount > 0 && (
         <div
           style={{
             display: 'flex',
             height: 6,
-            borderRadius: 'var(--bs-radius-full, 9999px)',
+            borderRadius: 9999,
             overflow: 'hidden',
-            background: 'var(--theme-elevation-150)',
-            marginBottom: '1rem',
+            background: 'var(--theme-elevation-150, #e2e8f0)',
+            marginBottom: '1.1rem',
             gap: 2,
           }}
         >
@@ -138,59 +158,94 @@ export function FulfillmentPipeline({ breakdown, totalOrders }: FulfillmentPipel
         </div>
       )}
 
-      {/* Stage Action Cards */}
+      {/* Stage Cards Grid */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: '0.65rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: '0.75rem',
         }}
       >
-        {stages.map((st) => (
-          <a
-            key={st.key}
-            href={st.href}
-            title={`View ${st.label} orders`}
-            style={{
-              display: 'block',
-              textDecoration: 'none',
-              padding: '0.65rem 0.85rem',
-              borderRadius: 'var(--bs-radius-sm, 6px)',
-              background: 'var(--theme-elevation-0, var(--theme-bg))',
-              border: '1px solid var(--theme-elevation-150)',
-              transition: 'all 0.15s ease',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--bs-primary-border)'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = 'var(--bs-shadow-sm)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--theme-elevation-150)'
-              e.currentTarget.style.transform = 'none'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: st.dotColor,
-                  boxShadow: `0 0 0 2px ${st.bgLight}`,
-                }}
-              />
-              <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--theme-elevation-500)' }}>
-                {st.label}
-              </span>
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--theme-text)', lineHeight: 1.2, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-              {st.count}
-            </div>
-          </a>
-        ))}
+        {stages.map((st) => {
+          const percentage = totalStageCount > 0 ? ((st.count / totalStageCount) * 100).toFixed(0) : '0'
+
+          return (
+            <Link
+              key={st.key}
+              href={st.href}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                textDecoration: 'none',
+                padding: '0.75rem 0.9rem',
+                borderRadius: 9,
+                background: 'var(--theme-elevation-50, #f8fafc)',
+                border: `1px solid ${st.badge ? st.borderColor : 'var(--theme-elevation-150, #e2e8f0)'}`,
+                transition: 'all 0.15s ease',
+                minHeight: 78,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--bs-primary, #2563eb)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.04)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = st.badge ? st.borderColor : 'var(--theme-elevation-150, #e2e8f0)'
+                e.currentTarget.style.transform = 'none'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: st.dotColor,
+                      boxShadow: `0 0 0 2px ${st.bgLight}`,
+                    }}
+                  />
+                  <span style={{ fontSize: 'var(--bs-font-sm, 0.8125rem)', fontWeight: 600, color: 'var(--theme-elevation-700, #334155)' }}>
+                    {st.label}
+                  </span>
+                </div>
+                {st.badge && (
+                  <span
+                    style={{
+                      fontSize: 'var(--bs-font-2xs, 0.6875rem)',
+                      fontWeight: 700,
+                      padding: '1.5px 6px',
+                      borderRadius: 4,
+                      background: st.bgLight,
+                      color: st.dotColor,
+                    }}
+                  >
+                    {st.badge}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 4 }}>
+                <div
+                  style={{
+                    fontSize: 'var(--bs-font-xl, 1.35rem)',
+                    fontWeight: 700,
+                    color: 'var(--theme-elevation-900, #0f172a)',
+                    fontVariantNumeric: 'tabular-nums',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {st.count.toLocaleString()}
+                </div>
+                <div style={{ fontSize: 'var(--bs-font-xs, 0.75rem)', color: 'var(--theme-elevation-400, #94a3b8)', fontWeight: 500 }}>
+                  {percentage}%
+                </div>
+              </div>
+            </Link>
+          )
+        })}
       </div>
     </div>
   )

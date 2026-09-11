@@ -82,7 +82,7 @@ export function AdminCard({
                 <h3
                   style={{
                     margin: 0,
-                    fontSize: '0.95rem',
+                    fontSize: 'var(--bs-font-md, 0.9375rem)',
                     fontWeight: 600,
                     color: 'var(--theme-text, #0f172a)',
                     letterSpacing: '-0.015em',
@@ -93,7 +93,7 @@ export function AdminCard({
                 {subtitle && (
                   <div
                     style={{
-                      fontSize: '0.75rem',
+                      fontSize: 'var(--bs-font-xs, 0.75rem)',
                       color: 'var(--theme-elevation-500, #64748b)',
                       marginTop: 2,
                     }}
